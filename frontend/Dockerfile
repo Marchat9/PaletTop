@@ -21,13 +21,6 @@ COPY package*.json ./
 RUN npm ci
 
 COPY . .
-
-# Bakes the backend API URL into the production build. Override at build time for your own
-# deployment, e.g.: docker build --target production --build-arg API_BASE_URL=https://api.example.com .
-ARG API_BASE_URL=http://localhost:3000
-RUN sed -i "s#backBaseApiUrl: environmentBase.backBaseApiUrl,#backBaseApiUrl: '${API_BASE_URL}',#" \
-    src/environments/environment.prod.ts
-
 RUN npm run build
 
 # ---- production: Nginx serving the static build ----
@@ -35,5 +28,11 @@ FROM nginx:alpine AS production
 
 COPY --from=build /app/dist/PaletTop/browser /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+# Backend URL is resolved at container startup, not baked into the build — see
+# docker-entrypoint.d/20-envsubst-runtime-config.sh and src/assets/env.js.
+# Override with: docker run -e API_BASE_URL=https://api.example.com ...
+COPY docker-entrypoint.d/20-envsubst-runtime-config.sh /docker-entrypoint.d/20-envsubst-runtime-config.sh
+RUN chmod +x /docker-entrypoint.d/20-envsubst-runtime-config.sh
 
 EXPOSE 80
