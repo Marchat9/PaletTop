@@ -1,0 +1,11 @@
+.separator {
+  width: 100%;
+  border: 1px dashed var(--color-primary);
+}
+
+.no-competition-configured {
+  font-size: 0.9rem;
+  margin: 0 auto;
+  color: var(--color-on-surface-variant);
+  line-height: 1.4;
+}

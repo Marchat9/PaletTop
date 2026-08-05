@@ -1,0 +1,18 @@
+<div class="code-inputs">
+  @for (digit of digits(); track $index) {
+    <input
+      type="number"
+      class="code-input"
+      [value]="digit"
+      [attr.data-digit-index]="$index"
+      [attr.aria-label]="'Chiffre ' + ($index + 1)"
+      (input)="onDigitInput($any($event.target).value, $index)"
+      (keydown)="onDigitKeyDown($event, $index)"
+      (paste)="onDigitPaste($event, $index)"
+      inputmode="numeric"
+      maxlength="1"
+      autocomplete="off"
+      placeholder="0"
+    />
+  }
+</div>

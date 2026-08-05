@@ -1,0 +1,61 @@
+<app-card>
+  <div class="card-header">
+    <app-icon name="info" iconClass="icon" />
+    <h2>Informations Générales</h2>
+  </div>
+
+  <div class="card-content padding">
+    @if (!hiddenFields().includes('name')) {
+      <div class="form-group">
+        <label class="form-label">Nom du tournoi <span class="mandatory">*</span></label>
+        <app-input-text
+          placeholder="Ex: Coupe du Laiton Doré"
+          [autofocus]="true"
+          [formControl]="group().controls.name"
+        ></app-input-text>
+      </div>
+    }
+
+    @if (!hiddenFields().includes('code')) {
+      <div class="form-group">
+        <label class="form-label">Code Unique <span class="mandatory">*</span></label>
+        <app-input-text
+          placeholder="Ex: PALET-2026"
+          [uppercase]="true"
+          [formControl]="group().controls.code"
+        ></app-input-text>
+      </div>
+    }
+
+    @if (!hiddenFields().includes('adminPassword')) {
+      <div class="form-group">
+        <label class="form-label"
+          >Mot de passe administrateur <span class="mandatory">*</span></label
+        >
+        <app-input-text
+          placeholder="Ex: Admin123"
+          [isPassword]="true"
+          [formControl]="group().controls.adminPassword"
+        ></app-input-text>
+      </div>
+    }
+
+    @if (!hiddenFields().includes('date')) {
+      <div class="form-group">
+        <label class="form-label">Date de l'événement <span class="mandatory">*</span></label>
+        <app-input-date [minDate]="minDate" [formControl]="group().controls.date"></app-input-date>
+      </div>
+    }
+
+    @if (!hiddenFields().includes('description')) {
+      <div class="form-group">
+        <label class="form-label">Description</label>
+        <app-input-textarea
+          placeholder="L'histoire de ce tournoi commence ici..."
+          [rows]="3"
+          [formControl]="group().controls.description"
+        ></app-input-textarea>
+      </div>
+    }
+  </div>
+</app-card>

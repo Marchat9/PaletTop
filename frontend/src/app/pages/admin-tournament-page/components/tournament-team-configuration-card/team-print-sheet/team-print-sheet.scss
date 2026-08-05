@@ -1,0 +1,59 @@
+// Le document imprimé doit toujours s'afficher en mode clair (fond blanc, texte
+// foncé), quel que soit le thème actif dans l'application (clair ou sombre) :
+// sans ces couleurs explicites, le texte hérite de --color-on-surface, qui est
+// clair en thème sombre et devient illisible sur une page imprimée blanche.
+.print-sheet-content {
+  background-color: #ffffff;
+  color: #1a1a1a;
+}
+
+.print-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #1a1a1a;
+}
+
+.print-title {
+  margin: 0;
+}
+
+.print-tournament-code {
+  margin: 0;
+
+  .code-value {
+    font-family: monospace;
+    font-size: 1.4rem;
+    font-weight: bold;
+    letter-spacing: 0.1em;
+    padding: 4px 12px;
+    border: 2px solid #1a1a1a;
+    border-radius: 4px;
+  }
+}
+
+.print-table {
+  width: 100%;
+  border-collapse: collapse;
+  print-color-adjust: exact;
+  -webkit-print-color-adjust: exact;
+
+  th,
+  td {
+    padding: 8px 12px;
+    text-align: left;
+    border: 1px solid #ccc;
+  }
+
+  tbody tr {
+    break-inside: avoid;
+  }
+
+  tbody tr:nth-child(even) {
+    background-color: #f0f0f0;
+  }
+}

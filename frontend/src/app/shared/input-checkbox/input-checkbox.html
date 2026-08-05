@@ -1,0 +1,14 @@
+<label class="checkbox-option" [class.has-description]="!!description()">
+  <input
+    type="checkbox"
+    [checked]="internalValue()"
+    [disabled]="disabled()"
+    (change)="onChange($any($event.target).checked)"
+  />
+  <div class="checkbox-text">
+    <span class="checkbox-label">{{ label() }}</span>
+    @if (description()) {
+      <span class="checkbox-description">{{ description() }}</span>
+    }
+  </div>
+</label>

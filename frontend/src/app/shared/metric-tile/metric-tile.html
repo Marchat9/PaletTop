@@ -1,0 +1,9 @@
+<article
+  class="metric-tile"
+  [class]="size()"
+  [class.clickable]="clickable()"
+  (click)="clickable() && clicked.emit(); $event.preventDefault()"
+>
+  <p class="value">{{ value() }}</p>
+  <p class="label">{{ label() }}</p>
+</article>

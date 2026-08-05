@@ -1,0 +1,16 @@
+<input
+  type="range"
+  class="input-range"
+  [min]="min()"
+  [max]="max()"
+  [step]="step()"
+  [value]="internalValue()"
+  (input)="onInput($any($event.target).value)"
+/>
+
+@if (minLabel() || maxLabel()) {
+  <div class="range-labels">
+    <span>{{ minLabel() }}</span>
+    <span>{{ maxLabel() }}</span>
+  </div>
+}

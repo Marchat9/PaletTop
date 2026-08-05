@@ -1,0 +1,39 @@
+<div
+  class="input-number-wrapper"
+  [class.disabled]="disabled()"
+  [class.placeholder-as-value]="placeholderAsValue()"
+>
+  <input
+    [id]="id()"
+    class="input-number"
+    type="number"
+    [placeholder]="placeholder()"
+    [value]="internalValue()"
+    [min]="min()"
+    [max]="max()"
+    [step]="step()"
+    [disabled]="disabled()"
+    (input)="onInput($any($event.target).value)"
+  />
+
+  <div class="stepper" aria-hidden="true">
+    <button
+      type="button"
+      class="stepper-btn"
+      [disabled]="!canIncrement()"
+      (click)="onIncrement()"
+      tabindex="-1"
+    >
+      <app-icon name="keyboard_arrow_up" />
+    </button>
+    <button
+      type="button"
+      class="stepper-btn"
+      [disabled]="!canDecrement()"
+      (click)="onDecrement()"
+      tabindex="-1"
+    >
+      <app-icon name="keyboard_arrow_down" />
+    </button>
+  </div>
+</div>

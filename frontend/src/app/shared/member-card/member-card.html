@@ -1,0 +1,34 @@
+<article class="member-card">
+  <div class="avatar">
+    @if (imageSrc()) {
+      <img class="avatar-img" [ngSrc]="imageSrc()!" width="96" height="96" />
+    } @else {
+      <app-icon name="person" iconClass="avatar-icon" />
+    }
+  </div>
+
+  <div class="body">
+    <h3 class="member-name">{{ name() }}</h3>
+    <p class="member-club">{{ club() }}</p>
+
+    <div class="member-meta">
+      @if (role()) {
+        <div class="meta-item">
+          <span class="meta-label">Role</span>
+          <span class="meta-value">{{ role() }}</span>
+        </div>
+      }
+
+      @if (role() && precision()) {
+        <div class="divider" aria-hidden="true"></div>
+      }
+
+      @if (precision()) {
+        <div class="meta-item">
+          <span class="meta-label">Precision</span>
+          <span class="meta-value accent">{{ precision() }}</span>
+        </div>
+      }
+    </div>
+  </div>
+</article>

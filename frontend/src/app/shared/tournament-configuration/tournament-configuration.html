@@ -1,0 +1,25 @@
+<div class="tournament-configuration" [style.--card-radio-basis]="99 / columns() + '%'">
+  <div class="item">
+    <app-tournament-parameters
+      [group]="form.controls.parameters"
+      [readonlyFields]="readonlyFields()"
+      [hiddenFields]="hiddenFields()"
+    />
+  </div>
+
+  <div class="item">
+    <app-tournament-rules
+      [group]="form.controls.rules"
+      [readonlyFields]="readonlyFields()"
+      [hiddenFields]="hiddenFields()"
+    />
+  </div>
+
+  <div class="item">
+    <app-tournament-mode-parameter
+      [group]="form.controls.modeParameter"
+      [readonlyFields]="readonlyFields()"
+      [hiddenFields]="hiddenFields()"
+    />
+  </div>
+</div>

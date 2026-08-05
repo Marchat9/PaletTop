@@ -1,0 +1,16 @@
+<div class="team-actions-menu">
+  <span class="menu-title"
+    >Equipe:
+    <span class="menu-title-team">{{ data.teamName }}</span>
+  </span>
+
+  <button type="button" class="action-row" (click)="select('edit')">
+    <app-icon name="edit" [ariaHidden]="true" />
+    <span>Modifier l'équipe</span>
+  </button>
+
+  <button type="button" class="action-row danger" (click)="select('delete')">
+    <app-icon name="delete" [ariaHidden]="true" />
+    <span>Supprimer l'équipe</span>
+  </button>
+</div>

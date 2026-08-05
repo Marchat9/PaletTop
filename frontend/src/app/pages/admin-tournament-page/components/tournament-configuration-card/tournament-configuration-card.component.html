@@ -1,0 +1,18 @@
+<app-card-collapsible [isExpanded]="false">
+  <div header class="header">
+    <div class="header-title">
+      <app-icon name="tune" iconClass="icon" />
+      <span class="title">Configuration du tournoi</span>
+    </div>
+  </div>
+
+  <div content class="config-content">
+    <app-configuration-form
+      [tournament]="tournament()"
+      [saving]="saveLoading()"
+      [hiddenFields]="hiddenFields()"
+      [readonlyFields]="readonlyFields()"
+      (configurationSaved)="saveConfiguration.emit($event)"
+    />
+  </div>
+</app-card-collapsible>

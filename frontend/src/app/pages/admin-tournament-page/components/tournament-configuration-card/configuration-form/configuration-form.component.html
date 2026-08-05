@@ -1,0 +1,49 @@
+<div class="configuration-form">
+  <div class="intro">
+    <span class="eyebrow">Reglages de competition</span>
+    <span
+      >Ajustez les regles actives du tournoi avant lancement. Les donnees de presentation restent
+      visibles dans l'en-tete du tournoi.</span
+    >
+  </div>
+
+  @if (!!tournament()) {
+    <app-tournament-configuration
+      [tournament]="tournament()"
+      [hiddenFields]="hiddenFields()"
+      [readonlyFields]="readonlyFields()"
+      (form)="onFormReady($event)"
+      (invalidFields)="invalidFieldNames.set($event)"
+    />
+
+    @if (!!invalidFieldNames()) {
+      <div class="validation-error">
+        <p>Les champs suivants sont requis ou invalides :</p>
+        <ul>
+          @for (field of invalidFieldNames(); track field) {
+            <li>{{ field }}</li>
+          }
+        </ul>
+      </div>
+    }
+
+    <div class="actions">
+      <app-button
+        title="Annuler"
+        variant="tertiary"
+        [disabled]="saving() || !!tournamentForm()?.pristine"
+        (clicked)="onCancel()"
+      />
+      <app-button
+        title="Enregistrer"
+        [loading]="saving()"
+        [disabled]="
+          saving() || !tournament() || !!tournamentForm()?.pristine || !!invalidFieldNames()
+        "
+        (clicked)="onSave()"
+      />
+    </div>
+  } @else {
+    <p class="empty-tournament">Aucune configuration de tournoi a afficher.</p>
+  }
+</div>

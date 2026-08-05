@@ -1,0 +1,50 @@
+:host {
+  display: block;
+}
+
+.team-actions-menu {
+  display: flex;
+  flex-direction: column;
+  min-width: 14rem;
+  padding: 0.5rem;
+  border-radius: 0.8rem;
+  background: var(--color-surface-container-high);
+  box-shadow: 0 1rem 2.5rem var(--color-shadow-strong);
+}
+
+.menu-title {
+  padding: 0.5rem 0.75rem 0.35rem;
+  font-family: var(--font-label);
+  font-size: 0.85rem;
+  letter-spacing: 0.1em;
+
+  .menu-title-team {
+    color: var(--color-on-surface-variant);
+    font-size: 0.72rem;
+  }
+}
+
+.action-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border: 0;
+  border-radius: 0.55rem;
+  background: transparent;
+  color: var(--color-on-surface);
+  font: inherit;
+  font-size: 0.95rem;
+  text-align: left;
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible {
+    background: var(--color-hover-surface-soft);
+    outline: none;
+  }
+
+  &.danger {
+    color: var(--color-error);
+  }
+}

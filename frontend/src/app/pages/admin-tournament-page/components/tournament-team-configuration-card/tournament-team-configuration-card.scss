@@ -1,0 +1,52 @@
+.header {
+  display: flex;
+  flex-direction: column;
+
+  .header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-right: 1rem;
+  }
+
+  .header-title {
+    display: flex;
+    flex-direction: row;
+    gap: 0.5rem;
+
+    ::ng-deep .icon {
+      color: var(--color-primary);
+    }
+
+    .title {
+      font-family: var(--font-headline);
+      font-size: 1.8rem;
+      line-height: 1;
+
+      .number {
+        color: var(--color-primary);
+        font-family: var(--font-label);
+      }
+    }
+  }
+
+  .header-description {
+    margin: 0;
+    color: var(--color-on-surface-variant);
+
+    .header-description-text {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+    }
+  }
+}
+
+.config-content {
+  display: flex;
+  flex-direction: column;
+}

@@ -1,0 +1,18 @@
+<section class="members">
+  <div class="header">
+    <h3>Membres de l'équipe</h3>
+    <p>{{ players().length }} joueur(s) inscrit(s).</p>
+  </div>
+
+  <div class="members-list">
+    @for (player of players(); track player.id) {
+      <app-member-card [name]="player.name" [club]="player.club ?? null" role="Équipier" />
+    } @empty {
+      <article class="empty-card">
+        <app-icon name="person_off" iconClass="icon" />
+        <h4>Aucun joueur</h4>
+        <p>L'équipe ne contient pas encore de membres.</p>
+      </article>
+    }
+  </div>
+</section>

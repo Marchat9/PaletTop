@@ -1,0 +1,14 @@
+<div
+  class="score-number"
+  [class.disabled]="disabled()"
+  [class]="colorRed() ? 'color-red' : 'color-blue'"
+>
+  <div class="increment-button button" (click)="onIncrement()">
+    <app-icon name="keyboard_arrow_up" variant="rounded" iconClass="icon" />
+  </div>
+  <div class="decrement-button button grey-opacity" (click)="onDecrement()">
+    <app-icon name="keyboard_arrow_down" variant="rounded" iconClass="icon" />
+  </div>
+
+  <span class="value">{{ value() }}</span>
+</div>

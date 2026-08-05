@@ -1,0 +1,54 @@
+.player-page {
+  min-height: 100dvh;
+
+  &__main {
+    max-width: 72rem;
+    margin: 0 auto;
+    padding: 1.5rem 1.25rem 6rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+
+  .state {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 1rem;
+    border-radius: 0.8rem;
+    background: var(--color-surface-container-low);
+    border: 1px solid var(--color-border-default);
+
+    p {
+      margin: 0;
+      color: var(--color-on-surface-variant);
+    }
+
+    &--loading {
+      ::ng-deep .material-symbols-outlined {
+        color: var(--color-primary);
+      }
+    }
+
+    &--error {
+      border-color: color-mix(in srgb, var(--color-error) 45%, transparent);
+
+      ::ng-deep .material-symbols-outlined,
+      p {
+        color: var(--color-error);
+      }
+    }
+  }
+
+  .current-match {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+
+    h3 {
+      margin: 0;
+      font-family: var(--font-headline);
+      font-size: 1.65rem;
+    }
+  }
+}

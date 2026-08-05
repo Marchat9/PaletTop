@@ -1,0 +1,24 @@
+<div class="team-import-template-dialog">
+  <h2 class="title">Télécharger un modèle Excel</h2>
+  <p class="message">
+    Indiquez le nombre de joueurs par équipe pour générer un modèle avec le bon nombre de colonnes.
+    Vous pourrez ajouter des colonnes supplémentaires à la main dans le fichier si une équipe compte
+    plus de joueurs.
+  </p>
+
+  <div class="field-group">
+    <label for="import-template-max-players">Nombre de joueurs par équipe</label>
+    <app-input-number
+      id="import-template-max-players"
+      [value]="playersCount()"
+      [min]="1"
+      [max]="data.maxPlayers"
+      (valueChange)="updatePlayersCount($event)"
+    />
+  </div>
+
+  <div class="actions">
+    <app-button title="Annuler" variant="secondary" (clicked)="onCancel()" />
+    <app-button title="Télécharger" variant="primary" icon="download" (clicked)="onConfirm()" />
+  </div>
+</div>

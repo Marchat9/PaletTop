@@ -1,0 +1,15 @@
+<div
+  class="input-file-trigger"
+  [class]="variant()"
+  [class.disabled]="disabled()"
+  [attr.aria-disabled]="disabled()"
+  (click)="onTrigger()"
+>
+  <div class="button-content">
+    @if (icon()) {
+      <app-icon [name]="icon()!" iconClass="button-icon" />
+    }
+    <span class="text">{{ title() }}</span>
+  </div>
+</div>
+<input #fileInput type="file" [attr.accept]="accept()" hidden (change)="onChange($event)" />

@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Epilogue:wght@400;700;800&amp;family=Manrope:wght@400;500;700&amp;family=Space+Grotesk:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-secondary": "#253140",
+                        "on-error": "#690005",
+                        "tertiary": "#e6c27d",
+                        "primary": "#e9c349",
+                        "on-tertiary": "#402d00",
+                        "on-primary-fixed": "#241a00",
+                        "on-tertiary-fixed-variant": "#5b4308",
+                        "on-secondary-container": "#adb9cc",
+                        "on-tertiary-fixed": "#261900",
+                        "inverse-surface": "#dde3ee",
+                        "tertiary-fixed-dim": "#e6c27d",
+                        "secondary": "#bbc7da",
+                        "secondary-container": "#3e4a59",
+                        "on-background": "#dde3ee",
+                        "on-primary-container": "#413200",
+                        "tertiary-container": "#b99857",
+                        "surface-bright": "#343a42",
+                        "inverse-primary": "#735c00",
+                        "surface-container-highest": "#2f353e",
+                        "error-container": "#93000a",
+                        "primary-fixed-dim": "#e9c349",
+                        "on-surface": "#dde3ee",
+                        "primary-fixed": "#ffe088",
+                        "tertiary-fixed": "#ffdea3",
+                        "outline": "#9c8f7f",
+                        "on-primary": "#3c2f00",
+                        "inverse-on-surface": "#2b3139",
+                        "secondary-fixed": "#d7e3f7",
+                        "primary-container": "#bb9820",
+                        "on-secondary-fixed-variant": "#3c4857",
+                        "background": "#0e141c",
+                        "on-primary-fixed-variant": "#574500",
+                        "surface": "#0e141c",
+                        "on-error-container": "#ffdad6",
+                        "on-tertiary-container": "#453000",
+                        "surface-variant": "#2f353e",
+                        "secondary-fixed-dim": "#bbc7da",
+                        "outline-variant": "#504538",
+                        "surface-container-lowest": "#090f16",
+                        "surface-container-low": "#161c24",
+                        "surface-dim": "#0e141c",
+                        "on-surface-variant": "#d4c4b3",
+                        "surface-container-high": "#242a33",
+                        "surface-container": "#1a2028",
+                        "surface-tint": "#e9c349",
+                        "on-secondary-fixed": "#101c2a",
+                        "error": "#ffb4ab"
+                    },
+                    fontFamily: {
+                        "headline": ["Epilogue"],
+                        "body": ["Manrope"],
+                        "label": ["Space Grotesk"]
+                    },
+                    borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .brass-gradient {
+            background: linear-gradient(135deg, #e9c349 0%, #bb9820 100%);
+        }
+        .slate-glass {
+            background: rgba(14, 20, 28, 0.85);
+            backdrop-filter: blur(20px);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface font-body selection:bg-primary selection:text-on-primary">
+<!-- Background Content (Blurred) -->
+<div class="fixed inset-0 overflow-hidden flex flex-col blur-md grayscale-[0.2]">
+<!-- TopAppBar -->
+<header class="bg-[#0e141c] flex justify-between items-center w-full px-6 py-4 docked full-width top-0 z-10">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[#e9c349]" style="font-size: 24px;">precision_manufacturing</span>
+<h1 class="font-epilogue tracking-tight headline-lg text-2xl font-bold text-[#e9c349] tracking-tighter">L'Artisan du Palet</h1>
+</div>
+<div class="hidden md:flex gap-6">
+<span class="text-[#e9c349] font-bold">Accueil</span>
+<span class="text-[#dde3ee]">Admin</span>
+<span class="text-[#dde3ee]">Joueur</span>
+<span class="text-[#dde3ee]">Match</span>
+</div>
+</header>
+<!-- Mock Home Content -->
+<main class="flex-1 p-6 space-y-8 overflow-y-auto">
+<section class="mt-8">
+<h2 class="font-headline text-4xl font-extrabold tracking-tight mb-4">Tableau de bord</h2>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="h-48 bg-surface-container rounded-xl border border-outline-variant/10"></div>
+<div class="h-48 bg-surface-container rounded-xl border border-outline-variant/10"></div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full flex justify-around items-center px-4 pb-6 pt-2 bg-[#0e141c] border-t border-[#504538]/15 z-10">
+<div class="flex flex-col items-center justify-center bg-gradient-to-br from-[#e9c349] to-[#bb9820] text-[#3c2f00] rounded-md px-3 py-1.5">
+<span class="material-symbols-outlined">home</span>
+<span class="font-space-grotesk text-[10px] uppercase tracking-widest mt-1">Accueil</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#dde3ee]/60 px-3 py-1.5">
+<span class="material-symbols-outlined">settings_suggest</span>
+<span class="font-space-grotesk text-[10px] uppercase tracking-widest mt-1">Admin</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#dde3ee]/60 px-3 py-1.5">
+<span class="material-symbols-outlined">person</span>
+<span class="font-space-grotesk text-[10px] uppercase tracking-widest mt-1">Joueur</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#dde3ee]/60 px-3 py-1.5">
+<span class="material-symbols-outlined">sports_kabaddi</span>
+<span class="font-space-grotesk text-[10px] uppercase tracking-widest mt-1">Match</span>
+</div>
+</nav>
+</div>
+<!-- Modal Overlay -->
+<div class="fixed inset-0 z-[100] flex items-center justify-center bg-background/40 backdrop-blur-sm px-4">
+<!-- Modal Container -->
+<div class="slate-glass w-full max-w-md border border-primary/20 rounded-xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
+<!-- Modal Header -->
+<div class="flex justify-between items-center px-8 pt-8 pb-4">
+<h2 class="font-headline text-2xl font-bold text-on-surface tracking-tight">Rejoindre un Tournoi</h2>
+<button class="text-on-surface-variant hover:text-primary transition-colors duration-200">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<!-- Modal Content -->
+<div class="px-8 pb-10">
+<p class="text-on-surface-variant body-lg mb-8 leading-relaxed">
+                    Saisissez vos identifiants pour entrer dans l'arène et défier vos adversaires.
+                </p>
+<form class="space-y-6">
+<!-- Tournament Code Input -->
+<div class="space-y-2">
+<label class="font-label text-xs uppercase tracking-[0.2em] text-primary/70 ml-1">Code Tournoi</label>
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-primary/50 group-focus-within:text-primary transition-colors">key</span>
+<input class="w-full bg-surface-container-highest border-b border-outline-variant/30 focus:border-primary focus:ring-0 pl-12 py-4 text-on-surface placeholder:text-on-surface-variant/40 rounded-t-lg transition-all" placeholder="Ex: LAITON-2024" type="text"/>
+</div>
+</div>
+<!-- Player Code Input -->
+<div class="space-y-2">
+<label class="font-label text-xs uppercase tracking-[0.2em] text-primary/70 ml-1">Code Joueur</label>
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-primary/50 group-focus-within:text-primary transition-colors">badge</span>
+<input class="w-full bg-surface-container-highest border-b border-outline-variant/30 focus:border-primary focus:ring-0 pl-12 py-4 text-on-surface placeholder:text-on-surface-variant/40 rounded-t-lg transition-all" maxlength="4" placeholder="0000" type="text"/>
+</div>
+<p class="font-label text-[10px] text-on-surface-variant/50 flex items-center gap-1 mt-1">
+<span class="material-symbols-outlined text-xs">info</span> 
+                            Identifiant numérique à 4 chiffres
+                        </p>
+</div>
+<!-- CTA Buttons -->
+<div class="pt-6 flex flex-col gap-3">
+<button class="brass-gradient text-on-primary font-bold py-4 rounded-lg shadow-lg active:scale-95 transition-all duration-150 flex items-center justify-center gap-2 group" type="submit">
+<span class="material-symbols-outlined text-on-primary">login</span>
+                            Rejoindre
+                        </button>
+<button class="text-primary font-label text-sm uppercase tracking-widest py-3 border border-primary/20 hover:bg-primary/5 transition-all rounded-lg" type="button">
+                            Annuler
+                        </button>
+</div>
+</form>
+</div>
+<!-- Footer Accent -->
+<div class="h-1 w-full bg-gradient-to-r from-transparent via-primary/30 to-transparent"></div>
+</div>
+</div>
+<!-- Decorative Image Background Overlay (Subtle Pattern) -->
+<div class="fixed inset-0 pointer-events-none opacity-5 mix-blend-overlay">
+<img class="w-full h-full object-cover" data-alt="abstract close-up of dark slate stone texture with subtle natural grain and metallic reflections" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDVfTmTDOr-GXS9c03IYWP8QCys4xiyHYNPtVIjJ_cJjyZHXFNjuwmHblWhIAYZnJKeBreNVNGG1Ihv2D0LyYgyQgmZqHsO6dKJ-_EzBSFXEmZHUCEz2jVKqODxcVQFcKPdf6_56V5v3xUCq4ViUdSR5k85V_2Bs82Lht2lZXV8HJMQPMcrRx2nHpqc1jhgwCGZz0i1eoAXZ3GYKYtwP0GciSUckDDTqt7D_MaNzvjh-FvgqkXEtd23ja3fob1dS8GWUZHojoVm59I"/>
+</div>
+</body></html>

@@ -1,0 +1,42 @@
+@if (match()) {
+  <app-player-match-card-inner
+    [match]="match()!"
+    [teamId]="teamId()"
+    [teamCode]="teamCode()"
+    [pointsPerGame]="pointsPerGame()"
+    [startMatchError]="startMatchError()"
+    [validateMatchError]="validateMatchError()"
+    [updateScoreError]="updateScoreError()"
+    [startMatchLoading]="startMatchLoading()"
+    [validateMatchLoading]="validateMatchLoading()"
+    (startMatch)="startMatch.emit($event)"
+    (updateScore)="updateScore.emit($event)"
+    (validateMatch)="validateMatch.emit($event)"
+  />
+} @else {
+  @switch (teamMatchStatus()) {
+    @case ('NOT_STARTED') {
+      <div class="match-card-empty">
+        <app-icon name="timer" />
+        <p>Le tournoi n'a pas encore commencé, préparez-vous</p>
+      </div>
+    }
+    @case ('FINISH') {
+      <div class="match-card-empty">
+        <app-icon name="sports_score" />
+        <p>
+          Fin du tournoi, merci d'avoir participé.
+          @if (rank() !== '') {
+            Vous avez fini <b>{{ rank() }}</b> <sup>ème</sup>
+          }
+        </p>
+      </div>
+    }
+    @default {
+      <div class="match-card-empty">
+        <app-icon name="sports_score" />
+        <p>Pas de match en cours</p>
+      </div>
+    }
+  }
+}

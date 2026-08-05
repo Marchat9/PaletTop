@@ -1,0 +1,10 @@
+<section class="results">
+  <h3>Derniers Matchs</h3>
+  <div class="list">
+    @for (result of results(); track result.id) {
+      <app-team-last-matches [currentTeamName]="teamName()" [result]="result" />
+    } @empty {
+      <p class="empty">Aucun match pour le moment.</p>
+    }
+  </div>
+</section>

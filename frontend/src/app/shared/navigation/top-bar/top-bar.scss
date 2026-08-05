@@ -1,0 +1,88 @@
+.hdr {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  background: var(--color-surface);
+  border-bottom: 1px solid rgb(80 69 56 / 30%);
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 0;
+    cursor: pointer;
+
+    .logo {
+      margin: -10px 5px -10px 0;
+    }
+  }
+
+  .title {
+    margin: 0;
+    font-family: var(--font-headline);
+    color: var(--color-primary);
+    font-size: 1.2rem;
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  .nav {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+  }
+
+  .actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .link {
+    text-decoration: none;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    font-size: 0.7rem;
+    color: var(--color-on-surface);
+    opacity: 0.75;
+
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+
+    &--active {
+      color: var(--color-primary);
+      opacity: 1;
+    }
+  }
+
+  .notif {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border: 0;
+    border-radius: 999px;
+    background: var(--color-surface-container-high);
+    color: var(--color-on-surface);
+  }
+
+  .theme {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border: 0;
+    border-radius: 999px;
+    background: var(--color-surface-container-high);
+    color: var(--color-on-surface);
+    cursor: pointer;
+  }
+}

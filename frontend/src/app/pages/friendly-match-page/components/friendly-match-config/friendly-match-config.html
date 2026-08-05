@@ -1,0 +1,41 @@
+<app-card>
+  <div class="friendly-match-config">
+    <div class="line">
+      <div class="team-field">
+        <label class="field-label">Nom de l'équipe rouge</label>
+        <app-input-text
+          placeholder="Nom de l'équipe"
+          [value]="team1Name()"
+          (valueChange)="team1NameChange.emit($event)"
+        />
+      </div>
+      <div class="team-field">
+        <label class="field-label">Nom de l'équipe Bleu</label>
+        <app-input-text
+          placeholder="Nom de l'équipe"
+          [value]="team2Name()"
+          (valueChange)="team2NameChange.emit($event)"
+        />
+      </div>
+    </div>
+
+    <div class="line">
+      <div class="target-score">
+        <label class="field-label">Points à atteindre</label>
+        <app-input-number
+          [value]="targetScore()"
+          [min]="1"
+          [max]="100"
+          (valueChange)="targetScoreChange.emit($event)"
+        />
+      </div>
+
+      <app-button
+        title="Match suivant"
+        icon="sports_score"
+        (clicked)="nextMatch.emit()"
+        [disabled]="!isMatchFinished()"
+      />
+    </div>
+  </div>
+</app-card>

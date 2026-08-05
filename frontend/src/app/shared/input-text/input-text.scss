@@ -1,0 +1,43 @@
+.input-text-wrapper {
+  position: relative;
+}
+
+::ng-deep .input-icon {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-on-surface-variant);
+  font-size: 1.1rem;
+  pointer-events: none;
+}
+
+.input-text {
+  width: 100%;
+  min-height: 2.75rem;
+  padding: 0.625rem 0.75rem;
+  border: 1px solid var(--color-outline-variant);
+  border-radius: 0.5rem;
+  background: var(--color-surface-container);
+  color: var(--color-on-surface);
+
+  &.with-icon {
+    padding-left: 2.5rem;
+  }
+
+  &::placeholder {
+    color: var(--color-on-surface-variant);
+    opacity: 0.75;
+  }
+
+  &:focus {
+    outline: 2px solid color-mix(in srgb, var(--color-primary) 60%, transparent);
+    outline-offset: 1px;
+    border-color: var(--color-primary);
+  }
+
+  &:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+}

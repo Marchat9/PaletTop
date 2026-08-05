@@ -1,0 +1,70 @@
+.card-radio-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.card-radio-button {
+  flex: 1 1 calc(var(--card-radio-basis, 50%) - 0.5rem);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+  border: 1px solid var(--color-outline-variant);
+  border-radius: 0.5rem;
+  background: var(--color-surface-container-highest);
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s ease;
+
+  .card-radio-content {
+    padding: 0 1rem;
+    .card-radio-name {
+      margin: 0;
+      font-weight: 600;
+      color: var(--color-primary);
+    }
+
+    .card-radio-description {
+      margin: 0.25rem 0 0;
+      font-size: 0.8rem;
+      color: var(--color-on-surface-variant);
+    }
+  }
+
+  ::ng-deep .icon {
+    color: var(--color-primary);
+    font-size: 1.5rem;
+    flex-shrink: 0;
+  }
+
+  &.selected {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+
+    ::ng-deep .icon {
+      color: var(--color-on-primary);
+    }
+
+    .card-radio-content .card-radio-name {
+      color: var(--color-on-primary);
+    }
+
+    .card-radio-content .card-radio-description {
+      color: color-mix(in srgb, var(--color-on-primary) 75%, transparent);
+    }
+  }
+
+  &:not(.selected) {
+    opacity: 0.8;
+
+    &:hover {
+      opacity: 1;
+    }
+  }
+
+  &:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--color-primary) 60%, transparent);
+    outline-offset: 2px;
+  }
+}

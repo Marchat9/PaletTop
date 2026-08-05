@@ -1,0 +1,27 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "NestJS",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "start:debug"],
+      "cwd": "${workspaceFolder}/backend",
+      "console": "integratedTerminal",
+      "sourceMaps": true,
+      "restart": true
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "NestJS DevDB",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "start:debug:devDb"],
+      "cwd": "${workspaceFolder}/backend",
+      "console": "integratedTerminal",
+      "sourceMaps": true,
+      "restart": true
+    }
+  ]
+}

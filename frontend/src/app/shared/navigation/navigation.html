@@ -1,0 +1,18 @@
+<div class="nav-shell">
+  <app-top-bar
+    [title]="appName"
+    [links]="navItems"
+    [activeRoute]="currentRouteSplited()"
+    [showLinks]="!isMobile()"
+    [theme]="theme()"
+    [notificationBadge]="notificationBadge()"
+    (changeTheme)="changeTheme.emit($event)"
+    (notificationClick)="onNotificationClick()"
+  />
+
+  <main class="nav-main" [class.nav-main--mobile]="isMobile()">
+    <router-outlet />
+  </main>
+
+  <app-bottom-nav [items]="navItems" [activeRoute]="currentRouteSplited()" [visible]="isMobile()" />
+</div>

@@ -1,0 +1,42 @@
+<app-card-collapsible [isExpanded]="isExpanded()">
+  <div header class="header">
+    <div class="header-top">
+      <div class="header-title">
+        <app-icon name="groups" iconClass="icon" />
+        <span class="title">
+          Configuration des équipes - (
+          <span class="number"
+            >{{ tournament()?.teams?.length ?? 0 }}/{{
+              tournament()?.configuration?.maxTeamCapacity ?? '?'
+            }}</span
+          >
+          )
+        </span>
+      </div>
+
+      <app-button
+        title="Imprimer la liste des équipes"
+        icon="print"
+        variant="secondary"
+        [disabled]="!hasTeams()"
+        [stopPropagation]="true"
+        (clicked)="printTeamList()"
+      />
+    </div>
+
+    <div class="header-description">
+      <span class="header-description-text"> Gestion des équipes, des joueurs et des clubs. </span>
+    </div>
+  </div>
+
+  <div content class="config-content">
+    <app-team-config
+      [tournament]="tournament()"
+      (teamUpdated)="onTeamUpdate.emit($event)"
+    ></app-team-config>
+  </div>
+</app-card-collapsible>
+
+@if (isPrinting()) {
+  <app-team-print-sheet class="print-sheet" [tournament]="tournament()" />
+}

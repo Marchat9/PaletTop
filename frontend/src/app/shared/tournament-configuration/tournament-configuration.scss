@@ -1,0 +1,9 @@
+.tournament-configuration {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+
+  .item {
+    flex: 1 1 calc(var(--card-radio-basis, 50%) - 0.5rem);
+  }
+}

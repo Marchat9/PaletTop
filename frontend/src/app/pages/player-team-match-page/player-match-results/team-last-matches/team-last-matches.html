@@ -1,0 +1,26 @@
+<article class="match" [class]="outcomeClass()" [class.ongoing]="isOngoing()">
+  <div class="header">
+    <span class="match-number">Match {{ result().sessionNumber }}</span>
+    <span class="match-status" [class.ongoing]="isOngoing()">
+      {{ statusLabel() }}
+    </span>
+  </div>
+
+  <div class="scoreline">
+    <span class="team current">{{ currentTeamName() }} <small>(vous)</small></span>
+    @if (isFinished()) {
+      <span class="score current bold">{{ result().currentTeamScore }}</span>
+      <span class="separator">-</span>
+      <span class="score bold">{{ result().opponentScore }}</span>
+    } @else {
+      <span class="score placeholder">—</span>
+      <span class="separator"> </span>
+      <span class="score placeholder">—</span>
+    }
+    <span class="team">{{ result().opponentTeamName }}</span>
+  </div>
+
+  @if (isFinished()) {
+    <p class="outcome">{{ outcomeLabel() }}</p>
+  }
+</article>

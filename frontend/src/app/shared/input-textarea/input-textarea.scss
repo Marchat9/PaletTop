@@ -1,0 +1,28 @@
+.input-textarea {
+  width: 100%;
+  min-height: 2.75rem;
+  padding: 0.625rem 0.75rem;
+  border: 1px solid var(--color-outline-variant);
+  border-radius: 0.5rem;
+  background: var(--color-surface-container);
+  color: var(--color-on-surface);
+  font-family: inherit;
+  font-size: 0.975rem;
+  resize: vertical;
+
+  &::placeholder {
+    color: var(--color-on-surface-variant);
+    opacity: 0.75;
+  }
+
+  &:focus {
+    outline: 2px solid color-mix(in srgb, var(--color-primary) 60%, transparent);
+    outline-offset: 1px;
+    border-color: var(--color-primary);
+  }
+
+  &:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+}

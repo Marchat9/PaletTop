@@ -1,0 +1,47 @@
+:host {
+  display: flex;
+  flex: 1 1 auto;
+}
+
+.tournament-join {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 1.5rem;
+  justify-content: space-between;
+
+  .header {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+
+    .title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+
+      h3 {
+        margin: 0;
+        font-family: var(--font-headline);
+        font-size: 1.8rem;
+        line-height: 1;
+      }
+
+      ::ng-deep .icon {
+        color: var(--color-primary);
+      }
+    }
+
+    .description {
+      span {
+        margin: 0;
+        color: var(--color-on-surface-variant);
+      }
+    }
+  }
+
+  .action {
+    margin: 0 auto;
+    width: clamp(14rem, 33vw, 24rem);
+  }
+}

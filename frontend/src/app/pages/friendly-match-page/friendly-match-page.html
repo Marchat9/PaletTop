@@ -1,0 +1,26 @@
+<div class="friendly-match">
+  <app-friendly-match-config
+    [team1Name]="team1Name()"
+    [team2Name]="team2Name()"
+    [targetScore]="targetScore()"
+    [isMatchFinished]="isMatchFinished()"
+    (team1NameChange)="onTeam1NameChange($event)"
+    (team2NameChange)="onTeam2NameChange($event)"
+    (targetScoreChange)="onTargetScoreChange($event)"
+    (nextMatch)="onNextMatch()"
+  />
+
+  <app-friendly-match-score
+    [team1Name]="team1Name()"
+    [team2Name]="team2Name()"
+    [team1Score]="team1Score()"
+    [team2Score]="team2Score()"
+    [targetScore]="targetScore()"
+    [isMatchFinished]="isMatchFinished()"
+    [winner]="winner()"
+    (team1ScoreChange)="onTeam1ScoreChange($event)"
+    (team2ScoreChange)="onTeam2ScoreChange($event)"
+  />
+
+  <app-friendly-match-history [matchHistory]="matchHistory()" (deleteHistory)="onDeleteHistory()" />
+</div>

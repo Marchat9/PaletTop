@@ -1,0 +1,52 @@
+:host {
+  display: block;
+}
+
+.confirmation-popup {
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  width: min(100vw - 2rem, 26rem);
+  border-radius: 0.8rem;
+  background: var(--color-surface-container-high);
+  box-shadow: 0 1rem 2.5rem var(--color-shadow-strong);
+}
+
+.header-row {
+  display: flex;
+  align-items: center;
+}
+
+.title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--color-on-surface);
+
+  ::ng-deep .icon {
+    color: var(--color-warning, var(--color-primary));
+    flex-shrink: 0;
+  }
+}
+
+.message {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--color-on-surface-variant);
+}
+
+.actions {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+
+  app-button {
+    flex: 1;
+    min-width: 8rem;
+  }
+}

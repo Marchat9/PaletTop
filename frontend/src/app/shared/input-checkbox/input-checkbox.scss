@@ -1,0 +1,33 @@
+.checkbox-option {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  font-size: 0.95rem;
+
+  &.has-description {
+    align-items: flex-start;
+  }
+
+  input[type='checkbox'] {
+    cursor: pointer;
+    accent-color: var(--color-primary);
+    margin-top: 0.2rem;
+    flex-shrink: 0;
+  }
+}
+
+.checkbox-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.checkbox-label {
+  color: var(--color-on-surface);
+}
+
+.checkbox-description {
+  font-size: 0.8rem;
+  color: var(--color-on-surface-variant);
+}

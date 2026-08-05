@@ -1,0 +1,9 @@
+<textarea
+  [id]="id() || null"
+  class="input-textarea"
+  [placeholder]="placeholder()"
+  [value]="internalValue()"
+  [rows]="rows()"
+  [disabled]="disabled()"
+  (input)="onInput($any($event.target).value)"
+></textarea>

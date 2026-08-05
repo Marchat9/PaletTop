@@ -1,0 +1,15 @@
+# Excel input
+_xlsm_extract
+*.xlsm
+
+# AI
+.claude
+.workflow
+PLANNING.md
+*.ps1
+skills-lock.json
+.superpowers
+**/superpowers
+
+# MCP
+mcp.json

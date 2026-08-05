@@ -1,0 +1,52 @@
+<section class="player-page">
+  <main class="player-page__main">
+    @if (isLoading()) {
+      <section class="state state--loading">
+        <app-icon name="progress_activity" />
+        <p>Chargement des informations d'équipe...</p>
+      </section>
+    } @else if (error()) {
+      <section class="state state--error">
+        <app-icon name="error" />
+        <p>{{ error() }}</p>
+      </section>
+    } @else if (!team()) {
+      <section class="state state--empty">
+        <app-icon name="groups" />
+        <p>Aucune équipe trouvée dans ce tournoi.</p>
+      </section>
+    } @else {
+      <app-player-team-header
+        [team]="team()!"
+        [tournamentCode]="tournamentCode()"
+        [wins]="wins()"
+        [rank]="rank()"
+        (openRank)="openRankModale()"
+      />
+
+      <section class="current-match">
+        <h3>Match en cours</h3>
+        <app-player-match-card
+          [match]="currentMatch()"
+          [teamMatchStatus]="teamMatchStatus()"
+          [teamId]="team()!.id"
+          [teamCode]="team()!.code"
+          [pointsPerGame]="pointsPerGame()"
+          [startMatchError]="startMatchError()"
+          [validateMatchError]="validateMatchError()"
+          [updateScoreError]="updateScoreError()"
+          [startMatchLoading]="startMatchLoading()"
+          [validateMatchLoading]="validateMatchLoading()"
+          [rank]="rank()"
+          (startMatch)="startMatch($event)"
+          (updateScore)="updateScore($event)"
+          (validateMatch)="validateMatch($event)"
+        />
+      </section>
+
+      <app-player-team-members [players]="team()!.players" />
+
+      <app-player-match-results [results]="recentResults()" [teamName]="team()!.name" />
+    }
+  </main>
+</section>

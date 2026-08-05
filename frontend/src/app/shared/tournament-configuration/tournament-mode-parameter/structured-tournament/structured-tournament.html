@@ -1,0 +1,83 @@
+<div class="card-content">
+  <div class="form-group">
+    <div class="form-multi-input">
+      <label class="form-label">Tableaux éliminatoires</label>
+      <app-input-checkbox
+        label="Tableau Principal"
+        description="Toujours actif, ne peux être désactivé."
+        [checked]="true"
+        [disabled]="true"
+      ></app-input-checkbox>
+      <app-input-checkbox
+        label="Consolante"
+        description="Pour les perdants du 1er tour du tableau Principal"
+        [formControl]="group().controls.hasConsolanteTable"
+      ></app-input-checkbox>
+
+      <div class="form-multi-input">
+        <span class="form-label">Tableaux de repêchage</span>
+        <app-input-checkbox
+          label="Challenge principale"
+          description="Pour les perdants du 2eme tour du tableau Principal"
+          [formControl]="group().controls.hasChallengePrincipaleTable"
+        ></app-input-checkbox>
+        <app-input-checkbox
+          label="Challenge Consolante"
+          description="Pour les perdants du 1er tour du la Consolante"
+          [formControl]="group().controls.hasChallengeConsolanteTable"
+        ></app-input-checkbox>
+      </div>
+
+      <!-- Match pour la 3ème place -->
+      <app-input-checkbox
+        label="Match pour la 3ème place"
+        description="Génère un match entre les deux perdants des demi-finales du Tableau Principal afin d'affiner la 3eme place. Le match sera sur le même round que la final."
+        [formControl]="group().controls.hasThirdPlaceMatch"
+      ></app-input-checkbox>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label class="form-label">Taille du Tableau Principal</label>
+    <p class="form-label-description">
+      Nombre d'équipes dans le Tableau Principal (puissance de 2) — automatique si non défini
+    </p>
+    @if (principalBracketSizeOptions) {
+      <app-input-select
+        [value]="group().controls.principalBracketSize.value?.toString() ?? ''"
+        [options]="principalBracketSizeOptions"
+        (valueChange)="
+          group().controls.principalBracketSize.setValue(+$event);
+          group().controls.principalBracketSize.markAsDirty()
+        "
+      />
+    }
+  </div>
+  <div class="form-group">
+    <label class="form-label">Nombre de parties qualificatives</label>
+    <p class="form-label-description">
+      Nombre de manches jouées par chaque équipe en phase de poules
+    </p>
+    <app-input-number
+      [formControl]="group().controls.numberOfQualifyingRounds"
+      [min]="numberOfQualifyingRoundsConfig.min"
+      [max]="numberOfQualifyingRoundsConfig.max"
+      [step]="1"
+    ></app-input-number>
+  </div>
+  <div class="form-group">
+    <label class="form-label">Nombre de poules</label>
+    <p class="form-label-description">
+      Les équipes seront réparties dans X groupes qui s'affrontent chacun en round-robin
+    </p>
+    <app-input-number
+      [formControl]="group().controls.numberOfPools"
+      [zeroAsUndefined]="true"
+      placeholder="Automatique"
+      [placeholderAsValue]="true"
+      [min]="numberOfPoolsConfig.min"
+      [max]="numberOfPoolsConfig.max"
+      [step]="1"
+    ></app-input-number>
+  </div>
+</div>

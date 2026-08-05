@@ -1,0 +1,37 @@
+<header class="hdr">
+  <div class="brand" routerLink="/">
+    <img class="logo" ngSrc="assets/images/palet_logo.png" width="50" height="50" />
+
+    <h1 class="title">{{ title() }}</h1>
+  </div>
+
+  @if (showLinks()) {
+    <nav class="nav" aria-label="Navigation principale">
+      @for (link of links(); track link.route) {
+        <a
+          class="link"
+          [class.link--active]="link.route === activeRoute()"
+          [routerLink]="link.route"
+        >
+          <app-icon [name]="link.icon!" />
+          <span>{{ link.label }}</span>
+        </a>
+      }
+    </nav>
+  }
+
+  <div class="actions">
+    <app-button-icon
+      class="notif"
+      icon="notifications"
+      [badge]="notificationBadge()"
+      (clicked)="notificationClick.emit()"
+    />
+
+    <app-button-icon
+      class="theme"
+      [icon]="theme() === 'dark' ? 'light_mode' : 'dark_mode'"
+      (clicked)="toggleTheme()"
+    />
+  </div>
+</header>

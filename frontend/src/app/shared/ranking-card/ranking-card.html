@@ -1,0 +1,81 @@
+<app-card-collapsible>
+  <div header class="header">
+    <div class="header-title">
+      <app-icon name="leaderboard" iconClass="icon" />
+      <h2 class="title">Classement</h2>
+    </div>
+  </div>
+
+  <div content class="card-content">
+    @if (isLoading()) {
+      <p class="empty-hint">Chargement du classement...</p>
+    } @else if (!hasData()) {
+      <p class="empty-hint">Aucune session démarrée.</p>
+    } @else {
+      <table class="ranking-table">
+        <thead>
+          @switch (scoreCalculation()) {
+            @case ('score') {
+              <tr>
+                <th class="col-rank">Rang</th>
+                <th class="col-team">Équipe</th>
+                <th class="col-stat">Score</th>
+              </tr>
+            }
+            @case ('tournament_score') {
+              <tr>
+                <th class="col-rank">Rang</th>
+                <th class="col-team">Équipe</th>
+                <th class="col-stat">Pts Tournoi</th>
+              </tr>
+            }
+            @default {
+              <tr>
+                <th class="col-rank">Rang</th>
+                <th class="col-team">Équipe</th>
+                <th class="col-stat">V</th>
+                <th class="col-stat">Pts+</th>
+                <th class="col-stat">GA</th>
+              </tr>
+            }
+          }
+        </thead>
+        <tbody>
+          @for (entry of ranking(); track entry.teamId) {
+            @switch (scoreCalculation()) {
+              @case ('score') {
+                <tr [class.row--top]="entry.rank === 1">
+                  <td class="col-rank">{{ entry.rank }}</td>
+                  <td class="col-team">{{ entry.teamName }}</td>
+                  <td class="col-stat">{{ entry.pointsFor }}</td>
+                </tr>
+              }
+              @case ('tournament_score') {
+                <tr [class.row--top]="entry.rank === 1">
+                  <td class="col-rank">{{ entry.rank }}</td>
+                  <td class="col-team">{{ entry.teamName }}</td>
+                  <td class="col-stat">{{ entry.tournamentPoints }}</td>
+                </tr>
+              }
+              @default {
+                <tr [class.row--top]="entry.rank === 1">
+                  <td class="col-rank">{{ entry.rank }}</td>
+                  <td class="col-team">{{ entry.teamName }}</td>
+                  <td class="col-stat">{{ entry.wins }}</td>
+                  <td class="col-stat">{{ entry.pointsFor }}</td>
+                  <td
+                    class="col-stat"
+                    [class.ga--positive]="entry.goalAverage > 0"
+                    [class.ga--negative]="entry.goalAverage < 0"
+                  >
+                    {{ entry.goalAverage > 0 ? '+' : '' }}{{ entry.goalAverage }}
+                  </td>
+                </tr>
+              }
+            }
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+</app-card-collapsible>

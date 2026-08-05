@@ -1,0 +1,21 @@
+<div
+  class="button"
+  [class]="variant()"
+  [class.large]="large()"
+  [class.disabled]="disabled() || loading()"
+  [class.loading]="loading()"
+  [attr.aria-disabled]="disabled() || loading()"
+  (click)="onClick($event)"
+>
+  <div class="button-content">
+    @if (icon()) {
+      <app-icon [name]="icon()!" iconClass="button-icon" />
+    }
+    @if (title()) {
+      <span class="text">{{ title() }}</span>
+    }
+  </div>
+  @if (loading()) {
+    <span class="loader"></span>
+  }
+</div>

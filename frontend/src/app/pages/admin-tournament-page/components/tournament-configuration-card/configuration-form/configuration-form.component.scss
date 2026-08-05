@@ -1,0 +1,66 @@
+.configuration-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+
+  .intro {
+    display: flex;
+    flex-direction: column;
+
+    span {
+      color: var(--color-on-surface-variant);
+    }
+
+    .eyebrow {
+      color: var(--color-primary);
+      font-family: var(--font-label);
+      font-size: 0.72rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+  }
+
+  .actions {
+    display: flex;
+    gap: 1rem;
+    width: 100%;
+    justify-content: flex-end;
+
+    app-button {
+      flex: 1;
+      max-width: 19rem;
+
+      @media (max-width: 1200px) {
+        max-width: 100%;
+      }
+    }
+  }
+
+  .validation-error {
+    border: 1px solid var(--color-error);
+    border-radius: 0.5rem;
+    padding: 0.75rem 1rem;
+    color: var(--color-error);
+    font-size: 0.82rem;
+
+    p {
+      margin: 0 0 0.4rem;
+      font-weight: 600;
+    }
+
+    ul {
+      margin: 0;
+      padding-left: 1.2rem;
+    }
+
+    li {
+      margin: 0.1rem 0;
+    }
+  }
+
+  .empty-tournament {
+    margin: 0;
+    color: var(--color-error);
+    font-size: 0.82rem;
+  }
+}

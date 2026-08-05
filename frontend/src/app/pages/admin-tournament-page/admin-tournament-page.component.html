@@ -1,0 +1,42 @@
+<div class="admin-tournament-page">
+  <!-- Main Content -->
+  <div class="page-content">
+    <app-tournament-header
+      [tournament]="tournament()"
+      [completeLoading]="completeLoading()"
+      (completeTournament)="completeTournament()"
+      (disconnect)="disconnect()"
+    />
+
+    <app-match-sessions-card
+      [tournament]="tournament() ?? null"
+      [sessions]="sessions()"
+      [startLoading]="startLoading()"
+      [nextLoading]="nextLoading()"
+      [scoreUpdateLoading]="scoreUpdateLoading()"
+      (startTournament)="startTournament()"
+      (scoreUpdate)="adminScoreUpdate($event)"
+      (nextSession)="nextSession()"
+    />
+
+    <app-ranking-card
+      [ranking]="ranking()"
+      [isLoading]="rankingLoading()"
+      [scoreCalculation]="tournament()?.configuration?.scoreCalculation"
+    />
+
+    <app-tournament-configuration-card
+      [tournament]="tournament() ?? null"
+      [hiddenFields]="hiddenFields"
+      [readonlyFields]="readonlyFields"
+      [saveLoading]="isUpdateConfigLoading()"
+      (saveConfiguration)="updateTournamentConfiguration($event)"
+    />
+
+    <app-tournament-team-configuration-card
+      [tournament]="tournament()"
+      (onTeamUpdate)="updateTournamentTeam($event)"
+      (notification)="onNotification($event)"
+    />
+  </div>
+</div>

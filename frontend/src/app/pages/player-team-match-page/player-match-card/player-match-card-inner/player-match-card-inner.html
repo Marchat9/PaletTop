@@ -1,0 +1,145 @@
+<div
+  class="match-card"
+  [class.match-card--bye]="isBye()"
+  [class.match-card--validated]="!isBye() && isValidated()"
+>
+  @if (isBye()) {
+    <div class="bye-header">
+      <app-icon name="emoji_events" />
+      <div class="bye-header__text">
+        <span class="bye-title">Exempté</span>
+        <span class="bye-session">Round {{ match().session.sessionNumber }}</span>
+      </div>
+    </div>
+    <p class="bye-message">Votre équipe est exemptée pour ce round.</p>
+    @if (isValidated()) {
+      <div class="bye-result">
+        <app-icon name="verified" />
+        <span>Victoire accordée · +{{ match().scoreA }} pts</span>
+      </div>
+    } @else {
+      <p class="bye-pending">En attente de confirmation</p>
+    }
+  } @else {
+    <div class="match-card__teams">
+      <div class="team-block team-block--my">
+        <span class="team-block__name">{{
+          isTeamA() ? match().teamA.name : (match().teamB?.name ?? '—')
+        }}</span>
+        <span class="team-block__you">vous</span>
+      </div>
+      <div class="match-card__vs">
+        <span class="vs-label">VS</span>
+        <div class="match-card__meta">
+          <span class="plate-label">Plaque N°{{ match().plateNumber ?? '—' }}</span>
+          <span class="status-badge" [class]="'status-badge--' + match().status.toLowerCase()">
+            @switch (match().status) {
+              @case ('PENDING') {
+                En attente
+              }
+              @case ('ONGOING') {
+                En cours
+              }
+              @case ('ENDED') {
+                Terminé
+              }
+              @case ('VALIDATED') {
+                Validé
+              }
+            }
+          </span>
+          <app-match-timer
+            [startedAt]="match().startedAt"
+            [finishedAt]="match().finishedAt"
+            [status]="match().status"
+          />
+        </div>
+      </div>
+      <div class="team-block team-block--opponent">
+        <span class="team-block__name">{{ opponentName() }}</span>
+        <span class="team-block__you">adversaire</span>
+      </div>
+    </div>
+
+    @if (!isPending()) {
+      <div class="match-card__scoreboard">
+        <div class="score-block">
+          <app-score-number
+            id="my-score"
+            [value]="localMyScore()"
+            [colorRed]="isTeamA()"
+            [min]="0"
+            [max]="pointsPerGame()"
+            [disabled]="isValidated()"
+            (valueChange)="onMyScoreChange($event)"
+          />
+        </div>
+        <span class="score-sep">—</span>
+        <div class="score-block">
+          <app-score-number
+            id="opponent-score"
+            [value]="localOpponentScore()"
+            [colorRed]="!isTeamA()"
+            [min]="0"
+            [max]="pointsPerGame()"
+            [disabled]="isValidated()"
+            (valueChange)="onOpponentScoreChange($event)"
+          />
+        </div>
+      </div>
+
+      @if (updateScoreError()) {
+        <p class="error-hint">{{ updateScoreError() }}</p>
+      }
+    }
+
+    @if (isPending()) {
+      <div class="match-card__action">
+        <app-button
+          title="Démarrer le match"
+          icon="play_arrow"
+          [loading]="startMatchLoading()"
+          (clicked)="onStartMatch(match(), teamCode())"
+        />
+        @if (startMatchError()) {
+          <p class="error-hint">{{ startMatchError() }}</p>
+        }
+      </div>
+    }
+
+    @if (isEnded()) {
+      <div class="match-card__validate">
+        <p class="validate-hint">
+          <app-icon name="info" />
+          Pour valider le score, demandez le code équipe de votre adversaire.
+        </p>
+        <div class="validate-form">
+          <app-input-text
+            id="opponent-code"
+            placeholder="Code équipe adverse"
+            [value]="opponentCode()"
+            [uppercase]="true"
+            (valueChange)="opponentCode.set($event)"
+          />
+          <app-button
+            title="Valider le score"
+            icon="check_circle"
+            [loading]="validateMatchLoading()"
+            [disabled]="opponentCode().length < 4"
+            (clicked)="onValidateMatch(match(), teamCode(), opponentCode())"
+          />
+        </div>
+        @if (validateMatchError()) {
+          <p class="error-hint">{{ validateMatchError() }}</p>
+        }
+      </div>
+    }
+
+    @if (isValidated()) {
+      <div class="match-card__validated">
+        <app-icon name="verified" />
+        <span>Score validé</span>
+      </div>
+    }
+  }
+</div>

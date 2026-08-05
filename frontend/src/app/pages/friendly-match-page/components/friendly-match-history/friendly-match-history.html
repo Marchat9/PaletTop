@@ -1,0 +1,38 @@
+@if (matchHistory().length > 0) {
+  <app-card>
+    <div class="friendly-match-history">
+      <div class="header">
+        <h3 class="history-title">Matchs terminés</h3>
+        <app-button
+          title="Supprimer l'historique"
+          icon="delete"
+          variant="error"
+          (clicked)="deleteHistory.emit()"
+        />
+      </div>
+      <div class="history-list">
+        @for (match of matchHistory(); track $index; let index = $index) {
+          <div
+            class="history-item"
+            [class.winner-left]="match.team1Score > match.team2Score"
+            [class.winner-right]="match.team2Score > match.team1Score"
+          >
+            <div class="match-number">
+              <span class="number">{{ index }}</span>
+            </div>
+
+            <div class="match-info">
+              <span class="team-name left" [class.winner]="match.team1Score > match.team2Score">
+                {{ match.team1Name || 'Équipe 1' }}
+              </span>
+              <span class="score">{{ match.team1Score }} - {{ match.team2Score }}</span>
+              <span class="team-name right" [class.winner]="match.team2Score > match.team1Score">
+                {{ match.team2Name || 'Équipe 2' }}
+              </span>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  </app-card>
+}

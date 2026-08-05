@@ -1,0 +1,39 @@
+.home-page {
+  min-height: 100dvh;
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 1.5rem 1.25rem 6.2rem;
+
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+
+  .header {
+    flex: 1 1 auto;
+  }
+  .tournament {
+    flex: 1 1 auto;
+  }
+  .friendly-match {
+    flex: 1 1 auto;
+  }
+
+  .mts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.9rem;
+
+    app-metric-tile {
+      flex: 1 1 8.4rem;
+    }
+  }
+}
+
+@media (width < 900px) {
+  .deck {
+    .card-wide {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
+}

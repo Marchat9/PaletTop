@@ -1,0 +1,25 @@
+.results {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem;
+  border-radius: 0.95rem;
+  background: var(--color-surface-container-lowest);
+
+  h3 {
+    margin: 0;
+    font-family: var(--font-headline);
+  }
+
+  .empty {
+    margin: 0;
+    color: var(--color-on-surface-variant);
+    font-size: 0.82rem;
+  }
+
+  .list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+}

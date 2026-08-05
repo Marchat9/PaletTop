@@ -1,0 +1,60 @@
+.friendly-match-score {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+
+  .teams {
+    display: flex;
+    justify-content: space-around;
+
+    .name {
+      font-size: 1.25rem;
+      font-weight: 700;
+      text-align: center;
+      transition: color 0.2s;
+
+      &.winner {
+        color: #4caf50;
+      }
+    }
+  }
+
+  .scores {
+    display: flex;
+    align-items: stretch;
+    justify-content: space-between;
+    position: relative;
+
+    .score {
+      flex: 1 1 auto;
+    }
+
+    .separator {
+      position: absolute;
+      inset: 0;
+      margin: auto;
+      z-index: 999;
+      user-select: none;
+      width: 31px;
+      height: 5px;
+      background: white;
+    }
+  }
+
+  .vs {
+    font-size: 5rem;
+  }
+}
+
+.winner-information {
+  display: flex;
+  justify-content: center;
+
+  .winner-label {
+    font-size: 2rem;
+    font-weight: 600;
+    color: #4caf50;
+    text-align: center;
+    white-space: nowrap;
+  }
+}

@@ -1,0 +1,5 @@
+<div class="metrics">
+  @for (metric of metrics() || []; track metric.label) {
+    <app-metric-tile [value]="metric.value" [label]="metric.label" />
+  }
+</div>

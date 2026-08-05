@@ -1,0 +1,45 @@
+<div class="notifications-modal" role="dialog" aria-modal="true" aria-label="Notifications">
+  <div class="notifications-header">
+    <div class="notifications-title-wrap">
+      <app-icon name="notifications_active" iconClass="title-icon" />
+      <h2 class="notifications-title">Notifications</h2>
+    </div>
+    <app-button-icon class="icon-btn" icon="close" (clicked)="close()" />
+  </div>
+
+  <div class="notifications-list">
+    @for (notification of notificationWithDetails(); track notification.id) {
+      <div class="notification-item">
+        <div class="notification-icon-wrap" [class]="notification.typeIcon">
+          <app-icon [name]="notification.icon" />
+        </div>
+
+        <div class="notification-data">
+          <p class="notification-message">{{ notification.message }}</p>
+          <p class="notification-meta">{{ notification.relativeTime }} • {{ notification.type }}</p>
+        </div>
+
+        <app-button-icon
+          class="icon-btn done-btn"
+          icon="check"
+          (clicked)="markAsRead(notification.id)"
+        />
+      </div>
+    } @empty {
+      <div class="notifications-empty">
+        <app-icon name="notifications_off" />
+        <p>Aucune notification pour le moment.</p>
+      </div>
+    }
+  </div>
+
+  <footer class="notifications-footer">
+    <app-button
+      class="footer-btn"
+      title="Tout marquer comme lu"
+      variant="secondary"
+      [disabled]="notificationWithDetails().length === 0"
+      (clicked)="markAllAsRead()"
+    />
+  </footer>
+</div>

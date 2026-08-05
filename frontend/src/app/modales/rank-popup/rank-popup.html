@@ -1,0 +1,22 @@
+<div class="rank-popup">
+  <div class="header-row">
+    <h2 class="title">
+      Tournoi :
+      <span class="name">
+        {{ data.tournamentName }}
+      </span>
+    </h2>
+  </div>
+
+  <div class="body">
+    <app-ranking-card
+      [ranking]="data.ranking"
+      [isLoading]="false"
+      [scoreCalculation]="data.scoreCalculation"
+    />
+  </div>
+
+  <div class="actions">
+    <app-button [title]="data.closeLabel ?? 'Fermer'" variant="secondary" (clicked)="onCancel()" />
+  </div>
+</div>

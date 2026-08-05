@@ -1,0 +1,89 @@
+.friendly-match-history {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    .history-title {
+      font-size: 1rem;
+      font-weight: 700;
+      opacity: 0.7;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+  }
+
+  .history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .history-item {
+    $border-radius: 8px;
+    $index-width: 30px;
+
+    display: flex;
+    border-radius: $border-radius;
+    background: var(--color-surface-container);
+    border: 1px solid var(--color-surface-container-high);
+
+    .match-number {
+      border-radius: $border-radius 0 0 $border-radius;
+      width: $index-width;
+      background-color: var(--color-tertiary-container);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+
+      .number {
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: var(--color-on-tertiary);
+      }
+    }
+
+    .match-info {
+      flex: 1 1 auto;
+      padding: 0.6rem $index-width 0.6rem 0;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      align-items: center;
+      gap: 0.75rem;
+
+      @media (max-width: 480px) {
+        padding: 0.6rem 0.75rem;
+      }
+
+      .team-name {
+        font-size: 0.95rem;
+        font-weight: 600;
+        opacity: 0.7;
+
+        &.left {
+          text-align: right;
+        }
+
+        &.right {
+          text-align: left;
+        }
+
+        &.winner {
+          opacity: 1;
+          color: #4caf50;
+        }
+      }
+    }
+
+    .score {
+      font-size: 1rem;
+      font-weight: 700;
+      text-align: center;
+      white-space: nowrap;
+    }
+  }
+}

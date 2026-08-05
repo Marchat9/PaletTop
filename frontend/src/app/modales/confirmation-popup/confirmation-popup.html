@@ -1,0 +1,24 @@
+<div class="confirmation-popup">
+  <div class="header-row">
+    <h2 class="title">
+      <app-icon [name]="data.icon ?? 'warning'" iconClass="icon" [ariaHidden]="true" />
+      {{ data.title }}
+    </h2>
+  </div>
+
+  <p class="message">{{ data.message }}</p>
+
+  <div class="actions">
+    <app-button
+      [title]="data.cancelLabel ?? 'Annuler'"
+      variant="secondary"
+      (clicked)="onCancel()"
+    />
+    <app-button
+      [title]="data.confirmLabel ?? 'Confirmer'"
+      variant="primary"
+      icon="check"
+      (clicked)="onConfirm()"
+    />
+  </div>
+</div>

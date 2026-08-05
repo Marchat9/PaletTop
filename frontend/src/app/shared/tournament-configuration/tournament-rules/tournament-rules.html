@@ -1,0 +1,75 @@
+<app-card>
+  <div class="card-header">
+    <app-icon name="military_tech" iconClass="icon" />
+    <h2>Règles & Scores</h2>
+  </div>
+
+  <div class="card-content padding">
+    @if (!hiddenFields().includes('maxTeamCapacity')) {
+      <div class="form-group">
+        <label class="form-label">Capacité Maximale</label>
+        <span class="form-label-2">{{ group().controls.maxTeamCapacity.value }} Équipes</span>
+        <app-input-range
+          [min]="maxTeamCapacity.min"
+          [max]="maxTeamCapacity.max"
+          [step]="2"
+          minPostLabel="Min."
+          maxPostLabel="Max."
+          [formControl]="group().controls.maxTeamCapacity"
+        ></app-input-range>
+      </div>
+    }
+
+    <div class="form-group">
+      <label class="form-label">Calcul des scores</label>
+      <app-input-card-radio
+        [columns]="3"
+        [options]="scoreCalculationOptions"
+        [formControl]="group().controls.scoreCalculation"
+      ></app-input-card-radio>
+    </div>
+
+    @if (!hiddenFields().includes('pointsPerGame')) {
+      <div class="form-group">
+        <label class="form-label"
+          >Points par partie: {{ group().controls.pointsPerGame.value }}</label
+        >
+        <app-input-range
+          [min]="minPointsPerGame"
+          [max]="maxPointsPerGame"
+          [step]="1"
+          minPostLabel="Min."
+          maxPostLabel="Max."
+          [formControl]="group().controls.pointsPerGame"
+        ></app-input-range>
+      </div>
+    }
+
+    <div class="form-group">
+      <div class="form-multi-input">
+        <label class="form-label">Règle de génération des matchs</label>
+        @if (!hiddenFields().includes('rematch')) {
+          <app-input-checkbox
+            label="Autoriser les rematch"
+            description="Dans la limite du possible"
+            [formControl]="group().controls.rematch"
+          ></app-input-checkbox>
+        }
+        @if (!hiddenFields().includes('matchAgainstFullSameClub')) {
+          <app-input-checkbox
+            label="Autoriser les matchs contre les équipes du même club"
+            description="Dans la limite du possible - tous les membres de l'équipe doivent être du même club"
+            [formControl]="group().controls.matchAgainstFullSameClub"
+          ></app-input-checkbox>
+        }
+        @if (!hiddenFields().includes('matchAgainstPartialSameClub')) {
+          <app-input-checkbox
+            label="Autoriser les matchs contre des membres du même club"
+            description="Dans la limite du possible - un membre de l'équipe suffit pour être considéré du même club"
+            [formControl]="group().controls.matchAgainstPartialSameClub"
+          ></app-input-checkbox>
+        }
+      </div>
+    </div>
+  </div>
+</app-card>

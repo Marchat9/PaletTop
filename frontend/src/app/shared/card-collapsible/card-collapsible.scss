@@ -1,0 +1,66 @@
+.card-collapsible {
+  border-radius: 0.8rem;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  background: var(--color-surface-container-low);
+
+  &.is-expanded {
+    ::ng-deep .expand_icon {
+      transform: rotate(180deg);
+    }
+
+    .card-collapsible-content-wrapper {
+      grid-template-rows: 1fr;
+      opacity: 1;
+    }
+  }
+
+  .card-collapsible-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    border: 0;
+    text-align: left;
+    background: transparent;
+    color: inherit;
+    padding: 1.2rem 1.2rem;
+
+    &.pointer {
+      cursor: pointer;
+    }
+
+    .header-content {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+      min-width: 0;
+      flex: 1 auto;
+    }
+
+    ::ng-deep .expand_icon {
+      transition: transform 180ms ease;
+      color: var(--color-primary);
+    }
+  }
+
+  .card-collapsible-content-wrapper {
+    display: grid;
+    grid-template-rows: 0fr;
+    opacity: 0;
+    padding: 0 1.2rem 1.2rem 1.2rem;
+    transition:
+      grid-template-rows 220ms ease,
+      opacity 160ms ease;
+
+    &.collapsed {
+      padding: 0;
+    }
+
+    .card-collapsible-content {
+      overflow: hidden;
+      min-height: 0;
+    }
+  }
+}

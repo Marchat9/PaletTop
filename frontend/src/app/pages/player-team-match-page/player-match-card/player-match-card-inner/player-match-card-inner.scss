@@ -1,0 +1,288 @@
+:host {
+  display: block;
+}
+
+.match-card {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  padding: 1.5rem;
+  border-radius: 1.25rem;
+  background: var(--color-surface-container-low);
+  border-left: 5px solid var(--color-primary);
+  min-height: 320px;
+  justify-content: center;
+
+  @media (min-height: 600px) {
+    min-height: 420px;
+    padding: 2rem;
+    gap: 2.5rem;
+  }
+
+  &--validated {
+    border-left-color: var(--color-tertiary);
+  }
+
+  &--bye {
+    border-left-color: var(--color-secondary);
+    align-items: center;
+    gap: 1.25rem;
+  }
+
+  &__teams {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 1rem;
+    text-align: center;
+  }
+
+  &__vs {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  &__meta {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3rem;
+  }
+
+  &__scoreboard {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5rem;
+    flex: 1;
+  }
+
+  &__action {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    justify-content: center;
+  }
+
+  &__validate {
+    border-top: 1px solid var(--color-outline-variant);
+    padding-top: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  &__validated {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    color: var(--color-tertiary);
+    font-weight: 600;
+    font-size: 1.1rem;
+    padding: 0.75rem 0;
+
+    ::ng-deep .material-symbols-outlined {
+      font-size: 1.6rem;
+    }
+  }
+}
+
+.team-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  overflow: hidden;
+
+  &__name {
+    font-size: clamp(1rem, 4vw, 1.4rem);
+    font-weight: 700;
+    color: var(--color-on-surface);
+    line-height: 1.2;
+    word-break: break-word;
+  }
+
+  &__you {
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--color-on-surface-variant);
+  }
+
+  &--my .team-block__name {
+    color: var(--color-primary);
+  }
+}
+
+.vs-label {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--color-outline-variant);
+  letter-spacing: 0.1em;
+}
+
+.plate-label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-on-surface-variant);
+}
+
+.status-badge {
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  white-space: nowrap;
+
+  &--pending {
+    background: color-mix(in srgb, var(--color-on-surface-variant) 12%, transparent);
+    color: var(--color-on-surface-variant);
+  }
+
+  &--ongoing {
+    background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+    color: var(--color-primary);
+  }
+
+  &--ended {
+    background: color-mix(in srgb, var(--color-secondary) 12%, transparent);
+    color: var(--color-secondary);
+  }
+
+  &--validated {
+    background: color-mix(in srgb, var(--color-tertiary) 12%, transparent);
+    color: var(--color-tertiary);
+  }
+}
+
+.score-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  min-width: 6rem;
+  flex: 1 1 auto;
+
+  /* Scale up input-number for scoreboard use */
+  ::ng-deep .input-number-wrapper {
+    width: 100%;
+  }
+
+  ::ng-deep .input-number {
+    font-size: clamp(2rem, 8vw, 3.5rem);
+    font-weight: 700;
+    min-height: 5rem;
+    text-align: center;
+    padding: 0.5rem 2.75rem 0.5rem 0.5rem;
+    border-radius: 0.75rem;
+  }
+
+  ::ng-deep .stepper-btn {
+    width: 2rem;
+    height: 1.4rem;
+  }
+}
+
+.score-sep {
+  font-size: clamp(2rem, 8vw, 3.5rem);
+  font-weight: 300;
+  color: var(--color-outline-variant);
+  user-select: none;
+}
+
+.validate-hint {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--color-on-surface-variant);
+
+  ::ng-deep .material-symbols-outlined {
+    font-size: 1rem;
+    flex-shrink: 0;
+  }
+}
+
+.validate-form {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  align-items: flex-end;
+
+  app-input-text {
+    flex: 1 1 10rem;
+  }
+}
+
+.error-hint {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--color-error);
+  text-align: center;
+}
+
+.bye-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+
+  ::ng-deep .material-symbols-outlined {
+    font-size: 2rem;
+    color: var(--color-secondary);
+  }
+
+  &__text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+  }
+}
+
+.bye-session {
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-on-surface-variant);
+}
+
+.bye-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--color-secondary);
+}
+
+.bye-message {
+  margin: 0;
+  color: var(--color-on-surface-variant);
+  font-size: 0.9rem;
+}
+
+.bye-result {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--color-tertiary);
+  font-weight: 600;
+  font-size: 1rem;
+
+  ::ng-deep .material-symbols-outlined {
+    font-size: 1.4rem;
+  }
+}
+
+.bye-pending {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--color-on-surface-variant);
+  font-style: italic;
+}

@@ -1,0 +1,15 @@
+<div class="card-content">
+  <div class="form-group">
+    <label class="form-label">Nombre de partie</label>
+    <p class="form-label-description">Limiter le nombre de round dans ce mode de compétition</p>
+    <app-input-number
+      [formControl]="group().controls.numberOfRound"
+      [zeroAsUndefined]="true"
+      placeholder="Sans limite - l'admin cloture quand il le souhaite"
+      [placeholderAsValue]="true"
+      [min]="0"
+      [max]="999"
+      [step]="1"
+    ></app-input-number>
+  </div>
+</div>

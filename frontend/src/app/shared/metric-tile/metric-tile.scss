@@ -1,0 +1,69 @@
+.metric-tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  border-radius: 0.65rem;
+  background: var(--color-surface-container-low);
+  border: 2px solid transparent;
+
+  &.small {
+    --label-font-size: 0.5rem;
+    --value-font-size: 1rem;
+    padding: 0.7rem;
+  }
+
+  &.normal {
+    --label-font-size: 0.62rem;
+    --value-font-size: 1.45rem;
+    padding: 1rem;
+  }
+
+  &.big {
+    --label-font-size: 1rem;
+    --value-font-size: 2rem;
+    padding: 1.4rem;
+  }
+
+  &.clickable {
+    cursor: pointer;
+    border-color: color-mix(in srgb, var(--color-primary) 30%, transparent);
+    transition:
+      background-color 150ms ease,
+      border-color 150ms ease,
+      transform 100ms ease;
+
+    &:hover {
+      background: var(--color-surface-container-high);
+      border-color: var(--color-primary);
+    }
+
+    &:active {
+      transform: scale(0.97);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--color-primary);
+      outline-offset: 2px;
+    }
+  }
+
+  .value {
+    margin: 0;
+    color: var(--color-primary);
+    font-family: var(--font-headline);
+    font-weight: 800;
+    font-size: var(--value-font-size);
+  }
+
+  .label {
+    margin: 0;
+    color: var(--color-on-surface-variant);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: var(--label-font-size);
+    text-align: center;
+  }
+}

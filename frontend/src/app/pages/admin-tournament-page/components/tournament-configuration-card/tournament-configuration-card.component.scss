@@ -1,0 +1,28 @@
+.header {
+  display: flex;
+  flex-direction: column;
+
+  .header-title {
+    display: flex;
+    flex-direction: row;
+    gap: 0.5rem;
+
+    ::ng-deep .icon {
+      color: var(--color-primary);
+    }
+
+    .title {
+      display: flex;
+      gap: 0.55rem;
+      margin: 0;
+      font-family: var(--font-headline);
+      font-size: 1.8rem;
+      line-height: 1;
+    }
+  }
+}
+
+.config-content {
+  display: flex;
+  flex-direction: column;
+}

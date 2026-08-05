@@ -1,0 +1,26 @@
+<section class="team-header">
+  <div class="header-left">
+    <span class="eyebrow">Fiche équipe</span>
+    <span class="team-name left-border">{{ team().name }}</span>
+    <div class="team-info">
+      <span class="tournament-code"
+        >Code Tournoi: <span class="code">{{ tournamentCode() }}</span></span
+      >
+      <div class="team-code">
+        <span>Code Équipe:</span>
+        <div class="code bold">{{ team().code }}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="team-metrics">
+    <app-metric-tile label="Victoires" [value]="wins()" size="big" />
+    <app-metric-tile
+      label="Classement"
+      [value]="rank()"
+      size="big"
+      [clickable]="true"
+      (clicked)="openRank.emit()"
+    />
+  </div>
+</section>

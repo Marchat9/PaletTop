@@ -1,0 +1,13 @@
+@if (loaded()) {
+  <span [class]="[fontClass(), iconClass()]" [attr.aria-hidden]="ariaHidden() || null">{{
+    name()
+  }}</span>
+} @else {
+  <span
+    class="icon-fallback"
+    [class]="iconClass()"
+    [class.spin]="fallbackSpin()"
+    [attr.aria-hidden]="ariaHidden() || null"
+    >{{ fallback() }}</span
+  >
+}

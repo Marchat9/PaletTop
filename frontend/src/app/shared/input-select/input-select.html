@@ -1,0 +1,13 @@
+<select
+  [id]="id() || null"
+  class="input-select"
+  [value]="internalValue()"
+  [disabled]="disabled()"
+  (change)="onChange($any($event.target).value)"
+>
+  @for (option of options(); track option.value) {
+    <option [value]="option.value" [selected]="internalValue() === option.value">
+      {{ option.label }}
+    </option>
+  }
+</select>

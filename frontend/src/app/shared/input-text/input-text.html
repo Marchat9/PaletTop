@@ -1,0 +1,20 @@
+<div class="input-text-wrapper">
+  @if (icon()) {
+    <app-icon [name]="icon()" iconClass="input-icon" [ariaHidden]="true" />
+  }
+
+  <input
+    #inputElement
+    [id]="id() || null"
+    class="input-text"
+    [class.with-icon]="!!icon()"
+    [type]="isPassword() ? 'password' : 'text'"
+    [placeholder]="placeholder()"
+    [autocomplete]="autocomplete()"
+    [value]="internalValue()"
+    [disabled]="disabled()"
+    [attr.autocapitalize]="uppercase() ? 'characters' : 'off'"
+    [style.text-transform]="uppercase() ? 'uppercase' : 'none'"
+    (input)="onInput($any($event.target).value)"
+  />
+</div>

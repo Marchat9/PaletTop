@@ -1,0 +1,67 @@
+<div class="tournament-create">
+  <header class="header">
+    <div class="header-content">
+      <h1 class="title">Configuration d'un nouveau <span class="tournament">Tournoi</span></h1>
+      <p class="subtitle">
+        Définissez les paramètres de votre tournoi. Chaque réglage forge l'identité de votre
+        événement.
+      </p>
+    </div>
+    <div class="header-accent">
+      <span class="status-label no-wrap">Statut: Configuration</span>
+      <div class="accent-line"></div>
+    </div>
+    <div class="background-section">
+      <img
+        class="image"
+        ngSrc="assets/images/palet_sombre.png"
+        priority
+        width="1200"
+        height="900"
+      />
+    </div>
+  </header>
+
+  <app-tournament-configuration
+    [columns]="2"
+    (form)="tournamentForm.set($event)"
+    (invalidFields)="invalidFieldNames.set($event)"
+  />
+
+  <div class="actions-wrapper">
+    @if (creationError()) {
+      <p class="form-error" role="alert">
+        <app-icon name="error" iconClass="form-error-icon" />
+        {{ creationError() }}
+      </p>
+    }
+    @if (!!invalidFieldNames()) {
+      <div class="validation-error">
+        <p>Les champs suivants sont requis ou invalides :</p>
+        <ul>
+          @for (field of invalidFieldNames(); track field) {
+            <li>{{ field }}</li>
+          }
+        </ul>
+      </div>
+    }
+
+    <div class="actions-buttons">
+      <app-button
+        title="Annuler"
+        variant="secondary"
+        [large]="true"
+        (clicked)="cancel()"
+      ></app-button>
+      <app-button
+        title="Créer le Tournoi"
+        variant="primary"
+        icon="add_circle"
+        [disabled]="!tournamentForm()?.valid"
+        [loading]="isCreationLoading()"
+        [large]="true"
+        (clicked)="submit()"
+      />
+    </div>
+  </div>
+</div>

@@ -1,0 +1,41 @@
+<app-card>
+  <div class="card-header">
+    <app-icon name="sports_handball" iconClass="icon" />
+    <h2>Paramètres de Jeu</h2>
+  </div>
+
+  <div class="card-content padding">
+    <!-- Competition Mode -->
+    <div class="form-group">
+      <label class="form-label">Mode de Compétition <span class="mandatory">*</span></label>
+      <app-input-card-radio
+        [options]="competitionModeOptions"
+        [formControl]="group().controls.competitionMode"
+      ></app-input-card-radio>
+    </div>
+
+    <div class="separator"></div>
+
+    @switch (group().controls.competitionMode.value) {
+      @case ('standard') {
+        <app-structured-tournament
+          [group]="group().controls.structuredMode"
+          [readonlyFields]="readonlyFields()"
+          [hiddenFields]="hiddenFields()"
+        />
+      }
+      @case ('up_down') {
+        <app-up-down-tournament
+          [group]="group().controls.upDownMode"
+          [readonlyFields]="readonlyFields()"
+          [hiddenFields]="hiddenFields()"
+        />
+      }
+      @default {
+        <span class="no-competition-configured"
+          >Pas de configuration supplémentaire pour ce type de compétition.</span
+        >
+      }
+    }
+  </div>
+</app-card>

@@ -1,0 +1,83 @@
+.input-number-wrapper {
+  position: relative;
+
+  &.disabled {
+    opacity: 0.7;
+  }
+}
+
+.placeholder-as-value {
+  ::placeholder {
+    color: var(--color-on-surface);
+  }
+}
+
+.input-number {
+  width: 100%;
+  min-height: 2.5rem;
+  padding: 0.5rem 2.5rem 0.5rem 0.75rem;
+  border: 1px solid var(--color-outline-variant);
+  border-radius: 0.375rem;
+  background: var(--color-surface-container);
+  color: var(--color-on-surface);
+  font-size: 0.9rem;
+  appearance: textfield;
+
+  &::-webkit-outer-spin-button,
+  &::-webkit-inner-spin-button {
+    appearance: none;
+    margin: 0;
+  }
+
+  &:focus {
+    outline: 1px solid var(--color-primary);
+    border-color: var(--color-primary);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+  }
+}
+
+.stepper {
+  position: absolute;
+  top: 50%;
+  right: 0.375rem;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.stepper-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1rem;
+  border: 1px solid var(--color-outline-variant);
+  border-radius: 0.25rem;
+  background: var(--color-surface-container-highest);
+  color: var(--color-on-surface-variant);
+  padding: 0;
+  cursor: pointer;
+
+  ::ng-deep .material-symbols-outlined {
+    font-size: 1rem;
+    line-height: 1;
+  }
+
+  &:hover:not(:disabled) {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+  }
+
+  &:active:not(:disabled) {
+    background: color-mix(in srgb, var(--color-primary) 15%, var(--color-surface-container-high));
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+}

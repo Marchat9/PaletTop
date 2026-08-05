@@ -1,0 +1,125 @@
+:host {
+  display: block;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+
+  &-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    ::ng-deep .icon {
+      color: var(--color-primary);
+    }
+
+    .title {
+      margin: 0;
+      font-family: var(--font-headline);
+      font-size: 1.8rem;
+      line-height: 1;
+    }
+  }
+}
+
+.card-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.empty-hint {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--color-on-surface-variant);
+}
+
+.pool-ranking {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.pool-header {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-primary);
+
+  .material-symbols-outlined {
+    font-size: 1rem;
+  }
+}
+
+.ranking-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+
+  th,
+  td {
+    padding: 0.45rem 0.6rem;
+    text-align: left;
+  }
+
+  thead tr {
+    border-bottom: 1px solid var(--color-outline-variant);
+  }
+
+  th {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--color-on-surface-variant);
+  }
+
+  tbody tr {
+    border-bottom: 1px solid color-mix(in srgb, var(--color-outline-variant) 40%, transparent);
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    &.row--top {
+      background: color-mix(in srgb, var(--color-primary) 6%, transparent);
+
+      .col-rank {
+        font-weight: 700;
+        color: var(--color-primary);
+      }
+    }
+  }
+
+  .col-rank {
+    width: 2.5rem;
+    color: var(--color-on-surface-variant);
+    font-weight: 500;
+  }
+
+  .col-team {
+    font-weight: 500;
+  }
+
+  .col-stat {
+    width: 3.5rem;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    color: var(--color-on-surface-variant);
+  }
+
+  .ga--positive {
+    color: var(--color-primary);
+  }
+
+  .ga--negative {
+    color: var(--color-error);
+  }
+}

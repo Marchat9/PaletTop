@@ -1,0 +1,16 @@
+<div class="input-date-wrapper">
+  <input
+    class="input-date with-icon"
+    matInput
+    [matDatepicker]="picker"
+    [value]="internalValue()"
+    (dateChange)="onDateChange($event)"
+    [min]="minDate()"
+    [max]="maxDate()"
+    [disabled]="disabled()"
+    [required]="required()"
+    (click)="picker.open()"
+  />
+  <app-icon name="calendar_month" iconClass="input-icon" (click)="picker.open()" />
+  <mat-datepicker #picker></mat-datepicker>
+</div>

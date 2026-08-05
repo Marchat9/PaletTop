@@ -1,0 +1,8 @@
+<div class="button-icon" (click)="clicked.emit()">
+  <app-icon [name]="icon()" />
+  @if (badge() !== null) {
+    <span class="badge" aria-label="Nombre de notifications">{{
+      (badge() || 0) > maxNumberOfNotifications ? maxNumberOfNotifications + '+' : badge()
+    }}</span>
+  }
+</div>

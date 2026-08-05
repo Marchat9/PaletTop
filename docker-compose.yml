@@ -1,0 +1,61 @@
+services:
+    db:
+        image: postgres:16-alpine
+        container_name: palet-db
+        restart: unless-stopped
+        environment:
+            POSTGRES_DB: palet
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD: postgres
+        ports:
+            - '5432:5432'
+        volumes:
+            - postgres_data:/var/lib/postgresql/data
+        healthcheck:
+            test: ['CMD-SHELL', 'pg_isready -U postgres -d palet']
+            interval: 5s
+            timeout: 5s
+            retries: 10
+
+    backend:
+        build:
+            context: ./backend
+            dockerfile: Dockerfile
+            target: dev
+        container_name: palet-backend
+        restart: unless-stopped
+        depends_on:
+            db:
+                condition: service_healthy
+        environment:
+            PORT: 3000
+            DB_HOST: db
+            DB_PORT: 5432
+            DB_NAME: palet
+            DB_USER: postgres
+            DB_PASSWORD: postgres
+        ports:
+            - '3000:3000'
+        volumes:
+            - ./backend:/app
+            - /app/node_modules
+        command: sh -c "npm install && npm run start:dev"
+
+    frontend:
+        build:
+            context: ./frontend
+            dockerfile: Dockerfile
+            target: dev
+        container_name: palet-frontend
+        restart: unless-stopped
+        depends_on:
+            - backend
+        ports:
+            - '4200:4200'
+        volumes:
+            - ./frontend:/app
+            - /app/node_modules
+        command: sh -c "npm install && npm run start -- --host 0.0.0.0 --port 4200"
+
+volumes:
+    postgres_data:

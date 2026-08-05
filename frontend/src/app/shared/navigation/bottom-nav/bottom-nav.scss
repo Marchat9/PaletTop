@@ -1,0 +1,41 @@
+.nav-bot {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem 1.25rem;
+  background: rgb(14 20 28 / 90%);
+  backdrop-filter: blur(14px);
+  border-top: 1px solid rgb(80 69 56 / 30%);
+
+  .item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.2rem;
+    min-width: 3.75rem;
+    padding: 0.3rem 0.55rem;
+    border-radius: 0.65rem;
+    color: var(--color-on-surface);
+    opacity: 0.75;
+    text-decoration: none;
+
+    &--active {
+      background: rgb(233 195 73 / 12%);
+      color: var(--color-primary);
+      opacity: 1;
+    }
+  }
+
+  .label {
+    font-family: var(--font-label);
+    font-size: 0.62rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+  }
+}

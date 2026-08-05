@@ -1,0 +1,17 @@
+<div class="home-page">
+  <app-title-and-description class="header" />
+
+  <app-section-tournament
+    class="tournament"
+    (eventTournamentJoin)="openModaleTournamentJoin()"
+    (eventTournamentCreation)="goToTournamentCreation()"
+  ></app-section-tournament>
+
+  <app-section-friendly-match
+    class="friendly-match"
+    (eventGoToFriendlyMatch)="goToFriendlyMatch()"
+  />
+  @if (false) {
+    <app-section-metrics class="metric" [metrics]="metrics()" />
+  }
+</div>

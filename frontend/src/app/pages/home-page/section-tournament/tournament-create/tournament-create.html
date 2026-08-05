@@ -1,0 +1,31 @@
+<app-card>
+  <div class="tournament-create">
+    <div class="header">
+      <div class="title">
+        <h3>Creer un tournoi</h3>
+        <app-icon name="add_moderator" iconClass="icon" />
+      </div>
+      <div class="description">
+        <span
+          >Configurez vos regles, invitez vos joueurs et pilotez le classement
+          automatiquement.</span
+        >
+      </div>
+      <div class="info">
+        <ul>
+          <li>Gestion des poules</li>
+          <li>Score en temps reel</li>
+          <li>Historique immuable</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="action">
+      <app-button
+        title="Organiser un tournoi"
+        icon="add_moderator"
+        (clicked)="eventTournamentCreation.emit()"
+      />
+    </div>
+  </div>
+</app-card>

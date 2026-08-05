@@ -1,0 +1,14 @@
+:host {
+  display: flex;
+  flex: 1 1 auto;
+}
+
+.card {
+  border-radius: 0.8rem;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.2rem;
+  background: var(--color-surface-container-low);
+}

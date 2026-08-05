@@ -1,0 +1,22 @@
+<div class="card-collapsible" [class.is-expanded]="isExpanded()">
+  <div
+    class="card-collapsible-header pointer"
+    [attr.aria-expanded]="isExpanded()"
+    (click)="toggleExpanded()"
+  >
+    <div class="header-content">
+      <ng-content select="[header]" />
+    </div>
+    <app-icon name="expand_more" iconClass="expand_icon" />
+  </div>
+
+  <div
+    class="card-collapsible-content-wrapper"
+    [class.collapsed]="!isExpanded()"
+    [attr.inert]="!isExpanded() ? '' : null"
+  >
+    <div class="card-collapsible-content">
+      <ng-content select="[content]" />
+    </div>
+  </div>
+</div>

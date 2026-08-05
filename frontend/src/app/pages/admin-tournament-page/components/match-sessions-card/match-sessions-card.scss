@@ -1,0 +1,69 @@
+:host {
+  display: block;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-right: 2rem;
+
+  .header-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1;
+
+    ::ng-deep .icon {
+      color: var(--color-primary);
+    }
+
+    .title {
+      margin: 0;
+      font-family: var(--font-headline);
+      font-size: 1.8rem;
+      line-height: 1;
+    }
+
+    .header-session-info {
+      font-size: 1.25rem;
+      color: var(--color-on-surface-variant);
+      margin-left: 0.5rem;
+    }
+  }
+
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+}
+
+.card-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.draft-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+
+  .section-info {
+    margin: 0;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: var(--color-on-surface-variant);
+  }
+
+  app-button {
+    align-self: flex-start;
+
+    @media (max-width: 480px) {
+      align-self: stretch;
+    }
+  }
+}

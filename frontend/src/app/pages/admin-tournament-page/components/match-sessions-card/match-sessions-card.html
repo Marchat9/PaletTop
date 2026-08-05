@@ -1,0 +1,53 @@
+<app-card-collapsible [isExpanded]="true">
+  <div header class="header">
+    <div class="header-title">
+      <app-icon name="sports_score" iconClass="icon" />
+      <span class="title">Sessions de matchs</span>
+      @if (isActive() && sessionNumber() > 0) {
+        <span class="header-session-info"> - </span>
+        <span class="header-session-info"> Round {{ sessionNumber() }} </span>
+      }
+    </div>
+
+    @if (isActive()) {
+      <div class="header-actions">
+        <app-button
+          title="Round Suivant"
+          icon="skip_next"
+          variant="primary"
+          [loading]="nextLoading()"
+          [disabled]="!canGenerateNewSession()"
+          [stopPropagation]="true"
+          (clicked)="nextSession.emit()"
+        />
+      </div>
+    }
+  </div>
+
+  <div content class="card-content">
+    @if (isDraft()) {
+      <div class="draft-section">
+        <p class="section-info">
+          Le tournoi n'a pas encore démarré. En démarrant, les équipes seront réparties dans les
+          poules et les matchs de la première session seront générés.
+        </p>
+        <app-button
+          title="Démarrer le tournoi"
+          icon="play_arrow"
+          variant="primary"
+          [loading]="startLoading()"
+          (clicked)="startTournament.emit()"
+        />
+      </div>
+    }
+
+    @if (isActive() && currentSession()) {
+      <app-session-matches
+        [session]="currentSession()!"
+        [pointsPerGame]="pointsPerGame()"
+        [scoreUpdateLoading]="scoreUpdateLoading()"
+        (scoreUpdate)="scoreUpdate.emit($event)"
+      />
+    }
+  </div>
+</app-card-collapsible>

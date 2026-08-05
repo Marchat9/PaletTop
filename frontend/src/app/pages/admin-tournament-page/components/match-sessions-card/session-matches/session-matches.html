@@ -1,0 +1,100 @@
+<div class="matches-section">
+  @for (group of matchGroups(); track group.label) {
+    <div class="pool-group">
+      @if (group.label) {
+        <div class="pool-header">
+          <app-icon name="emoji_events" iconClass="pool-icon" />
+          {{ group.label }}
+        </div>
+      }
+
+      <div class="match-list">
+        @for (match of group.matches; track match.id) {
+          <div
+            class="match-row"
+            [class.is-bye]="match.isBye"
+            [class.is-editing]="editingMatchId() === match.id"
+          >
+            @if (editingMatchId() === match.id) {
+              <div class="edit-row">
+                <span class="plate">
+                  <span class="plate-label">N°{{ match.plateNumber }}</span>
+                </span>
+                <span class="team team-a">{{ match.teamA.name }}</span>
+                <app-input-number
+                  [value]="draftScoreA()"
+                  [min]="0"
+                  [max]="pointsPerGame()"
+                  (valueChange)="draftScoreA.set($event)"
+                />
+                <span class="vs">—</span>
+                <app-input-number
+                  [value]="draftScoreB()"
+                  [min]="0"
+                  [max]="pointsPerGame()"
+                  (valueChange)="draftScoreB.set($event)"
+                />
+                <span class="team team-b">{{ match.teamB?.name }}</span>
+                <div class="edit-actions">
+                  <app-button
+                    title="Enregistrer"
+                    variant="primary"
+                    icon="check"
+                    [loading]="scoreUpdateLoading()"
+                    (clicked)="saveEdit(match.id)"
+                  />
+                  <app-button title="Annuler" variant="secondary" (clicked)="cancelEdit()" />
+                </div>
+              </div>
+            } @else {
+              @if (!match.isBye) {
+                <span class="plate">
+                  <span class="plate-label">N°{{ match.plateNumber }}</span>
+                </span>
+              }
+              <span class="team team-a">{{ match.teamA.name }}</span>
+              @if (match.isBye) {
+                <span class="bye-badge">Exempté</span>
+              } @else {
+                <span class="score-display">
+                  <strong>{{ match.scoreA }}</strong>
+                  <span class="vs">—</span>
+                  <strong>{{ match.scoreB }}</strong>
+                </span>
+                <span class="team team-b">{{ match.teamB?.name }}</span>
+              }
+              <div class="match-meta">
+                <span class="status-badge" [class]="'status-badge--' + match.status.toLowerCase()">
+                  @switch (match.status) {
+                    @case ('PENDING') {
+                      En attente
+                    }
+                    @case ('ONGOING') {
+                      En cours
+                    }
+                    @case ('ENDED') {
+                      Terminé
+                    }
+                    @case ('VALIDATED') {
+                      Validé
+                    }
+                  }
+                </span>
+                <app-match-timer
+                  [startedAt]="match.startedAt"
+                  [finishedAt]="match.finishedAt"
+                  [status]="match.status"
+                />
+                @if (!match.isBye) {
+                  <button class="edit-btn" (click)="startEdit(match)" title="Modifier le score">
+                    <app-icon name="edit" />
+                  </button>
+                }
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </div>
+  }
+</div>

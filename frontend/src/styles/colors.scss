@@ -1,0 +1,126 @@
+:root {
+  --font-headline: 'Epilogue', sans-serif;
+  --font-body: 'Manrope', sans-serif;
+  --font-label: 'Space Grotesk', sans-serif;
+
+  --color-theme: black;
+
+  --color-background: #0e141c;
+  --color-surface: #0e141c;
+  --color-surface-container-lowest: #090f16;
+  --color-surface-container-low: #161c24;
+  --color-surface-container: #1a2028;
+  --color-surface-container-high: #242a33;
+  --color-surface-container-highest: #2f353e;
+
+  --color-primary: #e9c349;
+  --color-primary-container: #bb9820;
+  --color-on-primary: #3c2f00;
+
+  --color-secondary: #bbc7da;
+  --color-secondary-container: #4a5f78;
+  --color-on-secondary: #fffaf0;
+
+  --color-tertiary: #e6c27d;
+  --color-tertiary-container: #8b7940;
+  --color-on-tertiary: #fffaf0;
+  --color-error: #ff7070;
+  --color-error-container: #b3261e;
+  --color-on-error-container: #ffe9e7;
+
+  --color-on-surface: #dde3ee;
+  --color-on-surface-variant: #d4c4b3;
+  --color-outline: #9c8f7f;
+  --color-outline-variant: #504538;
+  --color-overlay-strong: rgb(14 20 28 / 85%);
+  --color-overlay-light: rgb(14 20 28 / 45%);
+  --color-shadow-strong: rgb(0 0 0 / 35%);
+  --color-border-subtle: rgb(80 69 56 / 15%);
+  --color-border-default: rgb(80 69 56 / 50%);
+  --color-hover-surface-soft: rgb(47 53 62 / 35%);
+  --color-hover-surface-default: rgb(47 53 62 / 45%);
+
+  --color-status-draft-text: #f0d47a;
+  --color-status-draft-bg: rgb(233 195 73 / 18%);
+  --color-status-draft-border: rgb(233 195 73 / 40%);
+  --color-status-pending-text: #b7dcec;
+  --color-status-pending-bg: rgb(74 95 120 / 28%);
+  --color-status-pending-border: rgb(187 199 218 / 45%);
+  --color-status-ongoing-text: #a8e3c1;
+  --color-status-ongoing-bg: rgb(56 128 94 / 28%);
+  --color-status-ongoing-border: rgb(95 201 149 / 45%);
+  --color-status-ended-text: #d0d8e5;
+  --color-status-ended-bg: rgb(47 53 62 / 48%);
+  --color-status-ended-border: rgb(156 143 127 / 42%);
+
+  --color-status-success-text: #a8e3c1;
+  --color-status-success-bg: rgb(56 128 94 / 24%);
+  --color-status-success-border: rgb(95 201 149 / 45%);
+  --color-status-error-text: #ffc4c0;
+  --color-status-error-bg: rgb(179 54 44 / 24%);
+  --color-status-error-border: rgb(255 112 112 / 46%);
+
+  --gradient-brass: linear-gradient(135deg, #e9c349 0%, #bb9820 100%);
+}
+
+:root[data-theme='light'] {
+  --color-theme: white;
+
+  --color-background: #f6f3ee;
+  --color-surface: #fffaf0;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #f2ece1;
+  --color-surface-container: #e9e1d2;
+  --color-surface-container-high: #ded3bf;
+  --color-surface-container-highest: #d2c2ab;
+
+  --color-primary: #9c7400;
+  --color-primary-container: #c99a00;
+  --color-on-primary: #fffaf0;
+
+  --color-secondary: #4e5f79;
+  --color-secondary-container: #c9bb8e;
+  --color-on-secondary: #1a2830;
+
+  --color-tertiary: #b27a00;
+  --color-tertiary-container: #ffd699;
+  --color-on-tertiary: #2a1f00;
+
+  --color-error: #d64033;
+  --color-error-container: #d64033;
+  --color-on-error-container: #fff4f2;
+
+  --color-on-surface: #2a241b;
+  --color-on-surface-variant: #4a3f31;
+  --color-outline: #7d6d58;
+  --color-outline-variant: #b6a58f;
+  --color-overlay-strong: rgb(42 36 27 / 45%);
+  --color-overlay-light: rgb(42 36 27 / 15%);
+  --color-shadow-strong: rgb(42 36 27 / 18%);
+  --color-border-subtle: rgb(182 165 143 / 35%);
+  --color-border-default: rgb(182 165 143 / 65%);
+  --color-hover-surface-soft: rgb(210 194 171 / 45%);
+  --color-hover-surface-default: rgb(210 194 171 / 65%);
+
+  --color-status-draft-text: #5a4300;
+  --color-status-draft-bg: rgb(201 154 0 / 16%);
+  --color-status-draft-border: rgb(156 116 0 / 42%);
+  --color-status-pending-text: #2e4a66;
+  --color-status-pending-bg: rgb(78 95 121 / 16%);
+  --color-status-pending-border: rgb(78 95 121 / 35%);
+  --color-status-ongoing-text: #22523f;
+  --color-status-ongoing-bg: rgb(86 156 122 / 18%);
+  --color-status-ongoing-border: rgb(86 156 122 / 38%);
+  --color-status-ended-text: #4a3f31;
+  --color-status-ended-bg: rgb(182 165 143 / 24%);
+  --color-status-ended-border: rgb(125 109 88 / 38%);
+
+  --color-status-success-text: #22523f;
+  --color-status-success-bg: rgb(86 156 122 / 16%);
+  --color-status-success-border: rgb(86 156 122 / 40%);
+  --color-status-error-text: #8f271f;
+  --color-status-error-bg: rgb(214 64 51 / 14%);
+  --color-status-error-border: rgb(214 64 51 / 38%);
+
+  --gradient-brass: linear-gradient(135deg, #c99a00 0%, #9c7400 100%);
+}

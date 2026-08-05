@@ -1,0 +1,178 @@
+.tournament-create {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  padding: 2rem 1rem;
+  max-width: 80rem;
+  margin: 0 auto;
+
+  .header {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+
+    @media (min-width: 900px) {
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+
+    .header-content {
+      flex: 1 1 auto;
+
+      .title {
+        margin: 0;
+        font-size: 3rem;
+        font-weight: 800;
+        line-height: 1.1;
+        color: var(--color-on-surface);
+      }
+
+      .subtitle {
+        margin: 0.5rem 0 0 0;
+        font-size: 1rem;
+        line-height: 1.5;
+        color: var(--color-on-surface-variant);
+        max-width: 32rem;
+      }
+    }
+
+    .header-accent {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 0.5rem;
+
+      @media (max-width: 900px) {
+        align-items: flex-start;
+      }
+
+      .status-label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--color-primary);
+      }
+
+      .accent-line {
+        height: 0.25rem;
+        width: 6rem;
+        background: linear-gradient(135deg, var(--color-primary) 0%, #8b6f47 100%);
+        border-radius: 0.125rem;
+      }
+    }
+
+    .background-section {
+      position: absolute;
+      z-index: -1;
+      right: -2rem;
+      bottom: -8rem;
+      width: 37rem;
+      border-radius: 0.8rem;
+      overflow: hidden;
+      pointer-events: none;
+      opacity: 0.72;
+
+      @media (width < 900px) {
+        opacity: 0.56;
+        bottom: -4rem;
+      }
+
+      &::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background:
+          linear-gradient(to right, transparent 80%, var(--color-background) 100%),
+          linear-gradient(to left, transparent 66%, var(--color-background) 99%),
+          linear-gradient(to top, var(--color-background) 5%, rgb(14 20 28 / 0%) 50%),
+          radial-gradient(circle at 88% 86%, var(--color-background) -10%, rgb(14 20 28 / 0%) 56%);
+      }
+
+      .image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        filter: saturate(0.9) contrast(1.05);
+      }
+    }
+  }
+}
+
+.actions-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  align-items: flex-end;
+
+  .form-error {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    width: 50%;
+    padding: 0.75rem 1rem;
+
+    color: var(--color-error);
+    background: color-mix(in srgb, var(--color-error) 12%, transparent);
+
+    border-radius: 0.5rem;
+    border: 1px solid color-mix(in srgb, var(--color-error) 35%, transparent);
+
+    font-size: 0.875rem;
+    font-weight: 500;
+    white-space: pre-line;
+    margin: 0;
+
+    @media (max-width: 1200px) {
+      width: 100%;
+    }
+
+    ::ng-deep .form-error-icon {
+      font-size: 1.1rem;
+      flex-shrink: 0;
+    }
+  }
+
+  .validation-error {
+    border: 1px solid var(--color-error);
+    border-radius: 0.5rem;
+    padding: 0.75rem 1rem;
+    color: var(--color-error);
+    font-size: 0.82rem;
+
+    p {
+      margin: 0 0 0.4rem;
+      font-weight: 600;
+    }
+
+    ul {
+      margin: 0;
+      padding-left: 1.2rem;
+    }
+
+    li {
+      margin: 0.1rem 0;
+    }
+  }
+
+  .actions-buttons {
+    display: flex;
+    gap: 1rem;
+    width: 100%;
+    justify-content: flex-end;
+
+    app-button {
+      flex: 1;
+      max-width: 19rem;
+
+      @media (max-width: 1200px) {
+        max-width: 100%;
+      }
+    }
+  }
+}

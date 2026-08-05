@@ -1,0 +1,80 @@
+<app-card>
+  <div class="tournament-info">
+    <div class="tournament-info-header">
+      <div class="info-header">
+        <span class="eyebrow">Pilotage du tournoi</span>
+
+        <div class="info-header-action">
+          <app-button
+            title="Terminer le tournoi"
+            icon="flag"
+            [variant]="finishTournamentPrimaryTheme() ? 'primary' : 'secondary'"
+            [loading]="completeLoading()"
+            [disabled]="!canFinishTournament()"
+            (clicked)="completeTournament.emit()"
+          />
+          <app-button
+            title="Se déconnecter"
+            icon="account_circle_off"
+            variant="error"
+            (clicked)="disconnect.emit()"
+          />
+        </div>
+      </div>
+      <div class="header">
+        <div class="tournament-header-info">
+          <div class="title">
+            <app-icon name="label" iconClass="icon" />
+            <h1>{{ tournament()?.name }}</h1>
+          </div>
+          <span class="text"
+            >Code: <span class="badge-code">{{ tournament()?.code }}</span></span
+          >
+        </div>
+
+        <div class="tournament-header-status">
+          <span class="text"
+            >Etat du tournoi :
+            <span class="status-badge" [class]="statusPresentation().tone">
+              {{ statusPresentation().label }}
+            </span>
+          </span>
+          @if (!!phaseName()) {
+            <span class="text"
+              >Statut du tournoi :
+              <span class="status-badge">
+                {{ phaseName() }}
+              </span>
+            </span>
+          }
+        </div>
+      </div>
+
+      @if (hasDescription()) {
+        <div class="tournament-description">
+          <span class="title">Description:</span>
+          <span class="description">{{ tournament()?.description }}</span>
+        </div>
+      }
+    </div>
+
+    <dl class="tournament-info-meta">
+      <div>
+        <dt>Date du tournoi</dt>
+        <dd>{{ tournament()?.date | date: 'dd/MM/yyyy' }}</dd>
+      </div>
+      <div>
+        <dt>Creation</dt>
+        <dd>{{ tournament()?.createdAt | date: 'dd/MM/yyyy HH:mm' }}</dd>
+      </div>
+      <div>
+        <dt>Equipes</dt>
+        <dd>{{ teamCount() }}</dd>
+      </div>
+      <div>
+        <dt>Matchs</dt>
+        <dd>{{ matchCount() }}</dd>
+      </div>
+    </dl>
+  </div>
+</app-card>

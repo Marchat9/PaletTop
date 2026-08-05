@@ -1,0 +1,28 @@
+<div class="print-sheet-content">
+  <div class="print-header">
+    <h1 class="print-title">{{ tournament()?.name }}</h1>
+    <p class="print-tournament-code">
+      Code du tournoi : <span class="code-value">{{ tournament()?.code }}</span>
+    </p>
+  </div>
+  <table class="print-table">
+    <thead>
+      <tr>
+        <th>Équipe</th>
+        <th>Code</th>
+        <th>Joueurs</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (team of sortedTeams(); track team.id) {
+        <tr>
+          <td>{{ team.name }}</td>
+          <td>
+            <b>{{ team.code }}</b>
+          </td>
+          <td>{{ team.playerNames }}</td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>

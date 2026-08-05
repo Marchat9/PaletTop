@@ -1,0 +1,67 @@
+:host {
+  flex: 1 1 auto;
+  display: flex;
+}
+
+.score-number {
+  position: relative;
+  flex: 1 1 auto;
+
+  --border-radius: 10px;
+  border-radius: var(--border-radius);
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+
+  user-select: none;
+
+  &.disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+
+  &.color-red {
+    background-color: #9f0d0d; // TODO Color with theming
+  }
+  &.color-blue {
+    background-color: #1919cb; // TODO Color with theming
+  }
+
+  .value {
+    z-index: 100;
+    color: whitesmoke;
+    position: absolute;
+    margin: auto;
+    font-size: 4rem;
+    font-weight: bold;
+  }
+
+  .button {
+    flex: 1 1 auto;
+    display: flex;
+    justify-content: center;
+    height: 9rem;
+
+    width: 100%;
+    color: rgba(255, 255, 255, 0.1);
+
+    ::ng-deep .icon {
+      z-index: 100;
+      font-size: 8rem;
+    }
+  }
+
+  .increment-button {
+    align-items: flex-start;
+  }
+  .decrement-button {
+    align-items: flex-end;
+  }
+
+  .grey-opacity {
+    background-color: rgba(128, 128, 128, 0.2);
+    border-radius: 0 0 var(--border-radius) var(--border-radius);
+  }
+}

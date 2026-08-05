@@ -1,0 +1,184 @@
+@use '@angular/material' as mat;
+@use './styles/colors';
+@use 'ngx-toastr/toastr';
+
+// Initialiser Material
+@include mat.core();
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  // background: linear-gradient(to bottom, var(--color-theme) 15%, var(--color-background) 25%);
+  background: var(--color-background);
+  color: var(--color-on-surface);
+  font-family: var(--font-body);
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+span.palet,
+span.tournament {
+  color: var(--color-primary) !important;
+  font-style: italic !important;
+  font-weight: bold !important;
+}
+
+.no-wrap {
+  white-space: nowrap;
+}
+
+.dialog-backdrop {
+  backdrop-filter: blur(16px);
+  background: var(--color-overlay-strong) !important;
+}
+.dialog-backdrop-light {
+  backdrop-filter: blur(8px);
+  background: var(--color-overlay-light) !important;
+}
+
+.dialog-panel {
+  display: block;
+  width: min(100vw - 2rem, 29rem);
+
+  .cdk-dialog-container {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    outline: none;
+  }
+
+  .cdk-dialog-container:focus,
+  .cdk-dialog-container:focus-visible {
+    outline: none;
+  }
+}
+
+.dialog-panel-large {
+  display: block;
+  width: min(100vw - 2rem, 80%);
+
+  .cdk-dialog-container {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    outline: none;
+  }
+
+  .cdk-dialog-container:focus,
+  .cdk-dialog-container:focus-visible {
+    outline: none;
+  }
+}
+
+// Team actions menu (kebab): anchored popover on desktop, bottom sheet on mobile
+.team-actions-popover-backdrop {
+  background: transparent !important;
+}
+
+.team-actions-popover-panel,
+.team-actions-sheet-panel {
+  display: block;
+
+  .cdk-dialog-container {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    outline: none;
+  }
+
+  .cdk-dialog-container:focus,
+  .cdk-dialog-container:focus-visible {
+    outline: none;
+  }
+}
+
+.team-actions-sheet-panel {
+  width: 100%;
+  max-width: 100vw;
+  padding: 0 0.75rem env(safe-area-inset-bottom, 0.75rem);
+
+  .team-actions-menu {
+    min-width: 0;
+    border-radius: 1rem 1rem 0 0 !important;
+    padding-bottom: 1rem;
+
+    &::before {
+      content: '';
+      display: block;
+      width: 2.5rem;
+      height: 0.3rem;
+      margin: 0.6rem auto 0.4rem;
+      border-radius: 999px;
+      background: var(--color-border-subtle);
+    }
+  }
+}
+
+// Calendar picker overlay styles
+.cdk-overlay-pane {
+  &.calendar-overlay {
+    z-index: 1000;
+  }
+}
+
+.cdk-overlay-transparent-backdrop {
+  display: none;
+}
+
+.toast-top-right-custom {
+  top: 20px;
+  right: 20px;
+}
+
+// Filet de sécurité : si le navigateur ne déclenche jamais l'événement
+// natif `afterprint` (ex. navigateur intégré de VS Code, qui n'ouvre pas de
+// vraie boîte de dialogue d'impression), `.print-sheet` resterait monté à
+// l'écran indéfiniment. On le masque donc toujours hors impression, quel
+// que soit l'état du composant qui le monte.
+@media screen {
+  .print-sheet {
+    display: none;
+  }
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  .print-sheet,
+  .print-sheet * {
+    visibility: visible;
+  }
+
+  .print-sheet {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+  }
+
+  .nav-shell {
+    height: auto;
+    overflow: visible;
+  }
+
+  .nav-main {
+    overflow: visible;
+  }
+}

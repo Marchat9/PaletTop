@@ -1,0 +1,82 @@
+.team-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+
+  .header-left {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+
+    .team-name {
+      margin: 0;
+      font-family: var(--font-headline);
+      font-size: clamp(2rem, 6vw, 3rem);
+      line-height: 1.1;
+    }
+
+    .eyebrow {
+      color: var(--color-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      font-size: 0.8rem;
+    }
+    .left-border {
+      border-radius: 10px;
+      padding-left: 1rem;
+      border-left: 5px solid var(--color-primary);
+    }
+
+    .team-info {
+      display: flex;
+      flex-direction: row;
+      gap: 1rem;
+
+      font-family: var(--font-label);
+      font-size: 1rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--color-secondary);
+      white-space: nowrap;
+
+      .tournament-code {
+        margin: 0;
+        padding: 0.25rem 0.6rem;
+        border-radius: 0.45rem;
+        background: var(--color-surface-container-high);
+        align-content: center;
+
+        .code {
+          color: var(--color-tertiary);
+        }
+      }
+
+      .team-code {
+        display: flex;
+        flex-direction: row;
+        gap: 0.3rem;
+        align-items: center;
+
+        margin: 0;
+        padding: 0.25rem 0.6rem;
+        border-radius: 0.45rem;
+        background: var(--color-surface-container-high);
+
+        .code {
+          font-size: 1rem;
+          color: var(--color-tertiary);
+        }
+      }
+    }
+  }
+
+  .team-metrics {
+    display: flex;
+    gap: 1.4rem;
+  }
+
+  .bold {
+    font-weight: bold;
+  }
+}

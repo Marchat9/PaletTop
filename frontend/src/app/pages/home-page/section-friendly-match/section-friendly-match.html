@@ -1,0 +1,33 @@
+<app-card>
+  <div class="friendly-match">
+    <div class="header">
+      <div class="title">
+        <h3>Match amical</h3>
+        <app-icon name="sports_score" iconClass="icon" />
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="description">
+        <span
+          >Lancez une partie rapide sans pression seul ou en équipe et affichez votre score en
+          direct.</span
+        >
+      </div>
+
+      <div class="versus">
+        <img ngSrc="assets/images/friendly-player-1.jpg" width="120" height="120" />
+        <span class="vs">VS</span>
+        <img ngSrc="assets/images/friendly-player-2.jpg" width="120" height="120" />
+      </div>
+    </div>
+
+    <div class="action">
+      <app-button
+        title="Lancer un match amical"
+        icon="sports_score"
+        (clicked)="eventGoToFriendlyMatch.emit()"
+      />
+    </div>
+  </div>
+</app-card>

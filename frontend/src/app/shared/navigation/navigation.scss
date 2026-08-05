@@ -1,0 +1,41 @@
+.nav-shell {
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.nav-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  /* Scrollbar styling - Webkit browsers */
+  &::-webkit-scrollbar {
+    width: 0.5rem;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: var(--color-surface-container-low);
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--color-primary);
+    border-radius: 0.25rem;
+    transition: background 0.2s ease;
+
+    &:hover {
+      background: var(--color-tertiary);
+    }
+  }
+
+  /* Firefox */
+  scrollbar-color: var(--color-primary) var(--color-surface-container-low);
+  scrollbar-width: thin;
+}
+
+.nav-main--mobile {
+  margin-bottom: 5rem;
+}

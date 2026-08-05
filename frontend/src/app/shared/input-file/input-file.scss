@@ -1,0 +1,73 @@
+:host {
+  display: contents;
+}
+
+.input-file-trigger {
+  --line-height: 0.64rem;
+
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5em;
+
+  border: 0;
+  border-radius: 0.6rem;
+  padding: 0.7rem 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-family: var(--font-label);
+  font-size: var(--line-height);
+  font-weight: 700;
+  transition:
+    opacity 0.2s ease,
+    filter 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+
+  cursor: pointer;
+
+  &.disabled {
+    background: var(--color-surface-container-low);
+    color: var(--color-on-surface-variant);
+    cursor: default;
+    opacity: 0.55;
+    filter: saturate(0.45);
+    box-shadow: inset 0 0 0 1px rgb(80 69 56 / 30%);
+  }
+
+  &.primary {
+    background: var(--gradient-brass);
+    color: var(--color-on-primary);
+  }
+
+  &.secondary {
+    background: var(--color-secondary-container);
+    color: var(--color-on-secondary);
+  }
+
+  &.tertiary {
+    background: var(--color-tertiary-container);
+    color: var(--color-on-tertiary);
+  }
+
+  &.error {
+    background: var(--color-error-container);
+    color: var(--color-on-error-container);
+  }
+
+  .button-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5em;
+  }
+
+  ::ng-deep .button-icon {
+    line-height: var(--line-height);
+  }
+
+  .text {
+    white-space: nowrap;
+  }
+}

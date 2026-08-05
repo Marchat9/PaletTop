@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Palet Laiton Pro - Création de Tournoi</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Epilogue:wght@400;700;800&amp;family=Manrope:wght@400;500;600&amp;family=Space+Grotesk:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "tertiary-container": "#b99857",
+                        "surface-container-lowest": "#090f16",
+                        "on-tertiary-container": "#453000",
+                        "on-primary-fixed-variant": "#574500",
+                        "on-secondary-fixed-variant": "#3c4857",
+                        "secondary": "#bbc7da",
+                        "on-secondary-fixed": "#101c2a",
+                        "on-tertiary-fixed-variant": "#5b4308",
+                        "tertiary-fixed-dim": "#e6c27d",
+                        "secondary-fixed": "#d7e3f7",
+                        "tertiary-fixed": "#ffdea3",
+                        "inverse-on-surface": "#2b3139",
+                        "surface-bright": "#343a42",
+                        "secondary-fixed-dim": "#bbc7da",
+                        "on-background": "#dde3ee",
+                        "tertiary": "#e6c27d",
+                        "outline-variant": "#504538",
+                        "on-primary-container": "#413200",
+                        "on-error-container": "#ffdad6",
+                        "surface-variant": "#2f353e",
+                        "error": "#ffb4ab",
+                        "on-surface": "#dde3ee",
+                        "on-tertiary-fixed": "#261900",
+                        "error-container": "#93000a",
+                        "primary": "#e9c349",
+                        "background": "#0e141c",
+                        "on-tertiary": "#402d00",
+                        "surface-tint": "#e9c349",
+                        "surface-container": "#1a2028",
+                        "primary-container": "#bb9820",
+                        "surface": "#0e141c",
+                        "primary-fixed": "#ffe088",
+                        "on-secondary-container": "#adb9cc",
+                        "on-error": "#690005",
+                        "inverse-primary": "#735c00",
+                        "outline": "#9c8f7f",
+                        "on-primary-fixed": "#241a00",
+                        "on-primary": "#3c2f00",
+                        "surface-container-low": "#161c24",
+                        "primary-fixed-dim": "#e9c349",
+                        "on-secondary": "#253140",
+                        "inverse-surface": "#dde3ee",
+                        "surface-dim": "#0e141c",
+                        "surface-container-highest": "#2f353e",
+                        "on-surface-variant": "#d4c4b3",
+                        "secondary-container": "#3e4a59",
+                        "surface-container-high": "#242a33"
+                    },
+                    fontFamily: {
+                        "headline": ["Epilogue"],
+                        "body": ["Manrope"],
+                        "label": ["Space Grotesk"]
+                    },
+                    borderRadius: { "DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem" },
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .brass-gradient {
+            background: linear-gradient(135deg, #e9c349 0%, #bb9820 100%);
+        }
+        .glass-panel {
+            background-color: rgba(47, 53, 62, 0.7);
+            backdrop-filter: blur(20px);
+        }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #504538; border-radius: 10px; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface font-body selection:bg-primary selection:text-on-primary min-h-screen pb-32 custom-scrollbar">
+<!-- Top Navigation Anchor -->
+<nav class="fixed top-0 w-full z-50 bg-slate-950/80 backdrop-blur-md flex justify-between items-center px-6 py-4 border-b border-amber-900/15 shadow-xl shadow-slate-950/50">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-amber-400" data-icon="precision_manufacturing">precision_manufacturing</span>
+<span class="text-xl font-bold tracking-tighter text-amber-400 font-headline">Palet Laiton Pro</span>
+</div>
+<div class="flex items-center gap-6">
+<span class="text-slate-400 hover:text-amber-300 transition-colors cursor-pointer material-symbols-outlined" data-icon="notifications">notifications</span>
+<div class="hidden md:flex gap-8 font-label text-[10px] uppercase tracking-widest text-slate-400">
+<a class="hover:text-amber-300" href="#">Accueil</a>
+<a class="text-amber-400 underline underline-offset-8 decoration-2" href="#">Admin</a>
+<a class="hover:text-amber-300" href="#">Joueur</a>
+<a class="hover:text-amber-300" href="#">Missions</a>
+</div>
+</div>
+</nav>
+<main class="container mx-auto px-4 pt-24 max-w-5xl">
+<!-- Header Section with Asymmetry -->
+<header class="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6">
+<div class="max-w-2xl">
+<h1 class="font-headline text-5xl font-extrabold tracking-tight text-on-surface mb-2">Configuration <span class="text-primary italic">Tournoi</span></h1>
+<p class="font-body text-secondary max-w-md">Définissez les paramètres de votre compétition artisanale. Chaque réglage forge l'identité de votre événement.</p>
+</div>
+<div class="flex flex-col items-end gap-1">
+<span class="font-label text-xs uppercase tracking-[0.2em] text-tertiary">Statut: Configuration</span>
+<div class="h-1 w-24 brass-gradient rounded-full"></div>
+</div>
+</header>
+<div class="grid grid-cols-1 md:grid-cols-12 gap-8">
+<!-- Left Column: Primary Config -->
+<div class="md:col-span-7 space-y-8">
+<!-- Section 1: Informations Générales -->
+<section class="bg-surface-container rounded-xl overflow-hidden">
+<div class="bg-surface-container-high px-6 py-4 flex items-center gap-3 border-b border-outline-variant/15">
+<span class="material-symbols-outlined text-primary" data-icon="info">info</span>
+<h2 class="font-headline text-lg font-bold">Informations Générales</h2>
+</div>
+<div class="p-8 space-y-6">
+<div class="group">
+<label class="font-label text-xs uppercase tracking-widest text-tertiary mb-2 block">Nom du tournoi</label>
+<input class="w-full bg-surface-container-highest border-b-2 border-outline-variant/30 focus:border-primary px-4 py-3 outline-none transition-all text-on-surface" placeholder="Ex: Coupe du Laiton Doré" type="text"/>
+</div>
+<div class="grid grid-cols-2 gap-6">
+<div class="group">
+<label class="font-label text-xs uppercase tracking-widest text-tertiary mb-2 block">Code Unique</label>
+<input class="w-full bg-surface-container-highest border-b-2 border-outline-variant/30 focus:border-primary px-4 py-3 outline-none transition-all text-on-surface font-label" type="text" value="BRASS-2024-X"/>
+</div>
+<div class="group">
+<label class="font-label text-xs uppercase tracking-widest text-tertiary mb-2 block">Date de l'événement</label>
+<input class="w-full bg-surface-container-highest border-b-2 border-outline-variant/30 focus:border-primary px-4 py-3 outline-none transition-all text-on-surface" type="date"/>
+</div>
+</div>
+<div class="group">
+<label class="font-label text-xs uppercase tracking-widest text-tertiary mb-2 block">Description artisanale</label>
+<textarea class="w-full bg-surface-container-highest border-b-2 border-outline-variant/30 focus:border-primary px-4 py-3 outline-none transition-all text-on-surface resize-none" placeholder="L'histoire de ce tournoi commence ici..." rows="3"></textarea>
+</div>
+</div>
+</section>
+<!-- Section 2: Paramètres de Jeu -->
+<section class="bg-surface-container rounded-xl overflow-hidden">
+<div class="bg-surface-container-high px-6 py-4 flex items-center gap-3 border-b border-outline-variant/15">
+<span class="material-symbols-outlined text-primary" data-icon="sports_handball">sports_handball</span>
+<h2 class="font-headline text-lg font-bold">Paramètres de Jeu</h2>
+</div>
+<div class="p-8 space-y-8">
+<div>
+<label class="font-label text-xs uppercase tracking-widest text-tertiary mb-4 block">Type de Palet</label>
+<div class="grid grid-cols-2 gap-4">
+<button class="flex items-center justify-between p-4 bg-surface-container-highest border border-primary/40 rounded-md group">
+<div class="text-left">
+<p class="font-bold text-primary">Laiton Pro</p>
+<p class="text-[10px] text-secondary">Poids régulé - 155g</p>
+</div>
+<span class="material-symbols-outlined text-primary" data-icon="check_circle" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</button>
+<button class="flex items-center justify-between p-4 bg-surface-container-low border border-outline-variant/20 rounded-md hover:border-outline-variant/50 transition-all">
+<div class="text-left">
+<p class="font-bold text-secondary">Laiton Standard</p>
+<p class="text-[10px] text-secondary">Polyvalence loisir</p>
+</div>
+<span class="material-symbols-outlined text-slate-700" data-icon="radio_button_unchecked">radio_button_unchecked</span>
+</button>
+</div>
+</div>
+<div>
+<div class="flex justify-between items-center mb-4">
+<label class="font-label text-xs uppercase tracking-widest text-tertiary">Capacité Maximale</label>
+<span class="font-label text-primary text-xl">32 Équipes</span>
+</div>
+<input class="w-full h-1 bg-surface-container-highest rounded-lg appearance-none cursor-pointer accent-primary" max="64" min="4" type="range" value="32"/>
+<div class="flex justify-between mt-2 font-label text-[10px] text-slate-500 uppercase tracking-tighter">
+<span>4 Min.</span>
+<span>64 Max.</span>
+</div>
+</div>
+<div>
+<label class="font-label text-xs uppercase tracking-widest text-tertiary mb-4 block">Format de Compétition</label>
+<div class="space-y-3">
+<div class="flex items-center justify-between p-3 bg-surface-container-low rounded group cursor-pointer hover:bg-surface-container-high transition-colors">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-secondary" data-icon="grid_view">grid_view</span>
+<span class="font-body text-sm font-medium">Poules (Qualification) + Élimination</span>
+</div>
+<input checked="" class="text-primary focus:ring-primary bg-surface-container-highest border-outline-variant" name="format" type="radio"/>
+</div>
+<div class="flex items-center justify-between p-3 bg-surface-container-low rounded group cursor-pointer hover:bg-surface-container-high transition-colors">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-secondary" data-icon="account_tree">account_tree</span>
+<span class="font-body text-sm font-medium">Élimination directe (Bracket)</span>
+</div>
+<input class="text-primary focus:ring-primary bg-surface-container-highest border-outline-variant" name="format" type="radio"/>
+</div>
+<div class="flex items-center justify-between p-3 bg-surface-container-low rounded group cursor-pointer hover:bg-surface-container-high transition-colors">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-secondary" data-icon="leaderboard">leaderboard</span>
+<span class="font-body text-sm font-medium">Championnat (Tous contre tous)</span>
+</div>
+<input class="text-primary focus:ring-primary bg-surface-container-highest border-outline-variant" name="format" type="radio"/>
+</div>
+</div>
+</div>
+</div>
+</section>
+</div>
+<!-- Right Column: Secondary Config -->
+<div class="md:col-span-5 space-y-8">
+<!-- Section 3: Règles & Scores -->
+<section class="bg-surface-container-low border border-outline-variant/10 rounded-xl p-8">
+<h3 class="font-headline text-lg font-bold mb-6 flex items-center gap-3">
+<span class="material-symbols-outlined text-primary" data-icon="military_tech">military_tech</span>
+                        Règles &amp; Scores
+                    </h3>
+<div class="space-y-6">
+<div class="bg-surface-container p-4 rounded-lg">
+<label class="font-label text-[10px] uppercase tracking-widest text-tertiary block mb-3">Calcul des scores</label>
+<select class="w-full bg-surface-container-highest border-none focus:ring-1 focus:ring-primary px-3 py-2 rounded text-sm text-on-surface appearance-none">
+<option>13 Points Standard</option>
+<option>Temps limité (20 min)</option>
+<option>Mixte (Points ou Temps)</option>
+</select>
+</div>
+<div class="bg-surface-container p-4 rounded-lg">
+<label class="font-label text-[10px] uppercase tracking-widest text-tertiary block mb-3">Condition de Victoire</label>
+<div class="flex gap-4">
+<button class="flex-1 py-2 px-3 text-xs border border-primary text-primary rounded bg-primary/5 font-bold">Score Exact</button>
+<button class="flex-1 py-2 px-3 text-xs border border-outline-variant/30 text-secondary rounded hover:bg-surface-container-highest">Mort Subite</button>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="bg-surface-container p-3 rounded-lg text-center">
+<span class="font-label text-[9px] uppercase text-slate-500 block">Gagné</span>
+<span class="font-headline text-2xl font-bold text-primary">+3</span>
+</div>
+<div class="bg-surface-container p-3 rounded-lg text-center">
+<span class="font-label text-[9px] uppercase text-slate-500 block">Perdu</span>
+<span class="font-headline text-2xl font-bold text-error">0</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Section 4 & 5: Organisation & Avancé -->
+<section class="space-y-4">
+<div class="bg-surface-container p-6 rounded-xl space-y-4">
+<h4 class="font-label text-xs font-bold text-on-surface-variant flex items-center gap-2">
+<span class="material-symbols-outlined text-sm" data-icon="settings_suggest">settings_suggest</span>
+                            LOGISTIQUE
+                        </h4>
+<label class="flex items-center gap-3 cursor-pointer group">
+<div class="relative w-10 h-5 bg-slate-800 rounded-full transition-colors group-hover:bg-slate-700">
+<div class="absolute left-1 top-1 w-3 h-3 brass-gradient rounded-full"></div>
+</div>
+<span class="text-sm font-medium">Tirage basé sur classement</span>
+</label>
+<label class="flex items-center gap-3 cursor-pointer group">
+<div class="relative w-10 h-5 bg-primary/20 rounded-full">
+<div class="absolute right-1 top-1 w-3 h-3 brass-gradient rounded-full shadow-sm"></div>
+</div>
+<span class="text-sm font-medium">Gestion consolantes incluse</span>
+</label>
+</div>
+<div class="bg-surface-container p-6 rounded-xl space-y-4">
+<h4 class="font-label text-xs font-bold text-on-surface-variant flex items-center gap-2">
+<span class="material-symbols-outlined text-sm" data-icon="gavel">gavel</span>
+                            AVANCÉ
+                        </h4>
+<div class="grid grid-cols-2 gap-4">
+<div>
+<label class="text-[10px] uppercase font-label text-slate-500">Repos (min)</label>
+<input class="w-full bg-surface-container-highest border-none p-2 rounded text-sm mt-1" type="number" value="10"/>
+</div>
+<div>
+<label class="text-[10px] uppercase font-label text-slate-500">Arbitrage</label>
+<select class="w-full bg-surface-container-highest border-none p-2 rounded text-sm mt-1">
+<option>Auto</option>
+<option>Manuel</option>
+</select>
+</div>
+</div>
+</div>
+</section>
+<!-- Visual Accent: Decorative Glass Image -->
+<div class="relative h-48 rounded-xl overflow-hidden shadow-2xl group">
+<img alt="Machined Brass Components" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="Close-up of high-precision machined brass mechanical components with metallic luster and dark shadows in an industrial workshop setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCNQBBjngULafw9NzDKrSYIRDq29vv19kUNC6ED3LLaSbdwWqceebTAMuGLoGwLRkwWA842hL8IbMpr2zZSmv5P0QOpM8nguUU-EEd0SLh05vONxVnAM3cutxxsoJVHuL15zLbeJ496BxXRjcR4e-zkvipxdc1MCpwIDB_sMIpb706UTZFQNW4cJ1jlb8_9JPY0Y0l6KHaIbDRchefZoZoP3VCP3N011vqQvWIJ-HWDX8816iECwbIHyemaBVQh_uSEB_TvtENriBI"/>
+<div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent"></div>
+<div class="absolute bottom-4 left-4">
+<p class="font-label text-[10px] uppercase tracking-widest text-primary mb-1">Inspiration</p>
+<p class="font-headline font-bold text-on-surface">L'Art de la Précision</p>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Prominent Action Footer -->
+<footer class="fixed bottom-0 left-0 w-full z-50 bg-slate-900/90 backdrop-blur-xl border-t border-amber-900/20 px-8 py-6 flex items-center justify-between">
+<div class="hidden md:block">
+<p class="text-xs text-slate-400 font-label uppercase tracking-widest">Récapitulatif</p>
+<p class="text-sm font-body text-on-surface">Tournoi 13 pts • 32 Équipes • Laiton Pro</p>
+</div>
+<div class="flex items-center gap-4 w-full md:w-auto">
+<button class="flex-1 md:flex-none px-6 py-3 border border-outline-variant/30 text-secondary font-label text-xs uppercase tracking-widest hover:bg-slate-800 transition-colors">
+                Enregistrer Brouillon
+            </button>
+<button class="flex-[2] md:flex-none px-12 py-3 brass-gradient text-on-primary font-headline font-extrabold text-sm uppercase tracking-widest shadow-lg shadow-primary/20 active:scale-95 transition-all">
+                Créer le Tournoi
+            </button>
+</div>
+</footer>
+<!-- Mobile Bottom Nav -->
+<div class="md:hidden fixed bottom-0 left-0 w-full bg-slate-900 flex justify-around items-center px-4 py-3 pb-safe z-50 rounded-t-xl border-t border-amber-900/15 shadow-[0_-8px_30px_rgb(0,0,0,0.12)]">
+<div class="flex flex-col items-center justify-center text-slate-500 p-2">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="font-label text-[10px] uppercase tracking-widest mt-1">Accueil</span>
+</div>
+<div class="flex flex-col items-center justify-center bg-amber-400/10 text-amber-400 rounded-xl p-2 scale-105">
+<span class="material-symbols-outlined" data-icon="admin_panel_settings">admin_panel_settings</span>
+<span class="font-label text-[10px] uppercase tracking-widest mt-1">Admin</span>
+</div>
+<div class="flex flex-col items-center justify-center text-slate-500 p-2">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="font-label text-[10px] uppercase tracking-widest mt-1">Joueur</span>
+</div>
+<div class="flex flex-col items-center justify-center text-slate-500 p-2">
+<span class="material-symbols-outlined" data-icon="handshake">handshake</span>
+<span class="font-label text-[10px] uppercase tracking-widest mt-1">Missions</span>
+</div>
+</div>
+</body></html>

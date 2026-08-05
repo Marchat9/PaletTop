@@ -1,0 +1,10 @@
+@if (visible()) {
+  <nav class="nav-bot" aria-label="Navigation mobile">
+    @for (item of items(); track item.route) {
+      <a class="item" [class.item--active]="item.route === activeRoute()" [routerLink]="item.route">
+        <app-icon [name]="item.icon!" />
+        <span class="label">{{ item.label }}</span>
+      </a>
+    }
+  </nav>
+}
