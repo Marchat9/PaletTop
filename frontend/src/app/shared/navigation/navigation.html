@@ -8,6 +8,7 @@
     [notificationBadge]="notificationBadge()"
     (changeTheme)="changeTheme.emit($event)"
     (notificationClick)="onNotificationClick()"
+    (redirectToGithub)="redirectToGithub()"
   />
 
   <main class="nav-main" [class.nav-main--mobile]="isMobile()">

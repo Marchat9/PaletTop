@@ -2,6 +2,7 @@ export const environment = {
   appName: 'Palet Top',
   limitMobileSizePx: 768,
   backBaseApiUrl: 'http://localhost:3000',
+  githubRepoUrl: 'https://github.com/Marchat9/PaletTop',
 
   apiConfiguration: {
     delayToUpdateScore: 500, // ms

@@ -1,5 +1,10 @@
 <div class="button-icon" (click)="clicked.emit()">
-  <app-icon [name]="icon()" />
+  @if (icon()) {
+    <app-icon [name]="icon()!" />
+  } @else {
+    <img class="image" [ngSrc]="imagePath() ?? ''" priority width="20" height="20" />
+  }
+
   @if (badge() !== null) {
     <span class="badge" aria-label="Nombre de notifications">{{
       (badge() || 0) > maxNumberOfNotifications ? maxNumberOfNotifications + '+' : badge()

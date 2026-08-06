@@ -61,19 +61,7 @@
     }
   }
 
-  .notif {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 2rem;
-    height: 2rem;
-    border: 0;
-    border-radius: 999px;
-    background: var(--color-surface-container-high);
-    color: var(--color-on-surface);
-  }
-
-  .theme {
+  .icon {
     display: flex;
     align-items: center;
     justify-content: center;

@@ -22,14 +22,20 @@
 
   <div class="actions">
     <app-button-icon
-      class="notif"
+      class="icon"
+      [imagePath]="'assets/images/github_' + (theme() === 'dark' ? 'white' : 'black') + '.svg'"
+      (clicked)="redirectToGithub.emit()"
+    />
+
+    <app-button-icon
+      class="icon"
       icon="notifications"
       [badge]="notificationBadge()"
       (clicked)="notificationClick.emit()"
     />
 
     <app-button-icon
-      class="theme"
+      class="icon"
       [icon]="theme() === 'dark' ? 'light_mode' : 'dark_mode'"
       (clicked)="toggleTheme()"
     />

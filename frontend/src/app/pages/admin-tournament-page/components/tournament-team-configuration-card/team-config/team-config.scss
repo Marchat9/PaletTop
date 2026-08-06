@@ -143,6 +143,10 @@
       &.gap {
         gap: 0.55rem;
       }
+
+      &.wrap {
+        flex-wrap: wrap;
+      }
     }
 
     .import-section {
@@ -197,6 +201,12 @@
         display: flex;
         flex-direction: row;
         justify-content: space-between;
+        gap: 0.5rem;
+
+        @media (max-width: 480px) {
+          flex-direction: column;
+          align-items: stretch;
+        }
 
         .left-side {
           display: flex;
@@ -220,6 +230,10 @@
           flex-wrap: nowrap;
           align-items: flex-start;
           gap: 0.5rem;
+
+          @media (max-width: 480px) {
+            justify-content: space-between;
+          }
 
           .code {
             flex: 1 1 auto;
@@ -250,6 +264,11 @@
           grid-template-columns: auto 1fr;
           align-items: baseline;
           gap: 1rem;
+
+          @media (max-width: 480px) {
+            grid-template-columns: 1fr;
+            gap: 0.15rem;
+          }
 
           .name {
             font-size: 1.1rem;
