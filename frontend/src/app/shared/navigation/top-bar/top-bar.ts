@@ -23,6 +23,7 @@ export class TopBarComponent {
 
   public readonly changeTheme = output<ThemeMode>();
   public readonly notificationClick = output<void>();
+  public readonly redirectToGithub = output<void>();
 
   public toggleTheme(): void {
     const nextTheme = this.theme() === 'dark' ? 'light' : 'dark';

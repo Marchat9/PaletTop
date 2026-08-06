@@ -92,4 +92,8 @@ export class Navigation {
         console.log('Notification dialog closed');
       });
   }
+
+  public redirectToGithub(): void {
+    window.open(environment.githubRepoUrl, '_blank');
+  }
 }
