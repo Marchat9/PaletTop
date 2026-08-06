@@ -16,6 +16,11 @@ function resolveBackBaseApiUrl(): string {
 export const environment = {
   ...environmentBase,
   production: true,
+  pwa: {
+    ...environmentBase.pwa,
+    enabled: true,
+  },
+
   get backBaseApiUrl(): string {
     return resolveBackBaseApiUrl();
   },

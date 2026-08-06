@@ -1,0 +1,91 @@
+:host {
+  display: block;
+  width: min(100vw - 2rem, 26rem);
+}
+
+.install-modal {
+  width: 100%;
+  border-radius: 0.8rem;
+  background: var(--color-surface-container-high);
+  box-shadow: 0 1rem 2.5rem var(--color-shadow-strong);
+  overflow: hidden;
+}
+
+.install-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.install-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+::ng-deep .title-icon {
+  color: var(--color-primary);
+}
+
+.install-title {
+  margin: 0;
+  font-family: var(--font-headline);
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.install-body {
+  padding: 1rem 1.25rem;
+  color: var(--color-on-surface);
+
+  p {
+    margin: 0 0 0.75rem;
+    font-size: 0.9rem;
+  }
+}
+
+.install-steps {
+  margin: 0;
+  padding-left: 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+}
+
+::ng-deep .step-icon {
+  color: var(--color-primary);
+}
+
+.install-footer {
+  padding: 0.3rem 1.25rem 1rem;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.icon-btn {
+  width: 2rem;
+  height: 2rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.5rem;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  color: var(--color-on-surface-variant);
+
+  &:hover {
+    background: var(--color-hover-surface-default);
+    color: var(--color-primary);
+  }
+}

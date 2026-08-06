@@ -5,6 +5,7 @@ import { provideStore } from '@ngrx/store';
 import { provideStoreDevtools } from '@ngrx/store-devtools';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { provideToastr } from 'ngx-toastr';
+import { provideServiceWorker } from '@angular/service-worker';
 
 import { environment } from '../environments/environment';
 import { routes } from './app-routes';
@@ -23,6 +24,10 @@ export const appConfig: ApplicationConfig = {
       positionClass: 'toast-top-right-custom',
     }),
     { provide: LOCALE_ID, useValue: 'fr-FR' },
+    provideServiceWorker('ngsw-worker.js', {
+      enabled: environment.pwa.enabled,
+      registrationStrategy: 'registerWhenStable:30000',
+    }),
     ...(!environment.production
       ? [
           provideStoreDevtools({
