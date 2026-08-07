@@ -1,0 +1,27 @@
+<div class="install-modal" role="dialog" aria-modal="true" aria-label="Installer l'application">
+  <div class="install-header">
+    <div class="install-title-wrap">
+      <app-icon name="install_mobile" iconClass="title-icon" />
+      <h2 class="install-title">Installer PaletTop</h2>
+    </div>
+    <app-button-icon class="icon-btn" icon="close" (clicked)="close()" />
+  </div>
+
+  <div class="install-body">
+    @if (isIos()) {
+      <p>Pour installer PaletTop sur votre iPhone :</p>
+      <ol class="install-steps">
+        <li><app-icon name="ios_share" iconClass="step-icon" /> Appuyez sur <strong>Partager</strong></li>
+        <li><app-icon name="add_box" iconClass="step-icon" /> Sélectionnez <strong>Sur l'écran d'accueil</strong></li>
+      </ol>
+    } @else {
+      <p>Installez PaletTop sur votre appareil pour y accéder directement depuis votre écran d'accueil.</p>
+    }
+  </div>
+
+  <footer class="install-footer">
+    @if (!isIos()) {
+      <app-button title="Installer" variant="primary" (clicked)="install()" />
+    }
+  </footer>
+</div>

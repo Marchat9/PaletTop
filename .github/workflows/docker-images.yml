@@ -9,14 +9,55 @@ on:
 env:
     REGISTRY: ghcr.io
 
+# Cancel superseded runs on a PR (new push to the same branch obsoletes the previous
+# build). Never cancel a tag push — a release build always runs to completion.
+concurrency:
+    group: docker-images-${{ github.ref }}
+    cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 permissions:
     contents: read
     packages: write
 
 jobs:
-    build:
+    # Detects which project(s) a PR actually touches, so a PR that only changes
+    # `frontend/` doesn't also spend CI minutes building an unchanged backend image (and
+    # vice versa). Always runs (even on tag pushes) to keep the build job's `if` simple —
+    # its output is only consulted for pull_request events, see below.
+    changes:
         runs-on: ubuntu-latest
+        outputs:
+            backend: ${{ steps.filter.outputs.backend }}
+            frontend: ${{ steps.filter.outputs.frontend }}
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Detect changed projects
+              uses: dorny/paths-filter@v3
+              id: filter
+              with:
+                  filters: |
+                      backend:
+                          - 'backend/**'
+                      frontend:
+                          - 'frontend/**'
+
+    build:
+        needs: changes
+        # On a PR, skip a project's image entirely if nothing under its directory
+        # changed. Tag pushes (releases) always build+push both, so a version tag never
+        # publishes just one half of the app. Written with plain dot-notation property
+        # access (no dynamic bracket indexing) so there's no ambiguity about whether the
+        # expression is valid GitHub Actions syntax.
+        if: |
+            github.event_name != 'pull_request' ||
+            (matrix.name == 'backend' && needs.changes.outputs.backend == 'true') ||
+            (matrix.name == 'frontend' && needs.changes.outputs.frontend == 'true')
+        runs-on: ubuntu-latest
+        timeout-minutes: 15
         strategy:
+            fail-fast: false
             matrix:
                 include:
                     - name: backend
@@ -59,5 +100,19 @@ jobs:
                   push: ${{ github.event_name != 'pull_request' }}
                   tags: ${{ steps.meta.outputs.tags }}
                   labels: ${{ steps.meta.outputs.labels }}
+                  # No attestation manifest: keeps the pushed image a plain single-arch
+                  # image rather than an OCI index, which is what `docker run` on a
+                  # self-hosted deployment expects.
+                  provenance: false
+                  # Same backend both ways (GitHub's own cache storage, not a registry
+                  # image) so cache actually round-trips between runs, and no
+                  # `*-build-cache` package is ever created in GHCR. `mode=max` caches
+                  # the intermediate `dev`/`build` stages too, not just the final
+                  # `production` layer — those are what `npm ci`/`npm run build` land in.
+                  # `ignore-error=true`: the GHA cache backend occasionally returns a
+                  # transient 5xx on export (seen in the wild as "failed to parse error
+                  # response 504") — without this flag that turns a flaky cache write into
+                  # a failed build. cache-to is skipped entirely on PRs so only tag pushes
+                  # (which is what we actually want warm) touch the cache export path.
                   cache-from: type=gha,scope=${{ matrix.name }}
-                  cache-to: ${{ github.event_name != 'pull_request' && format('type=registry,ref={0}/{1}-build-cache:{2},mode=max', env.REGISTRY, env.IMAGE_REPO, matrix.name) || '' }}
+                  cache-to: ${{ github.event_name != 'pull_request' && format('type=gha,scope={0},mode=max,ignore-error=true', matrix.name) || '' }}

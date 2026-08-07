@@ -1,9 +1,11 @@
 # PaletTop
 
-**PaletTop** is a tournament management app for *Palet*, a traditional French game played with
+**PaletTop** is a tournament management app for _Palet_, a traditional French game played with
 metal pucks. It handles the parts that are usually a hassle to run by hand: team registration,
 pool/bracket draws, live score tracking, and rankings — from a phone or a laptop, for both the
 tournament admin and the players.
+
+🚀 **Live demo:** the app is currently available at [palettop.marchat.fr.eu.org](http://palettop.marchat.fr.eu.org/).
 
 ## Highlights
 
@@ -22,11 +24,11 @@ tournament admin and the players.
 
 ## Tech stack
 
-| Layer    | Stack                                                                 |
-| -------- | ---------------------------------------------------------------------- |
-| Frontend | Angular 21 (standalone, signals), NgRx, Angular Material/CDK           |
-| Backend  | NestJS 11, TypeORM, PostgreSQL, Socket.IO                              |
-| Infra    | Docker Compose (Postgres + backend + frontend)                        |
+| Layer    | Stack                                                        |
+| -------- | ------------------------------------------------------------ |
+| Frontend | Angular 21 (standalone, signals), NgRx, Angular Material/CDK |
+| Backend  | NestJS 11, TypeORM, PostgreSQL, Socket.IO                    |
+| Infra    | Docker Compose (Postgres + backend + frontend)               |
 
 ## Quick start
 

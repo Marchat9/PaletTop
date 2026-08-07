@@ -8,6 +8,11 @@ export const environment = {
     delayToUpdateScore: 500, // ms
   },
 
+  pwa: {
+    enabled: false,
+    delayRepromptInDay: 2,
+  },
+
   tournamentConfiguration: {
     admin: {
       hiddenFields: ['adminPassword'],
