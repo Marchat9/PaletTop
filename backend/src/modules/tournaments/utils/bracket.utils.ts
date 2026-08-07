@@ -15,7 +15,7 @@ export type RankIndexByEliminationTable = {
  * Ex : 14 → 8 | 62 → 32 | 10 → 8
  */
 export function computePrincipalBracketSize(teamCount: number): number {
-    return Math.pow(2, Math.ceil(Math.log2(teamCount / 2)));
+    return Math.pow(2, Math.max(1, Math.ceil(Math.log2(teamCount / 2))));
 }
 
 /**

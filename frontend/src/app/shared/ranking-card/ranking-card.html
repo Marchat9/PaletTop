@@ -44,21 +44,21 @@
           @for (entry of ranking(); track entry.teamId) {
             @switch (scoreCalculation()) {
               @case ('score') {
-                <tr [class.row--top]="entry.rank === 1">
+                <tr>
                   <td class="col-rank">{{ entry.rank }}</td>
                   <td class="col-team">{{ entry.teamName }}</td>
                   <td class="col-stat">{{ entry.pointsFor }}</td>
                 </tr>
               }
               @case ('tournament_score') {
-                <tr [class.row--top]="entry.rank === 1">
+                <tr>
                   <td class="col-rank">{{ entry.rank }}</td>
                   <td class="col-team">{{ entry.teamName }}</td>
                   <td class="col-stat">{{ entry.tournamentPoints }}</td>
                 </tr>
               }
               @default {
-                <tr [class.row--top]="entry.rank === 1">
+                <tr>
                   <td class="col-rank">{{ entry.rank }}</td>
                   <td class="col-team">{{ entry.teamName }}</td>
                   <td class="col-stat">{{ entry.wins }}</td>

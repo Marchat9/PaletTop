@@ -84,17 +84,17 @@
   tbody tr {
     border-bottom: 1px solid color-mix(in srgb, var(--color-outline-variant) 40%, transparent);
 
-    &:last-child {
-      border-bottom: none;
-    }
-
-    &.row--top {
+    &:first-child {
       background: color-mix(in srgb, var(--color-primary) 6%, transparent);
 
       .col-rank {
         font-weight: 700;
         color: var(--color-primary);
       }
+    }
+
+    &:last-child {
+      border-bottom: none;
     }
   }
 
