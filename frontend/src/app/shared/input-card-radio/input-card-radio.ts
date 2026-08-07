@@ -14,6 +14,7 @@ export interface InputCardRadioOption<T> {
   value: T;
   label: string;
   description?: string;
+  htmlDescription?: string;
   icon?: string;
 }
 

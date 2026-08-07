@@ -159,6 +159,9 @@ export class PlayerTeamMatchPageComponent {
             teamCode: this.teamCode!,
           }),
         );
+      }
+
+      if (!this.sessions() || this.sessions()?.length === 0) {
         this.store.dispatch(loadSessions({ code: this.tournamentPathCode! }));
       }
     });
