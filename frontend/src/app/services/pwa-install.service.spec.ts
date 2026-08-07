@@ -65,7 +65,10 @@ describe('PwaInstallService', () => {
   it('calls prompt() on the captured event and stops offering install once chosen', async () => {
     const promptSpy = vi.fn();
     const service = TestBed.inject(PwaInstallService);
-    dispatchBeforeInstallPrompt({ prompt: promptSpy, userChoice: Promise.resolve({ outcome: 'accepted' }) });
+    dispatchBeforeInstallPrompt({
+      prompt: promptSpy,
+      userChoice: Promise.resolve({ outcome: 'accepted' }),
+    });
 
     service.promptInstall();
     expect(promptSpy).toHaveBeenCalled();

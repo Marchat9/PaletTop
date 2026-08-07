@@ -11,6 +11,9 @@ concurrency:
 
 permissions:
     contents: read
+    # Both PR comments and PR labels go through the Issues API under the hood,
+    # so they need `issues: write` — `pull-requests: write` alone isn't enough.
+    issues: write
     pull-requests: write
 
 jobs:
@@ -34,6 +37,25 @@ jobs:
                           - 'backend/**'
                       frontend:
                           - 'frontend/**'
+
+            # Labels the PR with `frontend`, `backend`, or both, based on the same
+            # path detection used to decide what to lint above. Labels that don't
+            # exist yet in the repo are created automatically by this API call.
+            - name: Label PR with touched project(s)
+              if: steps.filter.outputs.backend == 'true' || steps.filter.outputs.frontend == 'true'
+              uses: actions/github-script@v7
+              with:
+                  script: |
+                      const labels = [];
+                      if ('${{ steps.filter.outputs.backend }}' === 'true') labels.push('backend');
+                      if ('${{ steps.filter.outputs.frontend }}' === 'true') labels.push('frontend');
+
+                      await github.rest.issues.addLabels({
+                          owner: context.repo.owner,
+                          repo: context.repo.repo,
+                          issue_number: context.issue.number,
+                          labels,
+                      });
 
     lint:
         needs: changes
@@ -83,6 +105,10 @@ jobs:
               id: lint
               if: env.SHOULD_LINT == 'true'
               working-directory: ${{ matrix.context }}
+              # NO_COLOR tells eslint/prettier (via chalk) to skip ANSI color codes,
+              # since the output ends up in a plain-text PR comment, not a terminal.
+              env:
+                  NO_COLOR: '1'
               # `set -o pipefail` makes this step's exit code the linter's exit code,
               # not `tee`'s — `tee` only mirrors the output to a file the comment step
               # below can read, it shouldn't hide a lint failure.
@@ -91,13 +117,16 @@ jobs:
                   ${{ matrix.command }} 2>&1 | tee lint-output.txt
 
             # Only runs when the lint step itself failed (not e.g. a `npm ci` failure,
-            # and not when the matrix leg was skipped entirely). A custom `if:` on a
-            # step is NOT implicitly ANDed with `success()`, so this still runs after
-            # the lint step's failure without needing `always()`. Uploaded (rather than
-            # commented right here) so the `comment` job below can combine both matrix
-            # legs into a single PR comment instead of one per project.
+            # and not when the matrix leg was skipped entirely). A custom `if:` that
+            # doesn't reference a status function (success/failure/always/cancelled)
+            # still gets an implicit `success()` ANDed in by GitHub — and by this point
+            # the job is already failing, so that implicit success() would always be
+            # false. `failure()` overrides that default so the condition below actually
+            # gets evaluated. Uploaded (rather than commented right here) so the
+            # `comment` job below can combine both matrix legs into a single PR comment
+            # instead of one per project.
             - name: Upload lint output
-              if: steps.lint.outcome == 'failure'
+              if: failure() && steps.lint.outcome == 'failure'
               uses: actions/upload-artifact@v4
               with:
                   name: lint-output-${{ matrix.name }}
@@ -138,9 +167,12 @@ jobs:
                           echo "### ❌ Lint failed — \`$name\`"
                           echo
                           echo '```'
+                          # Strip ANSI color codes (belt-and-suspenders alongside NO_COLOR
+                          # on the lint step) — raw escape codes are unreadable once dumped
+                          # into a plain-text PR comment code block.
                           # Stay comfortably under GitHub's ~65536 char comment limit,
                           # split across however many projects failed.
-                          head -c 30000 "$dir/lint-output.txt"
+                          sed -r 's/\x1b\[[0-9;]*[a-zA-Z]//g' "$dir/lint-output.txt" | head -c 30000
                           echo
                           echo '```'
                           echo
