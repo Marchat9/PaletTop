@@ -37,6 +37,11 @@ jobs:
 
     lint:
         needs: changes
+        # Without an explicit `name:`, the status check context GitHub reports (and
+        # what a branch protection rule would have to match on) concatenates every
+        # matrix property (name, context, command) instead of just `name` — fragile,
+        # since editing `command` would silently change the check's name.
+        name: lint (${{ matrix.name }})
         runs-on: ubuntu-latest
         timeout-minutes: 10
         strategy:

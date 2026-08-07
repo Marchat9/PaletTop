@@ -45,6 +45,10 @@ jobs:
 
     build:
         needs: changes
+        # Without an explicit `name:`, the status check context concatenates every
+        # matrix property (name, context) instead of just `name` — fragile, since
+        # editing `context` would silently change the check's name.
+        name: build (${{ matrix.name }})
         runs-on: ubuntu-latest
         timeout-minutes: 15
         strategy:
