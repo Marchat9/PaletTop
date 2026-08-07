@@ -1,0 +1,165 @@
+name: Lint
+
+on:
+    pull_request:
+        branches: [main]
+
+# A new push to the same PR obsoletes the previous lint run.
+concurrency:
+    group: lint-${{ github.ref }}
+    cancel-in-progress: true
+
+permissions:
+    contents: read
+    pull-requests: write
+
+jobs:
+    # Detects which project(s) the PR actually touches, so a PR that only changes
+    # `frontend/` doesn't also lint an untouched backend (and vice versa).
+    changes:
+        runs-on: ubuntu-latest
+        outputs:
+            backend: ${{ steps.filter.outputs.backend }}
+            frontend: ${{ steps.filter.outputs.frontend }}
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Detect changed projects
+              uses: dorny/paths-filter@v3
+              id: filter
+              with:
+                  filters: |
+                      backend:
+                          - 'backend/**'
+                      frontend:
+                          - 'frontend/**'
+
+    lint:
+        needs: changes
+        # Without an explicit `name:`, the status check context GitHub reports (and
+        # what a branch protection rule would have to match on) concatenates every
+        # matrix property (name, context, command) instead of just `name` — fragile,
+        # since editing `command` would silently change the check's name.
+        name: lint (${{ matrix.name }})
+        runs-on: ubuntu-latest
+        timeout-minutes: 10
+        strategy:
+            fail-fast: false
+            matrix:
+                include:
+                    # Backend has real ESLint. Frontend has no ESLint config yet, so it
+                    # only gets a Prettier format check for now.
+                    - name: backend
+                      context: ./backend
+                      command: npm run lint
+                    - name: frontend
+                      context: ./frontend
+                      command: npm run format:check
+        # Only lint a project if something under its directory actually changed. A
+        # job-level `env:` (unlike a job-level `if:`) has access to `matrix`/`needs`,
+        # so the check lives here and is reused as `env.SHOULD_LINT` below.
+        env:
+            SHOULD_LINT: ${{ (matrix.name == 'backend' && needs.changes.outputs.backend == 'true') || (matrix.name == 'frontend' && needs.changes.outputs.frontend == 'true') }}
+        steps:
+            - name: Checkout
+              if: env.SHOULD_LINT == 'true'
+              uses: actions/checkout@v4
+
+            - name: Set up Node.js
+              if: env.SHOULD_LINT == 'true'
+              uses: actions/setup-node@v4
+              with:
+                  node-version: '22'
+                  cache: npm
+                  cache-dependency-path: ${{ matrix.context }}/package-lock.json
+
+            - name: Install dependencies
+              if: env.SHOULD_LINT == 'true'
+              working-directory: ${{ matrix.context }}
+              run: npm ci
+
+            - name: Run lint
+              id: lint
+              if: env.SHOULD_LINT == 'true'
+              working-directory: ${{ matrix.context }}
+              # `set -o pipefail` makes this step's exit code the linter's exit code,
+              # not `tee`'s — `tee` only mirrors the output to a file the comment step
+              # below can read, it shouldn't hide a lint failure.
+              run: |
+                  set -o pipefail
+                  ${{ matrix.command }} 2>&1 | tee lint-output.txt
+
+            # Only runs when the lint step itself failed (not e.g. a `npm ci` failure,
+            # and not when the matrix leg was skipped entirely). A custom `if:` on a
+            # step is NOT implicitly ANDed with `success()`, so this still runs after
+            # the lint step's failure without needing `always()`. Uploaded (rather than
+            # commented right here) so the `comment` job below can combine both matrix
+            # legs into a single PR comment instead of one per project.
+            - name: Upload lint output
+              if: steps.lint.outcome == 'failure'
+              uses: actions/upload-artifact@v4
+              with:
+                  name: lint-output-${{ matrix.name }}
+                  path: ${{ matrix.context }}/lint-output.txt
+                  retention-days: 1
+
+    # Combines whatever `lint-output-*` artifacts exist (one per failed matrix leg,
+    # zero if everything passed) into a single PR comment. `if: always()` so it still
+    # runs — and reports — when the `lint` job failed; a job only runs by default when
+    # every job in `needs` succeeded.
+    comment:
+        needs: [changes, lint]
+        if: always()
+        runs-on: ubuntu-latest
+        timeout-minutes: 5
+        steps:
+            - name: Download lint outputs
+              uses: actions/download-artifact@v4
+              with:
+                  pattern: lint-output-*
+                  path: lint-outputs
+                  if-no-artifact-found: ignore
+
+            - name: Build combined comment body
+              id: build
+              run: |
+                  body_file=comment-body.md
+                  : > "$body_file"
+                  found=false
+
+                  for dir in lint-outputs/lint-output-*/; do
+                      [ -d "$dir" ] || continue
+                      found=true
+                      name="$(basename "$dir")"
+                      name="${name#lint-output-}"
+
+                      {
+                          echo "### ❌ Lint failed — \`$name\`"
+                          echo
+                          echo '```'
+                          # Stay comfortably under GitHub's ~65536 char comment limit,
+                          # split across however many projects failed.
+                          head -c 30000 "$dir/lint-output.txt"
+                          echo
+                          echo '```'
+                          echo
+                      } >> "$body_file"
+                  done
+
+                  echo "found=$found" >> "$GITHUB_OUTPUT"
+
+            - name: Comment on PR
+              if: steps.build.outputs.found == 'true'
+              uses: actions/github-script@v7
+              with:
+                  script: |
+                      const fs = require('fs');
+                      const body = fs.readFileSync('comment-body.md', 'utf8');
+
+                      await github.rest.issues.createComment({
+                          owner: context.repo.owner,
+                          repo: context.repo.repo,
+                          issue_number: context.issue.number,
+                          body,
+                      });
