@@ -110,13 +110,13 @@ export class StructuredTournamentStrategy extends TournamentStrategy {
         const nbTeamStillInGame =
             (config.principalBracketSize ?? 0) /
             Math.pow(2, Math.max(currentSessionNumber - (numberOfQualifyingRounds ?? 0) - 1, 0));
-        const hasChampion = nbTeamStillInGame <= 1;
+        const isFinal = isElimination && nbTeamStillInGame <= 2;
 
         return {
             currentSession: currentSessionNumber,
             phaseName: this.computePhaseName(tournament, sessions),
-            canFinishTournament: isElimination && allValidated && hasChampion,
-            canGenerateNewSession: allValidated && !hasChampion,
+            canFinishTournament: isElimination && allValidated && isFinal,
+            canGenerateNewSession: allValidated && !isFinal,
         };
     }
 
