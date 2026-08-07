@@ -11,6 +11,7 @@ import { Icon } from '../icon/icon';
 })
 export class CardCollapsible implements OnInit {
   readonly defaultExpanded = input(true, { alias: 'isExpanded' });
+  readonly canCollapse = input(true);
   readonly isExpanded = signal(true);
 
   ngOnInit(): void {

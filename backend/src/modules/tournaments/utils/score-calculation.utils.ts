@@ -1,3 +1,6 @@
+import { ScoreCalculation } from 'src/enum/tounament.enum';
+import { GlobalRankingEntry } from '../responses/ranking.dto';
+
 const TOURNAMENT_SCORE_WIN_POINTS = 6;
 
 const TOURNAMENT_SCORE_LOSS_BANDS: ReadonlyArray<{
@@ -25,4 +28,26 @@ export function computeTournamentScorePoints(won: boolean, ownScore: number): nu
         (band) => ownScore >= band.min && ownScore <= band.max,
     );
     return matchingBand?.points ?? 0;
+}
+
+/**
+ * Score de classement d'une entry pour une méthode de calcul donnée, comparable directement
+ * par soustraction — pour VICTORY_AND_GOAL_AVERAGE, les victoires sont pondérées pour toujours
+ * primer sur le goal average (départage).
+ */
+export function computeEntryScore(
+    entry: Pick<GlobalRankingEntry, 'tournamentPoints' | 'wins' | 'goalAverage' | 'pointsFor'>,
+    scoreCalculation: ScoreCalculation,
+): number {
+    const GOAL_AVERAGE_TIEBREAK_OFFSET = 1_000_000;
+
+    switch (scoreCalculation) {
+        case ScoreCalculation.TOURNAMENT_SCORE:
+            return entry.tournamentPoints;
+        case ScoreCalculation.VICTORY_AND_GOAL_AVERAGE:
+            return entry.wins * GOAL_AVERAGE_TIEBREAK_OFFSET + entry.goalAverage;
+        default:
+        case ScoreCalculation.SCORE:
+            return entry.pointsFor;
+    }
 }

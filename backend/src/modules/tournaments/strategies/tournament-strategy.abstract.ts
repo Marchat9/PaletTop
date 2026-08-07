@@ -5,11 +5,13 @@ import { TournamentMatch } from 'src/entities/tounament-match.entity';
 import { TournamentPool } from 'src/entities/tournament-pool.entity';
 import { Tournament } from 'src/entities/tournament.entity';
 import { MatchesSessionStatus, MatchStatus, TournamentStatus } from 'src/enum/status.enum';
-import { ScoreCalculation } from 'src/enum/tounament.enum';
 import { MatchHistoryDto, toMatchHistoryDto } from '../../tournaments/responses/match-history.dto';
 import { GlobalRankingEntry } from '../../tournaments/responses/ranking.dto';
 import { TournamentStatusInfo } from '../../tournaments/responses/tournament-status.dto';
-import { computeTournamentScorePoints } from '../../tournaments/utils/score-calculation.utils';
+import {
+    computeEntryScore,
+    computeTournamentScorePoints,
+} from '../../tournaments/utils/score-calculation.utils';
 
 export abstract class TournamentStrategy {
     canStartNextSession(session: MatchesSession): boolean {
@@ -20,22 +22,21 @@ export abstract class TournamentStrategy {
         const stats = this.computeStats(tournament.teams, matches);
         const { scoreCalculation } = tournament.configuration;
 
-        stats.sort((a, b) => {
-            switch (scoreCalculation) {
-                case ScoreCalculation.TOURNAMENT_SCORE:
-                    return b.tournamentPoints - a.tournamentPoints;
-                case ScoreCalculation.VICTORY_AND_GOAL_AVERAGE:
-                    return b.wins - a.wins || b.goalAverage - a.goalAverage;
-                default:
-                case ScoreCalculation.SCORE:
-                    return b.pointsFor - a.pointsFor;
-            }
-        });
+        stats.sort(
+            (a, b) =>
+                computeEntryScore(b, scoreCalculation) - computeEntryScore(a, scoreCalculation),
+        );
 
-        return stats.map((stat, index) => ({
-            ...stat,
-            rank: index + 1,
-        }));
+        return stats.reduce<GlobalRankingEntry[]>((ranked, stat, index) => {
+            const isTiedWithPrevious =
+                index > 0 &&
+                computeEntryScore(stat, scoreCalculation) ===
+                    computeEntryScore(stats[index - 1], scoreCalculation);
+            const rank = isTiedWithPrevious ? ranked[index - 1].rank : index + 1;
+
+            ranked.push({ ...stat, rank });
+            return ranked;
+        }, []);
     }
 
     computeTeamHistory(matches: TournamentMatch[], teamId: string): MatchHistoryDto[] {

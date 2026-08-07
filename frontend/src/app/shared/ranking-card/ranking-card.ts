@@ -17,6 +17,7 @@ export class RankingCard {
   public readonly ranking = input<GlobalRankingEntry[]>();
   public readonly isLoading = input<boolean>(false);
   public readonly scoreCalculation = input<ScoreCalculation>();
+  public readonly canCollapse = input<boolean>(true);
   // ==============================
 
   public readonly hasData = computed(() => (this.ranking()?.length ?? 0) > 0);

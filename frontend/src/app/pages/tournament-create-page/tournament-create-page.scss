@@ -91,10 +91,26 @@
           position: absolute;
           inset: 0;
           background:
-            linear-gradient(to right, color-mix(in srgb, var(--color-background) 0%, transparent) 74%, var(--color-background) 94%),
-            linear-gradient(to left, color-mix(in srgb, var(--color-background) 0%, transparent) 66%, var(--color-background) 99%),
-            linear-gradient(to top, var(--color-background) 5%, color-mix(in srgb, var(--color-background) 0%, transparent) 50%),
-            radial-gradient(circle at 88% 86%, var(--color-background) -10%, color-mix(in srgb, var(--color-background) 0%, transparent) 56%);
+            linear-gradient(
+              to right,
+              color-mix(in srgb, var(--color-background) 0%, transparent) 74%,
+              var(--color-background) 94%
+            ),
+            linear-gradient(
+              to left,
+              color-mix(in srgb, var(--color-background) 0%, transparent) 66%,
+              var(--color-background) 99%
+            ),
+            linear-gradient(
+              to top,
+              var(--color-background) 5%,
+              color-mix(in srgb, var(--color-background) 0%, transparent) 50%
+            ),
+            radial-gradient(
+              circle at 88% 86%,
+              var(--color-background) -10%,
+              color-mix(in srgb, var(--color-background) 0%, transparent) 56%
+            );
         }
       }
 

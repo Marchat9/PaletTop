@@ -79,12 +79,16 @@ export class SessionService {
         if (loadedSession) {
             this.gateway.emitSessionUpdated(tournament.code, toSessionResponseDto(loadedSession));
             this.emitNewMatchForEachTeam(tournament.code, loadedSession);
+
+            // Emit first ranking - everyone with 0 point.
+            this.rankingService.scheduleRankingUpdate(tournament.code);
         }
 
         const statusAfterStart = await this.buildTournamentStatus(strategy, updatedTournament);
         const tournamentWithStatus = toAdminTournamentDto(updatedTournament, statusAfterStart);
 
         this.gateway.emitTournamentUpdated(tournament.code, tournamentWithStatus);
+
         return tournamentWithStatus;
     }
 

@@ -3,33 +3,40 @@
 }
 
 .rank-popup {
-  padding: 2rem;
+  padding: 0rem;
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
   border-radius: 0.8rem;
   background: var(--color-surface-container-high);
   box-shadow: 0 1rem 2.5rem var(--color-shadow-strong);
-}
 
-.header-row {
-  display: flex;
-  align-items: center;
-}
+  --padding-value: 2rem;
+  @media (width < 768px) {
+    --padding-value: 1rem;
+    gap: 1rem;
+  }
 
-.title {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin: 0;
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: var(--color-primary);
+  .header-row {
+    display: flex;
+    align-items: center;
+    padding: var(--padding-value) var(--padding-value) 0;
 
-  .name {
-    font-size: 1.6rem;
-    text-transform: capitalize;
-    color: var(--color-on-surface-variant);
+    .title {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin: 0;
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--color-primary);
+
+      .name {
+        font-size: 1.6rem;
+        text-transform: capitalize;
+        color: var(--color-on-surface-variant);
+      }
+    }
   }
 }
 
@@ -38,11 +45,22 @@
   font-size: 0.875rem;
   line-height: 1.5;
   color: var(--color-on-surface-variant);
+
+  ::ng-deep .card-collapsible {
+    border-radius: 0;
+  }
+  ::ng-deep .card-collapsible .card-collapsible-header.pointer {
+    cursor: auto;
+  }
+  ::ng-deep .card-collapsible.is-expanded .card-collapsible-content-wrapper {
+    padding: 0 0 1rem;
+  }
 }
 
 .actions {
   display: flex;
   justify-content: flex-end;
+  padding: 0 var(--padding-value) var(--padding-value);
 
   app-button {
     min-width: max(20vw, 10rem);

@@ -16,6 +16,9 @@
         @if (option.description) {
           <p class="card-radio-description">{{ option.description }}</p>
         }
+        @if (option.htmlDescription) {
+          <div class="card-radio-html-description" [innerHTML]="option.htmlDescription"></div>
+        }
       </div>
 
       <app-icon

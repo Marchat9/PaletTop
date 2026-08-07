@@ -25,6 +25,7 @@ export const scoreCalculationOptions: {
   label: string;
   icon: string;
   description: string;
+  htmlDescription?: string;
 }[] = [
   {
     value: 'victory_ga',
@@ -43,6 +44,16 @@ export const scoreCalculationOptions: {
     icon: 'workspace_premium',
     label: 'Points tournoi',
     description: 'Règles spécifiques au tournoi',
+    htmlDescription: `
+      <div class="flex">
+        <span>0-2 = 0pt</span>
+        <span>3-5 = 1pt</span>
+        <span>6-8 = 2pts</span>
+        <span>9-10 = 3pts</span>
+        <span>11-12 = 5pts</span>
+        <span>Victoire = 6pts</span>
+      </div>
+    `,
   },
 ];
 

@@ -19,6 +19,11 @@
     gap: 2.5rem;
   }
 
+  @media (width < 768px) {
+    padding: 1.5rem 0.75rem;
+    border-left-width: 0;
+  }
+
   &--validated {
     border-left-color: var(--color-tertiary);
   }
@@ -57,6 +62,10 @@
     justify-content: center;
     gap: 1.5rem;
     flex: 1;
+
+    @media (width < 768px) {
+      gap: 0;
+    }
   }
 
   &__action {

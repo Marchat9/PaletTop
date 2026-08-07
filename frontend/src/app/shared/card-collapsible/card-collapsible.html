@@ -2,12 +2,14 @@
   <div
     class="card-collapsible-header pointer"
     [attr.aria-expanded]="isExpanded()"
-    (click)="toggleExpanded()"
+    (click)="canCollapse() && toggleExpanded()"
   >
     <div class="header-content">
       <ng-content select="[header]" />
     </div>
-    <app-icon name="expand_more" iconClass="expand_icon" />
+    @if (canCollapse()) {
+      <app-icon name="expand_more" iconClass="expand_icon" />
+    }
   </div>
 
   <div
