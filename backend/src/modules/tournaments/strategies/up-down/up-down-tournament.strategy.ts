@@ -8,7 +8,6 @@ import { MatchesSessionStatus, TournamentStatus } from 'src/enum/status.enum';
 import { ConstraintConfig } from 'src/model/constraint.model';
 import { MatchRepository } from 'src/modules/tournaments/repositories/match.repository';
 import { PoolService } from 'src/modules/tournaments/services/pool.service';
-import { generateMatchesInPool } from 'src/modules/tournaments/strategies/structured/structured-session.utils';
 import {
     extractCompetitionConfiguration,
     extractContraintConfig,
@@ -16,6 +15,7 @@ import {
 import { DeepPartial } from 'typeorm';
 import { TournamentStatusInfo } from '../../../tournaments/responses/tournament-status.dto';
 import { TournamentStrategy } from '../tournament-strategy.abstract';
+import { generateMatchesInPool } from 'src/modules/tournaments/utils/match.utils';
 
 export class UpDownTournamentStrategy extends TournamentStrategy {
     private readonly logger = new Logger(UpDownTournamentStrategy.name);
@@ -34,25 +34,6 @@ export class UpDownTournamentStrategy extends TournamentStrategy {
         this.logger.debug(
             'Starting generateSessionMatches with tournament code: ' + tournament.code,
         );
-        // TODO: Logique montante-descendante (up-down / progressive)
-        //
-        // Principe :
-        // - Session 1 : tirage aléatoire parmi toutes les équipes (pas de poules)
-        // - Sessions suivantes : appariement par niveau selon classement courant
-        //   → équipe 1 vs équipe 2, équipe 3 vs équipe 4, etc.
-        //   → permet un affinage progressif du classement réel
-        //
-        // Différences avec STANDARD :
-        // - Pas de poules (pool = null sur les matchs)
-        // - assignTeamsToPools() n'est pas appelé (pas de pools)
-        // - Le bye est possible (équipe exemptée si nombre impair)
-        //
-        // Inputs :
-        // - tournament.configuration.numberOfPlaques → nombre de matchs simultanés
-        // - pastMatches → classement courant pour l'appariement
-        //
-        // Output : liste de TournamentMatch[] à persister
-
         const constraintConfig: ConstraintConfig = extractContraintConfig(tournament.configuration);
 
         const pool = tournament.pools[0] ?? null;

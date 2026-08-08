@@ -1,18 +1,16 @@
 import { MatchesSession } from 'src/entities/matches-session.entity';
-import { Team } from 'src/entities/team.entity';
 import { TournamentMatch } from 'src/entities/tounament-match.entity';
 import { StructuredCompetitionConfiguration } from 'src/entities/tournament-competition-configuration.entity';
 import { TournamentPool } from 'src/entities/tournament-pool.entity';
 import { Tournament } from 'src/entities/tournament.entity';
-import { MatchStatus, TournamentStatus } from 'src/enum/status.enum';
+import { TournamentStatus } from 'src/enum/status.enum';
 import { EliminationTableau, MatchGroupKey } from 'src/enum/tounament.enum';
 import { ConstraintConfig } from 'src/model/constraint.model';
-import { generatePairsWithContraints } from 'src/modules/tournaments/utils/draw.utils';
+import { generateMatchesInPool } from 'src/modules/tournaments/utils/match.utils';
 import { extractContraintConfig } from 'src/modules/tournaments/utils/tournament.utils';
 import { DeepPartial } from 'typeorm';
 import { GlobalRankingEntry } from '../../../tournaments/responses/ranking.dto';
 import { computeTableTeamRankIndex } from '../../../tournaments/utils/bracket.utils';
-import { buildByeMatchData, selectByeTeam } from '../../../tournaments/utils/bye.utils';
 
 /**
  * Permet de générer les matches de qualification suivant le nombre de pool.
@@ -108,71 +106,6 @@ export function generateEliminationMatches(
             pastMatches,
         ),
     );
-}
-
-/**
- * Function to generation tournament matches for a pool
- *
- * @param pool
- * @param teams
- * @param tournament
- * @param session
- * @param constraintConfig
- * @param pastMatches
- * @returns DeepPartial<TournamentMatch>[]
- */
-
-export function generateMatchesInPool(
-    poll: TournamentPool,
-    teams: Team[],
-    tournament: Tournament,
-    session: MatchesSession,
-    constraintConfig: ConstraintConfig,
-    pastMatches: TournamentMatch[],
-): DeepPartial<TournamentMatch>[] {
-    const allMatches: DeepPartial<TournamentMatch>[] = [];
-
-    const tournamentRef: Tournament = { id: tournament.id } as Tournament;
-    const sessionRef: MatchesSession = { id: session.id } as MatchesSession;
-    const currentTeams = [...teams];
-
-    // Byes
-    if (currentTeams.length % 2 !== 0) {
-        const byeTeam = selectByeTeam(currentTeams, []);
-        allMatches.push(
-            buildByeMatchData(
-                { id: byeTeam.id } as Team,
-                tournamentRef,
-                poll,
-                sessionRef,
-                tournament.configuration.pointsPerGame,
-                session.sessionNumber,
-            ),
-        );
-        currentTeams.splice(
-            currentTeams.findIndex((t) => t.id === byeTeam.id),
-            1,
-        );
-    }
-
-    // Matches
-    for (const [teamA, teamB] of generatePairsWithContraints(
-        constraintConfig,
-        currentTeams,
-        pastMatches,
-    )) {
-        allMatches.push({
-            tournament: tournamentRef,
-            session: sessionRef,
-            sessionNumber: session.sessionNumber,
-            pool: poll,
-            teamA: { id: teamA.id } as Team,
-            teamB: { id: teamB.id } as Team,
-            isBye: false,
-            status: MatchStatus.PENDING,
-        });
-    }
-    return allMatches;
 }
 
 export function computePhaseName(
