@@ -6,6 +6,8 @@ import {
     UpDownCompetitionConfiguration,
 } from 'src/entities/tournament-competition-configuration.entity';
 import { CompetitionMode } from 'src/enum/tounament.enum';
+import { TournamentConfiguration } from 'src/entities/tournament-configuration.entity';
+import { ConstraintConfig } from 'src/model/constraint.model';
 
 export function sanitizeTournament(tournament: Tournament): Tournament {
     const safeTournament = tournament as Tournament & { adminPassword?: string };
@@ -63,4 +65,12 @@ export function extractCompetitionConfiguration(
         default:
             return {};
     }
+}
+
+export function extractContraintConfig(configuration: TournamentConfiguration): ConstraintConfig {
+    return {
+        allowRematch: configuration.rematch ?? false,
+        allowMatchAgainstFullSameClub: configuration.matchAgainstFullSameClub ?? false,
+        allowMatchAgainstPartialSameClub: configuration.matchAgainstPartialSameClub ?? false,
+    };
 }

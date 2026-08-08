@@ -1,34 +1,18 @@
 import { MatchesSession } from 'src/entities/matches-session.entity';
 import { Team } from 'src/entities/team.entity';
 import { TournamentMatch } from 'src/entities/tounament-match.entity';
-import { TournamentConfiguration } from 'src/entities/tournament-configuration.entity';
+import { StructuredCompetitionConfiguration } from 'src/entities/tournament-competition-configuration.entity';
 import { TournamentPool } from 'src/entities/tournament-pool.entity';
 import { Tournament } from 'src/entities/tournament.entity';
-import { MatchStatus } from 'src/enum/status.enum';
+import { MatchStatus, TournamentStatus } from 'src/enum/status.enum';
 import { EliminationTableau, MatchGroupKey } from 'src/enum/tounament.enum';
+import { ConstraintConfig } from 'src/model/constraint.model';
+import { generatePairsWithContraints } from 'src/modules/tournaments/utils/draw.utils';
+import { extractContraintConfig } from 'src/modules/tournaments/utils/tournament.utils';
 import { DeepPartial } from 'typeorm';
 import { GlobalRankingEntry } from '../../../tournaments/responses/ranking.dto';
 import { computeTableTeamRankIndex } from '../../../tournaments/utils/bracket.utils';
 import { buildByeMatchData, selectByeTeam } from '../../../tournaments/utils/bye.utils';
-import {
-    ConstraintConfig,
-    generatePairsWithContraints,
-} from 'src/modules/tournaments/utils/draw.utils';
-import { StructuredCompetitionConfiguration } from 'src/entities/tournament-competition-configuration.entity';
-
-function extractContraintConfig(configuration: TournamentConfiguration): ConstraintConfig {
-    return {
-        allowRematch: configuration.rematch ?? false,
-        allowMatchAgainstFullSameClub: configuration.matchAgainstFullSameClub ?? false,
-        allowMatchAgainstPartialSameClub: configuration.matchAgainstPartialSameClub ?? false,
-    };
-}
-
-export function extractCompetitionConfiguration(
-    config: TournamentConfiguration,
-): StructuredCompetitionConfiguration {
-    return config.competitionConfiguration as StructuredCompetitionConfiguration;
-}
 
 /**
  * Permet de générer les matches de qualification suivant le nombre de pool.
@@ -64,6 +48,7 @@ export function generateQualifyingMatches(
 
 export function generateEliminationMatches(
     tournament: Tournament,
+    competitionConfig: StructuredCompetitionConfiguration,
     session: MatchesSession,
     pastMatches: TournamentMatch[],
     globalRanking: GlobalRankingEntry[],
@@ -71,9 +56,6 @@ export function generateEliminationMatches(
 ): DeepPartial<TournamentMatch>[] {
     // Config
     const constraintConfig: ConstraintConfig = extractContraintConfig(tournament.configuration);
-    const competitionConfig: StructuredCompetitionConfiguration = extractCompetitionConfiguration(
-        tournament.configuration,
-    );
     const activeTableaux: EliminationTableau[] = [
         EliminationTableau.PRINCIPALE,
         ...(competitionConfig.hasConsolanteTable ? [EliminationTableau.CONSOLANTE] : []),
@@ -140,7 +122,7 @@ export function generateEliminationMatches(
  * @returns DeepPartial<TournamentMatch>[]
  */
 
-function generateMatchesInPool(
+export function generateMatchesInPool(
     poll: TournamentPool,
     teams: Team[],
     tournament: Tournament,
@@ -191,4 +173,35 @@ function generateMatchesInPool(
         });
     }
     return allMatches;
+}
+
+export function computePhaseName(
+    tournamentStatus: TournamentStatus,
+    isElimination: boolean,
+    nbTeamStillInGame: number,
+    hasThirdPlaceMatch: boolean,
+): string {
+    switch (true) {
+        case tournamentStatus === TournamentStatus.DRAFT:
+        case tournamentStatus === TournamentStatus.CANCELLED:
+        case tournamentStatus === TournamentStatus.COMPLETED:
+        default:
+            return '';
+
+        case tournamentStatus === TournamentStatus.ACTIVE && !isElimination:
+            return 'Phase qualificative';
+
+        case tournamentStatus === TournamentStatus.ACTIVE &&
+            isElimination &&
+            nbTeamStillInGame === 2:
+            return `Finale${hasThirdPlaceMatch ? ' + Petite Finale' : ''}`;
+
+        case tournamentStatus === TournamentStatus.ACTIVE &&
+            isElimination &&
+            nbTeamStillInGame === 4:
+            return 'Demi-Finale';
+
+        case tournamentStatus === TournamentStatus.ACTIVE && isElimination && nbTeamStillInGame > 4:
+            return 'Phase éliminatoire';
+    }
 }

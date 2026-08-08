@@ -8,7 +8,7 @@
           <app-button
             title="Terminer le tournoi"
             icon="flag"
-            [variant]="finishTournamentPrimaryTheme() ? 'primary' : 'secondary'"
+            [variant]="canFinishTournament() ? 'primary' : 'secondary'"
             [loading]="completeLoading()"
             [disabled]="!canFinishTournament()"
             (clicked)="completeTournament.emit()"
