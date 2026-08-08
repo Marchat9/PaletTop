@@ -4,6 +4,10 @@ import { PlayerClub } from 'src/entities/player_club.entity';
 import { Team } from 'src/entities/team.entity';
 import { Tournament } from 'src/entities/tournament.entity';
 import { TournamentStatus } from 'src/enum/status.enum';
+import { RealtimeGateway } from 'src/modules/realtime/realtime.gateway';
+import { TournamentTeamDto } from 'src/modules/tournaments/dto/team-tournament.dto';
+import { RankingService } from 'src/modules/tournaments/services/ranking.service';
+import { SessionService } from 'src/modules/tournaments/services/session.service';
 import {
     extractCompetitionConfiguration,
     sanitizeTournament,
@@ -17,7 +21,6 @@ import { TournamentRepository } from '../repositories/tournament.repository';
 import { TeamDto, toTeamDto } from '../responses/admin-tournament.dto';
 import { generateTeamCode } from '../utils/team.utils';
 import { TournamentAuthService } from './tournament-auth.service';
-import { TournamentTeamDto } from 'src/modules/tournaments/dto/team-tournament.dto';
 
 @Injectable()
 export class TournamentsService {
@@ -28,6 +31,9 @@ export class TournamentsService {
         private readonly teamRepo: TeamRepository,
         private readonly playerClubRepo: PlayerClubRepository,
         private readonly tournamentAuthService: TournamentAuthService,
+        private readonly sessionService: SessionService,
+        private readonly rankingService: RankingService,
+        private readonly gateway: RealtimeGateway,
     ) {}
 
     async findAll(): Promise<Tournament[]> {
@@ -210,6 +216,12 @@ export class TournamentsService {
                 withTeams: true,
             },
         );
+
+        if (tournament.status !== TournamentStatus.DRAFT) {
+            throw new BadRequestException(
+                `Le tournoi '${dto.code}' n'est plus en état brouillon et ne peut donc pas être modifié.`,
+            );
+        }
 
         if (tournament.code !== dto.code) {
             const existingTounament: boolean = !!(await this.tournamentRepo.findByCode(dto.code));

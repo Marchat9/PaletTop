@@ -10,7 +10,7 @@ export const environment = {
 
   pwa: {
     enabled: false,
-    delayRepromptInDay: 2,
+    delayRepromptInDay: 14,
   },
 
   tournamentConfiguration: {

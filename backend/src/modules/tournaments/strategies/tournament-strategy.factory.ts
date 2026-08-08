@@ -1,9 +1,9 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { CompetitionMode } from 'src/enum/tounament.enum';
-import { PoolService } from '../../tournaments/services/pool.service';
+import { TournamentRepository } from 'src/modules/tournaments/repositories/tournament.repository';
 import { MatchRepository } from '../../tournaments/repositories/match.repository';
 import { PoolRepository } from '../../tournaments/repositories/pool.repository';
-import { TournamentRepository } from 'src/modules/tournaments/repositories/tournament.repository';
+import { PoolService } from '../../tournaments/services/pool.service';
 import { ChampionshipTournamentStrategy } from './championship/championship-tournament.strategy';
 import { StructuredTournamentStrategy } from './structured/structured-tournament.strategy';
 import { TournamentStrategy } from './tournament-strategy.abstract';
@@ -28,7 +28,7 @@ export class TournamentStrategyFactory {
                     this.tournamentRepo,
                 );
             case CompetitionMode.UP_DOWN:
-                return new UpDownTournamentStrategy();
+                return new UpDownTournamentStrategy(this.poolService, this.matchRepo);
             case CompetitionMode.CHAMPIONSHIP:
                 return new ChampionshipTournamentStrategy();
             default:

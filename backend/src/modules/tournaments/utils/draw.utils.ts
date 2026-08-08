@@ -1,22 +1,11 @@
 import { Team } from 'src/entities/team.entity';
 import { TournamentMatch } from 'src/entities/tounament-match.entity';
+import { ConstraintLevel } from 'src/enum/constraint-level.enum';
+import { ConstraintConfig } from 'src/model/constraint.model';
+import { buildConstraintLadder } from 'src/modules/tournaments/utils/constraint.utils';
+import { shuffleFisherYates } from 'src/modules/tournaments/utils/global.utils';
 
 export type TeamPair = [Team, Team];
-
-enum ConstraintLevel {
-    NO_SAME_CLUB, // interdit : tous appartiennent au même club
-    NO_PARTIAL_SAME_CLUB, // interdit : une partie des membres appartiennent au même club
-    NO_REMATCH_NO_SAME_CLUB, // interdit : rematch + tous appartiennent au même club
-    NO_REMATCH_NO_PARTIAL_SAME_CLUB, // interdit : rematch + une partie des membres appartiennent au même club
-    NO_REMATCH, // interdit : rematch uniquement
-    NO_CONTRAINTE, // aucune contrainte
-}
-
-export interface ConstraintConfig {
-    allowMatchAgainstFullSameClub: boolean;
-    allowMatchAgainstPartialSameClub: boolean;
-    allowRematch: boolean;
-}
 
 /**
  * Génère les paires d'équipes pour une session dans une poule.
@@ -28,24 +17,7 @@ export function generatePairsWithContraints(
     teams: Team[],
     pastMatches: TournamentMatch[],
 ): TeamPair[] {
-    const constraintsLevel = [
-        ...(!config.allowMatchAgainstFullSameClub && !config.allowRematch
-            ? []
-            : [ConstraintLevel.NO_SAME_CLUB]),
-        ...(!config.allowMatchAgainstPartialSameClub && !config.allowRematch
-            ? []
-            : [ConstraintLevel.NO_PARTIAL_SAME_CLUB]),
-        ...(!config.allowMatchAgainstFullSameClub && config.allowRematch
-            ? []
-            : [ConstraintLevel.NO_REMATCH_NO_SAME_CLUB]),
-        ...(!config.allowMatchAgainstPartialSameClub && config.allowRematch
-            ? []
-            : [ConstraintLevel.NO_REMATCH_NO_PARTIAL_SAME_CLUB]),
-        ...(config.allowRematch ? [] : [ConstraintLevel.NO_REMATCH]),
-        ConstraintLevel.NO_CONTRAINTE,
-    ];
-
-    for (const level of constraintsLevel) {
+    for (const level of buildConstraintLadder(config)) {
         const result = recursiveGeneratePair([...teams], [], pastMatches, level);
         if (result !== null) {
             return result;
@@ -55,7 +27,9 @@ export function generatePairsWithContraints(
     return [];
 }
 
-// Backtracking : fixe la première équipe libre et cherche un adversaire valide.
+// Backtracking : fixe la première équipe libre et cherche un adversaire valide,
+// en essayant en priorité les équipes contre qui elle a le moins joué (pour varier
+// les adversaires une fois que les contraintes anti-revanche ne discriminent plus).
 // Retourne null si aucune solution n'existe à ce niveau de contrainte.
 function recursiveGeneratePair(
     remaining: Team[],
@@ -66,12 +40,13 @@ function recursiveGeneratePair(
     if (remaining.length === 0) return pairs;
 
     const [first, ...rest] = remaining;
+    const candidates = shuffleFisherYates(rest).sort(
+        (a, b) => matchCount(first, a, pastMatches) - matchCount(first, b, pastMatches),
+    );
 
-    for (let i = 0; i < rest.length; i++) {
-        const opponent = rest[i];
-
+    for (const opponent of candidates) {
         if (isValidPair(first, opponent, pastMatches, level)) {
-            const remainingTeams = rest.filter((team) => team.id !== opponent.id);
+            const remainingTeams = candidates.filter((team) => team.id !== opponent.id);
             const newPairs: TeamPair[] = [...pairs, [first, opponent]];
 
             const result = recursiveGeneratePair(remainingTeams, newPairs, pastMatches, level);
@@ -91,16 +66,13 @@ function isValidPair(
 ): boolean {
     switch (level) {
         case ConstraintLevel.NO_SAME_CLUB:
-            return clubIdIfFullSameClub(teamA) !== clubIdIfFullSameClub(teamB);
+            return !sameFullClub(teamA, teamB);
 
         case ConstraintLevel.NO_PARTIAL_SAME_CLUB:
             return !teamsShareClub(teamA, teamB);
 
         case ConstraintLevel.NO_REMATCH_NO_SAME_CLUB:
-            return (
-                clubIdIfFullSameClub(teamA) !== clubIdIfFullSameClub(teamB) &&
-                !hasRematch(teamA, teamB, pastMatches)
-            );
+            return !sameFullClub(teamA, teamB) && !hasRematch(teamA, teamB, pastMatches);
 
         case ConstraintLevel.NO_REMATCH_NO_PARTIAL_SAME_CLUB:
             return !teamsShareClub(teamA, teamB) && !hasRematch(teamA, teamB, pastMatches);
@@ -114,13 +86,18 @@ function isValidPair(
     }
 }
 
-// Vérifie si les équipes ont déjà jouée contre.
-function hasRematch(teamA: Team, teamB: Team, pastMatches: TournamentMatch[]): boolean {
-    return pastMatches.some(
+// Nombre de fois où teamA et teamB se sont déjà affrontées.
+function matchCount(teamA: Team, teamB: Team, pastMatches: TournamentMatch[]): number {
+    return pastMatches.filter(
         (m) =>
             (m.teamA?.id === teamA.id && m.teamB?.id === teamB.id) ||
             (m.teamA?.id === teamB.id && m.teamB?.id === teamA.id),
-    );
+    ).length;
+}
+
+// Vérifie si les équipes ont déjà jouée contre.
+function hasRematch(teamA: Team, teamB: Team, pastMatches: TournamentMatch[]): boolean {
+    return matchCount(teamA, teamB, pastMatches) > 0;
 }
 
 // Vérifie si au moins un joueur de teamA et un joueur de teamB partagent le même club.
@@ -135,4 +112,12 @@ function teamsShareClub(teamA: Team, teamB: Team): boolean {
 function clubIdIfFullSameClub(team: Team): string | null {
     const clubs: string[] = team.players.filter((p) => !!p.club).map((p) => p.club!.id);
     return clubs.length === team.players.length && new Set(clubs).size === 1 ? clubs[0] : null;
+}
+
+// Vérifie si teamA et teamB sont toutes les deux homogènes et appartiennent au même club.
+// Deux équipes non-homogènes (ou sans club) ne sont jamais considérées "du même club".
+function sameFullClub(teamA: Team, teamB: Team): boolean {
+    const clubA = clubIdIfFullSameClub(teamA);
+    const clubB = clubIdIfFullSameClub(teamB);
+    return clubA !== null && clubB !== null && clubA === clubB;
 }

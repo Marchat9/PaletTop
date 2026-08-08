@@ -1,11 +1,12 @@
 import { Logger } from '@nestjs/common';
 import { MatchesSession } from 'src/entities/matches-session.entity';
 import { TournamentMatch } from 'src/entities/tounament-match.entity';
+import { StructuredCompetitionConfiguration } from 'src/entities/tournament-competition-configuration.entity';
 import { TournamentPool } from 'src/entities/tournament-pool.entity';
 import { Tournament } from 'src/entities/tournament.entity';
-import { TournamentStatus } from 'src/enum/status.enum';
 import { MatchGroupKey } from 'src/enum/tounament.enum';
 import { TournamentRepository } from 'src/modules/tournaments/repositories/tournament.repository';
+import { extractCompetitionConfiguration } from 'src/modules/tournaments/utils/tournament.utils';
 import { DeepPartial } from 'typeorm';
 import { MatchRepository } from '../../../tournaments/repositories/match.repository';
 import { PoolRepository } from '../../../tournaments/repositories/pool.repository';
@@ -14,7 +15,7 @@ import { PoolService } from '../../../tournaments/services/pool.service';
 import { computePrincipalBracketSize } from '../../../tournaments/utils/bracket.utils';
 import { TournamentStrategy } from '../tournament-strategy.abstract';
 import {
-    extractCompetitionConfiguration,
+    computePhaseName,
     generateEliminationMatches,
     generateQualifyingMatches,
 } from './structured-session.utils';
@@ -35,7 +36,7 @@ export class StructuredTournamentStrategy extends TournamentStrategy {
         this.logger.debug(
             'Starting prepareTournamentStart with tournament code: ' + tournament.code,
         );
-        const config = extractCompetitionConfiguration(tournament.configuration);
+        const config = this.getConfig(tournament);
 
         config.principalBracketSize =
             config.principalBracketSize ?? computePrincipalBracketSize(tournament.teams.length);
@@ -48,7 +49,7 @@ export class StructuredTournamentStrategy extends TournamentStrategy {
 
     override async assignTeamsToPools(tournament: Tournament): Promise<TournamentPool[]> {
         this.logger.debug('Starting assignTeamsToPools with tournament code: ' + tournament.code);
-        const config = extractCompetitionConfiguration(tournament.configuration);
+        const config = this.getConfig(tournament);
 
         return await this.poolService.assignTeamsToPools(tournament, config.numberOfPools);
     }
@@ -61,7 +62,7 @@ export class StructuredTournamentStrategy extends TournamentStrategy {
         this.logger.debug(
             'Starting generateSessionMatches with tournament code: ' + tournament.code,
         );
-        const config = extractCompetitionConfiguration(tournament.configuration);
+        const config = this.getConfig(tournament);
 
         const qualifyingRounds = config.numberOfQualifyingRounds ?? 0;
         const isElimination = session.sessionNumber > qualifyingRounds;
@@ -79,6 +80,7 @@ export class StructuredTournamentStrategy extends TournamentStrategy {
 
             partialMatches = generateEliminationMatches(
                 tournament,
+                config,
                 session,
                 pastMatches,
                 ranking,
@@ -101,7 +103,7 @@ export class StructuredTournamentStrategy extends TournamentStrategy {
         this.logger.debug(
             'Starting computeTournamentStatus with tournament code: ' + tournament.code,
         );
-        const config = extractCompetitionConfiguration(tournament.configuration);
+        const config = this.getConfig(tournament);
 
         const numberOfQualifyingRounds = config.numberOfQualifyingRounds ?? 0;
         const currentSessionNumber = this.currentSessionNumber(sessions);
@@ -114,47 +116,15 @@ export class StructuredTournamentStrategy extends TournamentStrategy {
 
         return {
             currentSession: currentSessionNumber,
-            phaseName: this.computePhaseName(tournament, sessions),
+            phaseName: computePhaseName(
+                tournament.status,
+                isElimination,
+                nbTeamStillInGame,
+                config.hasThirdPlaceMatch,
+            ),
             canFinishTournament: isElimination && allValidated && isFinal,
             canGenerateNewSession: allValidated && !isFinal,
         };
-    }
-
-    private computePhaseName(tournament: Tournament, sessions: MatchesSession[]): string {
-        const config = extractCompetitionConfiguration(tournament.configuration);
-
-        const numberOfQualifyingRounds = config.numberOfQualifyingRounds ?? 0;
-        const currentSessionNumber = this.currentSessionNumber(sessions);
-        const isElimination = currentSessionNumber > numberOfQualifyingRounds;
-        const nbTeamStillInGame =
-            (config.principalBracketSize ?? 0) /
-            Math.pow(2, Math.max(currentSessionNumber - (numberOfQualifyingRounds ?? 0) - 1, 0));
-
-        switch (true) {
-            case tournament.status === TournamentStatus.DRAFT:
-            case tournament.status === TournamentStatus.CANCELLED:
-            case tournament.status === TournamentStatus.COMPLETED:
-            default:
-                return '';
-
-            case tournament.status === TournamentStatus.ACTIVE && !isElimination:
-                return 'Phase qualificative';
-
-            case tournament.status === TournamentStatus.ACTIVE &&
-                isElimination &&
-                nbTeamStillInGame === 2:
-                return 'Finale';
-
-            case tournament.status === TournamentStatus.ACTIVE &&
-                isElimination &&
-                nbTeamStillInGame === 4:
-                return 'Demi-Finale';
-
-            case tournament.status === TournamentStatus.ACTIVE &&
-                isElimination &&
-                nbTeamStillInGame > 4:
-                return 'Phase éliminatoire';
-        }
     }
 
     private async getOrCreateVirtualPools(
@@ -179,5 +149,11 @@ export class StructuredTournamentStrategy extends TournamentStrategy {
                 name: groupKey,
             }),
         );
+    }
+
+    private getConfig(tournament: Tournament): StructuredCompetitionConfiguration {
+        return extractCompetitionConfiguration(
+            tournament.configuration,
+        ) as StructuredCompetitionConfiguration;
     }
 }

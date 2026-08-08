@@ -35,9 +35,6 @@ export class TournamentHeaderComponent {
   public readonly canFinishTournament = computed(
     () => this.tournamentStatus()?.canFinishTournament ?? false,
   );
-  public readonly finishTournamentPrimaryTheme = computed(
-    () => this.canFinishTournament() && !(this.tournamentStatus()?.canGenerateNewSession ?? true),
-  );
   public readonly phaseName = computed(() => this.tournamentStatus()?.phaseName ?? null);
 
   public readonly teamCount = computed(() => this.tournament()?.teams?.length ?? 0);
