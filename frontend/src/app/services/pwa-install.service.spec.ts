@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { PwaInstallService } from './pwa-install.service';
+import { environment } from '@environment';
 
 function dispatchBeforeInstallPrompt(
   overrides: Partial<{ prompt: () => void; userChoice: Promise<{ outcome: string }> }> = {},
@@ -77,15 +78,16 @@ describe('PwaInstallService', () => {
     expect(service.shouldShowPrompt()).toBe(false);
   });
 
-  it('hides the prompt for 2 days after dismiss(), then shows it again', () => {
+  it("hides the prompt for 'delayRepromptInDay' days after dismiss(), then shows it again", () => {
     const service = TestBed.inject(PwaInstallService);
     dispatchBeforeInstallPrompt();
 
     service.dismiss();
     expect(service.shouldShowPrompt()).toBe(false);
 
-    const overTwoDaysAgo = Date.now() - 2 * 24 * 60 * 60 * 1000 - 1000;
-    localStorage.setItem('pwa-install-dismissed-at', overTwoDaysAgo.toString());
+    const overNDaysAgo =
+      Date.now() - environment.pwa.delayRepromptInDay * 24 * 60 * 60 * 1000 - 1000;
+    localStorage.setItem('pwa-install-dismissed-at', overNDaysAgo.toString());
     expect(service.shouldShowPrompt()).toBe(true);
   });
 
