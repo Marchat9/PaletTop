@@ -31,6 +31,10 @@ import { rankingFeatureKey } from './ranking/ranking.selectors';
 import { FriendlyMatchState } from './friendly-match/friendly-match.reducer';
 import { friendlyMatchReducer } from './friendly-match/friendly-match.reducer';
 import { friendlyMatchFeatureKey } from './friendly-match/friendly-match.selectors';
+import { SuperAdminEffects } from './superadmin/superadmin.effects';
+import { SuperAdminState } from './superadmin/superadmin.reducer';
+import { superadminReducer } from './superadmin/superadmin.reducer';
+import { superadminFeatureKey } from './superadmin/superadmin.selectors';
 
 export interface AppState {
   [appConfigFeatureKey]: AppConfigState;
@@ -41,6 +45,7 @@ export interface AppState {
   [matchHistoryFeatureKey]: MatchHistoryState;
   [rankingFeatureKey]: RankingState;
   [friendlyMatchFeatureKey]: FriendlyMatchState;
+  [superadminFeatureKey]: SuperAdminState;
 }
 
 export const reducers: ActionReducerMap<AppState> = {
@@ -52,6 +57,7 @@ export const reducers: ActionReducerMap<AppState> = {
   [matchHistoryFeatureKey]: matchHistoryReducer,
   [rankingFeatureKey]: rankingReducer,
   [friendlyMatchFeatureKey]: friendlyMatchReducer,
+  [superadminFeatureKey]: superadminReducer,
 };
 
 export const effects = [
@@ -63,4 +69,5 @@ export const effects = [
   MatchEffects,
   MatchHistoryEffects,
   RankingEffects,
+  SuperAdminEffects,
 ];

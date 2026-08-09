@@ -23,6 +23,8 @@ import { selectNotificationCount } from 'src/app/store/app-config/app-config.sel
 import { AppState } from 'src/app/store/app-store';
 import { AboutPopupComponent } from '../../modales/about-popup/about-popup';
 import { NotificationPopupComponent } from '../../modales/notification-popup/notification-popup';
+import { SuperAdminConnectionPopupComponent } from '../../modales/super-admin-connection-popup/super-admin-connection-popup';
+import { clearSuperAdminSession } from 'src/app/store/superadmin/superadmin.actions';
 import { BottomNavComponent } from './bottom-nav/bottom-nav';
 import { NavItem } from './nav-item.entity';
 import { TopBarComponent } from './top-bar/top-bar';
@@ -129,13 +131,17 @@ export class Navigation {
 
   private openSuperAdminConnectionDialog(): void {
     this.dialog
-      .open(NotificationPopupComponent, {
+      .open<boolean>(SuperAdminConnectionPopupComponent, {
         panelClass: 'dialog-panel',
         backdropClass: 'dialog-backdrop',
       })
       .closed.pipe(first())
-      .subscribe(() => {
-        console.log('Notification dialog closed');
+      .subscribe((connected) => {
+        if (connected) {
+          this.router.navigate(['/super-admin']);
+        } else {
+          this.store.dispatch(clearSuperAdminSession());
+        }
       });
   }
 }

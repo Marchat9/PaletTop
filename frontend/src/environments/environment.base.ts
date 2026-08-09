@@ -21,7 +21,7 @@ export const environment = {
 
   burgerMenu: {
     disabledKeys: [''],
-    hiddenKeys: ['SUPER_ADMIN'],
+    hiddenKeys: [''],
   },
 
   tournamentConfiguration: {

@@ -1,0 +1,47 @@
+<div class="super-admin-connection-popup-container" (keydown.enter)="onConnect()">
+  <div class="header-row">
+    <h2 class="title">
+      <app-icon name="admin_panel_settings" iconClass="icon" [ariaHidden]="true" />
+      Connexion Super Admin
+    </h2>
+    <button class="close-button" type="button" aria-label="Fermer" (click)="onCancel()">
+      <app-icon name="close" />
+    </button>
+  </div>
+
+  <p class="subtitle">Saisissez le mot de passe pour accéder à l'espace super admin.</p>
+
+  <div class="field-group">
+    <label class="field-label" for="super-admin-password">Mot de passe</label>
+    <app-input-text
+      id="super-admin-password"
+      placeholder="******"
+      icon="key"
+      [isPassword]="true"
+      [autofocus]="true"
+      [value]="password()"
+      (valueChange)="onPasswordChange($event)"
+    ></app-input-text>
+  </div>
+
+  @if (error()) {
+    <div class="error-container">
+      <span class="message">
+        <app-icon name="error" [ariaHidden]="true" />
+        {{ error() }}
+      </span>
+    </div>
+  }
+
+  <div class="actions">
+    <app-button title="Annuler" variant="secondary" (clicked)="onCancel()"></app-button>
+    <app-button
+      title="Connexion"
+      variant="primary"
+      icon="login"
+      [loading]="isLoading()"
+      [disabled]="!canConnect()"
+      (clicked)="onConnect()"
+    ></app-button>
+  </div>
+</div>
