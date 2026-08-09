@@ -8,114 +8,114 @@
   background: var(--color-surface-container-high);
   box-shadow: 0 1rem 2.5rem var(--color-shadow-strong);
   overflow: hidden;
-}
 
-.about-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 1rem 1.25rem;
-  border-bottom: 1px solid var(--color-border-subtle);
-}
+  .about-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--color-border-subtle);
 
-.about-title-wrap {
-  display: flex;
-  align-items: center;
-  gap: 0.55rem;
-}
+    .about-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+    }
 
-::ng-deep .title-icon {
-  color: var(--color-primary);
-}
+    ::ng-deep .title-icon {
+      color: var(--color-primary);
+    }
 
-.about-title {
-  margin: 0;
-  font-family: var(--font-headline);
-  font-size: 1rem;
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
-  font-weight: bold;
-  height: 14px;
-}
+    .about-title {
+      margin: 0;
+      font-family: var(--font-headline);
+      font-size: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+      font-weight: bold;
+      height: 14px;
+    }
 
-.about-body {
-  padding: 1.25rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.75rem;
-  text-align: center;
-}
+    .icon-btn {
+      width: 2rem;
+      height: 2rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 0.5rem;
+      border: 0;
+      background: transparent;
+      cursor: pointer;
+      color: var(--color-on-surface-variant);
 
-.logo {
-  border-radius: 0.5rem;
-}
-
-.bio {
-  margin: 0;
-  font-size: 0.9rem;
-  line-height: 1.5;
-  color: var(--color-on-surface);
-}
-
-.version {
-  margin: 0;
-  font-size: 0.8rem;
-  color: var(--color-on-surface-variant);
-}
-
-.links {
-  margin: 0.5rem 0 0;
-  padding: 0;
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  width: 100%;
-}
-
-.link-row {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  padding: 0.6rem 0.75rem;
-  border-radius: 0.5rem;
-  text-decoration: none;
-  color: var(--color-on-surface);
-  font-size: 0.875rem;
-
-  &:hover {
-    background: var(--color-hover-surface-default);
-    color: var(--color-primary);
+      &:hover {
+        background: var(--color-hover-surface-default);
+        color: var(--color-primary);
+      }
+    }
   }
-}
 
-::ng-deep .link-icon {
-  color: var(--color-on-surface-variant);
-  flex-shrink: 0;
-}
+  .about-body {
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    text-align: center;
 
-.link-icon-img {
-  width: 1.5rem;
-  height: 1.5rem;
-  object-fit: contain;
-  flex-shrink: 0;
-}
+    .logo {
+      border-radius: 0.5rem;
+    }
 
-.icon-btn {
-  width: 2rem;
-  height: 2rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 0.5rem;
-  border: 0;
-  background: transparent;
-  cursor: pointer;
-  color: var(--color-on-surface-variant);
+    .bio {
+      margin: 0;
+      font-size: 0.9rem;
+      line-height: 1.5;
+      color: var(--color-on-surface);
+    }
 
-  &:hover {
-    background: var(--color-hover-surface-default);
-    color: var(--color-primary);
+    .version {
+      margin: 0;
+      font-size: 0.8rem;
+      color: var(--color-on-surface-variant);
+    }
+
+    .links {
+      margin: 0.5rem 0 0;
+      padding: 0;
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+      width: 100%;
+
+      .link-row {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        padding: 0.6rem 0.75rem;
+        border-radius: 0.5rem;
+        text-decoration: none;
+        color: var(--color-on-surface);
+        font-size: 0.875rem;
+
+        &:hover {
+          background: var(--color-hover-surface-default);
+          color: var(--color-primary);
+        }
+      }
+
+      ::ng-deep .link-icon {
+        color: var(--color-on-surface-variant);
+        flex-shrink: 0;
+      }
+
+      .link-icon-img {
+        width: 1.5rem;
+        height: 1.5rem;
+        object-fit: contain;
+        flex-shrink: 0;
+      }
+    }
   }
 }

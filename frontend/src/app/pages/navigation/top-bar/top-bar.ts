@@ -4,7 +4,7 @@ import { NavItem } from '../nav-item.entity';
 import { ThemeMode } from 'src/app/models/theme-mode.model';
 import { ButtonIcon } from 'src/app/shared/button-icon/button-icon';
 import { Icon } from 'src/app/shared/icon/icon';
-import { BurgerMenu } from '../../burger-menu/burger-menu';
+import { BurgerMenu } from '../../../shared/burger-menu/burger-menu';
 import { BurgerMenuClickKey, BurgerMenuItem } from 'src/app/shared/burger-menu/burger-menu.model';
 import { NgOptimizedImage } from '@angular/common';
 

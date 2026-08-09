@@ -9,7 +9,7 @@ import { selectTheme } from 'src/app/store/app-config/app-config.selectors';
 import { AppState } from 'src/app/store/app-store';
 import { environment } from '../environments/environment';
 import { PwaInstallService } from './services/pwa-install.service';
-import { Navigation } from './shared/navigation/navigation';
+import { Navigation } from './pages/navigation/navigation';
 
 @Component({
   selector: 'app-root',

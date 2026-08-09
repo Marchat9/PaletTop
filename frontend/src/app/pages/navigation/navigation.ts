@@ -16,6 +16,8 @@ import { environment } from '@environment';
 import { Store } from '@ngrx/store';
 import { filter, first } from 'rxjs';
 import { ThemeMode } from 'src/app/models/theme-mode.model';
+import { generateBurgerMenuItem } from 'src/app/pages/navigation/navigation.utils';
+import { PwaInstallService } from 'src/app/services/pwa-install.service';
 import { BurgerMenuClickKey, BurgerMenuItem } from 'src/app/shared/burger-menu/burger-menu.model';
 import { selectNotificationCount } from 'src/app/store/app-config/app-config.selectors';
 import { AppState } from 'src/app/store/app-store';
@@ -24,7 +26,6 @@ import { NotificationPopupComponent } from '../../modales/notification-popup/not
 import { BottomNavComponent } from './bottom-nav/bottom-nav';
 import { NavItem } from './nav-item.entity';
 import { TopBarComponent } from './top-bar/top-bar';
-import { PwaInstallService } from 'src/app/services/pwa-install.service';
 
 @Component({
   selector: 'app-navigation',
@@ -46,40 +47,13 @@ export class Navigation {
     { label: 'Match Amical', route: '/friendly-match', icon: 'handshake' },
     { label: 'Admin', route: '/admin', icon: 'admin_panel_settings' },
   ];
-  readonly burgerMenuItem: Signal<BurgerMenuItem[]> = computed(() => [
-    {
-      order: 1,
-      icon: 'assets/images/github_' + (this.theme() === 'dark' ? 'white' : 'black') + '.svg',
-      name: 'GitHub',
-      clickKey: 'GITHUB',
-      disabled: environment.burgerMenu.disabledKeys.includes('GITHUB'),
-      hidden: environment.burgerMenu.hiddenKeys.includes('GITHUB'),
-    },
-    {
-      order: 2,
-      icon: 'install_desktop',
-      name: "Installer l'application",
-      clickKey: 'PWA',
-      disabled: environment.burgerMenu.disabledKeys.includes('PWA'),
-      hidden: environment.burgerMenu.hiddenKeys.includes('PWA'),
-    },
-    {
-      order: 3,
-      icon: 'info',
-      name: 'A propos',
-      clickKey: 'ABOUT',
-      disabled: environment.burgerMenu.disabledKeys.includes('ABOUT'),
-      hidden: environment.burgerMenu.hiddenKeys.includes('ABOUT'),
-    },
-    {
-      order: 99,
-      icon: 'admin_panel_settings',
-      name: 'Super Admin',
-      clickKey: 'SUPER_ADMIN',
-      disabled: environment.burgerMenu.disabledKeys.includes('SUPER_ADMIN'),
-      hidden: environment.burgerMenu.hiddenKeys.includes('SUPER_ADMIN'),
-    },
-  ]);
+  readonly burgerMenuItem: Signal<BurgerMenuItem[]> = computed(() =>
+    generateBurgerMenuItem(
+      this.theme(),
+      environment.burgerMenu.disabledKeys,
+      environment.burgerMenu.hiddenKeys,
+    ),
+  );
 
   readonly currentRoute = signal('');
   readonly isMobile = signal(false);
@@ -121,15 +95,10 @@ export class Navigation {
   }
 
   public onNotificationClick(): void {
-    this.dialog
-      .open(NotificationPopupComponent, {
-        panelClass: 'dialog-panel',
-        backdropClass: 'dialog-backdrop',
-      })
-      .closed.pipe(first())
-      .subscribe(() => {
-        console.log('Notification dialog closed');
-      });
+    this.dialog.open(NotificationPopupComponent, {
+      panelClass: 'dialog-panel',
+      backdropClass: 'dialog-backdrop',
+    });
   }
 
   public burgerMenuClick(eventKey: BurgerMenuClickKey): void {
@@ -146,6 +115,8 @@ export class Navigation {
       case 'SUPER_ADMIN':
         this.openSuperAdminConnectionDialog();
         break;
+      default:
+        console.warn(`BurgerKey [${eventKey}] not implemented.`);
     }
   }
 
