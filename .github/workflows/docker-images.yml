@@ -66,6 +66,9 @@ jobs:
         # `env.SHOULD_BUILD` in every step's `if:` below.
         env:
             SHOULD_BUILD: ${{ github.event_name != 'pull_request' || (matrix.name == 'backend' && needs.changes.outputs.backend == 'true') || (matrix.name == 'frontend' && needs.changes.outputs.frontend == 'true') }}
+            # Overwritten below on a tag push — stays at this placeholder for PR builds,
+            # matching the frontend's own committed default (see environment.version.ts).
+            APP_VERSION: '0.0.0'
         steps:
             - name: Checkout
               if: env.SHOULD_BUILD == 'true'
@@ -78,6 +81,13 @@ jobs:
             - name: Compute lowercase image repository
               if: env.SHOULD_BUILD == 'true'
               run: echo "IMAGE_REPO=${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
+
+            # Strips the leading 'v' from the release tag (ex: v1.4.2 -> 1.4.2), matching
+            # the `type=semver,pattern={{version}}` Docker tag derived below — the app's
+            # displayed version and its image tag always agree.
+            - name: Compute app version
+              if: env.SHOULD_BUILD == 'true' && github.ref_type == 'tag'
+              run: echo "APP_VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
 
             - name: Log in to GitHub Container Registry
               if: env.SHOULD_BUILD == 'true' && github.event_name != 'pull_request'
@@ -107,6 +117,8 @@ jobs:
                   push: ${{ github.event_name != 'pull_request' }}
                   tags: ${{ steps.meta.outputs.tags }}
                   labels: ${{ steps.meta.outputs.labels }}
+                  # Only the frontend Dockerfile declares APP_VERSION as an ARG.
+                  build-args: ${{ matrix.name == 'frontend' && format('APP_VERSION={0}', env.APP_VERSION) || '' }}
                   # No attestation manifest: keeps the pushed image a plain single-arch
                   # image rather than an OCI index, which is what `docker run` on a
                   # self-hosted deployment expects.

@@ -1,0 +1,58 @@
+<div class="about-popup" role="dialog" aria-modal="true" aria-label="À propos de PaletTop">
+  <div class="about-header">
+    <div class="about-title-wrap">
+      <app-icon name="info" iconClass="title-icon" />
+      <span class="about-title">À propos de PaletTop</span>
+    </div>
+    <app-button-icon class="icon-btn" icon="close" (clicked)="onClose()" />
+  </div>
+
+  <div class="about-body">
+    <img class="logo" ngSrc="assets/images/palet_logo.png" width="64" height="64" priority />
+
+    <div class="bio">
+      <span [innerHTML]="aboutBio"></span>
+    </div>
+
+    <p class="version">Version {{ appVersion }}</p>
+
+    <ul class="links">
+      <li>
+        <a class="link-row" [href]="githubRepoUrl" target="_blank" rel="noopener">
+          <app-icon name="code" iconClass="link-icon" />
+          <span>Code source</span>
+        </a>
+      </li>
+      <li>
+        <a class="link-row" [href]="githubIssuesUrl" target="_blank" rel="noopener">
+          <app-icon name="bug_report" iconClass="link-icon" />
+          <span>Signaler un problème</span>
+        </a>
+      </li>
+      @if (!!contactEmail) {
+        <li>
+          <a class="link-row" [href]="'mailto:' + contactEmail">
+            <app-icon name="mail" iconClass="link-icon" />
+            <span>Me contacter</span>
+          </a>
+        </li>
+      }
+      @if (!!socialUrl) {
+        <li>
+          <a class="link-row" [href]="socialUrl" target="_blank" rel="noopener">
+            <app-icon name="link" iconClass="link-icon" />
+            <span>Me suivre</span>
+          </a>
+        </li>
+      }
+      @if (!!donationUrl) {
+        <li>
+          <a class="link-row" [href]="donationUrl" target="_blank" rel="noopener">
+            <img class="link-icon-img" ngSrc="assets/images/paypal.png" width="20" height="20" />
+            <span>Faire un don</span>
+          </a>
+        </li>
+      }
+    </ul>
+  </div>
+</div>

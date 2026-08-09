@@ -1,0 +1,37 @@
+// Filet de sécurité : si le navigateur ne déclenche jamais l'événement
+// natif `afterprint` (ex. navigateur intégré de VS Code, qui n'ouvre pas de
+// vraie boîte de dialogue d'impression), `.print-sheet` resterait monté à
+// l'écran indéfiniment. On le masque donc toujours hors impression, quel
+// que soit l'état du composant qui le monte.
+@media screen {
+  .print-sheet {
+    display: none;
+  }
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  .print-sheet,
+  .print-sheet * {
+    visibility: visible;
+  }
+
+  .print-sheet {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+  }
+
+  .nav-shell {
+    height: auto;
+    overflow: visible;
+  }
+
+  .nav-main {
+    overflow: visible;
+  }
+}

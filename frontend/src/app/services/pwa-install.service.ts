@@ -1,5 +1,8 @@
-import { Injectable, computed, signal } from '@angular/core';
+import { Dialog } from '@angular/cdk/dialog';
+import { Injectable, computed, inject, signal } from '@angular/core';
 import { environment } from '@environment';
+import { first } from 'rxjs';
+import { InstallPwaPopupComponent } from 'src/app/modales/install-pwa-popup/install-pwa-popup';
 
 export type PwaInstallPlatform = 'android' | 'ios' | 'unsupported';
 
@@ -15,6 +18,8 @@ const REPROMPT_DELAY_MS = environment.pwa.delayRepromptInDay * 24 * 60 * 60 * 10
 export class PwaInstallService {
   private readonly deferredPrompt = signal<BeforeInstallPromptEvent | null>(null);
   private readonly installed = signal(false);
+
+  private readonly dialog = inject(Dialog);
 
   constructor() {
     if (typeof window === 'undefined') {
@@ -54,6 +59,10 @@ export class PwaInstallService {
     return !this.isWithinDismissCooldown();
   }
 
+  public isInstalled(): boolean {
+    return this.installed();
+  }
+
   public promptInstall(): void {
     const event = this.deferredPrompt();
     if (!event) {
@@ -72,6 +81,22 @@ export class PwaInstallService {
       // close button unable to complete: the cooldown simply won't persist, so the
       // prompt may show again next visit instead of crashing.
     }
+  }
+
+  public displayInstallPopUp(): void {
+    this.dialog
+      .open(InstallPwaPopupComponent, {
+        panelClass: 'dialog-panel',
+        backdropClass: 'dialog-backdrop',
+      })
+      .closed.pipe(first())
+      .subscribe(() => {
+        // Covers backdrop click / Escape (which bypass InstallPwaPopupComponent.close())
+        // and a cancelled native install prompt — both must still start the dismiss
+        // cooldown. Redundant with the explicit close() button's own dismiss() call,
+        // which is harmless since dismiss() just overwrites a timestamp.
+        this.dismiss();
+      });
   }
 
   private isStandalone(): boolean {

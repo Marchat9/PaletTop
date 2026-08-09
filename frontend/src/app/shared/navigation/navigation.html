@@ -6,9 +6,10 @@
     [showLinks]="!isMobile()"
     [theme]="theme()"
     [notificationBadge]="notificationBadge()"
+    [burgerMenuItem]="burgerMenuItem()"
     (changeTheme)="changeTheme.emit($event)"
     (notificationClick)="onNotificationClick()"
-    (redirectToGithub)="redirectToGithub()"
+    (burgerMenuClick)="burgerMenuClick($event)"
   />
 
   <main class="nav-main" [class.nav-main--mobile]="isMobile()">

@@ -1,8 +1,14 @@
+import { environmentAbout } from 'src/environments/splits/environment.about';
+import { APP_VERSION } from 'src/environments/splits/environment.version';
+
 export const environment = {
   appName: 'Palet Top',
+  version: APP_VERSION,
   limitMobileSizePx: 768,
   backBaseApiUrl: 'http://localhost:3000',
   githubRepoUrl: 'https://github.com/Marchat9/PaletTop',
+
+  about: environmentAbout,
 
   apiConfiguration: {
     delayToUpdateScore: 500, // ms
@@ -11,6 +17,11 @@ export const environment = {
   pwa: {
     enabled: false,
     delayRepromptInDay: 14,
+  },
+
+  burgerMenu: {
+    disabledKeys: [''],
+    hiddenKeys: ['SUPER_ADMIN'],
   },
 
   tournamentConfiguration: {

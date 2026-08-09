@@ -1,15 +1,15 @@
-import { Component, effect, inject } from '@angular/core';
 import { Dialog } from '@angular/cdk/dialog';
+import { Component, effect, inject } from '@angular/core';
+import { SwUpdate } from '@angular/service-worker';
 import { Store } from '@ngrx/store';
-import { first } from 'rxjs';
+import { filter, first, interval, Subject, takeUntil } from 'rxjs';
 import { ThemeMode } from 'src/app/models/theme-mode.model';
 import { setTheme } from 'src/app/store/app-config/app-config.actions';
-import { AppState } from 'src/app/store/app-store';
-import { Navigation } from './shared/navigation/navigation';
 import { selectTheme } from 'src/app/store/app-config/app-config.selectors';
+import { AppState } from 'src/app/store/app-store';
 import { environment } from '../environments/environment';
-import { InstallPwaPopupComponent } from './modales/install-pwa-popup/install-pwa-popup';
 import { PwaInstallService } from './services/pwa-install.service';
+import { Navigation } from './shared/navigation/navigation';
 
 @Component({
   selector: 'app-root',
@@ -22,18 +22,20 @@ export class App {
 
   // Theme
   public readonly theme = this.store.selectSignal(selectTheme);
+
+  private destroy$ = new Subject<void>();
+  constructor() {
+    if (environment.pwa.enabled) {
+      this.processPwa();
+      this.checkForPwaUpdate();
+    }
+  }
+
   public changeTheme(theme: ThemeMode): void {
     this.store.dispatch(setTheme({ theme }));
   }
 
-  constructor() {
-    if (environment.pwa.enabled) {
-      this.processPwa();
-    }
-  }
-
   private processPwa(): void {
-    const dialog = inject(Dialog);
     const pwaInstallService = inject(PwaInstallService);
 
     // `shouldShowPrompt()` is a plain method, not a signal, but any Angular signals it
@@ -48,20 +50,36 @@ export class App {
         return;
       }
       hasOpenedInstallPrompt = true;
-
-      dialog
-        .open(InstallPwaPopupComponent, {
-          panelClass: 'dialog-panel',
-          backdropClass: 'dialog-backdrop',
-        })
-        .closed.pipe(first())
-        .subscribe(() => {
-          // Covers backdrop click / Escape (which bypass InstallPwaPopupComponent.close())
-          // and a cancelled native install prompt — both must still start the dismiss
-          // cooldown. Redundant with the explicit close() button's own dismiss() call,
-          // which is harmless since dismiss() just overwrites a timestamp.
-          pwaInstallService.dismiss();
-        });
+      pwaInstallService.displayInstallPopUp();
     });
+  }
+
+  private checkForPwaUpdate(): void {
+    const pwaInstallService = inject(PwaInstallService);
+    if (pwaInstallService.isInstalled()) {
+      const swUpdate = inject(SwUpdate);
+      // Check every N secondes if a new version is available
+      interval(30_000)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe(() => {
+          swUpdate.checkForUpdate();
+        });
+
+      // Trigger when a new version is available
+      swUpdate.versionUpdates
+        .pipe(
+          filter((evt) => evt.type === 'VERSION_READY'),
+          takeUntil(this.destroy$),
+        )
+        .subscribe(() => {
+          console.debug('[PWA] New version was available - reloading.');
+          window.location.reload();
+        });
+    }
+  }
+
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 }
