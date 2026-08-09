@@ -1,0 +1,54 @@
+// ###################################
+// Toaster dialog position
+.toast-top-right-custom {
+  top: 20px;
+  right: 20px;
+}
+// ###################################
+
+// ###################################
+// Common dialog class
+.dialog-backdrop {
+  backdrop-filter: blur(16px);
+  background: var(--color-overlay-strong) !important;
+}
+.dialog-backdrop-light {
+  backdrop-filter: blur(8px);
+  background: var(--color-overlay-light) !important;
+}
+
+.dialog-panel {
+  display: block;
+  width: min(100vw - 2rem, 29rem);
+
+  .cdk-dialog-container {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    outline: none;
+  }
+
+  .cdk-dialog-container:focus,
+  .cdk-dialog-container:focus-visible {
+    outline: none;
+  }
+}
+
+.dialog-panel-large {
+  display: block;
+  width: min(100vw - 2rem, 92%);
+
+  .cdk-dialog-container {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    outline: none;
+  }
+
+  .cdk-dialog-container:focus,
+  .cdk-dialog-container:focus-visible {
+    outline: none;
+  }
+}

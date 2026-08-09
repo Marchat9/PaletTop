@@ -1,25 +1,30 @@
+import { Dialog } from '@angular/cdk/dialog';
 import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
+  Signal,
   computed,
   inject,
   input,
   output,
   signal,
 } from '@angular/core';
-import { Dialog } from '@angular/cdk/dialog';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { environment } from '@environment';
+import { Store } from '@ngrx/store';
 import { filter, first } from 'rxjs';
 import { ThemeMode } from 'src/app/models/theme-mode.model';
+import { generateBurgerMenuItem } from 'src/app/pages/navigation/navigation.utils';
+import { PwaInstallService } from 'src/app/services/pwa-install.service';
+import { BurgerMenuClickKey, BurgerMenuItem } from 'src/app/shared/burger-menu/burger-menu.model';
 import { selectNotificationCount } from 'src/app/store/app-config/app-config.selectors';
 import { AppState } from 'src/app/store/app-store';
-import { Store } from '@ngrx/store';
+import { AboutPopupComponent } from '../../modales/about-popup/about-popup';
+import { NotificationPopupComponent } from '../../modales/notification-popup/notification-popup';
 import { BottomNavComponent } from './bottom-nav/bottom-nav';
 import { NavItem } from './nav-item.entity';
-import { NotificationPopupComponent } from '../../modales/notification-popup/notification-popup';
 import { TopBarComponent } from './top-bar/top-bar';
 
 @Component({
@@ -42,6 +47,13 @@ export class Navigation {
     { label: 'Match Amical', route: '/friendly-match', icon: 'handshake' },
     { label: 'Admin', route: '/admin', icon: 'admin_panel_settings' },
   ];
+  readonly burgerMenuItem: Signal<BurgerMenuItem[]> = computed(() =>
+    generateBurgerMenuItem(
+      this.theme(),
+      environment.burgerMenu.disabledKeys,
+      environment.burgerMenu.hiddenKeys,
+    ),
+  );
 
   readonly currentRoute = signal('');
   readonly isMobile = signal(false);
@@ -50,6 +62,7 @@ export class Navigation {
   private readonly destroyRef = inject(DestroyRef);
   private readonly store = inject(Store<AppState>);
   private readonly dialog = inject(Dialog);
+  private readonly pwaInstallService = inject(PwaInstallService);
 
   private readonly notificationCount = this.store.selectSignal(selectNotificationCount);
   public readonly notificationBadge = computed(() => this.notificationCount() || null);
@@ -82,6 +95,39 @@ export class Navigation {
   }
 
   public onNotificationClick(): void {
+    this.dialog.open(NotificationPopupComponent, {
+      panelClass: 'dialog-panel',
+      backdropClass: 'dialog-backdrop',
+    });
+  }
+
+  public burgerMenuClick(eventKey: BurgerMenuClickKey): void {
+    switch (eventKey) {
+      case 'GITHUB':
+        window.open(environment.githubRepoUrl, '_blank');
+        break;
+      case 'PWA':
+        this.pwaInstallService.displayInstallPopUp();
+        break;
+      case 'ABOUT':
+        this.openAboutDialog();
+        break;
+      case 'SUPER_ADMIN':
+        this.openSuperAdminConnectionDialog();
+        break;
+      default:
+        console.warn(`BurgerKey [${eventKey}] not implemented.`);
+    }
+  }
+
+  private openAboutDialog(): void {
+    this.dialog.open(AboutPopupComponent, {
+      panelClass: 'dialog-panel',
+      backdropClass: 'dialog-backdrop',
+    });
+  }
+
+  private openSuperAdminConnectionDialog(): void {
     this.dialog
       .open(NotificationPopupComponent, {
         panelClass: 'dialog-panel',
@@ -91,9 +137,5 @@ export class Navigation {
       .subscribe(() => {
         console.log('Notification dialog closed');
       });
-  }
-
-  public redirectToGithub(): void {
-    window.open(environment.githubRepoUrl, '_blank');
   }
 }

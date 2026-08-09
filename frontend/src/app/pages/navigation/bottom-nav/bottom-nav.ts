@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { NavItem } from '../nav-item.entity';
-import { Icon } from '../../icon/icon';
+import { Icon } from '../../../shared/icon/icon';
 
 @Component({
   selector: 'app-bottom-nav',

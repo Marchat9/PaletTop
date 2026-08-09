@@ -1,0 +1,31 @@
+<div class="burger-menu">
+  <app-button-icon class="icon" matIconButton [matMenuTriggerFor]="menu" [icon]="menuIcon()" />
+
+  <mat-menu
+    #menu="matMenu"
+    class="default-burger-menu-display"
+    [class]="customClass()"
+    [xPosition]="xPosition()"
+    [yPosition]="yPosition()"
+  >
+    @for (item of orderedMenuItem(); track item.name) {
+      <button
+        mat-menu-item
+        class="menu-item"
+        (click)="this.menuClick.emit(item.clickKey)"
+        [disabled]="item.disabled"
+      >
+        @if (item.icon.startsWith('assets')) {
+          <img [ngSrc]="item.icon" priority width="20" height="20" />
+        } @else {
+          <app-icon [name]="item.icon" />
+        }
+        <span class="menu-label">{{ item.name }}</span>
+      </button>
+    } @empty {
+      <button mat-menu-item>
+        <span>Aucune option disponible</span>
+      </button>
+    }
+  </mat-menu>
+</div>

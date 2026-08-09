@@ -1,14 +1,14 @@
+import { Dialog } from '@angular/cdk/dialog';
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { provideMockStore } from '@ngrx/store/testing';
-import { Dialog } from '@angular/cdk/dialog';
-import { signal } from '@angular/core';
 import { Subject } from 'rxjs';
-import { App } from './app';
-import { appConfigFeatureKey } from 'src/app/store/app-config/app-config.selectors';
-import { initialAppConfigState } from 'src/app/store/app-config/app-config.reducer';
 import { PwaInstallService } from 'src/app/services/pwa-install.service';
+import { initialAppConfigState } from 'src/app/store/app-config/app-config.reducer';
+import { appConfigFeatureKey } from 'src/app/store/app-config/app-config.selectors';
 import { environment } from '../environments/environment';
+import { App } from './app';
 
 // NOTE: deviates from the task-7 brief, which used `vi.mock('../environments/environment', ...)`.
 // The Angular unit-test builder (@angular/build, vitest runner) statically bundles each spec file
@@ -32,13 +32,33 @@ describe('App - PWA install popup', () => {
     environment.pwa.enabled = originalPwaEnabled;
   });
 
-  // `app.ts` calls `dialog.open(...).closed.pipe(first()).subscribe(...)` (Fix 2), so the
-  // mocked `DialogRef` needs a real Observable for `closed` (a plain `{ subscribe() {} }`
-  // object has no `.pipe`). A `Subject` that we control lets tests also simulate the dialog
-  // closing (backdrop click / Escape / cancelled install) by calling `.next()`.
+  // `PwaInstallService` is mocked wholesale via `useValue` (it's a leaf service with no
+  // Angular DI-relevant behavior worth exercising for real here), which means its real
+  // `displayInstallPopUp()` — which opens the dialog and wires `.closed` to `dismiss()` —
+  // never runs either. `mockPwaInstallService()` replicates just enough of that real
+  // behavior (open the dialog via `openSpy`, subscribe `.closed` to `dismiss`) so `App`'s
+  // effect (which only ever calls `displayInstallPopUp()`, never `Dialog` directly) can be
+  // observed through the same `openSpy`/`dismissSpy` the tests already assert on.
   function mockDialogRef() {
     const closed = new Subject<void>();
     return { closed };
+  }
+
+  function mockPwaInstallService(options: {
+    shouldShowPrompt: () => boolean;
+    dismiss?: () => void;
+    openSpy: () => { closed: Subject<void> };
+  }) {
+    const { shouldShowPrompt, dismiss = vi.fn(), openSpy } = options;
+    return {
+      shouldShowPrompt,
+      isInstalled: () => false,
+      dismiss,
+      displayInstallPopUp: () => {
+        const dialogRef = openSpy();
+        dialogRef.closed.subscribe(() => dismiss());
+      },
+    };
   }
 
   function configure(shouldShowPrompt: boolean) {
@@ -51,7 +71,10 @@ describe('App - PWA install popup', () => {
         provideRouter([]),
         provideMockStore({ initialState: { [appConfigFeatureKey]: initialAppConfigState } }),
         { provide: Dialog, useValue: { open: openSpy } },
-        { provide: PwaInstallService, useValue: { shouldShowPrompt: () => shouldShowPrompt } },
+        {
+          provide: PwaInstallService,
+          useValue: mockPwaInstallService({ shouldShowPrompt: () => shouldShowPrompt, openSpy }),
+        },
       ],
     });
 
@@ -95,7 +118,10 @@ describe('App - PWA install popup', () => {
         provideRouter([]),
         provideMockStore({ initialState: { [appConfigFeatureKey]: initialAppConfigState } }),
         { provide: Dialog, useValue: { open: openSpy } },
-        { provide: PwaInstallService, useValue: { shouldShowPrompt: () => eligible() } },
+        {
+          provide: PwaInstallService,
+          useValue: mockPwaInstallService({ shouldShowPrompt: () => eligible(), openSpy }),
+        },
       ],
     });
 
@@ -123,7 +149,10 @@ describe('App - PWA install popup', () => {
         provideRouter([]),
         provideMockStore({ initialState: { [appConfigFeatureKey]: initialAppConfigState } }),
         { provide: Dialog, useValue: { open: openSpy } },
-        { provide: PwaInstallService, useValue: { shouldShowPrompt: () => eligible() } },
+        {
+          provide: PwaInstallService,
+          useValue: mockPwaInstallService({ shouldShowPrompt: () => eligible(), openSpy }),
+        },
       ],
     });
 
@@ -160,7 +189,11 @@ describe('App - PWA install popup', () => {
         { provide: Dialog, useValue: { open: openSpy } },
         {
           provide: PwaInstallService,
-          useValue: { shouldShowPrompt: () => true, dismiss: dismissSpy },
+          useValue: mockPwaInstallService({
+            shouldShowPrompt: () => true,
+            dismiss: dismissSpy,
+            openSpy,
+          }),
         },
       ],
     });

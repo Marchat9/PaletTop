@@ -21,6 +21,13 @@ COPY package*.json ./
 RUN npm ci
 
 COPY . .
+
+# App version baked into the bundle at build time (see scripts/set-version.mjs, run
+# automatically via the `prebuild` npm lifecycle script). Set from the release tag by
+# .github/workflows/docker-images.yml; defaults to the committed placeholder otherwise.
+ARG APP_VERSION=0.0.0
+ENV APP_VERSION=$APP_VERSION
+
 RUN npm run build
 
 # ---- production: Nginx serving the static build ----
