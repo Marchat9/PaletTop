@@ -10,6 +10,7 @@ describe('superAdminConfig', () => {
         delete process.env.SUPER_ADMIN_MAX_ATTEMPTS;
         delete process.env.SUPER_ADMIN_LOCKOUT_BASE_DELAY_SECONDS;
         delete process.env.SUPER_ADMIN_LOCKOUT_MAX_DELAY_SECONDS;
+        delete process.env.SUPER_ADMIN_MAX_PAGE_SIZE;
         delete process.env.NODE_ENV;
     });
 
@@ -84,5 +85,19 @@ describe('superAdminConfig', () => {
         const config = superAdminConfig();
 
         expect(config.lockoutBaseDelaySeconds).toBe(30);
+    });
+
+    it('defaults maxPageSize to 100', () => {
+        const config = superAdminConfig();
+
+        expect(config.maxPageSize).toBe(100);
+    });
+
+    it('respects SUPER_ADMIN_MAX_PAGE_SIZE', () => {
+        process.env.SUPER_ADMIN_MAX_PAGE_SIZE = '250';
+
+        const config = superAdminConfig();
+
+        expect(config.maxPageSize).toBe(250);
     });
 });

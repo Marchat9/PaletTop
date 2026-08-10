@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { LessThan, Repository } from 'typeorm';
 import { Team } from 'src/entities/team.entity';
@@ -10,6 +10,23 @@ export interface TournamentLoadOptions {
     withMatchesInTeams?: boolean;
     withMatches?: boolean;
     withSessions?: boolean;
+}
+
+const ADMIN_TOURNAMENT_SORTABLE_COLUMNS: Record<string, string> = {
+    name: 'tournament.name',
+    code: 'tournament.code',
+    status: 'tournament.status',
+    date: 'tournament.date',
+    createdAt: 'tournament.createdAt',
+};
+
+export interface AdminTournamentSearchOptions {
+    page: number;
+    pageSize: number;
+    search?: string;
+    status?: TournamentStatus;
+    sortBy?: string;
+    sortDir?: 'ASC' | 'DESC';
 }
 
 @Injectable()
@@ -103,17 +120,54 @@ export class TournamentRepository {
         return tournament;
     }
 
-    async updateStatus(id: string, status: TournamentStatus): Promise<void> {
-        let timeStampObj = {};
+    async searchForAdmin(
+        options: AdminTournamentSearchOptions,
+    ): Promise<{ items: (Tournament & { teamsCount: number })[]; total: number }> {
+        const sortColumn =
+            (options.sortBy && ADMIN_TOURNAMENT_SORTABLE_COLUMNS[options.sortBy]) ||
+            'tournament.createdAt';
+        const sortDir = options.sortDir === 'ASC' ? 'ASC' : 'DESC';
+
+        const queryBuilder = this.repo
+            .createQueryBuilder('tournament')
+            .loadRelationCountAndMap('tournament.teamsCount', 'tournament.teams');
+
+        if (options.search) {
+            queryBuilder.andWhere(
+                '(unaccent(tournament.name) ILIKE unaccent(:search) OR unaccent(tournament.code) ILIKE unaccent(:search))',
+                {
+                    search: `%${options.search}%`,
+                },
+            );
+        }
+        if (options.status) {
+            queryBuilder.andWhere('tournament.status = :status', { status: options.status });
+        }
+
+        const [items, total] = await queryBuilder
+            .orderBy(sortColumn, sortDir)
+            .skip((options.page - 1) * options.pageSize)
+            .take(options.pageSize)
+            .getManyAndCount();
+
+        return { items: items as (Tournament & { teamsCount: number })[], total };
+    }
+
+    private statusTimestamps(
+        status: TournamentStatus,
+    ): Partial<Pick<Tournament, 'activatedAt' | 'completedAt'>> {
         switch (status) {
             case TournamentStatus.ACTIVE:
-                timeStampObj = { activatedAt: new Date() };
-                break;
+                return { activatedAt: new Date() };
             case TournamentStatus.COMPLETED:
-                timeStampObj = { completedAt: new Date() };
-                break;
+                return { completedAt: new Date() };
+            default:
+                return {};
         }
-        await this.repo.update(id, { status, ...timeStampObj });
+    }
+
+    async updateStatus(id: string, status: TournamentStatus): Promise<void> {
+        await this.repo.update(id, { status, ...this.statusTimestamps(status) });
     }
 
     save(tournament: Partial<Tournament>): Promise<Tournament> {
@@ -165,6 +219,26 @@ export class TournamentRepository {
         await this.repo.delete(ids);
     }
 
+    async updateStatusMany(ids: string[], status: TournamentStatus): Promise<void> {
+        if (!ids.length) return;
+        // Deliberate raw status flip — does NOT run the orchestration that
+        // startTournament()/completeTournament() normally do (pool draw, session
+        // creation/closure, websocket events). Setting a tournament to ACTIVE or
+        // COMPLETED through this path can leave it without pools/sessions/matches.
+        // Accepted as an "I know what I'm doing" super admin escape hatch — the
+        // frontend must warn strongly and recommend only using this for CANCELLED.
+        // Timestamp bookkeeping (activatedAt/completedAt) is still kept in sync via
+        // statusTimestamps() so the cleanup cron's retention queries stay correct.
+        await this.repo.update(ids, { status, ...this.statusTimestamps(status) });
+    }
+
+    async updateAdminPassword(id: string, newPassword: string): Promise<void> {
+        const result = await this.repo.update(id, { adminPassword: newPassword });
+        if (!result.affected) {
+            throw new NotFoundException('Tournoi introuvable.');
+        }
+    }
+
     private daysAgo(days: number): Date {
         const date = new Date();
         date.setDate(date.getDate() - days);
@@ -173,5 +247,25 @@ export class TournamentRepository {
 
     private daysFromNow(days: number): Date {
         return this.daysAgo(-days);
+    }
+
+    async countByStatus(): Promise<Record<TournamentStatus, number>> {
+        const rows = await this.repo
+            .createQueryBuilder('tournament')
+            .select('tournament.status', 'status')
+            .addSelect('COUNT(*)', 'count')
+            .groupBy('tournament.status')
+            .getRawMany<{ status: TournamentStatus; count: string }>();
+
+        const counts: Record<TournamentStatus, number> = {
+            [TournamentStatus.DRAFT]: 0,
+            [TournamentStatus.ACTIVE]: 0,
+            [TournamentStatus.COMPLETED]: 0,
+            [TournamentStatus.CANCELLED]: 0,
+        };
+        for (const row of rows) {
+            counts[row.status] = Number(row.count);
+        }
+        return counts;
     }
 }

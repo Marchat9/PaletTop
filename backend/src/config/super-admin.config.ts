@@ -6,6 +6,7 @@ export interface SuperAdminConfig {
     maxAttempts: number;
     lockoutBaseDelaySeconds: number;
     lockoutMaxDelaySeconds: number;
+    maxPageSize: number;
 }
 
 const DEFAULT_PASSWORD = 'PaletTopPassword';
@@ -43,4 +44,5 @@ export default registerAs('superAdmin', (): SuperAdminConfig => ({
     maxAttempts: parseNumber(process.env.SUPER_ADMIN_MAX_ATTEMPTS, 3),
     lockoutBaseDelaySeconds: parseNumber(process.env.SUPER_ADMIN_LOCKOUT_BASE_DELAY_SECONDS, 30),
     lockoutMaxDelaySeconds: parseNumber(process.env.SUPER_ADMIN_LOCKOUT_MAX_DELAY_SECONDS, 1800),
+    maxPageSize: parseNumber(process.env.SUPER_ADMIN_MAX_PAGE_SIZE, 100),
 }));

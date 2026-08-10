@@ -10,6 +10,7 @@ function makeService(overrides: Partial<SuperAdminConfig> = {}): SuperAdminServi
         maxAttempts: 3,
         lockoutBaseDelaySeconds: 30,
         lockoutMaxDelaySeconds: 1800,
+        maxPageSize: 100,
         ...overrides,
     };
     const configService = { getOrThrow: () => config } as unknown as ConfigService;

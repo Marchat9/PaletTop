@@ -29,14 +29,14 @@ export class SuperAdminService {
 
     login(password: string, ip: string): void {
         const state = this.attempts.get(ip);
-        this.logger.debug(`Attemtp to connect to super admin with ip : ${ip}`);
+        this.logger.debug(`Attemtp to connect to super admin with ip : '${ip}'`);
 
         if (
             state?.lockedUntil !== null &&
             state?.lockedUntil !== undefined &&
             state.lockedUntil > Date.now()
         ) {
-            this.logger.warn(`Super admin login attempt refused (IP locked out): ${ip}`);
+            this.logger.warn(`Super admin login attempt refused (IP locked out): '${ip}'`);
             throw new HttpException(LOCKOUT_MESSAGE, HttpStatus.TOO_MANY_REQUESTS);
         }
 
@@ -69,7 +69,7 @@ export class SuperAdminService {
         if (state.failedAttempts < this.config.maxAttempts) {
             this.attempts.set(ip, state);
             this.logger.warn(
-                `Super admin login failed (${state.failedAttempts}/${this.config.maxAttempts}): ${ip}`,
+                `Super admin login failed (${state.failedAttempts}/${this.config.maxAttempts}): '${ip}'`,
             );
             throw new UnauthorizedException('Mot de passe invalide');
         }
@@ -84,7 +84,7 @@ export class SuperAdminService {
         this.attempts.set(ip, state);
 
         this.logger.warn(
-            `IP locked out after too many failed super admin login attempts (lockout #${state.consecutiveLockouts}, ${delaySeconds}s): ${ip}`,
+            `IP locked out after too many failed super admin login attempts (lockout #${state.consecutiveLockouts}, ${delaySeconds}s): '${ip}'`,
         );
         throw new HttpException(LOCKOUT_MESSAGE, HttpStatus.TOO_MANY_REQUESTS);
     }

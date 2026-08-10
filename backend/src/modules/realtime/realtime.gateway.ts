@@ -89,8 +89,8 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
                 client.emit('join-error', { message: 'Équipe introuvable.' });
                 return;
             }
-            client.join(`tournament:${tournamentCode}`);
-            client.join(`tournament:${tournamentCode}:team:${teamCode}`);
+            void client.join(`tournament:${tournamentCode}`);
+            void client.join(`tournament:${tournamentCode}:team:${teamCode}`);
             this.logger.log(
                 `[WS] ${client.id} joined rooms: 'tournament:${tournamentCode}' and 'tournament:${tournamentCode}:team:${teamCode}'.`,
             );
@@ -109,8 +109,8 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
                 });
                 return;
             }
-            client.join(`tournament:${tournamentCode}`);
-            client.join(`tournament:${tournamentCode}:admin`);
+            void client.join(`tournament:${tournamentCode}`);
+            void client.join(`tournament:${tournamentCode}:admin`);
             this.logger.log(
                 `[WS][Admin] ${client.id} joined rooms: 'tournament:${tournamentCode}' and 'tournament:${tournamentCode}:admin'`,
             );
