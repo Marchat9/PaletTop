@@ -1,0 +1,113 @@
+<app-card-collapsible [canCollapse]="false">
+  <div header class="card-header">
+    <div class="card-header-title">
+      Clubs <span class="count">· {{ list().total }} au total</span>
+    </div>
+    <div class="toolbar">
+      <app-input-text
+        placeholder="Rechercher un club…"
+        icon="search"
+        [value]="list().criteria.search"
+        (valueChange)="onSearchInput($event)"
+      ></app-input-text>
+    </div>
+  </div>
+
+  <div content>
+    @if (selectedCount() > 0) {
+      <div class="bulk-bar">
+        <span>{{ selectedCount() }} sélectionné(s)</span>
+        <app-button title="Supprimer la sélection" variant="error" (clicked)="deleteSelection()" />
+      </div>
+    }
+
+    <div class="table-scroll">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th class="col-check">
+              <input
+                type="checkbox"
+                [checked]="selectedCount() > 0 && selectedCount() === list().items.length"
+                (change)="toggleSelectAll($any($event.target).checked)"
+              />
+            </th>
+            <th class="sortable">
+              <button type="button" class="sort-btn" (click)="onSort('name')">
+                Club
+                @if (sortState().column === 'name') {
+                  <span class="sort-indicator">{{ sortState().indicator }}</span>
+                }
+              </button>
+            </th>
+            <th class="sortable">
+              <button type="button" class="sort-btn" (click)="onSort('playersCount')">
+                Joueurs rattachés
+                @if (sortState().column === 'playersCount') {
+                  <span class="sort-indicator">{{ sortState().indicator }}</span>
+                }
+              </button>
+            </th>
+            <th class="col-actions">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (club of list().items; track club.id) {
+            <tr>
+              <td class="col-check">
+                <input
+                  type="checkbox"
+                  [checked]="selectedIds().has(club.id)"
+                  (change)="toggleSelect(club.id, $any($event.target).checked)"
+                />
+              </td>
+              <td class="col-name">{{ club.name }}</td>
+              <td>{{ club.playersCount }}</td>
+              <td class="col-actions">
+                <app-button-icon class="icon-btn" icon="edit" (clicked)="openRename(club)" />
+                <app-button-icon
+                  class="icon-btn danger"
+                  icon="delete"
+                  (clicked)="deleteOne(club)"
+                />
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="4" class="empty-row">
+                @if (list().isLoading) {
+                  Chargement…
+                } @else if (list().error) {
+                  <div class="error-container">
+                    <app-icon name="error" [ariaHidden]="true" />
+                    <span>{{ list().error }}</span>
+                  </div>
+                } @else {
+                  Aucun club ne correspond à cette recherche.
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <div class="pagination">
+      <span class="pagination-info">Page {{ list().criteria.page }} sur {{ totalPages() }}</span>
+      <div class="pagination-controls">
+        <app-button
+          title="‹ Précédent"
+          variant="secondary"
+          [disabled]="list().criteria.page <= 1"
+          (clicked)="onPageChange(list().criteria.page - 1)"
+        />
+        <app-button
+          title="Suivant ›"
+          variant="secondary"
+          [disabled]="list().criteria.page >= totalPages()"
+          (clicked)="onPageChange(list().criteria.page + 1)"
+        />
+      </div>
+    </div>
+  </div>
+</app-card-collapsible>

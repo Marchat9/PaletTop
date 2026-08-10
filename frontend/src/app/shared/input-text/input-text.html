@@ -8,7 +8,8 @@
     [id]="id() || null"
     class="input-text"
     [class.with-icon]="!!icon()"
-    [type]="isPassword() ? 'password' : 'text'"
+    [class.with-password-toggle]="isPassword()"
+    [type]="isPassword() && !showPassword() ? 'password' : 'text'"
     [placeholder]="placeholder()"
     [autocomplete]="autocomplete()"
     [value]="internalValue()"
@@ -17,4 +18,16 @@
     [style.text-transform]="uppercase() ? 'uppercase' : 'none'"
     (input)="onInput($any($event.target).value)"
   />
+
+  @if (isPassword()) {
+    <button
+      type="button"
+      class="password-toggle"
+      [attr.aria-label]="showPassword() ? 'Masquer le mot de passe' : 'Afficher le mot de passe'"
+      [disabled]="disabled()"
+      (click)="toggleShowPassword()"
+    >
+      <app-icon [name]="showPassword() ? 'visibility_off' : 'visibility'" [ariaHidden]="true" />
+    </button>
+  }
 </div>

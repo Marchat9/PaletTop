@@ -6,6 +6,7 @@ import { TournamentCreatePageComponent } from './pages/tournament-create-page/to
 import { AdminConnectionPageComponent } from './pages/admin-connection-page/admin-connection-page';
 import { PlayerConnectionPage } from './pages/player-connection-page/player-connection-page';
 import { FriendlyMatchPageComponent } from './pages/friendly-match-page/friendly-match-page';
+import { SuperAdminPageComponent } from './pages/super-admin-page/super-admin-page';
 
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'accueil' },
@@ -16,5 +17,6 @@ export const routes: Routes = [
   { path: 'player', component: PlayerConnectionPage },
   { path: 'player/:tournamentCode/:teamCode', component: PlayerTeamMatchPageComponent },
   { path: 'friendly-match', component: FriendlyMatchPageComponent },
+  { path: 'super-admin', component: SuperAdminPageComponent },
   { path: '**', redirectTo: 'accueil' },
 ];

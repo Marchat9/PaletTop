@@ -1,0 +1,55 @@
+<div class="status-popup-container">
+  <div class="header-row">
+    <h2 class="title">
+      <app-icon name="sync" iconClass="icon" [ariaHidden]="true" />
+      Changer le statut de la sélection
+    </h2>
+    <button class="close-button" type="button" aria-label="Fermer" (click)="onCancel()">
+      <app-icon name="close" />
+    </button>
+  </div>
+
+  <p class="subtitle">{{ data.ids.length }} tournoi(s) sélectionné(s).</p>
+
+  <div class="field-group">
+    <span class="field-label">Nouveau statut</span>
+    @for (option of statusOptions; track option.value) {
+      <label class="radio-row">
+        <input
+          type="radio"
+          name="status"
+          [checked]="selectedStatus() === option.value"
+          (change)="onSelectStatus(option.value)"
+        />
+        {{ option.label }}
+      </label>
+    }
+  </div>
+
+  <div class="warning-block">
+    <app-icon name="warning" [ariaHidden]="true" />
+    <span>
+      Ce changement ne suit pas le déroulement normal d'un tournoi (pas de tirage de poules ni de
+      génération de matchs si tu choisis Actif, pas de clôture de session si tu choisis Terminé).
+      Réserve cette action à <strong>Annulé</strong> sauf cas exceptionnel.
+    </span>
+  </div>
+
+  @if (request().error && hasSubmitted) {
+    <div class="error-container">
+      <app-icon name="error" [ariaHidden]="true" />
+      <span>{{ request().error }}</span>
+    </div>
+  }
+
+  <div class="actions">
+    <app-button title="Annuler" variant="secondary" (clicked)="onCancel()"></app-button>
+    <app-button
+      title="Confirmer"
+      variant="primary"
+      [loading]="request().isLoading"
+      [disabled]="!canConfirm()"
+      (clicked)="onConfirm()"
+    ></app-button>
+  </div>
+</div>

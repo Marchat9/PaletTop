@@ -1,0 +1,61 @@
+<div class="super-admin-page">
+  <header class="page-header">
+    <div class="page-header-row">
+      <div class="page-header-text">
+        <span class="eyebrow">PaletTop · Espace protégé</span>
+        <h1 class="page-title">Super Admin</h1>
+        <p class="page-sub">
+          Monitoring des tournois et des clubs enregistrés sur toute la plateforme.
+        </p>
+      </div>
+      <app-button
+        title="Rafraîchir"
+        icon="refresh"
+        variant="tertiary"
+        (clicked)="refresh()"
+      ></app-button>
+    </div>
+  </header>
+
+  <section class="stats-row" aria-label="Statistiques rapides">
+    <app-metric-tile
+      [value]="(metrics()?.tournaments?.active ?? '—') + ''"
+      label="Tournois actifs"
+      [clickable]="true"
+      (clicked)="onStatTileClick(TournamentStatus.ACTIVE)"
+    />
+    <app-metric-tile
+      [value]="(metrics()?.tournaments?.draft ?? '—') + ''"
+      label="Tournois brouillon"
+      [clickable]="true"
+      (clicked)="onStatTileClick(TournamentStatus.DRAFT)"
+    />
+    <app-metric-tile
+      [value]="(metrics()?.tournaments?.completed ?? '—') + ''"
+      label="Tournois terminés"
+      [clickable]="true"
+      (clicked)="onStatTileClick(TournamentStatus.FINISHED)"
+    />
+    <app-metric-tile [value]="(metrics()?.clubs?.total ?? '—') + ''" label="Clubs enregistrés" />
+  </section>
+
+  <app-super-admin-tournament-table
+    [list]="tournaments()"
+    (searchRequested)="onTournamentSearch($event)"
+    (detailRequested)="onTournamentDetailRequested($event)"
+    (passwordResetRequested)="onTournamentPasswordResetRequested($event)"
+    (deleteOneRequested)="onTournamentDeleteOneRequested($event)"
+    (deleteSelectionRequested)="onTournamentDeleteSelectionRequested($event)"
+    (statusChangeRequested)="onTournamentStatusChangeRequested($event)"
+  />
+
+  <app-super-admin-club-table
+    [list]="clubs()"
+    (searchRequested)="onClubSearch($event)"
+    (renameRequested)="onClubRenameRequested($event)"
+    (deleteOneRequested)="onClubDeleteOneRequested($event)"
+    (deleteSelectionRequested)="onClubDeleteSelectionRequested($event)"
+  />
+
+  <app-super-admin-settings />
+</div>

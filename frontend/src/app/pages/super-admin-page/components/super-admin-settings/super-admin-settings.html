@@ -1,0 +1,26 @@
+<app-card-collapsible [isExpanded]="configurations().length > 0">
+  <div header class="card-header">
+    <app-icon name="settings" iconClass="icon" />
+    <div class="card-header-title">Paramètres de l'application</div>
+  </div>
+  <div content class="settings-content">
+    <p class="settings-hint">
+      Emplacement permettant d'activer ou désactiver les réglages de l'application depuis cette
+      page.
+    </p>
+    @for (item of configurations(); track item.settingKey) {
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-label">{{ item.name }}</div>
+          <div class="toggle-hint">
+            {{ item.description }}
+          </div>
+        </div>
+        <label class="switch">
+          <input type="checkbox" [checked]="item.currentValue" />
+          <span class="switch-track"></span>
+        </label>
+      </div>
+    }
+  </div>
+</app-card-collapsible>

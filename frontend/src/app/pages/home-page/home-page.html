@@ -11,7 +11,7 @@
     class="friendly-match"
     (eventGoToFriendlyMatch)="goToFriendlyMatch()"
   />
-  @if (false) {
+  @if (metrics().length > 0) {
     <app-section-metrics class="metric" [metrics]="metrics()" />
   }
 </div>

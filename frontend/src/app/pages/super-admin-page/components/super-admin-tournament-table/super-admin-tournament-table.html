@@ -1,0 +1,172 @@
+<app-card-collapsible [canCollapse]="false">
+  <div header class="card-header">
+    <div class="card-header-title">
+      Tournois <span class="count">· {{ list().total }} au total</span>
+    </div>
+    <div class="toolbar">
+      <app-input-text
+        placeholder="Rechercher un code ou un nom…"
+        icon="search"
+        [value]="list().criteria.search"
+        (valueChange)="onSearchInput($event)"
+      ></app-input-text>
+      <app-input-select
+        [value]="list().criteria.status ?? ''"
+        [options]="statusFilterOptions"
+        (valueChange)="onStatusFilterChange($event)"
+      ></app-input-select>
+    </div>
+  </div>
+
+  <div content>
+    @if (selectedCount() > 0) {
+      <div class="bulk-bar">
+        <span>{{ selectedCount() }} sélectionné(s)</span>
+        <div class="bulk-actions">
+          <app-button
+            title="Changer le statut"
+            variant="secondary"
+            (clicked)="changeSelectionStatus()"
+          />
+          <app-button
+            title="Supprimer la sélection"
+            variant="error"
+            (clicked)="deleteSelection()"
+          />
+        </div>
+      </div>
+    }
+
+    <div class="table-scroll">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th class="col-check">
+              <input
+                type="checkbox"
+                [checked]="selectedCount() > 0 && selectedCount() === list().items.length"
+                (change)="toggleSelectAll($any($event.target).checked)"
+              />
+            </th>
+            <th class="sortable">
+              <button type="button" class="sort-btn" (click)="onSort('name')">
+                Tournoi
+                @if (sortState().column === 'name') {
+                  <span class="sort-indicator">{{ sortState().indicator }}</span>
+                }
+              </button>
+            </th>
+            <th class="sortable">
+              <button type="button" class="sort-btn" (click)="onSort('status')">
+                Statut
+                @if (sortState().column === 'status') {
+                  <span class="sort-indicator">{{ sortState().indicator }}</span>
+                }
+              </button>
+            </th>
+            <th class="sortable">
+              <button type="button" class="sort-btn" (click)="onSort('date')">
+                Date
+                @if (sortState().column === 'date') {
+                  <span class="sort-indicator">{{ sortState().indicator }}</span>
+                }
+              </button>
+            </th>
+            <th class="sortable">
+              <button type="button" class="sort-btn" (click)="onSort('teamsCount')">
+                Équipes
+                @if (sortState().column === 'teamsCount') {
+                  <span class="sort-indicator">{{ sortState().indicator }}</span>
+                }
+              </button>
+            </th>
+            <th class="sortable">
+              <button type="button" class="sort-btn" (click)="onSort('createdAt')">
+                Créé le
+                @if (sortState().column === 'createdAt') {
+                  <span class="sort-indicator">{{ sortState().indicator }}</span>
+                }
+              </button>
+            </th>
+            <th class="col-actions">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (tournament of list().items; track tournament.id) {
+            <tr>
+              <td class="col-check">
+                <input
+                  type="checkbox"
+                  [checked]="selectedIds().has(tournament.id)"
+                  (change)="toggleSelect(tournament.id, $any($event.target).checked)"
+                />
+              </td>
+              <td class="col-name">
+                <div class="name">{{ tournament.name }}</div>
+                <div class="code">{{ tournament.code }}</div>
+              </td>
+              <td>
+                <span class="badge" [class]="'badge-' + tournament.status.toLowerCase()">
+                  {{ statusLabels[tournament.status] }}
+                </span>
+              </td>
+              <td>{{ tournament.date | date: 'dd/MM/yyyy' }}</td>
+              <td>{{ tournament.teamsCount }}</td>
+              <td>{{ tournament.createdAt | date: 'dd/MM/yyyy' }}</td>
+              <td class="col-actions">
+                <app-button-icon
+                  class="icon-btn"
+                  icon="visibility"
+                  (clicked)="openDetail(tournament)"
+                />
+                <app-button-icon
+                  class="icon-btn"
+                  icon="key"
+                  (clicked)="openPasswordReset(tournament)"
+                />
+                <app-button-icon
+                  class="icon-btn danger"
+                  icon="delete"
+                  (clicked)="deleteOne(tournament)"
+                />
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="7" class="empty-row">
+                @if (list().isLoading) {
+                  Chargement…
+                } @else if (list().error) {
+                  <div class="error-container">
+                    <app-icon name="error" [ariaHidden]="true" />
+                    <span>{{ list().error }}</span>
+                  </div>
+                } @else {
+                  Aucun tournoi ne correspond à cette recherche.
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <div class="pagination">
+      <span class="pagination-info">Page {{ list().criteria.page }} sur {{ totalPages() }}</span>
+      <div class="pagination-controls">
+        <app-button
+          title="‹ Précédent"
+          variant="secondary"
+          [disabled]="list().criteria.page <= 1"
+          (clicked)="onPageChange(list().criteria.page - 1)"
+        />
+        <app-button
+          title="Suivant ›"
+          variant="secondary"
+          [disabled]="list().criteria.page >= totalPages()"
+          (clicked)="onPageChange(list().criteria.page + 1)"
+        />
+      </div>
+    </div>
+  </div>
+</app-card-collapsible>

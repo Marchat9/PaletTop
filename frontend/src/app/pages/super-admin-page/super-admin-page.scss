@@ -1,0 +1,55 @@
+.super-admin-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+  padding: 2rem;
+
+  .page-header {
+    .page-header-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1rem;
+
+      @media (width < 640px) {
+        flex-direction: column;
+      }
+    }
+
+    .page-header-text {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+
+      .eyebrow {
+        color: var(--color-primary);
+        font-family: var(--font-label);
+        font-size: 0.72rem;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+      }
+
+      .page-title {
+        margin: 0;
+        font-family: var(--font-headline);
+        font-size: clamp(2rem, 7vw, 3.4rem);
+        line-height: 1;
+      }
+
+      .page-sub {
+        margin: 0;
+        color: var(--color-on-surface-variant);
+      }
+    }
+  }
+
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.85rem;
+
+    @media (width < 768px) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+}

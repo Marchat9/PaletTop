@@ -41,6 +41,7 @@ export class InputText implements AfterViewInit, ControlValueAccessor {
   readonly valueChange = output<string>();
 
   protected readonly internalValue = signal('');
+  protected readonly showPassword = signal(false);
   private isControlValueAccessorActive = false;
   private onChangeFn: (v: any) => void = () => {};
   private onTouchedFn: () => void = () => {};
@@ -86,5 +87,9 @@ export class InputText implements AfterViewInit, ControlValueAccessor {
     this.valueChange.emit(nextValue);
     this.onChangeFn(nextValue);
     this.onTouchedFn();
+  }
+
+  toggleShowPassword(): void {
+    this.showPassword.update((shown) => !shown);
   }
 }

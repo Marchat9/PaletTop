@@ -2,7 +2,7 @@
   class="metric-tile"
   [class]="size()"
   [class.clickable]="clickable()"
-  (click)="clickable() && clicked.emit(); $event.preventDefault()"
+  (click)="clickable() && onClick($event)"
 >
   <p class="value">{{ value() }}</p>
   <p class="label">{{ label() }}</p>

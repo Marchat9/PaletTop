@@ -1,0 +1,39 @@
+<div class="rename-popup-container">
+  <div class="header-row">
+    <h2 class="title">
+      <app-icon name="edit" iconClass="icon" [ariaHidden]="true" />
+      Renommer le club
+    </h2>
+    <button class="close-button" type="button" aria-label="Fermer" (click)="onCancel()">
+      <app-icon name="close" />
+    </button>
+  </div>
+
+  <div class="field-group">
+    <label class="field-label" for="club-name">Nom du club</label>
+    <app-input-text
+      id="club-name"
+      [autofocus]="true"
+      [value]="name()"
+      (valueChange)="onNameChange($event)"
+    ></app-input-text>
+  </div>
+
+  @if (request().error && hasSubmitted) {
+    <div class="error-container">
+      <app-icon name="error" [ariaHidden]="true" />
+      <span>{{ request().error }}</span>
+    </div>
+  }
+
+  <div class="actions">
+    <app-button title="Annuler" variant="secondary" (clicked)="onCancel()"></app-button>
+    <app-button
+      title="Enregistrer"
+      variant="primary"
+      [loading]="request().isLoading"
+      [disabled]="!canConfirm()"
+      (clicked)="onConfirm()"
+    ></app-button>
+  </div>
+</div>

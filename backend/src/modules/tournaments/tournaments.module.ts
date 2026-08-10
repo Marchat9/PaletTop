@@ -16,6 +16,7 @@ import { SessionService } from './services/session.service';
 import { TeamController } from './controllers/team.controller';
 import { ScoreController } from './controllers/score.controller';
 import { TournamentsController } from './controllers/tournaments.controller';
+import { MetricsController } from './controllers/metrics.controller';
 import { MatchRepository } from './repositories/match.repository';
 import { PlayerClubRepository } from './repositories/player-club.repository';
 import { SessionRepository } from './repositories/session.repository';
@@ -39,7 +40,13 @@ import { SessionController } from 'src/modules/tournaments/controllers/session.c
         ]),
         RealtimeModule,
     ],
-    controllers: [TournamentsController, TeamController, ScoreController, SessionController],
+    controllers: [
+        TournamentsController,
+        TeamController,
+        ScoreController,
+        SessionController,
+        MetricsController,
+    ],
     providers: [
         TournamentRepository,
         TeamRepository,
@@ -57,6 +64,7 @@ import { SessionController } from 'src/modules/tournaments/controllers/session.c
     ],
     exports: [
         TournamentRepository,
+        PlayerClubRepository,
         MatchRepository,
         SessionRepository,
         PoolRepository,
