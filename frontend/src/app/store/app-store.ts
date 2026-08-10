@@ -35,6 +35,18 @@ import { SuperAdminEffects } from './superadmin/superadmin.effects';
 import { SuperAdminState } from './superadmin/superadmin.reducer';
 import { superadminReducer } from './superadmin/superadmin.reducer';
 import { superadminFeatureKey } from './superadmin/superadmin.selectors';
+import { MetricsEffects } from './metrics/metrics.effects';
+import { MetricsState } from './metrics/metrics.reducer';
+import { metricsReducer } from './metrics/metrics.reducer';
+import { metricsFeatureKey } from './metrics/metrics.selectors';
+import { SuperAdminTournamentsEffects } from './superadmin-tournaments/superadmin-tournaments.effects';
+import { SuperAdminTournamentsState } from './superadmin-tournaments/superadmin-tournaments.reducer';
+import { superAdminTournamentsReducer } from './superadmin-tournaments/superadmin-tournaments.reducer';
+import { superAdminTournamentsFeatureKey } from './superadmin-tournaments/superadmin-tournaments.selectors';
+import { SuperAdminClubsEffects } from './superadmin-clubs/superadmin-clubs.effects';
+import { SuperAdminClubsState } from './superadmin-clubs/superadmin-clubs.reducer';
+import { superAdminClubsReducer } from './superadmin-clubs/superadmin-clubs.reducer';
+import { superAdminClubsFeatureKey } from './superadmin-clubs/superadmin-clubs.selectors';
 
 export interface AppState {
   [appConfigFeatureKey]: AppConfigState;
@@ -46,6 +58,9 @@ export interface AppState {
   [rankingFeatureKey]: RankingState;
   [friendlyMatchFeatureKey]: FriendlyMatchState;
   [superadminFeatureKey]: SuperAdminState;
+  [metricsFeatureKey]: MetricsState;
+  [superAdminTournamentsFeatureKey]: SuperAdminTournamentsState;
+  [superAdminClubsFeatureKey]: SuperAdminClubsState;
 }
 
 export const reducers: ActionReducerMap<AppState> = {
@@ -58,6 +73,9 @@ export const reducers: ActionReducerMap<AppState> = {
   [rankingFeatureKey]: rankingReducer,
   [friendlyMatchFeatureKey]: friendlyMatchReducer,
   [superadminFeatureKey]: superadminReducer,
+  [metricsFeatureKey]: metricsReducer,
+  [superAdminTournamentsFeatureKey]: superAdminTournamentsReducer,
+  [superAdminClubsFeatureKey]: superAdminClubsReducer,
 };
 
 export const effects = [
@@ -70,4 +88,7 @@ export const effects = [
   MatchHistoryEffects,
   RankingEffects,
   SuperAdminEffects,
+  MetricsEffects,
+  SuperAdminTournamentsEffects,
+  SuperAdminClubsEffects,
 ];

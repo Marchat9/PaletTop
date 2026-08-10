@@ -3,6 +3,8 @@ import { Router } from '@angular/router';
 import { MockStore, provideMockStore } from '@ngrx/store/testing';
 import { SuperAdminPageComponent } from './super-admin-page';
 import { clearSuperAdminSession } from 'src/app/store/superadmin/superadmin.actions';
+import { TournamentStatus } from 'src/app/models/tournament-status.enum';
+import { searchSuperAdminTournaments } from 'src/app/store/superadmin-tournaments/superadmin-tournaments.actions';
 
 function setup(password: string | null) {
   const routerMock = { navigate: vi.fn() };
@@ -14,6 +16,38 @@ function setup(password: string | null) {
       provideMockStore({
         initialState: {
           superadmin: { authentication: { data: password, isLoading: false, error: null } },
+          metrics: { data: null, isLoading: false, error: null },
+          superAdminTournaments: {
+            list: {
+              items: [],
+              total: 0,
+              criteria: {
+                page: 1,
+                pageSize: 20,
+                search: '',
+                status: null,
+                sortBy: 'createdAt',
+                sortDir: 'DESC',
+              },
+              isLoading: false,
+              error: null,
+            },
+            detail: { data: null, isLoading: false, error: null },
+            deleteRequest: { isLoading: false, error: null },
+            statusChangeRequest: { isLoading: false, error: null },
+            passwordResetRequest: { isLoading: false, error: null },
+          },
+          superAdminClubs: {
+            list: {
+              items: [],
+              total: 0,
+              criteria: { page: 1, pageSize: 20, search: '' },
+              isLoading: false,
+              error: null,
+            },
+            renameRequest: { isLoading: false, error: null },
+            deleteRequest: { isLoading: false, error: null },
+          },
         },
       }),
     ],
@@ -45,5 +79,25 @@ describe('SuperAdminPageComponent', () => {
     fixture.destroy();
 
     expect(store.dispatch).toHaveBeenCalledWith(clearSuperAdminSession());
+  });
+
+  it('delegates stat tile clicks to the tournament table, filtering it by status', () => {
+    const { fixture, store } = setup('secret');
+    (store.dispatch as unknown as { mockClear: () => void }).mockClear();
+
+    fixture.componentInstance.onStatTileClick(TournamentStatus.ACTIVE);
+
+    expect(store.dispatch).toHaveBeenCalledWith(
+      searchSuperAdminTournaments({
+        criteria: {
+          page: 1,
+          pageSize: 20,
+          search: '',
+          status: TournamentStatus.ACTIVE,
+          sortBy: 'createdAt',
+          sortDir: 'DESC',
+        },
+      }),
+    );
   });
 });

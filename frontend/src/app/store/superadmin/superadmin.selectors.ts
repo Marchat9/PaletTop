@@ -3,8 +3,7 @@ import { SuperAdminState } from './superadmin.reducer';
 
 export const superadminFeatureKey = 'superadmin';
 
-export const selectSuperAdminState =
-  createFeatureSelector<SuperAdminState>(superadminFeatureKey);
+export const selectSuperAdminState = createFeatureSelector<SuperAdminState>(superadminFeatureKey);
 
 export const selectSuperAdminPassword = createSelector(
   selectSuperAdminState,

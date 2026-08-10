@@ -1,7 +1,17 @@
 import { DialogRef } from '@angular/cdk/dialog';
-import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  signal,
+} from '@angular/core';
 import { Store } from '@ngrx/store';
-import { clearSuperAdminSession, connectSuperAdmin } from 'src/app/store/superadmin/superadmin.actions';
+import {
+  clearSuperAdminSession,
+  connectSuperAdmin,
+} from 'src/app/store/superadmin/superadmin.actions';
 import {
   selectSuperAdminError,
   selectSuperAdminIsLoading,

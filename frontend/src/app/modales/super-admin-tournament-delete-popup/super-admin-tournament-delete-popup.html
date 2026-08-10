@@ -1,0 +1,47 @@
+<div class="delete-popup-container">
+  <div class="header-row">
+    <h2 class="title danger">
+      <app-icon name="delete" iconClass="icon" [ariaHidden]="true" />
+      Supprimer un tournoi actif
+    </h2>
+    <button class="close-button" type="button" aria-label="Fermer" (click)="onCancel()">
+      <app-icon name="close" />
+    </button>
+  </div>
+
+  <p class="subtitle">
+    <strong>{{ data.name }}</strong> ({{ data.code }}) est <strong>actif</strong> — il contient
+    probablement des équipes et des matchs en cours. Cette action est <strong>irréversible</strong>.
+  </p>
+
+  <div class="field-group">
+    <label class="field-label" for="confirm-code">Tape le code du tournoi pour confirmer</label>
+    <app-input-text
+      id="confirm-code"
+      [placeholder]="data.code"
+      [uppercase]="true"
+      [value]="confirmInput()"
+      (valueChange)="onInputChange($event)"
+    ></app-input-text>
+    <span class="field-hint">Doit correspondre exactement à « {{ data.code }} ».</span>
+  </div>
+
+  @if (request().error && hasSubmitted) {
+    <div class="error-container">
+      <app-icon name="error" [ariaHidden]="true" />
+      <span>{{ request().error }}</span>
+    </div>
+  }
+
+  <div class="actions">
+    <app-button title="Annuler" variant="secondary" (clicked)="onCancel()"></app-button>
+    <app-button
+      title="Supprimer définitivement"
+      variant="error"
+      icon="delete"
+      [loading]="request().isLoading"
+      [disabled]="!canConfirm()"
+      (clicked)="onConfirm()"
+    ></app-button>
+  </div>
+</div>

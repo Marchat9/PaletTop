@@ -11,7 +11,7 @@ const STATUS_PRESENTATION: Record<string, { label: string; tone: string }> = {
   [TournamentStatus.DRAFT]: { label: 'Brouillon', tone: 'draft' },
   [TournamentStatus.ACTIVE]: { label: 'En cours', tone: 'active' },
   [TournamentStatus.FINISHED]: { label: 'Terminé', tone: 'finished' },
-  [TournamentStatus.CLOSED]: { label: 'Clôturé', tone: 'closed' },
+  [TournamentStatus.CANCELLED]: { label: 'Annulé', tone: 'cancelled' },
 };
 
 @Component({

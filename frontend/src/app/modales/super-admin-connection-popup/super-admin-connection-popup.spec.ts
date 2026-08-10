@@ -2,7 +2,10 @@ import { TestBed } from '@angular/core/testing';
 import { DialogRef } from '@angular/cdk/dialog';
 import { MockStore, provideMockStore } from '@ngrx/store/testing';
 import { SuperAdminConnectionPopupComponent } from './super-admin-connection-popup';
-import { clearSuperAdminSession, connectSuperAdmin } from 'src/app/store/superadmin/superadmin.actions';
+import {
+  clearSuperAdminSession,
+  connectSuperAdmin,
+} from 'src/app/store/superadmin/superadmin.actions';
 
 function setup(authentication: { data: string | null; isLoading: boolean; error: string | null }) {
   const dialogRefMock = { close: vi.fn() };
@@ -67,7 +70,9 @@ describe('SuperAdminConnectionPopupComponent', () => {
   it('closes the dialog with true once the store reports a validated password', () => {
     const { fixture, dialogRefMock, store } = setup({ data: null, isLoading: false, error: null });
 
-    store.setState({ superadmin: { authentication: { data: 'secret', isLoading: false, error: null } } });
+    store.setState({
+      superadmin: { authentication: { data: 'secret', isLoading: false, error: null } },
+    });
     store.refreshState();
     fixture.detectChanges();
 

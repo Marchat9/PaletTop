@@ -15,4 +15,10 @@ export class MetricTileComponent {
   public readonly clickable = input<boolean>(false);
 
   public readonly clicked = output<void>();
+
+  onActivate(event?: Event): void {
+    if (!this.clickable()) return;
+    event?.preventDefault();
+    this.clicked.emit();
+  }
 }

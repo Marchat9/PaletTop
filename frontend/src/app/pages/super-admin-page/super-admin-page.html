@@ -1,4 +1,59 @@
 <div class="super-admin-page">
-  <h1>Super Admin</h1>
-  <p>Cette page est en cours de construction.</p>
+  <header class="page-header">
+    <span class="eyebrow">PaletTop · Espace protégé</span>
+    <h1 class="page-title">Super Admin</h1>
+    <p class="page-sub">
+      Monitoring des tournois et des clubs enregistrés sur toute la plateforme.
+    </p>
+  </header>
+
+  <section class="stats-row" aria-label="Statistiques rapides">
+    <app-metric-tile
+      [value]="(metrics()?.tournaments?.active ?? '—') + ''"
+      label="Tournois actifs"
+      [clickable]="true"
+      (clicked)="onStatTileClick(TournamentStatus.ACTIVE)"
+    />
+    <app-metric-tile
+      [value]="(metrics()?.tournaments?.draft ?? '—') + ''"
+      label="Tournois brouillon"
+      [clickable]="true"
+      (clicked)="onStatTileClick(TournamentStatus.DRAFT)"
+    />
+    <app-metric-tile
+      [value]="(metrics()?.tournaments?.completed ?? '—') + ''"
+      label="Tournois terminés"
+      [clickable]="true"
+      (clicked)="onStatTileClick(TournamentStatus.FINISHED)"
+    />
+    <app-metric-tile [value]="(metrics()?.clubs?.total ?? '—') + ''" label="Clubs enregistrés" />
+  </section>
+
+  <app-super-admin-tournament-table />
+
+  <app-super-admin-club-table />
+
+  <app-card-collapsible [canCollapse]="false">
+    <div header class="card-header">
+      <div class="card-header-title">Paramètres de la plateforme</div>
+    </div>
+    <div content class="settings-content">
+      <p class="settings-hint">
+        Emplacement réservé pour de futurs réglages activables/désactivables depuis cette page — le
+        contenu réel sera défini au fur et à mesure des besoins.
+      </p>
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-label">Exemple de réglage (illustratif)</div>
+          <div class="toggle-hint">
+            Représente la forme d'un futur réglage — aucune fonctionnalité réelle
+          </div>
+        </div>
+        <label class="switch">
+          <input type="checkbox" disabled />
+          <span class="switch-track"></span>
+        </label>
+      </div>
+    </div>
+  </app-card-collapsible>
 </div>

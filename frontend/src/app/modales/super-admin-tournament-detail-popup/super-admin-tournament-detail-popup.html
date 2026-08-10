@@ -1,0 +1,58 @@
+<div class="detail-popup-container">
+  <div class="header-row">
+    <h2 class="title">
+      <app-icon name="visibility" iconClass="icon" [ariaHidden]="true" />
+      {{ detail().data?.name ?? 'Détail du tournoi' }}
+    </h2>
+    <button class="close-button" type="button" aria-label="Fermer" (click)="onClose()">
+      <app-icon name="close" />
+    </button>
+  </div>
+
+  @if (detail().isLoading) {
+    <p class="empty-hint">Chargement…</p>
+  } @else if (detail().error) {
+    <div class="error-container">
+      <app-icon name="error" [ariaHidden]="true" />
+      <span>{{ detail().error }}</span>
+    </div>
+  } @else if (detail().data) {
+    <dl class="detail-grid">
+      <div>
+        <dt>Code</dt>
+        <dd>{{ detail().data!.code }}</dd>
+      </div>
+      <div>
+        <dt>Statut</dt>
+        <dd>{{ statusLabels[detail().data!.status] }}</dd>
+      </div>
+      <div>
+        <dt>Créé le</dt>
+        <dd>{{ detail().data!.createdAt | date: 'dd/MM/yyyy HH:mm' }}</dd>
+      </div>
+    </dl>
+
+    <div class="field-group">
+      <span class="field-label">Équipes ({{ detail().data!.teams.length }})</span>
+      <div class="team-list">
+        @for (team of detail().data!.teams; track team.id) {
+          <details class="team-item">
+            <summary>
+              {{ team.name }}
+              <span class="team-meta">{{ team.players.length }} joueur(s)</span>
+            </summary>
+            <div class="players">
+              @for (player of team.players; track player.id) {
+                <span class="player-chip">{{ player.name }}</span>
+              }
+            </div>
+          </details>
+        }
+      </div>
+    </div>
+  }
+
+  <div class="actions">
+    <app-button title="Fermer" variant="secondary" (clicked)="onClose()"></app-button>
+  </div>
+</div>
