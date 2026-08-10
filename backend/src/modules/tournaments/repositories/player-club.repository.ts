@@ -5,7 +5,7 @@ import { PlayerClub } from 'src/entities/player_club.entity';
 
 const ADMIN_CLUB_SORTABLE_COLUMNS: Record<string, string> = {
     name: 'club.name',
-    playersCount: 'club.playersCount',
+    playersCount: 'players_count',
 };
 
 export interface AdminClubSearchOptions {
@@ -51,7 +51,16 @@ export class PlayerClubRepository {
 
         const queryBuilder = this.repo
             .createQueryBuilder('club')
-            .loadRelationCountAndMap('club.playersCount', 'club.player');
+            .loadRelationCountAndMap('club.playersCount', 'club.player')
+            .addSelect(
+                (qb) =>
+                    qb
+                        .subQuery()
+                        .select('COUNT(*)')
+                        .from('players', 'p')
+                        .where('p.player_club_id = club.id'),
+                'players_count',
+            );
 
         if (options.search) {
             queryBuilder.andWhere('unaccent(club.name) ILIKE unaccent(:search)', {

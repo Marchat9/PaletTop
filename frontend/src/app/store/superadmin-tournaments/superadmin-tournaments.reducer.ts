@@ -23,14 +23,16 @@ import {
   searchSuperAdminTournamentsSuccess,
 } from './superadmin-tournaments.actions';
 
+export interface SuperAdminTournamentsListState {
+  items: SuperAdminTournamentSummaryDto[];
+  total: number;
+  criteria: SuperAdminTournamentSearchCriteria;
+  isLoading: boolean;
+  error: Nullable<string>;
+}
+
 export interface SuperAdminTournamentsState {
-  list: {
-    items: SuperAdminTournamentSummaryDto[];
-    total: number;
-    criteria: SuperAdminTournamentSearchCriteria;
-    isLoading: boolean;
-    error: Nullable<string>;
-  };
+  list: SuperAdminTournamentsListState;
   detail: {
     data: Nullable<TournamentDto>;
     isLoading: boolean;

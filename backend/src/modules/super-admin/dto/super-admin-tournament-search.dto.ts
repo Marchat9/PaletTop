@@ -2,7 +2,7 @@ import { IsIn, IsInt, IsOptional, IsString, Min } from 'class-validator';
 import { TournamentStatus } from 'src/enum/status.enum';
 import { SuperAdminActionDto } from './super-admin-action.dto';
 
-const SORTABLE_FIELDS = ['name', 'code', 'status', 'date', 'createdAt'] as const;
+const SORTABLE_FIELDS = ['name', 'code', 'status', 'date', 'createdAt', 'teamsCount'] as const;
 
 export class SuperAdminTournamentSearchDto extends SuperAdminActionDto {
     @IsInt()

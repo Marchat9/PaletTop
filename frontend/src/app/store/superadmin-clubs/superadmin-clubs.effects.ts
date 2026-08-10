@@ -36,6 +36,8 @@ export class SuperAdminClubsEffects {
             page: criteria.page,
             pageSize: criteria.pageSize,
             search: criteria.search || undefined,
+            sortBy: criteria.sortBy,
+            sortDir: criteria.sortDir,
           })
           .pipe(
             map(({ items, total }) => searchSuperAdminClubsSuccess({ items, total })),

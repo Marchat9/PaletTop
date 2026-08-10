@@ -11,7 +11,13 @@ import {
 } from './superadmin-clubs.actions';
 import { initialSuperAdminClubsState, superAdminClubsReducer } from './superadmin-clubs.reducer';
 
-const CRITERIA = { page: 1, pageSize: 20, search: '' };
+const CRITERIA = {
+  page: 1,
+  pageSize: 20,
+  search: '',
+  sortBy: 'name' as const,
+  sortDir: 'ASC' as const,
+};
 
 describe('superAdminClubsReducer', () => {
   it('returns the initial state for an unknown action', () => {

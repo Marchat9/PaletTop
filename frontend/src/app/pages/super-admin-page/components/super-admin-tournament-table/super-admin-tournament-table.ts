@@ -1,33 +1,34 @@
 import { DatePipe } from '@angular/common';
-import { Dialog } from '@angular/cdk/dialog';
 import {
   ChangeDetectionStrategy,
   Component,
-  OnInit,
   computed,
-  inject,
+  effect,
+  input,
+  output,
   signal,
 } from '@angular/core';
-import { Store } from '@ngrx/store';
-import { first } from 'rxjs';
 import { TournamentStatus } from 'src/app/models/tournament-status.enum';
-import { ConfirmationPopupComponent } from 'src/app/modales/confirmation-popup/confirmation-popup';
-import { SuperAdminTournamentDeletePopupComponent } from 'src/app/modales/super-admin-tournament-delete-popup/super-admin-tournament-delete-popup';
-import { SuperAdminTournamentDetailPopupComponent } from 'src/app/modales/super-admin-tournament-detail-popup/super-admin-tournament-detail-popup';
-import { SuperAdminTournamentPasswordResetPopupComponent } from 'src/app/modales/super-admin-tournament-password-reset-popup/super-admin-tournament-password-reset-popup';
-import { SuperAdminTournamentStatusPopupComponent } from 'src/app/modales/super-admin-tournament-status-popup/super-admin-tournament-status-popup';
 import { SuperAdminTournamentSummaryDto } from 'src/app/services/super-admin-tournament.service';
+import { Button } from 'src/app/shared/button/button';
+import { ButtonIcon } from 'src/app/shared/button-icon/button-icon';
 import { CardCollapsible } from 'src/app/shared/card-collapsible/card-collapsible';
 import { Icon } from 'src/app/shared/icon/icon';
 import { InputSelect, InputSelectOption } from 'src/app/shared/input-select/input-select';
 import { InputText } from 'src/app/shared/input-text/input-text';
 import {
-  deleteSuperAdminTournaments,
-  searchSuperAdminTournaments,
+  SuperAdminTournamentSearchCriteria,
+  SuperAdminTournamentSortBy,
 } from 'src/app/store/superadmin-tournaments/superadmin-tournaments.actions';
-import { selectSuperAdminTournamentsList } from 'src/app/store/superadmin-tournaments/superadmin-tournaments.selectors';
-
-type SortableColumn = 'name' | 'status' | 'date' | 'createdAt';
+import { SuperAdminTournamentsListState } from 'src/app/store/superadmin-tournaments/superadmin-tournaments.reducer';
+import {
+  computeSortState,
+  computeTotalPages,
+  nextSortDirection,
+  pruneSelection,
+  selectAll,
+  toggleSelection,
+} from '../super-admin-table.utils';
 
 const STATUS_LABELS: Record<TournamentStatus, string> = {
   [TournamentStatus.DRAFT]: 'Brouillon',
@@ -46,185 +47,101 @@ const STATUS_FILTER_OPTIONS: InputSelectOption[] = [
 
 @Component({
   selector: 'app-super-admin-tournament-table',
-  imports: [CardCollapsible, DatePipe, Icon, InputSelect, InputText],
+  imports: [Button, ButtonIcon, CardCollapsible, DatePipe, Icon, InputSelect, InputText],
   templateUrl: './super-admin-tournament-table.html',
   styleUrl: './super-admin-tournament-table.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class SuperAdminTournamentTableComponent implements OnInit {
-  private readonly store = inject(Store);
-  private readonly dialog = inject(Dialog);
+export class SuperAdminTournamentTableComponent {
+  readonly list = input.required<SuperAdminTournamentsListState>();
 
-  readonly list = this.store.selectSignal(selectSuperAdminTournamentsList);
+  readonly searchRequested = output<SuperAdminTournamentSearchCriteria>();
+  readonly detailRequested = output<string>();
+  readonly passwordResetRequested = output<SuperAdminTournamentSummaryDto>();
+  readonly deleteOneRequested = output<SuperAdminTournamentSummaryDto>();
+  readonly deleteSelectionRequested = output<string[]>();
+  readonly statusChangeRequested = output<string[]>();
+
   readonly statusFilterOptions = STATUS_FILTER_OPTIONS;
   readonly statusLabels = STATUS_LABELS;
 
-  readonly searchTerm = signal('');
-  readonly statusFilter = signal('');
   readonly selectedIds = signal<Set<string>>(new Set());
-
   readonly selectedCount = computed(() => this.selectedIds().size);
   readonly totalPages = computed(() =>
-    Math.max(1, Math.ceil(this.list().total / this.list().criteria.pageSize)),
+    computeTotalPages(this.list().total, this.list().criteria.pageSize),
   );
 
-  ngOnInit(): void {
-    this.dispatchSearch(1);
+  // Drives the sort arrow on sortable headers.
+  readonly sortState = computed(() => {
+    const { sortBy, sortDir } = this.list().criteria;
+    return computeSortState(sortBy, sortDir);
+  });
+
+  constructor() {
+    // Keeps the selection limited to ids still present in the current list —
+    // covers page/search/sort/filter changes and a row being deleted individually
+    // in one place, instead of clearing selectedIds by hand in every action.
+    effect(() => {
+      const currentIds = this.list().items.map((item) => item.id);
+      this.selectedIds.update((selected) => pruneSelection(selected, currentIds));
+    });
   }
 
   onSearchInput(value: string): void {
-    this.searchTerm.set(value);
-    this.selectedIds.set(new Set());
-    this.dispatchSearch(1);
+    this.searchRequested.emit({ ...this.list().criteria, page: 1, search: value.trim() });
   }
 
   onStatusFilterChange(value: string): void {
-    this.statusFilter.set(value);
-    this.selectedIds.set(new Set());
-    this.dispatchSearch(1);
+    this.searchRequested.emit({
+      ...this.list().criteria,
+      page: 1,
+      status: (value as TournamentStatus) || null,
+    });
   }
 
-  // Called by the page component when a stat tile is clicked.
-  applyStatusFilter(status: TournamentStatus): void {
-    this.onStatusFilterChange(status);
-  }
-
-  onSort(column: SortableColumn): void {
+  onSort(column: SuperAdminTournamentSortBy): void {
     const { sortBy, sortDir } = this.list().criteria;
-    const nextDir = sortBy === column && sortDir === 'ASC' ? 'DESC' : 'ASC';
-    this.selectedIds.set(new Set());
-    this.store.dispatch(
-      searchSuperAdminTournaments({
-        criteria: { ...this.list().criteria, sortBy: column, sortDir: nextDir },
-      }),
-    );
-  }
-
-  // Drives the visual sort arrow and the aria-sort attribute on sortable headers.
-  sortIndicator(column: SortableColumn): '▲' | '▼' | null {
-    const { sortBy, sortDir } = this.list().criteria;
-    if (sortBy !== column) return null;
-    return sortDir === 'ASC' ? '▲' : '▼';
-  }
-
-  ariaSortFor(column: SortableColumn): 'ascending' | 'descending' | null {
-    const { sortBy, sortDir } = this.list().criteria;
-    if (sortBy !== column) return null;
-    return sortDir === 'ASC' ? 'ascending' : 'descending';
+    this.searchRequested.emit({
+      ...this.list().criteria,
+      sortBy: column,
+      sortDir: nextSortDirection(sortBy, sortDir, column),
+    });
   }
 
   onPageChange(page: number): void {
-    this.selectedIds.set(new Set());
-    this.dispatchSearch(page);
+    this.searchRequested.emit({ ...this.list().criteria, page });
   }
 
   toggleSelectAll(checked: boolean): void {
-    this.selectedIds.set(checked ? new Set(this.list().items.map((item) => item.id)) : new Set());
+    this.selectedIds.set(
+      selectAll(
+        this.list().items.map((item) => item.id),
+        checked,
+      ),
+    );
   }
 
   toggleSelect(id: string, checked: boolean): void {
-    const next = new Set(this.selectedIds());
-    if (checked) next.add(id);
-    else next.delete(id);
-    this.selectedIds.set(next);
+    this.selectedIds.update((selected) => toggleSelection(selected, id, checked));
   }
 
   openDetail(tournament: SuperAdminTournamentSummaryDto): void {
-    this.dialog.open(SuperAdminTournamentDetailPopupComponent, {
-      data: { id: tournament.id },
-      panelClass: 'dialog-panel',
-      backdropClass: 'dialog-backdrop-light',
-    });
+    this.detailRequested.emit(tournament.id);
   }
 
   openPasswordReset(tournament: SuperAdminTournamentSummaryDto): void {
-    this.dialog.open(SuperAdminTournamentPasswordResetPopupComponent, {
-      data: { id: tournament.id, code: tournament.code, name: tournament.name },
-      panelClass: 'dialog-panel',
-      backdropClass: 'dialog-backdrop-light',
-    });
+    this.passwordResetRequested.emit(tournament);
   }
 
   deleteOne(tournament: SuperAdminTournamentSummaryDto): void {
-    if (tournament.status === TournamentStatus.ACTIVE) {
-      this.dialog.open(SuperAdminTournamentDeletePopupComponent, {
-        data: { id: tournament.id, code: tournament.code, name: tournament.name },
-        panelClass: 'dialog-panel',
-        backdropClass: 'dialog-backdrop-light',
-      });
-      return;
-    }
-
-    this.dialog
-      .open<boolean>(ConfirmationPopupComponent, {
-        data: {
-          title: 'Supprimer le tournoi',
-          message: `Supprimer "${tournament.name}" (${tournament.code}) ? Cette action est irréversible.`,
-          confirmLabel: 'Supprimer',
-        },
-        panelClass: 'dialog-panel',
-        backdropClass: 'dialog-backdrop-light',
-      })
-      .closed.pipe(first())
-      .subscribe((confirmed) => {
-        if (confirmed) {
-          this.store.dispatch(deleteSuperAdminTournaments({ ids: [tournament.id] }));
-        }
-      });
+    this.deleteOneRequested.emit(tournament);
   }
 
   deleteSelection(): void {
-    const ids = Array.from(this.selectedIds());
-    const hasActive = this.list().items.some(
-      (item) => ids.includes(item.id) && item.status === TournamentStatus.ACTIVE,
-    );
-
-    this.dialog
-      .open<boolean>(ConfirmationPopupComponent, {
-        data: {
-          title: 'Supprimer la sélection',
-          message: hasActive
-            ? `Supprimer les ${ids.length} tournois sélectionnés, dont au moins un tournoi actif ? Cette action est irréversible.`
-            : `Supprimer les ${ids.length} tournois sélectionnés ? Cette action est irréversible.`,
-          confirmLabel: 'Supprimer',
-        },
-        panelClass: 'dialog-panel',
-        backdropClass: 'dialog-backdrop-light',
-      })
-      .closed.pipe(first())
-      .subscribe((confirmed) => {
-        if (confirmed) {
-          this.store.dispatch(deleteSuperAdminTournaments({ ids }));
-          this.selectedIds.set(new Set());
-        }
-      });
+    this.deleteSelectionRequested.emit(Array.from(this.selectedIds()));
   }
 
   changeSelectionStatus(): void {
-    this.dialog
-      .open<boolean>(SuperAdminTournamentStatusPopupComponent, {
-        data: { ids: Array.from(this.selectedIds()) },
-        panelClass: 'dialog-panel',
-        backdropClass: 'dialog-backdrop-light',
-      })
-      .closed.pipe(first())
-      .subscribe((confirmed) => {
-        if (confirmed) {
-          this.selectedIds.set(new Set());
-        }
-      });
-  }
-
-  private dispatchSearch(page: number): void {
-    this.store.dispatch(
-      searchSuperAdminTournaments({
-        criteria: {
-          ...this.list().criteria,
-          page,
-          search: this.searchTerm().trim(),
-          status: (this.statusFilter() as TournamentStatus) || null,
-        },
-      }),
-    );
+    this.statusChangeRequested.emit(Array.from(this.selectedIds()));
   }
 }

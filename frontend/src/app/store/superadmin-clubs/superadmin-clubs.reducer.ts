@@ -15,19 +15,27 @@ import {
   searchSuperAdminClubsSuccess,
 } from './superadmin-clubs.actions';
 
+export interface SuperAdminClubsListState {
+  items: SuperAdminClubSummaryDto[];
+  total: number;
+  criteria: SuperAdminClubSearchCriteria;
+  isLoading: boolean;
+  error: Nullable<string>;
+}
+
 export interface SuperAdminClubsState {
-  list: {
-    items: SuperAdminClubSummaryDto[];
-    total: number;
-    criteria: SuperAdminClubSearchCriteria;
-    isLoading: boolean;
-    error: Nullable<string>;
-  };
+  list: SuperAdminClubsListState;
   renameRequest: ApiCallStatus;
   deleteRequest: ApiCallStatus;
 }
 
-const initialCriteria: SuperAdminClubSearchCriteria = { page: 1, pageSize: 20, search: '' };
+const initialCriteria: SuperAdminClubSearchCriteria = {
+  page: 1,
+  pageSize: 20,
+  search: '',
+  sortBy: 'name',
+  sortDir: 'DESC',
+};
 
 export const initialSuperAdminClubsState: SuperAdminClubsState = {
   list: { items: [], total: 0, criteria: initialCriteria, isLoading: false, error: null },

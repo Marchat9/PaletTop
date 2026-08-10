@@ -2,11 +2,7 @@
   class="metric-tile"
   [class]="size()"
   [class.clickable]="clickable()"
-  [attr.role]="clickable() ? 'button' : null"
-  [attr.tabindex]="clickable() ? 0 : null"
-  (click)="onActivate($event)"
-  (keydown.enter)="onActivate($event)"
-  (keydown.space)="onActivate($event)"
+  (click)="clickable() && onClick($event)"
 >
   <p class="value">{{ value() }}</p>
   <p class="label">{{ label() }}</p>

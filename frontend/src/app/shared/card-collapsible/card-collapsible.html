@@ -1,6 +1,7 @@
 <div class="card-collapsible" [class.is-expanded]="isExpanded()">
   <div
-    class="card-collapsible-header pointer"
+    class="card-collapsible-header"
+    [class.pointer]="canCollapse()"
     [attr.aria-expanded]="isExpanded()"
     (click)="canCollapse() && toggleExpanded()"
   >

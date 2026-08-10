@@ -3,12 +3,15 @@ import { TournamentStatus } from 'src/app/models/tournament-status.enum';
 import { SuperAdminTournamentSummaryDto } from 'src/app/services/super-admin-tournament.service';
 import { TournamentDto } from 'src/app/store/tournament/tournament.models';
 
+export type SuperAdminTournamentSortBy =
+  'name' | 'code' | 'status' | 'date' | 'createdAt' | 'teamsCount';
+
 export interface SuperAdminTournamentSearchCriteria {
   page: number;
   pageSize: number;
   search: string;
   status: TournamentStatus | null;
-  sortBy: 'name' | 'code' | 'status' | 'date' | 'createdAt';
+  sortBy: SuperAdminTournamentSortBy;
   sortDir: 'ASC' | 'DESC';
 }
 

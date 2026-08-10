@@ -1,10 +1,20 @@
 <div class="super-admin-page">
   <header class="page-header">
-    <span class="eyebrow">PaletTop · Espace protégé</span>
-    <h1 class="page-title">Super Admin</h1>
-    <p class="page-sub">
-      Monitoring des tournois et des clubs enregistrés sur toute la plateforme.
-    </p>
+    <div class="page-header-row">
+      <div class="page-header-text">
+        <span class="eyebrow">PaletTop · Espace protégé</span>
+        <h1 class="page-title">Super Admin</h1>
+        <p class="page-sub">
+          Monitoring des tournois et des clubs enregistrés sur toute la plateforme.
+        </p>
+      </div>
+      <app-button
+        title="Rafraîchir"
+        icon="refresh"
+        variant="tertiary"
+        (clicked)="refresh()"
+      ></app-button>
+    </div>
   </header>
 
   <section class="stats-row" aria-label="Statistiques rapides">
@@ -29,31 +39,23 @@
     <app-metric-tile [value]="(metrics()?.clubs?.total ?? '—') + ''" label="Clubs enregistrés" />
   </section>
 
-  <app-super-admin-tournament-table />
+  <app-super-admin-tournament-table
+    [list]="tournaments()"
+    (searchRequested)="onTournamentSearch($event)"
+    (detailRequested)="onTournamentDetailRequested($event)"
+    (passwordResetRequested)="onTournamentPasswordResetRequested($event)"
+    (deleteOneRequested)="onTournamentDeleteOneRequested($event)"
+    (deleteSelectionRequested)="onTournamentDeleteSelectionRequested($event)"
+    (statusChangeRequested)="onTournamentStatusChangeRequested($event)"
+  />
 
-  <app-super-admin-club-table />
+  <app-super-admin-club-table
+    [list]="clubs()"
+    (searchRequested)="onClubSearch($event)"
+    (renameRequested)="onClubRenameRequested($event)"
+    (deleteOneRequested)="onClubDeleteOneRequested($event)"
+    (deleteSelectionRequested)="onClubDeleteSelectionRequested($event)"
+  />
 
-  <app-card-collapsible [canCollapse]="false">
-    <div header class="card-header">
-      <div class="card-header-title">Paramètres de la plateforme</div>
-    </div>
-    <div content class="settings-content">
-      <p class="settings-hint">
-        Emplacement réservé pour de futurs réglages activables/désactivables depuis cette page — le
-        contenu réel sera défini au fur et à mesure des besoins.
-      </p>
-      <div class="toggle-row">
-        <div>
-          <div class="toggle-label">Exemple de réglage (illustratif)</div>
-          <div class="toggle-hint">
-            Représente la forme d'un futur réglage — aucune fonctionnalité réelle
-          </div>
-        </div>
-        <label class="switch">
-          <input type="checkbox" disabled />
-          <span class="switch-track"></span>
-        </label>
-      </div>
-    </div>
-  </app-card-collapsible>
+  <app-super-admin-settings />
 </div>

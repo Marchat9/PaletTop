@@ -16,7 +16,7 @@ export class MetricTileComponent {
 
   public readonly clicked = output<void>();
 
-  onActivate(event?: Event): void {
+  onClick(event?: Event): void {
     if (!this.clickable()) return;
     event?.preventDefault();
     this.clicked.emit();

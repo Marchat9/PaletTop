@@ -1,17 +1,16 @@
-import { Dialog } from '@angular/cdk/dialog';
 import { TestBed } from '@angular/core/testing';
-import { MockStore, provideMockStore } from '@ngrx/store/testing';
-import { of } from 'rxjs';
-import { ConfirmationPopupComponent } from 'src/app/modales/confirmation-popup/confirmation-popup';
-import { SuperAdminClubRenamePopupComponent } from 'src/app/modales/super-admin-club-rename-popup/super-admin-club-rename-popup';
 import { SuperAdminClubSummaryDto } from 'src/app/services/super-admin-club.service';
-import {
-  deleteSuperAdminClubs,
-  searchSuperAdminClubs,
-} from 'src/app/store/superadmin-clubs/superadmin-clubs.actions';
+import { SuperAdminClubSearchCriteria } from 'src/app/store/superadmin-clubs/superadmin-clubs.actions';
+import { SuperAdminClubsListState } from 'src/app/store/superadmin-clubs/superadmin-clubs.reducer';
 import { SuperAdminClubTableComponent } from './super-admin-club-table';
 
-const CRITERIA = { page: 1, pageSize: 20, search: '' };
+const CRITERIA: SuperAdminClubSearchCriteria = {
+  page: 1,
+  pageSize: 20,
+  search: '',
+  sortBy: 'name',
+  sortDir: 'ASC',
+};
 
 const CLUB_WITH_PLAYERS: SuperAdminClubSummaryDto = {
   id: 'id-with-players',
@@ -25,70 +24,50 @@ const CLUB_WITHOUT_PLAYERS: SuperAdminClubSummaryDto = {
   playersCount: 0,
 };
 
-function setup(
+function listState(
   items: SuperAdminClubSummaryDto[] = [CLUB_WITH_PLAYERS, CLUB_WITHOUT_PLAYERS],
-  closedValue: unknown = true,
-) {
-  const dialogMock = { open: vi.fn().mockReturnValue({ closed: of(closedValue) }) };
+  criteria: SuperAdminClubSearchCriteria = CRITERIA,
+): SuperAdminClubsListState {
+  return { items, total: items.length, criteria, isLoading: false, error: null };
+}
 
-  TestBed.configureTestingModule({
-    imports: [SuperAdminClubTableComponent],
-    providers: [
-      { provide: Dialog, useValue: dialogMock },
-      provideMockStore({
-        initialState: {
-          superAdminClubs: {
-            list: { items, total: items.length, criteria: CRITERIA, isLoading: false, error: null },
-            renameRequest: { isLoading: false, error: null },
-            deleteRequest: { isLoading: false, error: null },
-          },
-        },
-      }),
-    ],
-  });
-
-  const store = TestBed.inject(MockStore);
-  vi.spyOn(store, 'dispatch');
-
+function setup(items: SuperAdminClubSummaryDto[] = [CLUB_WITH_PLAYERS, CLUB_WITHOUT_PLAYERS]) {
+  TestBed.configureTestingModule({ imports: [SuperAdminClubTableComponent] });
   const fixture = TestBed.createComponent(SuperAdminClubTableComponent);
+  fixture.componentRef.setInput('list', listState(items));
   fixture.detectChanges();
-  return { fixture, dialogMock, store };
+  return { fixture };
 }
 
 describe('SuperAdminClubTableComponent', () => {
-  it('dispatches a search on init with page 1', () => {
-    const { store } = setup();
-    expect(store.dispatch).toHaveBeenCalledWith(
-      searchSuperAdminClubs({ criteria: { ...CRITERIA, page: 1, search: '' } }),
-    );
-  });
-
-  it('dispatches a trimmed search on search input and clears the selection', () => {
-    const { fixture, store } = setup();
-    fixture.componentInstance.toggleSelect(CLUB_WITH_PLAYERS.id, true);
-    expect(fixture.componentInstance.selectedCount()).toBe(1);
-    (store.dispatch as unknown as { mockClear: () => void }).mockClear();
+  it('emits searchRequested with page 1 and the trimmed term on search input', () => {
+    const { fixture } = setup();
+    const emitted: SuperAdminClubSearchCriteria[] = [];
+    fixture.componentInstance.searchRequested.subscribe((criteria) => emitted.push(criteria));
 
     fixture.componentInstance.onSearchInput('  nantes  ');
 
-    expect(fixture.componentInstance.selectedCount()).toBe(0);
-    expect(store.dispatch).toHaveBeenCalledWith(
-      searchSuperAdminClubs({ criteria: { ...CRITERIA, page: 1, search: 'nantes' } }),
-    );
+    expect(emitted).toEqual([{ ...CRITERIA, page: 1, search: 'nantes' }]);
   });
 
-  it('clears the selection when the page changes, so a selection can never span pages', () => {
-    const { fixture, store } = setup();
-    fixture.componentInstance.toggleSelect(CLUB_WITH_PLAYERS.id, true);
-    expect(fixture.componentInstance.selectedCount()).toBe(1);
-    (store.dispatch as unknown as { mockClear: () => void }).mockClear();
+  it('toggles sort direction on the same column and resets to ASC on a new column', () => {
+    const { fixture } = setup();
+    const emitted: SuperAdminClubSearchCriteria[] = [];
+    fixture.componentInstance.searchRequested.subscribe((criteria) => emitted.push(criteria));
+
+    fixture.componentInstance.onSort('playersCount');
+
+    expect(emitted).toEqual([{ ...CRITERIA, sortBy: 'playersCount', sortDir: 'ASC' }]);
+  });
+
+  it('emits searchRequested with the new page on page change', () => {
+    const { fixture } = setup();
+    const emitted: SuperAdminClubSearchCriteria[] = [];
+    fixture.componentInstance.searchRequested.subscribe((criteria) => emitted.push(criteria));
 
     fixture.componentInstance.onPageChange(2);
 
-    expect(fixture.componentInstance.selectedCount()).toBe(0);
-    expect(store.dispatch).toHaveBeenCalledWith(
-      searchSuperAdminClubs({ criteria: { ...CRITERIA, page: 2, search: '' } }),
-    );
+    expect(emitted).toEqual([{ ...CRITERIA, page: 2 }]);
   });
 
   it('toggleSelect tracks individual selection', () => {
@@ -117,70 +96,50 @@ describe('SuperAdminClubTableComponent', () => {
     expect(fixture.componentInstance.selectedCount()).toBe(0);
   });
 
-  it('opens the rename popup with the club id and name', () => {
-    const { fixture, dialogMock } = setup();
+  it('prunes the selection to ids still present whenever the list input changes', () => {
+    const { fixture } = setup();
+    fixture.componentInstance.toggleSelect(CLUB_WITH_PLAYERS.id, true);
+    fixture.componentInstance.toggleSelect(CLUB_WITHOUT_PLAYERS.id, true);
+    expect(fixture.componentInstance.selectedCount()).toBe(2);
+
+    // Simulates the parent re-rendering after CLUB_WITH_PLAYERS was deleted individually
+    // (or after a page/search/sort change that no longer includes it).
+    fixture.componentRef.setInput('list', listState([CLUB_WITHOUT_PLAYERS]));
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.selectedCount()).toBe(1);
+    expect(fixture.componentInstance.selectedIds().has(CLUB_WITHOUT_PLAYERS.id)).toBe(true);
+    expect(fixture.componentInstance.selectedIds().has(CLUB_WITH_PLAYERS.id)).toBe(false);
+  });
+
+  it('emits renameRequested with the club', () => {
+    const { fixture } = setup();
+    const emitted: SuperAdminClubSummaryDto[] = [];
+    fixture.componentInstance.renameRequested.subscribe((club) => emitted.push(club));
 
     fixture.componentInstance.openRename(CLUB_WITH_PLAYERS);
 
-    expect(dialogMock.open).toHaveBeenCalledWith(
-      SuperAdminClubRenamePopupComponent,
-      expect.objectContaining({
-        data: { id: CLUB_WITH_PLAYERS.id, name: CLUB_WITH_PLAYERS.name },
-      }),
-    );
+    expect(emitted).toEqual([CLUB_WITH_PLAYERS]);
   });
 
-  it('deleting a club with players attached warns about dissociation in the confirmation message', () => {
-    const { fixture, dialogMock } = setup();
-
-    fixture.componentInstance.deleteOne(CLUB_WITH_PLAYERS);
-
-    expect(dialogMock.open).toHaveBeenCalledWith(
-      ConfirmationPopupComponent,
-      expect.objectContaining({
-        data: expect.objectContaining({
-          message: expect.stringContaining('3 joueur(s) actuellement rattachés seront dissociés'),
-        }),
-      }),
-    );
-  });
-
-  it('deleting a club with no players attached uses the "no players" wording instead', () => {
-    const { fixture, dialogMock } = setup();
+  it('emits deleteOneRequested with the club', () => {
+    const { fixture } = setup();
+    const emitted: SuperAdminClubSummaryDto[] = [];
+    fixture.componentInstance.deleteOneRequested.subscribe((club) => emitted.push(club));
 
     fixture.componentInstance.deleteOne(CLUB_WITHOUT_PLAYERS);
 
-    expect(dialogMock.open).toHaveBeenCalledWith(
-      ConfirmationPopupComponent,
-      expect.objectContaining({
-        data: expect.objectContaining({
-          message: expect.stringContaining("Aucun joueur n'y est rattaché"),
-        }),
-      }),
-    );
+    expect(emitted).toEqual([CLUB_WITHOUT_PLAYERS]);
   });
 
-  it('dispatches deleteSuperAdminClubs for the selected ids and clears the selection when the bulk delete is confirmed', () => {
-    const { fixture, store } = setup();
+  it('emits deleteSelectionRequested with the selected ids', () => {
+    const { fixture } = setup();
     fixture.componentInstance.toggleSelect(CLUB_WITH_PLAYERS.id, true);
-    (store.dispatch as unknown as { mockClear: () => void }).mockClear();
+    const emitted: string[][] = [];
+    fixture.componentInstance.deleteSelectionRequested.subscribe((ids) => emitted.push(ids));
 
     fixture.componentInstance.deleteSelection();
 
-    expect(store.dispatch).toHaveBeenCalledWith(
-      deleteSuperAdminClubs({ ids: [CLUB_WITH_PLAYERS.id] }),
-    );
-    expect(fixture.componentInstance.selectedCount()).toBe(0);
-  });
-
-  it('does not dispatch a bulk delete and keeps the selection when the confirmation popup is dismissed', () => {
-    const { fixture, store } = setup([CLUB_WITH_PLAYERS, CLUB_WITHOUT_PLAYERS], false);
-    fixture.componentInstance.toggleSelect(CLUB_WITH_PLAYERS.id, true);
-    (store.dispatch as unknown as { mockClear: () => void }).mockClear();
-
-    fixture.componentInstance.deleteSelection();
-
-    expect(store.dispatch).not.toHaveBeenCalled();
-    expect(fixture.componentInstance.selectedCount()).toBe(1);
+    expect(emitted).toEqual([[CLUB_WITH_PLAYERS.id]]);
   });
 });

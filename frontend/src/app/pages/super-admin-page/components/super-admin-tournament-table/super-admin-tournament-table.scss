@@ -55,31 +55,7 @@
   .bulk-actions {
     display: flex;
     gap: 0.6rem;
-  }
-
-  .bulk-btn {
-    padding: 0.4rem 0.85rem;
-    border-radius: 0.5rem;
-    border: 1px solid var(--color-border-default);
-    background: var(--color-surface-container-high);
-    color: var(--color-on-surface);
-    font-size: 0.8rem;
-    font-weight: 600;
-    cursor: pointer;
-
-    &:hover {
-      background: var(--color-hover-surface-default);
-    }
-
-    &.danger {
-      border-color: var(--color-status-error-border);
-      color: var(--color-status-error-text);
-      background: var(--color-status-error-bg);
-
-      &:hover {
-        background: color-mix(in srgb, var(--color-status-error-bg) 70%, var(--color-error) 15%);
-      }
-    }
+    flex-wrap: wrap;
   }
 }
 
@@ -196,7 +172,7 @@
       padding: 0.6rem 1rem;
       border-radius: 0.5rem;
       background: var(--color-error-container);
-      color: var(--color-error);
+      color: var(--color-on-error-container);
     }
   }
 }
@@ -280,25 +256,5 @@
   .pagination-controls {
     display: flex;
     gap: 0.5rem;
-  }
-
-  .page-btn {
-    padding: 0.4rem 0.85rem;
-    border-radius: 0.5rem;
-    border: 1px solid var(--color-border-default);
-    background: var(--color-surface-container-high);
-    color: var(--color-on-surface);
-    font-size: 0.8rem;
-    font-weight: 600;
-    cursor: pointer;
-
-    &:hover:not(:disabled) {
-      background: var(--color-hover-surface-default);
-    }
-
-    &:disabled {
-      opacity: 0.45;
-      cursor: not-allowed;
-    }
   }
 }

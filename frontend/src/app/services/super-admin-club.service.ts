@@ -15,6 +15,8 @@ export interface SuperAdminClubSearchParams {
   page: number;
   pageSize: number;
   search?: string;
+  sortBy?: 'name' | 'playersCount';
+  sortDir?: 'ASC' | 'DESC';
 }
 
 @Injectable({ providedIn: 'root' })

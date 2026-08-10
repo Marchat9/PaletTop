@@ -5,6 +5,8 @@ export interface SuperAdminClubSearchCriteria {
   page: number;
   pageSize: number;
   search: string;
+  sortBy: 'name' | 'playersCount';
+  sortDir: 'ASC' | 'DESC';
 }
 
 export const searchSuperAdminClubs = createAction(

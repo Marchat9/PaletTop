@@ -18,6 +18,7 @@ const ADMIN_TOURNAMENT_SORTABLE_COLUMNS: Record<string, string> = {
     status: 'tournament.status',
     date: 'tournament.date',
     createdAt: 'tournament.createdAt',
+    teamsCount: 'teams_count',
 };
 
 export interface AdminTournamentSearchOptions {
@@ -130,7 +131,16 @@ export class TournamentRepository {
 
         const queryBuilder = this.repo
             .createQueryBuilder('tournament')
-            .loadRelationCountAndMap('tournament.teamsCount', 'tournament.teams');
+            .loadRelationCountAndMap('tournament.teamsCount', 'tournament.teams')
+            .addSelect(
+                (qb) =>
+                    qb
+                        .subQuery()
+                        .select('COUNT(*)')
+                        .from('team', 't')
+                        .where('t.tournament_id = tournament.id'),
+                'teams_count',
+            );
 
         if (options.search) {
             queryBuilder.andWhere(

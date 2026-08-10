@@ -7,7 +7,7 @@
       <app-input-text
         placeholder="Rechercher un club…"
         icon="search"
-        [value]="searchTerm()"
+        [value]="list().criteria.search"
         (valueChange)="onSearchInput($event)"
       ></app-input-text>
     </div>
@@ -17,9 +17,7 @@
     @if (selectedCount() > 0) {
       <div class="bulk-bar">
         <span>{{ selectedCount() }} sélectionné(s)</span>
-        <button class="bulk-btn danger" type="button" (click)="deleteSelection()">
-          Supprimer la sélection
-        </button>
+        <app-button title="Supprimer la sélection" variant="error" (clicked)="deleteSelection()" />
       </div>
     }
 
@@ -34,8 +32,22 @@
                 (change)="toggleSelectAll($any($event.target).checked)"
               />
             </th>
-            <th>Club</th>
-            <th>Joueurs rattachés</th>
+            <th class="sortable">
+              <button type="button" class="sort-btn" (click)="onSort('name')">
+                Club
+                @if (sortState().column === 'name') {
+                  <span class="sort-indicator">{{ sortState().indicator }}</span>
+                }
+              </button>
+            </th>
+            <th class="sortable">
+              <button type="button" class="sort-btn" (click)="onSort('playersCount')">
+                Joueurs rattachés
+                @if (sortState().column === 'playersCount') {
+                  <span class="sort-indicator">{{ sortState().indicator }}</span>
+                }
+              </button>
+            </th>
             <th class="col-actions">Actions</th>
           </tr>
         </thead>
@@ -52,12 +64,12 @@
               <td class="col-name">{{ club.name }}</td>
               <td>{{ club.playersCount }}</td>
               <td class="col-actions">
-                <button class="icon-btn" title="Renommer" (click)="openRename(club)">
-                  <app-icon name="edit" [ariaHidden]="true" />
-                </button>
-                <button class="icon-btn danger" title="Supprimer" (click)="deleteOne(club)">
-                  <app-icon name="delete" [ariaHidden]="true" />
-                </button>
+                <app-button-icon class="icon-btn" icon="edit" (clicked)="openRename(club)" />
+                <app-button-icon
+                  class="icon-btn danger"
+                  icon="delete"
+                  (clicked)="deleteOne(club)"
+                />
               </td>
             </tr>
           } @empty {
@@ -83,20 +95,18 @@
     <div class="pagination">
       <span class="pagination-info">Page {{ list().criteria.page }} sur {{ totalPages() }}</span>
       <div class="pagination-controls">
-        <button
-          class="page-btn"
+        <app-button
+          title="‹ Précédent"
+          variant="secondary"
           [disabled]="list().criteria.page <= 1"
-          (click)="onPageChange(list().criteria.page - 1)"
-        >
-          ‹ Précédent
-        </button>
-        <button
-          class="page-btn"
+          (clicked)="onPageChange(list().criteria.page - 1)"
+        />
+        <app-button
+          title="Suivant ›"
+          variant="secondary"
           [disabled]="list().criteria.page >= totalPages()"
-          (click)="onPageChange(list().criteria.page + 1)"
-        >
-          Suivant ›
-        </button>
+          (clicked)="onPageChange(list().criteria.page + 1)"
+        />
       </div>
     </div>
   </div>

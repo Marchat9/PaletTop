@@ -26,7 +26,7 @@ export interface SuperAdminTournamentSearchParams {
   pageSize: number;
   search?: string;
   status?: TournamentStatus;
-  sortBy?: 'name' | 'code' | 'status' | 'date' | 'createdAt';
+  sortBy?: 'name' | 'code' | 'status' | 'date' | 'createdAt' | 'teamsCount';
   sortDir?: 'ASC' | 'DESC';
 }
 

@@ -7,11 +7,11 @@
       <app-input-text
         placeholder="Rechercher un code ou un nom…"
         icon="search"
-        [value]="searchTerm()"
+        [value]="list().criteria.search"
         (valueChange)="onSearchInput($event)"
       ></app-input-text>
       <app-input-select
-        [value]="statusFilter()"
+        [value]="list().criteria.status ?? ''"
         [options]="statusFilterOptions"
         (valueChange)="onStatusFilterChange($event)"
       ></app-input-select>
@@ -23,12 +23,16 @@
       <div class="bulk-bar">
         <span>{{ selectedCount() }} sélectionné(s)</span>
         <div class="bulk-actions">
-          <button class="bulk-btn" type="button" (click)="changeSelectionStatus()">
-            Changer le statut
-          </button>
-          <button class="bulk-btn danger" type="button" (click)="deleteSelection()">
-            Supprimer la sélection
-          </button>
+          <app-button
+            title="Changer le statut"
+            variant="secondary"
+            (clicked)="changeSelectionStatus()"
+          />
+          <app-button
+            title="Supprimer la sélection"
+            variant="error"
+            (clicked)="deleteSelection()"
+          />
         </div>
       </div>
     }
@@ -44,36 +48,43 @@
                 (change)="toggleSelectAll($any($event.target).checked)"
               />
             </th>
-            <th class="sortable" [attr.aria-sort]="ariaSortFor('name')">
+            <th class="sortable">
               <button type="button" class="sort-btn" (click)="onSort('name')">
                 Tournoi
-                @if (sortIndicator('name'); as indicator) {
-                  <span class="sort-indicator">{{ indicator }}</span>
+                @if (sortState().column === 'name') {
+                  <span class="sort-indicator">{{ sortState().indicator }}</span>
                 }
               </button>
             </th>
-            <th class="sortable" [attr.aria-sort]="ariaSortFor('status')">
+            <th class="sortable">
               <button type="button" class="sort-btn" (click)="onSort('status')">
                 Statut
-                @if (sortIndicator('status'); as indicator) {
-                  <span class="sort-indicator">{{ indicator }}</span>
+                @if (sortState().column === 'status') {
+                  <span class="sort-indicator">{{ sortState().indicator }}</span>
                 }
               </button>
             </th>
-            <th class="sortable" [attr.aria-sort]="ariaSortFor('date')">
+            <th class="sortable">
               <button type="button" class="sort-btn" (click)="onSort('date')">
                 Date
-                @if (sortIndicator('date'); as indicator) {
-                  <span class="sort-indicator">{{ indicator }}</span>
+                @if (sortState().column === 'date') {
+                  <span class="sort-indicator">{{ sortState().indicator }}</span>
                 }
               </button>
             </th>
-            <th>Équipes</th>
-            <th class="sortable" [attr.aria-sort]="ariaSortFor('createdAt')">
+            <th class="sortable">
+              <button type="button" class="sort-btn" (click)="onSort('teamsCount')">
+                Équipes
+                @if (sortState().column === 'teamsCount') {
+                  <span class="sort-indicator">{{ sortState().indicator }}</span>
+                }
+              </button>
+            </th>
+            <th class="sortable">
               <button type="button" class="sort-btn" (click)="onSort('createdAt')">
                 Créé le
-                @if (sortIndicator('createdAt'); as indicator) {
-                  <span class="sort-indicator">{{ indicator }}</span>
+                @if (sortState().column === 'createdAt') {
+                  <span class="sort-indicator">{{ sortState().indicator }}</span>
                 }
               </button>
             </th>
@@ -103,19 +114,21 @@
               <td>{{ tournament.teamsCount }}</td>
               <td>{{ tournament.createdAt | date: 'dd/MM/yyyy' }}</td>
               <td class="col-actions">
-                <button class="icon-btn" title="Voir le détail" (click)="openDetail(tournament)">
-                  <app-icon name="visibility" [ariaHidden]="true" />
-                </button>
-                <button
+                <app-button-icon
                   class="icon-btn"
-                  title="Réinitialiser le mot de passe"
-                  (click)="openPasswordReset(tournament)"
-                >
-                  <app-icon name="key" [ariaHidden]="true" />
-                </button>
-                <button class="icon-btn danger" title="Supprimer" (click)="deleteOne(tournament)">
-                  <app-icon name="delete" [ariaHidden]="true" />
-                </button>
+                  icon="visibility"
+                  (clicked)="openDetail(tournament)"
+                />
+                <app-button-icon
+                  class="icon-btn"
+                  icon="key"
+                  (clicked)="openPasswordReset(tournament)"
+                />
+                <app-button-icon
+                  class="icon-btn danger"
+                  icon="delete"
+                  (clicked)="deleteOne(tournament)"
+                />
               </td>
             </tr>
           } @empty {
@@ -141,20 +154,18 @@
     <div class="pagination">
       <span class="pagination-info">Page {{ list().criteria.page }} sur {{ totalPages() }}</span>
       <div class="pagination-controls">
-        <button
-          class="page-btn"
+        <app-button
+          title="‹ Précédent"
+          variant="secondary"
           [disabled]="list().criteria.page <= 1"
-          (click)="onPageChange(list().criteria.page - 1)"
-        >
-          ‹ Précédent
-        </button>
-        <button
-          class="page-btn"
+          (clicked)="onPageChange(list().criteria.page - 1)"
+        />
+        <app-button
+          title="Suivant ›"
+          variant="secondary"
           [disabled]="list().criteria.page >= totalPages()"
-          (click)="onPageChange(list().criteria.page + 1)"
-        >
-          Suivant ›
-        </button>
+          (clicked)="onPageChange(list().criteria.page + 1)"
+        />
       </div>
     </div>
   </div>
