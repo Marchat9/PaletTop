@@ -16,13 +16,14 @@ import { StartMatch } from 'src/app/models/start-match.model';
 import { Button } from 'src/app/shared/button/button';
 import { Icon } from 'src/app/shared/icon/icon';
 import { InputText } from 'src/app/shared/input-text/input-text';
+import { MatchStatusComponent } from 'src/app/shared/match-status/match-status';
 import { MatchTimerComponent } from 'src/app/shared/match-timer/match-timer';
 import { ScoreNumber } from 'src/app/shared/score-number/score-number';
 
 @Component({
   selector: 'app-player-match-card-inner',
   standalone: true,
-  imports: [Button, ScoreNumber, InputText, MatchTimerComponent, Icon],
+  imports: [Button, ScoreNumber, InputText, MatchTimerComponent, Icon, MatchStatusComponent],
   templateUrl: './player-match-card-inner.html',
   styleUrl: './player-match-card-inner.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

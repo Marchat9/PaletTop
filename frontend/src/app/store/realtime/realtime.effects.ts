@@ -7,6 +7,10 @@ import { MatchHistoryDto, PlayerMatchDto } from 'src/app/models/player-match.mod
 import { GlobalRankingEntry } from 'src/app/models/global-ranking.model';
 import { WebSocketService } from 'src/app/services/websocket.service';
 import {
+  leaveSpectatorPage,
+  loadSpectatorTournamentSuccess,
+} from 'src/app/store/spectator/spectator.actions';
+import {
   createTournamentSuccess,
   disconnectTournamentAdministrator,
   loadTournamentInformationSuccess,
@@ -32,7 +36,7 @@ export class RealtimeEffects {
   disconnectWebSocket$ = createEffect(
     () =>
       this.actions$.pipe(
-        ofType(resetTournament, disconnectTournamentAdministrator),
+        ofType(resetTournament, disconnectTournamentAdministrator, leaveSpectatorPage),
         tap(() => this.wsService.disconnect()),
       ),
     { dispatch: false },
@@ -54,6 +58,16 @@ export class RealtimeEffects {
       ofType(loadTournamentInformationSuccess),
       switchMap(({ tournament, teamCode }) => {
         this.wsService.connect(tournament.code, { teamCode });
+        return this.computeWsEvents$();
+      }),
+    ),
+  );
+
+  connectWebSocketSpectator$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(loadSpectatorTournamentSuccess),
+      switchMap(({ tournament }) => {
+        this.wsService.connect(tournament.code, {});
         return this.computeWsEvents$();
       }),
     ),

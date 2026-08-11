@@ -2,7 +2,7 @@
   <div class="header">
     <span class="match-number">Match {{ result().sessionNumber }}</span>
     <span class="match-status" [class.ongoing]="isOngoing()">
-      {{ statusLabel() }}
+      <app-match-status [status]="statusLabel()" />
     </span>
   </div>
 
@@ -21,6 +21,8 @@
   </div>
 
   @if (isFinished()) {
-    <p class="outcome">{{ outcomeLabel() }}</p>
+    <div>
+      <span class="outcome" [class]="outcomeClass()">{{ outcomeLabel() }}</span>
+    </div>
   }
 </article>

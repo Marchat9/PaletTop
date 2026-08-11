@@ -1,4 +1,7 @@
 <div class="section-tournament">
-  <app-tournament-join (eventTournamentJoin)="eventTournamentJoin.emit()" />
+  <app-tournament-join
+    (eventTournamentJoin)="eventTournamentJoin.emit()"
+    (eventTournamentSpectate)="eventTournamentSpectate.emit()"
+  />
   <app-tournament-create (eventTournamentCreation)="eventTournamentCreation.emit()" />
 </div>
