@@ -12,4 +12,5 @@ import { Icon } from 'src/app/shared/icon/icon';
 })
 export class TournamentJoin {
   public readonly eventTournamentJoin = output<void>();
+  public readonly eventTournamentSpectate = output<void>();
 }

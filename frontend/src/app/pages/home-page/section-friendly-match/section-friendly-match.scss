@@ -76,5 +76,15 @@
   .action {
     margin: auto;
     width: clamp(14rem, 33vw, 24rem);
+
+    @media (width < 768px) {
+      width: 100%;
+      display: flex;
+      flex-wrap: wrap;
+    }
+
+    app-button {
+      flex: 1;
+    }
   }
 }

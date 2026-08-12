@@ -15,9 +15,15 @@
 
     <div class="action">
       <app-button
-        title="Rejoindre un tournoi"
+        title="En tant que joueur"
         icon="explore"
         (clicked)="eventTournamentJoin.emit()"
+      />
+      <app-button
+        title="En tant que spectateur"
+        icon="visibility"
+        variant="secondary"
+        (clicked)="eventTournamentSpectate.emit()"
       />
     </div>
   </div>

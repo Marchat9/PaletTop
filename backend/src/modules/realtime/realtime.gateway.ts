@@ -78,10 +78,6 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
             client.emit('join-error', { message: 'Tournoi introuvable.' });
             return;
         }
-        if (!password && !teamCode) {
-            client.emit('join-error', { message: 'payload incomplet.' });
-            return;
-        }
 
         if (teamCode) {
             const team = tournament.teams.find((t) => t.code === teamCode);
@@ -116,6 +112,15 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
             );
             return;
         }
+
+        // Spectator: neither a team code nor a password — read-only access to
+        // the tournament's public broadcasts (session/tournament/ranking on the
+        // general room, match updates on the dedicated spectator room).
+        void client.join(`tournament:${tournamentCode}`);
+        void client.join(`tournament:${tournamentCode}:spectator`);
+        this.logger.log(
+            `[WS][Spectator] ${client.id} joined rooms: 'tournament:${tournamentCode}' and 'tournament:${tournamentCode}:spectator'.`,
+        );
     }
 
     emitMatchUpdated(
@@ -129,6 +134,7 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
             this.server.to(`tournament:${code}:team:${teamBCode}`).emit('match:updated', payload);
         }
         this.server.to(`tournament:${code}:admin`).emit('match:updated', payload);
+        this.server.to(`tournament:${code}:spectator`).emit('match:updated', payload);
     }
 
     emitSessionUpdated(code: string, session: unknown): void {

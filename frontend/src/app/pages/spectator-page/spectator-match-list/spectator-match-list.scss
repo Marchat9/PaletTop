@@ -1,0 +1,191 @@
+:host {
+  display: block;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+
+  .header-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    ::ng-deep .icon {
+      color: var(--color-primary);
+    }
+
+    .title {
+      margin: 0;
+      font-family: var(--font-headline);
+      font-size: 1.8rem;
+      line-height: 1;
+    }
+  }
+}
+
+.matches-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+
+  .empty {
+    margin: 0;
+    font-size: 0.875rem;
+    color: var(--color-on-surface-variant);
+  }
+
+  .pool-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+
+    .pool-header {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--color-primary);
+
+      ::ng-deep .pool-icon {
+        font-size: 1rem;
+      }
+    }
+
+    .match-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.375rem;
+
+      .match-row {
+        display: flex;
+        align-items: center;
+        row-gap: 1rem;
+        column-gap: 3rem;
+        padding: 0.5rem 0.75rem;
+        border-radius: 0.5rem;
+        background: var(--color-surface-container);
+        font-size: 0.875rem;
+        flex-wrap: wrap;
+
+        &.is-bye {
+          background: transparent;
+          border: 1px dashed var(--color-outline-variant);
+          opacity: 0.75;
+        }
+
+        .vs {
+          flex-shrink: 0;
+          font-size: 0.75rem;
+          font-weight: 600;
+          color: var(--color-on-surface-variant);
+        }
+
+        .match-info {
+          flex: 1;
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          font-size: 0.875rem;
+          min-width: min(20rem, 100%);
+
+          .plate {
+            display: flex;
+            align-items: center;
+            flex-shrink: 0;
+
+            .plate-label {
+              font-size: 0.75rem;
+              font-weight: 600;
+              color: var(--color-primary);
+              background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+              padding: 0.15rem 0.4rem;
+              border-radius: 0.3rem;
+            }
+          }
+
+          .team {
+            flex: 1;
+            font-weight: 500;
+            color: var(--color-on-surface);
+            text-align: center;
+          }
+
+          .bye-badge {
+            flex: 1;
+            font-size: 0.75rem;
+            font-style: italic;
+            color: var(--color-on-surface-variant);
+            text-align: right;
+          }
+
+          .score-display {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            flex-shrink: 0;
+            font-variant-numeric: tabular-nums;
+
+            strong {
+              font-size: 1rem;
+              text-align: center;
+            }
+
+            .vs {
+              font-weight: 300;
+              font-size: 1rem;
+            }
+          }
+        }
+
+        .match-meta {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          margin-left: auto;
+          flex-shrink: 0;
+
+          @media (width <= 1234px) {
+            width: 100%;
+            margin: 0;
+            justify-content: space-between;
+          }
+
+          .status-badge {
+            font-size: 0.65rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+            padding: 0.15rem 0.45rem;
+            border-radius: 999px;
+            white-space: nowrap;
+
+            &--pending {
+              background: color-mix(in srgb, var(--color-on-surface-variant) 10%, transparent);
+              color: var(--color-on-surface-variant);
+            }
+
+            &--ongoing {
+              background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+              color: var(--color-primary);
+            }
+
+            &--ended {
+              background: color-mix(in srgb, var(--color-secondary) 12%, transparent);
+              color: var(--color-secondary);
+            }
+
+            &--validated {
+              background: color-mix(in srgb, var(--color-tertiary) 12%, transparent);
+              color: var(--color-tertiary);
+            }
+          }
+        }
+      }
+    }
+  }
+}

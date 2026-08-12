@@ -41,7 +41,13 @@
   }
 
   .action {
-    margin: 0 auto;
-    width: clamp(14rem, 33vw, 24rem);
+    width: 100%;
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+
+    app-button {
+      flex: 1;
+    }
   }
 }

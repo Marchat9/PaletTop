@@ -46,6 +46,7 @@ export class Navigation {
   readonly navItems: NavItem[] = [
     { label: 'Accueil', route: '/accueil', icon: 'home' },
     { label: 'Joueur', route: '/player', icon: 'person' },
+    { label: 'Spectateur', route: '/spectateur', icon: 'visibility' },
     { label: 'Match Amical', route: '/friendly-match', icon: 'handshake' },
     { label: 'Admin', route: '/admin', icon: 'admin_panel_settings' },
   ];

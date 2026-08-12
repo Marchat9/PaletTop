@@ -10,6 +10,7 @@ import {
 import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { JoinTournamentPopupComponent } from 'src/app/modales/join-tournament-popup/join-tournament-popup';
+import { SpectateTournamentPopupComponent } from 'src/app/modales/spectate-tournament-popup/spectate-tournament-popup';
 import { Metric } from 'src/app/models/metric.model';
 import { SectionMetrics } from 'src/app/pages/home-page/section-metrics/section-metrics';
 import { loadMetrics } from 'src/app/store/metrics/metrics.actions';
@@ -78,6 +79,21 @@ export class HomePageComponent implements OnInit {
             teamCode: string;
           };
           this.router.navigate([`/player/${tournamentCode}/${teamCode}`]);
+        }
+      });
+  }
+
+  public openModaleTournamentSpectate(): void {
+    this.dialog
+      .open(SpectateTournamentPopupComponent, {
+        panelClass: 'dialog-panel',
+        backdropClass: 'dialog-backdrop',
+        disableClose: false,
+      })
+      .closed.subscribe((tournamentData) => {
+        if (!!tournamentData) {
+          const { tournamentCode } = tournamentData as { tournamentCode: string };
+          this.router.navigate(['/spectateur', tournamentCode]);
         }
       });
   }

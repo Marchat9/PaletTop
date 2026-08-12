@@ -5,8 +5,12 @@ import { Tournament } from 'src/entities/tournament.entity';
 import { TournamentStatus } from 'src/enum/status.enum';
 import { RealtimeGateway } from 'src/modules/realtime/realtime.gateway';
 import { TournamentTeamDto } from 'src/modules/tournaments/dto/team-tournament.dto';
-import { RankingService } from 'src/modules/tournaments/services/ranking.service';
+import {
+    SpectatorTournamentDto,
+    toSpectatorTournamentDto,
+} from 'src/modules/tournaments/responses/spectator-tournament.dto';
 import { SessionService } from 'src/modules/tournaments/services/session.service';
+import { TournamentStrategyFactory } from 'src/modules/tournaments/strategies/tournament-strategy.factory';
 import {
     extractCompetitionConfiguration,
     sanitizeTournament,
@@ -31,7 +35,7 @@ export class TournamentsService {
         private readonly playerClubRepo: PlayerClubRepository,
         private readonly tournamentAuthService: TournamentAuthService,
         private readonly sessionService: SessionService,
-        private readonly rankingService: RankingService,
+        private readonly strategyFactory: TournamentStrategyFactory,
         private readonly gateway: RealtimeGateway,
     ) {}
 
@@ -50,6 +54,17 @@ export class TournamentsService {
             throw new NotFoundException('Tournoi introuvable');
         }
         return sanitizeTournament(tournament);
+    }
+
+    async findSpectatorTournamentByCode(code: string): Promise<SpectatorTournamentDto> {
+        const tournament = await this.tournamentRepo.findByCode(code);
+        if (!tournament) {
+            this.logger.warn(`Tournament not found with code: ${code}`);
+            throw new NotFoundException('Tournoi introuvable');
+        }
+        const strategy = this.strategyFactory.create(tournament.configuration.competitionMode);
+        const status = await this.sessionService.buildTournamentStatus(strategy, tournament);
+        return toSpectatorTournamentDto(tournament, status?.phaseName || '');
     }
 
     async create(tournamentCreation: CreateTournamentDto): Promise<Tournament> {

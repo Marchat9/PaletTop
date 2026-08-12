@@ -1,0 +1,51 @@
+<div class="spectate-tournament-popup-container" (keydown.enter)="onJoin()">
+  <div class="header-row">
+    <h2 class="title">
+      <app-icon name="visibility" iconClass="icon" [ariaHidden]="true" /> Suivre un tournoi
+    </h2>
+    <button class="close-button" type="button" aria-label="Fermer" (click)="onCancel()">
+      <app-icon name="close" />
+    </button>
+  </div>
+
+  <p class="subtitle">Saisissez le code du tournoi à suivre en tant que spectateur.</p>
+
+  <div class="field-group">
+    <label class="field-label" for="tournament-code">Code du tournoi</label>
+    <app-input-text
+      id="tournament-code"
+      placeholder="Ex: LAITON-2026"
+      autocomplete="off"
+      icon="key"
+      [value]="tournamentCode()"
+      [autofocus]="true"
+      [uppercase]="true"
+      (valueChange)="onTournamentCodeInput($event)"
+    ></app-input-text>
+  </div>
+
+  @if (isUnknownTournament()) {
+    <div class="error-container">
+      <span class="message">
+        <app-icon name="error" [ariaHidden]="true" />
+        Tournoi introuvable
+      </span>
+      <span class="description">
+        Veuillez vérifier le code saisi ou contacter l'administrateur du tournoi pour plus
+        d'informations.
+      </span>
+    </div>
+  }
+
+  <div class="actions">
+    <app-button title="Annuler" variant="secondary" (clicked)="onCancel()"></app-button>
+    <app-button
+      title="Suivre"
+      variant="primary"
+      icon="visibility"
+      [loading]="tournamentLoading()"
+      [disabled]="!canJoin()"
+      (clicked)="onJoin()"
+    ></app-button>
+  </div>
+</div>
