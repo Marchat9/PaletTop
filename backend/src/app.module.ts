@@ -8,6 +8,7 @@ import { TournamentsModule } from './modules/tournaments/tournaments.module';
 import { RealtimeModule } from './modules/realtime/realtime.module';
 import { CleanupModule } from './modules/cleanup/cleanup.module';
 import { SuperAdminModule } from './modules/super-admin/super-admin.module';
+import { HealthModule } from './modules/health/health.module';
 
 @Module({
     imports: [
@@ -17,6 +18,7 @@ import { SuperAdminModule } from './modules/super-admin/super-admin.module';
         RealtimeModule,
         CleanupModule,
         SuperAdminModule,
+        HealthModule,
     ],
 })
 export class AppModule {}

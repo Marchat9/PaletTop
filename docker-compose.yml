@@ -40,6 +40,12 @@ services:
             - ./backend:/app
             - /app/node_modules
         command: sh -c "npm install && npm run start:dev"
+        healthcheck:
+            test: ['CMD', 'wget', '--quiet', '--tries=1', '--spider', 'http://localhost:3000/health']
+            interval: 5s
+            timeout: 5s
+            retries: 10
+            start_period: 90s
 
     frontend:
         build:
@@ -49,7 +55,8 @@ services:
         container_name: palet-frontend
         restart: unless-stopped
         depends_on:
-            - backend
+            backend:
+                condition: service_healthy
         ports:
             - '4200:4200'
         volumes:
