@@ -38,6 +38,61 @@ export class PlayerClubRepository {
         return this.repo.save(this.repo.create({ name: rawName.trim() }));
     }
 
+    // Batch version of findOrCreate: one query to find every already-existing club, one
+    // (optional) bulk insert for the missing ones — instead of a query + maybe-insert per
+    // name, which used to run sequentially once per distinct club name in a team import.
+    // Two different raw names can normalize to the same club (spacing/case); the result
+    // maps every raw input to the same, de-duplicated PlayerClub in that case.
+    async findOrCreateMany(rawNames: string[]): Promise<Map<string, PlayerClub>> {
+        const normalize = (name: string): string => name.trim().replace(/\s+/g, '').toLowerCase();
+
+        const firstRawByNormalized = new Map<string, string>();
+        for (const rawName of rawNames) {
+            const trimmed = rawName.trim();
+            const normalized = normalize(trimmed);
+            if (!firstRawByNormalized.has(normalized)) {
+                firstRawByNormalized.set(normalized, trimmed);
+            }
+        }
+
+        const result = new Map<string, PlayerClub>();
+        const uniqueNormalizedNames = [...firstRawByNormalized.keys()];
+        if (uniqueNormalizedNames.length === 0) return result;
+
+        const existingClubs = await this.repo
+            .createQueryBuilder('club')
+            .where("regexp_replace(lower(club.name), '\\s+', '', 'g') IN (:...normalizedNames)", {
+                normalizedNames: uniqueNormalizedNames,
+            })
+            .getMany();
+
+        const clubByNormalized = new Map<string, PlayerClub>();
+        for (const club of existingClubs) {
+            clubByNormalized.set(normalize(club.name), club);
+        }
+
+        const missingNormalizedNames = uniqueNormalizedNames.filter(
+            (normalized) => !clubByNormalized.has(normalized),
+        );
+        if (missingNormalizedNames.length > 0) {
+            const created = await this.repo.save(
+                missingNormalizedNames.map((normalized) =>
+                    this.repo.create({ name: firstRawByNormalized.get(normalized)! }),
+                ),
+            );
+            for (const club of created) {
+                clubByNormalized.set(normalize(club.name), club);
+            }
+        }
+
+        for (const rawName of rawNames) {
+            const club = clubByNormalized.get(normalize(rawName));
+            if (club) result.set(rawName, club);
+        }
+
+        return result;
+    }
+
     count(): Promise<number> {
         return this.repo.count();
     }

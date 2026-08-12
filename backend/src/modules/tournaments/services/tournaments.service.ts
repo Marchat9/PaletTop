@@ -1,6 +1,5 @@
 import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { Player } from 'src/entities/player.entity';
-import { PlayerClub } from 'src/entities/player_club.entity';
 import { Team } from 'src/entities/team.entity';
 import { Tournament } from 'src/entities/tournament.entity';
 import { TournamentStatus } from 'src/enum/status.enum';
@@ -169,10 +168,7 @@ export class TournamentsService {
                 ),
             ),
         ];
-        const resolvedClubs = new Map<string, PlayerClub>();
-        for (const name of allClubNames) {
-            resolvedClubs.set(name, await this.playerClubRepo.findOrCreate(name));
-        }
+        const resolvedClubs = await this.playerClubRepo.findOrCreateMany(allClubNames);
 
         // Teams
         const existingTeamCodes: string[] = tournament.teams.map((team: Team) => team.code);
@@ -294,10 +290,7 @@ export class TournamentsService {
                         .filter((name): name is string => Boolean(name)),
                 ),
             ];
-            const resolvedClubs = new Map<string, PlayerClub>();
-            for (const name of clubNames) {
-                resolvedClubs.set(name, await this.playerClubRepo.findOrCreate(name));
-            }
+            const resolvedClubs = await this.playerClubRepo.findOrCreateMany(clubNames);
 
             team.players = teamData.players.map((playerDto) =>
                 Object.assign(new Player(), {

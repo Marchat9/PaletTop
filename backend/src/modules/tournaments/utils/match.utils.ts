@@ -10,6 +10,7 @@
  * @returns DeepPartial<TournamentMatch>[]
  */
 
+import { Logger } from '@nestjs/common';
 import { MatchesSession } from 'src/entities/matches-session.entity';
 import { Team } from 'src/entities/team.entity';
 import { TournamentMatch } from 'src/entities/tounament-match.entity';
@@ -21,6 +22,8 @@ import { buildByeMatchData, selectByeTeam } from 'src/modules/tournaments/utils/
 import { generatePairsWithContraints } from 'src/modules/tournaments/utils/draw.utils';
 import { DeepPartial } from 'typeorm';
 
+const logger = new Logger('MatchUtils');
+
 export function generateMatchesInPool(
     poll: TournamentPool,
     teams: Team[],
@@ -29,6 +32,7 @@ export function generateMatchesInPool(
     constraintConfig: ConstraintConfig,
     pastMatches: TournamentMatch[],
 ): DeepPartial<TournamentMatch>[] {
+    logger.debug(`generateMatchesInPool: pool=${poll.id ?? '(virtual)'} — ${teams.length} teams`);
     const allMatches: DeepPartial<TournamentMatch>[] = [];
 
     const tournamentRef: Tournament = { id: tournament.id } as Tournament;
@@ -55,11 +59,13 @@ export function generateMatchesInPool(
     }
 
     // Matches
-    for (const [teamA, teamB] of generatePairsWithContraints(
-        constraintConfig,
-        currentTeams,
-        pastMatches,
-    )) {
+    const pairingStartedAt = Date.now();
+    const pairs = generatePairsWithContraints(constraintConfig, currentTeams, pastMatches);
+    logger.debug(
+        `generateMatchesInPool: generatePairsWithContraints returned ${pairs.length} pairs in ${Date.now() - pairingStartedAt} ms`,
+    );
+
+    for (const [teamA, teamB] of pairs) {
         allMatches.push({
             tournament: tournamentRef,
             session: sessionRef,

@@ -67,20 +67,33 @@ export class RankingService {
     }
 
     async getTeamHistory(tournamentCode: string, teamCode: string): Promise<MatchHistoryDto[]> {
+        const historyByTeamCode = await this.getAllTeamsHistory(tournamentCode);
+        const history = historyByTeamCode.get(teamCode);
+        if (history === undefined) throw new NotFoundException('Équipe introuvable');
+        return history;
+    }
+
+    // Computes every team's history from one DB round trip instead of one per team — used
+    // whenever several teams' histories are needed together (e.g. after closing a session),
+    // where calling getTeamHistory() in a loop would re-fetch the whole tournament and its
+    // closed matches once per team.
+    async getAllTeamsHistory(tournamentCode: string): Promise<Map<string, MatchHistoryDto[]>> {
         const tournament = await this.tournamentRepo.findWithRelations(
             { code: tournamentCode },
             { withTeams: true },
         );
         if (!tournament) throw new NotFoundException('Tournoi introuvable');
 
-        const team = tournament.teams.find((t) => t.code === teamCode);
-        if (!team) throw new NotFoundException('Équipe introuvable');
-
         const closedSessions = await this.sessionRepo.findAllClosedByTournament(tournament.id);
         const allClosedMatches: TournamentMatch[] = closedSessions.flatMap((s) => s.matches);
 
         const strategy = this.strategyFactory.create(tournament.configuration.competitionMode);
-        return strategy.computeTeamHistory(allClosedMatches, team.id);
+        return new Map(
+            tournament.teams.map((team) => [
+                team.code,
+                strategy.computeTeamHistory(allClosedMatches, team.id),
+            ]),
+        );
     }
 
     async getGlobalRanking(tournamentCode: string): Promise<GlobalRankingEntry[]> {
