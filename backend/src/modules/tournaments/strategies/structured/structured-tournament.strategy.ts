@@ -68,6 +68,7 @@ export class StructuredTournamentStrategy extends TournamentStrategy {
         const isElimination = session.sessionNumber > qualifyingRounds;
 
         let partialMatches: DeepPartial<TournamentMatch>[];
+        const generationStartedAt = Date.now();
         if (isElimination) {
             const ranking = this.computeGlobalRanking(
                 tournament,
@@ -89,11 +90,16 @@ export class StructuredTournamentStrategy extends TournamentStrategy {
         } else {
             partialMatches = generateQualifyingMatches(tournament, session, pastMatches);
         }
+        this.logger.debug(
+            `generateSessionMatches: ${partialMatches.length} matches generated in ${Date.now() - generationStartedAt} ms`,
+        );
 
         const matches = partialMatches.map((match) => this.matchRepo.create(match));
 
         const assignedMatches = this.assignPlateNumbers(matches);
-        return this.matchRepo.save(assignedMatches);
+
+        const saved = await this.matchRepo.save(assignedMatches);
+        return saved;
     }
 
     override computeTournamentStatus(

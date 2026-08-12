@@ -21,6 +21,7 @@ import { RankingService } from './ranking.service';
 import { PoolRepository } from '../repositories/pool.repository';
 import { TournamentStrategy } from '../strategies/tournament-strategy.abstract';
 import { TournamentStrategyFactory } from '../strategies/tournament-strategy.factory';
+import { MatchHistoryDto } from 'src/modules/tournaments/responses/match-history.dto';
 
 @Injectable()
 export class SessionService {
@@ -69,6 +70,7 @@ export class SessionService {
             { id: tournament.id },
             { withTeams: true, withMatchesInTeams: true, withSessions: true },
         );
+
         if (!updatedTournament) {
             this.logger.error(`Tournament '${tournament.code}' not found after start.`);
             throw new NotFoundException('Tournoi introuvable après démarrage.');
@@ -219,6 +221,7 @@ export class SessionService {
             { id: tournament.id },
             { withTeams: true, withMatchesInTeams: true, withSessions: true },
         );
+
         if (!result) throw new NotFoundException('Tournoi introuvable après session.');
 
         const loadedNewSession = await this.sessionRepo.findByIdWithMatches(newSession.id);
@@ -262,8 +265,14 @@ export class SessionService {
             if (match.teamA?.code) teamCodes.add(match.teamA.code);
             if (match.teamB?.code) teamCodes.add(match.teamB.code);
         }
+        if (teamCodes.size === 0) return;
+
+        // One bulk lookup instead of one getTeamHistory() DB round trip per team — this
+        // used to re-fetch the whole tournament + closed matches once per team involved in
+        // the session (up to the full team count every round).
+        const historyByTeamCode = await this.rankingService.getAllTeamsHistory(tournamentCode);
         for (const teamCode of teamCodes) {
-            const history = await this.rankingService.getTeamHistory(tournamentCode, teamCode);
+            const history = (historyByTeamCode.get(teamCode) ?? []) as MatchHistoryDto[];
             this.gateway.emitHistoryUpdated(tournamentCode, teamCode, history);
         }
     }

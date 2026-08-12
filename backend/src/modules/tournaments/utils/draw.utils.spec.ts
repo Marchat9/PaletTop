@@ -187,4 +187,50 @@ describe('generatePairsWithContraints', () => {
 
         expect(pairContains(pairs, a, b)).toBe(false);
     });
+
+    describe("à l'échelle réelle (régression du crash mémoire à 200 équipes)", () => {
+        it('génère un appariement complet pour 200 équipes réparties sur des clubs concentrés, sans jamais réapparier deux équipes du même club', () => {
+            // Reproduit le scénario réel : 25 clubs de 8 équipes chacun (homogènes), et la
+            // configuration la plus stricte par défaut (ni revanche, ni même club). C'est
+            // exactement ce qui faisait exploser le backtracking en mémoire.
+            const clubCount = 25;
+            const teamsPerClub = 8;
+            const teams: Team[] = [];
+            for (let club = 0; club < clubCount; club++) {
+                for (let t = 0; t < teamsPerClub; t++) {
+                    teams.push(makeTeam([`club-${club}`, `club-${club}`]));
+                }
+            }
+
+            const start = Date.now();
+            const pairs = generatePairsWithContraints(STRICT_CONFIG, teams, []);
+            const elapsedMs = Date.now() - start;
+
+            expect(elapsedMs).toBeLessThan(2000);
+            expect(pairs).toHaveLength(100);
+            expect(new Set(allTeamIds(pairs)).size).toBe(200);
+
+            const teamClub = new Map(teams.map((t) => [t.id, t.players[0].club?.id]));
+            for (const [a, b] of pairs) {
+                expect(teamClub.get(a.id)).not.toBe(teamClub.get(b.id));
+            }
+        });
+
+        it('ne plante pas et reste rapide pour 200 équipes sans aucune club en commun, sur plusieurs sessions successives (historique qui grandit)', () => {
+            const teams = Array.from({ length: 200 }, () => makeTeam());
+            let pastMatches: TournamentMatch[] = [];
+
+            for (let session = 0; session < 3; session++) {
+                const start = Date.now();
+                const pairs = generatePairsWithContraints(STRICT_CONFIG, teams, pastMatches);
+                const elapsedMs = Date.now() - start;
+
+                expect(elapsedMs).toBeLessThan(2000);
+                expect(pairs).toHaveLength(100);
+                expect(new Set(allTeamIds(pairs)).size).toBe(200);
+
+                pastMatches = [...pastMatches, ...pairs.map(([a, b]) => makeMatch(a, b))];
+            }
+        });
+    });
 });

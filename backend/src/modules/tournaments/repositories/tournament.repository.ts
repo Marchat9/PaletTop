@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { LessThan, Repository } from 'typeorm';
 import { Team } from 'src/entities/team.entity';
+import { TournamentMatch } from 'src/entities/tounament-match.entity';
 import { Tournament } from 'src/entities/tournament.entity';
 import { TournamentStatus } from 'src/enum/status.enum';
 
@@ -71,14 +72,23 @@ export class TournamentRepository {
                 .leftJoinAndSelect('player.club', 'club');
         }
 
+        const tournament = await queryBuilder.getOne();
+        if (!tournament) return null;
+
+        // Loaded as its own query rather than joined onto the one above: teams and matches
+        // are both one-to-many off the tournament row, so joining them together multiplies
+        // their row counts (team_count x match_count) instead of just adding them — this is
+        // what caused an OOM on large tournaments.
         if (options.withMatches) {
-            queryBuilder
-                .leftJoinAndSelect('tournament.matches', 'match')
+            tournament.matches = await this.repo.manager
+                .createQueryBuilder(TournamentMatch, 'match')
                 .leftJoinAndSelect('match.teamA', 'matchTeamA')
-                .leftJoinAndSelect('match.teamB', 'matchTeamB');
+                .leftJoinAndSelect('match.teamB', 'matchTeamB')
+                .where('match.tournament = :tournamentId', { tournamentId: tournament.id })
+                .getMany();
         }
 
-        return queryBuilder.getOne();
+        return tournament;
     }
 
     async findWithRelations(
@@ -87,6 +97,13 @@ export class TournamentRepository {
     ): Promise<Tournament | null> {
         const tournament = await this.repo.findOne({
             where: where.id ? { id: where.id } : { code: where.code },
+            // 'query' forces one query per relation instead of a single query joining
+            // every one-to-many relation together. Without it, requesting teams + matches
+            // + matchsSessions.matches at once (all to-many off the same tournament row)
+            // makes TypeORM cross-join them in SQL — team_count x match_count x
+            // session_match_count rows — which is what caused an OOM crash on large
+            // tournaments (e.g. 256 teams x 128 matches x 128 session matches).
+            relationLoadStrategy: 'query',
             relations: {
                 ...(options.withTeams && { teams: { players: true } }),
                 ...((options.withMatches || options.withMatchesInTeams) && {
