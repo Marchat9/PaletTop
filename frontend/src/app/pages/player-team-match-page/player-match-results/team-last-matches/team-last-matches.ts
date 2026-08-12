@@ -1,10 +1,11 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { TeamResultView } from 'src/app/models/player-team-view';
+import { MatchStatusComponent } from 'src/app/shared/match-status/match-status';
 
 @Component({
   selector: 'app-team-last-matches',
   standalone: true,
-  imports: [],
+  imports: [MatchStatusComponent],
   templateUrl: './team-last-matches.html',
   styleUrl: './team-last-matches.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -19,19 +20,9 @@ export class TeamLastMatchesComponent {
     return s === 'ENDED' || s === 'VALIDATED';
   });
 
-  public readonly statusLabel = computed(() => {
-    switch (this.result().status) {
-      case 'PENDING':
-        return 'En attente';
-      case 'ONGOING':
-        return 'En cours';
-      case 'ENDED':
-      case 'VALIDATED':
-        return 'Terminé';
-      default:
-        return this.result().status;
-    }
-  });
+  public readonly statusLabel = computed(() =>
+    this.result().status === 'VALIDATED' ? 'ENDED' : this.result().status,
+  );
 
   public readonly outcomeClass = computed(() => {
     if (!this.isFinished()) return '';

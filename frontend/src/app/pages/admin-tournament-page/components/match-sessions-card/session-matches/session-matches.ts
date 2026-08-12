@@ -8,6 +8,7 @@ import { Nullable } from 'src/app/models/nullable.model';
 import { ScoreUpdate } from 'src/app/models/score-update.model';
 import { Button } from 'src/app/shared/button/button';
 import { InputNumber } from 'src/app/shared/input-number/input-number';
+import { MatchStatusComponent } from 'src/app/shared/match-status/match-status';
 import { MatchTimerComponent } from 'src/app/shared/match-timer/match-timer';
 import { Icon } from 'src/app/shared/icon/icon';
 import { computeMatchGroups } from './session-matches.utils';
@@ -15,7 +16,7 @@ import { computeMatchGroups } from './session-matches.utils';
 @Component({
   selector: 'app-session-matches',
   standalone: true,
-  imports: [Button, InputNumber, MatchTimerComponent, Icon],
+  imports: [Button, InputNumber, MatchStatusComponent, MatchTimerComponent, Icon],
   templateUrl: './session-matches.html',
   styleUrl: './session-matches.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

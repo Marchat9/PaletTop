@@ -36,6 +36,16 @@
     }
 
     .match-status {
+      font-size: 0.6rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 0.2rem 0.55rem;
+      border-radius: 999px;
+      white-space: nowrap;
+      background: color-mix(in srgb, var(--color-tertiary) 12%, transparent);
+      color: var(--color-tertiary);
+
       &.ongoing {
         color: var(--color-primary);
         font-weight: 700;
@@ -50,7 +60,7 @@
     gap: 0.45rem;
 
     .team {
-      font-size: 0.8rem;
+      font-size: 1rem;
       color: var(--color-on-surface-variant);
 
       &.current {
@@ -99,5 +109,22 @@
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--color-secondary);
+    font-weight: 700;
+    padding: 0.2rem 0.55rem;
+    border-radius: 999px;
+    white-space: nowrap;
+
+    &.win {
+      background: var(--color-status-success-bg);
+      color: var(--color-status-success-text);
+    }
+    &.loss {
+      background: var(--color-status-error-bg);
+      color: var(--color-status-error-text);
+    }
+    &.draw {
+      background: var(--color-status-ended-bg);
+      color: var(--color-status-ended-text);
+    }
   }
 }

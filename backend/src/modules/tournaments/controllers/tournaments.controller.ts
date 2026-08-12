@@ -23,6 +23,7 @@ import { JoinTournamentDto } from '../dto/join-tournament.dto';
 import { UpdateTournamentConfigurationDto } from '../dto/update-tournament-configuration.dto';
 import { AdminTournamentDto, toAdminTournamentDto } from '../responses/admin-tournament.dto';
 import { GlobalRankingEntry } from '../responses/ranking.dto';
+import { SpectatorTournamentDto } from '../responses/spectator-tournament.dto';
 import { RankingService } from '../services/ranking.service';
 import { TournamentsService } from '../services/tournaments.service';
 import { TournamentStrategyFactory } from '../strategies/tournament-strategy.factory';
@@ -209,6 +210,23 @@ export class TournamentsController {
 
             throw new InternalServerErrorException(
                 'Erreur lors de la génération de la session suivante.',
+            );
+        }
+    }
+
+    @Get('spectator/:code')
+    async getByCode(@Param('code') code: string): Promise<SpectatorTournamentDto> {
+        try {
+            return await this.tournamentsService.findSpectatorTournamentByCode(code);
+        } catch (error: unknown) {
+            if (error instanceof HttpException) {
+                throw error;
+            }
+
+            this.logger.error(`Get tournament by code failed`, error);
+
+            throw new InternalServerErrorException(
+                'Erreur interne lors de la récupération du tournoi.',
             );
         }
     }

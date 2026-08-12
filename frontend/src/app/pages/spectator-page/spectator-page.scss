@@ -1,0 +1,104 @@
+:host {
+  display: block;
+
+  /* On desktop the page fills the height the nav shell actually leaves below the
+     top bar, instead of demanding a literal 100dvh which would overflow it. */
+  @media (width >= 768px) {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+}
+
+.spectator-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+
+  @media (width >= 768px) {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+
+    .tournament-info {
+      flex: 2;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+
+      .name {
+        margin: 0;
+        font-family: var(--font-headline);
+        font-size: 1.5rem;
+      }
+
+      .status-badge,
+      .round {
+        font-size: 1rem;
+        font-weight: 600;
+        padding: 0.4rem 0.8rem;
+        border-radius: 999px;
+        background: var(--color-surface-container-high);
+        color: var(--color-on-surface-variant);
+      }
+    }
+
+    .switch {
+      flex: 1;
+      display: flex;
+      justify-content: flex-end;
+    }
+  }
+
+  .content {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    min-height: 0;
+
+    @media (width >= 768px) {
+      flex-direction: row;
+      flex: 1 1 auto;
+    }
+
+    .column {
+      min-width: 0;
+
+      @media (width >= 768px) {
+        flex: 1 1 0;
+        overflow-y: auto;
+      }
+    }
+  }
+
+  .error-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+
+    .message {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-weight: 600;
+      color: var(--color-error);
+    }
+
+    .description {
+      font-size: 0.75rem;
+      color: var(--color-on-surface-variant);
+    }
+  }
+}

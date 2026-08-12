@@ -1,0 +1,59 @@
+.switch-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: var(--color-on-surface);
+
+  &.disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+
+  input[type='checkbox'] {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+
+    &:checked ~ .switch-track {
+      background: var(--color-primary);
+
+      .switch-thumb {
+        transform: translateX(1.1rem);
+      }
+    }
+
+    &:focus-visible ~ .switch-track {
+      outline: 2px solid var(--color-primary);
+      outline-offset: 2px;
+    }
+  }
+
+  .switch-track {
+    position: relative;
+    inline-size: 2.3rem;
+    block-size: 1.3rem;
+    border-radius: 999px;
+    background: var(--color-surface-container-highest);
+    transition: background 0.15s ease;
+    flex-shrink: 0;
+
+    .switch-thumb {
+      position: absolute;
+      top: 0.15rem;
+      left: 0.15rem;
+      inline-size: 1rem;
+      block-size: 1rem;
+      border-radius: 999px;
+      background: var(--color-surface);
+      transition: transform 0.15s ease;
+    }
+  }
+
+  .switch-label {
+    color: var(--color-on-surface-variant);
+  }
+}

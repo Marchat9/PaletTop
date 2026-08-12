@@ -1,0 +1,68 @@
+<div class="spectator-page">
+  <div class="header">
+    <div class="tournament-info">
+      <h1 class="name">
+        <span>Tournoi : </span>
+        {{ tournament()?.name ?? '—' }}
+      </h1>
+      @if (tournament()) {
+        <div>
+          @switch (tournament()?.status) {
+            @case ('DRAFT') {
+              <span class="status-badge">Tounoi non démarré</span>
+            }
+            @case ('ACTIVE') {
+              <span class="status-badge">Phase : {{ tournament()!.phaseName || '' }}</span>
+            }
+            @case ('COMPLETED') {
+              <span class="status-badge">Tounoi terminé !</span>
+            }
+            @case ('CANCELLED') {
+              <span class="status-badge">Tounoi Annulé</span>
+            }
+          }
+        </div>
+      }
+      @if (currentSession()) {
+        <div>
+          <span class="round">Round : {{ currentSession()!.sessionNumber || '-' }}</span>
+        </div>
+      }
+    </div>
+    @if (!isMobile()) {
+      <app-switch
+        class="switch"
+        [checked]="autoScrollOn()"
+        label="Défilement automatique"
+        (checkedChange)="autoScrollOn.set($event)"
+      />
+    }
+  </div>
+
+  @if (error()) {
+    <div class="error-container">
+      <span class="message">
+        <app-icon name="error" [ariaHidden]="true" />
+        Tournoi introuvable.
+      </span>
+      <span class="description">
+        Veuillez vérifier le code du tournoi ou contacter l'administrateur du tournoi pour plus
+        d'informations.
+      </span>
+    </div>
+  } @else {
+    <div class="content">
+      <div class="column matches" [appAutoScroll]="autoScrollOn() && !isMobile()">
+        <app-spectator-match-list [session]="currentSession()" />
+      </div>
+      <div class="column ranking" [appAutoScroll]="autoScrollOn() && !isMobile()">
+        <app-ranking-card
+          [ranking]="ranking()"
+          [isLoading]="isLoading()"
+          [scoreCalculation]="tournament()?.scoreCalculation"
+          [canCollapse]="false"
+        />
+      </div>
+    </div>
+  }
+</div>

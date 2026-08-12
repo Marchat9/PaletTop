@@ -112,7 +112,9 @@ export function computePhaseName(
     tournamentStatus: TournamentStatus,
     isElimination: boolean,
     nbTeamStillInGame: number,
+    currentSessionNumber: number,
     hasThirdPlaceMatch: boolean,
+    numberOfQualifyingRounds: number,
 ): string {
     switch (true) {
         case tournamentStatus === TournamentStatus.DRAFT:
@@ -122,7 +124,7 @@ export function computePhaseName(
             return '';
 
         case tournamentStatus === TournamentStatus.ACTIVE && !isElimination:
-            return 'Phase qualificative';
+            return `Phase qualificative ${currentSessionNumber}/${numberOfQualifyingRounds}`;
 
         case tournamentStatus === TournamentStatus.ACTIVE &&
             isElimination &&

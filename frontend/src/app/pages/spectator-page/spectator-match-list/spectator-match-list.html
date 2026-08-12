@@ -1,0 +1,58 @@
+<app-card-collapsible [canCollapse]="false" [isExpanded]="true"
+  ><div header class="header">
+    <div class="header-title">
+      <app-icon name="sports_score" iconClass="icon" />
+      <h2 class="title">Matchs</h2>
+    </div>
+  </div>
+
+  <div content class="matches-section">
+    @for (group of matchGroups(); track group.label) {
+      <div class="pool-group">
+        @if (group.label) {
+          <div class="pool-header">
+            <app-icon name="emoji_events" iconClass="pool-icon" />
+            {{ group.label }}
+          </div>
+        }
+
+        <div class="match-list">
+          @for (match of group.matches; track match.id) {
+            <div class="match-row" [class.is-bye]="match.isBye">
+              <div class="match-info">
+                @if (!match.isBye) {
+                  <span class="plate">
+                    <span class="plate-label">N°{{ match.plateNumber }}</span>
+                  </span>
+                }
+                <span class="team team-a">{{ match.teamA.name }}</span>
+                @if (match.isBye) {
+                  <span class="bye-badge">Exempté</span>
+                } @else {
+                  <span class="score-display">
+                    <strong>{{ match.scoreA }}</strong>
+                    <span class="vs">—</span>
+                    <strong>{{ match.scoreB }}</strong>
+                  </span>
+                  <span class="team team-b">{{ match.teamB?.name }}</span>
+                }
+              </div>
+              <div class="match-meta">
+                <span class="status-badge" [class]="'status-badge--' + match.status.toLowerCase()">
+                  <app-match-status [status]="match.status" />
+                </span>
+                <app-match-timer
+                  [startedAt]="match.startedAt"
+                  [finishedAt]="match.finishedAt"
+                  [status]="match.status"
+                />
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    } @empty {
+      <p class="empty">Aucun match pour le moment.</p>
+    }
+  </div>
+</app-card-collapsible>

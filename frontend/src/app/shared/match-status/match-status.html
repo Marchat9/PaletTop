@@ -1,0 +1,16 @@
+<span class="status-badge">
+  @switch (status()) {
+    @case ('PENDING') {
+      En attente
+    }
+    @case ('ONGOING') {
+      En cours
+    }
+    @case ('ENDED') {
+      Terminé
+    }
+    @case ('VALIDATED') {
+      Validé
+    }
+  }
+</span>

@@ -1,0 +1,15 @@
+<label class="switch-option" [class.disabled]="disabled()">
+  <input
+    type="checkbox"
+    role="switch"
+    [checked]="internalValue()"
+    [disabled]="disabled()"
+    (change)="onChange($any($event.target).checked)"
+  />
+  <span class="switch-track">
+    <span class="switch-thumb"></span>
+  </span>
+  @if (label()) {
+    <span class="switch-label">{{ label() }}</span>
+  }
+</label>
