@@ -37,7 +37,7 @@ export class SessionController {
         @Param('sessionNumber', ParseIntPipe) sessionNumber: number,
     ): Promise<SessionResponseDto> {
         try {
-            return await this.sessionService.getSession(code, sessionNumber);
+            return await this.sessionService.getSessionByNumber(code, sessionNumber);
         } catch (error) {
             if (error instanceof HttpException) {
                 throw error;

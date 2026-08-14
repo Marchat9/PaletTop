@@ -10,18 +10,20 @@ import {
     toAdminTournamentDto,
     toTournamentMetaDto,
 } from 'src/modules/tournaments/responses/admin-tournament.dto';
+import { MatchHistoryDto } from 'src/modules/tournaments/responses/match-history.dto';
 import { TournamentAuthService } from 'src/modules/tournaments/services/tournament-auth.service';
 import { sanitizeTournament } from 'src/modules/tournaments/utils/tournament.utils';
-import { MatchRepository } from '../repositories/match.repository';
 import { SessionRepository } from '../repositories/session.repository';
 import { toPlayerMatchDto } from '../responses/player-match.dto';
 import { SessionResponseDto, toSessionResponseDto } from '../responses/session.response';
 import { TournamentStatusInfo } from '../responses/tournament-status.dto';
-import { RankingService } from './ranking.service';
-import { PoolRepository } from '../repositories/pool.repository';
 import { TournamentStrategy } from '../strategies/tournament-strategy.abstract';
 import { TournamentStrategyFactory } from '../strategies/tournament-strategy.factory';
-import { MatchHistoryDto } from 'src/modules/tournaments/responses/match-history.dto';
+import { RankingService } from './ranking.service';
+import {
+    appendMatchesSessionToTournament,
+    updateTournamentWithUpdatedSession,
+} from 'src/modules/tournaments/strategies/tournament-strategy.utils';
 
 @Injectable()
 export class SessionService {
@@ -30,8 +32,6 @@ export class SessionService {
     constructor(
         private readonly tournamentRepo: TournamentRepository,
         private readonly sessionRepo: SessionRepository,
-        private readonly matchRepo: MatchRepository,
-        private readonly poolRepo: PoolRepository,
         private readonly tournamentAuthService: TournamentAuthService,
         private readonly gateway: RealtimeGateway,
         private readonly rankingService: RankingService,
@@ -49,54 +49,77 @@ export class SessionService {
         if (!tournament.teams.length) {
             throw new BadRequestException('Aucune équipe inscrite au tournoi.');
         }
-
+        // ==== Common data ====
+        const tournamentId = tournament.id;
+        const tournamentCode = tournament.code;
         const strategy = this.strategyFactory.create(tournament.configuration.competitionMode);
-        await strategy.prepareTournamentStart(tournament);
+        // ====================
 
-        // assign saved pools in current tournament object
-        tournament.pools = await strategy.assignTeamsToPools(tournament);
-
+        // ====== Common ======
+        // Common step: Create initial session
         const session = await this.sessionRepo.save(
             this.sessionRepo.create({
-                tournament: { id: tournament.id } as Tournament,
+                tournament: { id: tournamentId } as Tournament,
                 sessionNumber: 1,
             }),
         );
-
-        await strategy.generateSessionMatches(tournament, session, []);
-        await this.tournamentRepo.updateStatus(tournament.id, TournamentStatus.ACTIVE);
-
-        const updatedTournament = await this.tournamentRepo.findWithRelations(
-            { id: tournament.id },
-            { withTeams: true, withMatchesInTeams: true, withSessions: true },
+        // Common step: Update Tournament status
+        const tournamentActive = await this.tournamentRepo.updateStatus(
+            tournament,
+            TournamentStatus.ACTIVE,
         );
+        this.logger.log(`Tournament ${tournamentCode} started with session '1' created`);
+        // ====================
 
-        if (!updatedTournament) {
-            this.logger.error(`Tournament '${tournament.code}' not found after start.`);
-            throw new NotFoundException('Tournoi introuvable après démarrage.');
-        }
+        // ========== Strategy ==========
+        // Strategy step: Prepare Tournament to start
+        const tournamentPrepared = await strategy.prepareTournamentStart(tournamentActive);
 
-        this.logger.log(`Tournament ${tournament.code} started — session 1 created`);
-        const loadedSession = await this.sessionRepo.findByIdWithMatches(session.id);
-        if (loadedSession) {
-            this.gateway.emitSessionUpdated(tournament.code, toSessionResponseDto(loadedSession));
-            this.emitNewMatchForEachTeam(tournament.code, loadedSession);
+        // Strategy step: Assign saved pools in current tournament object
+        const tournamentWithPool = {
+            ...tournamentPrepared,
+            pools: await strategy.assignTeamsToFirstPools(tournamentPrepared),
+        };
 
-            // Emit first ranking - everyone with 0 point.
-            this.rankingService.scheduleRankingUpdate(tournament.code);
-        }
+        // Strategy step: Generate matches in session first
+        const tournamentWithMatches = appendMatchesSessionToTournament(
+            tournamentWithPool,
+            session,
+            await strategy.generateSessionMatches(tournamentWithPool, session),
+        );
+        // ==============================
 
-        const statusAfterStart = await this.buildTournamentStatus(strategy, updatedTournament);
-        const tournamentWithStatus = toAdminTournamentDto(updatedTournament, statusAfterStart);
+        // ==== Final common steps ====
+        // data
+        const newSessionMatches = tournamentWithMatches.matchsSessions.find(
+            (s) => s.sessionNumber === session.sessionNumber,
+        )!;
+        // Emit new session data
+        this.gateway.emitSessionUpdated(tournamentCode, toSessionResponseDto(newSessionMatches));
+        // Emit match for every team in new session
+        this.emitNewMatchForEachTeam(tournamentCode, newSessionMatches);
 
-        this.gateway.emitTournamentUpdated(tournament.code, tournamentWithStatus);
+        // Emit first ranking - everyone with 0 point.
+        this.rankingService.scheduleRankingUpdate(tournamentCode);
 
-        return tournamentWithStatus;
+        // Build then return and emit tournament status info.
+        const statusAfterStart = await this.buildTournamentStatus(strategy, tournamentWithMatches);
+        const tournamentWithStatusInfo = toAdminTournamentDto(
+            tournamentWithMatches,
+            statusAfterStart,
+        );
+        this.gateway.emitTournamentUpdated(tournamentCode, tournamentWithStatusInfo);
+        // ====================
+
+        return tournamentWithStatusInfo;
     }
 
     async nextSession(code: string, password: string): Promise<AdminTournamentDto> {
         const tournament = await this.tournamentAuthService.findWithAdminAuth({ code }, password, {
             withTeams: true,
+            withMatches: true,
+            withSessions: true,
+            withPools: true,
         });
 
         if (tournament.status !== TournamentStatus.ACTIVE) {
@@ -105,28 +128,144 @@ export class SessionService {
             );
         }
 
-        tournament.pools = await this.poolRepo.findByTournamentWithTeams(tournament.id);
-
-        const nextSessionTournament = await this.advanceToNextSession(tournament);
-
+        // ==== Common data ====
+        const tournamentId = tournament.id;
+        const tournamentCode = tournament.code;
         const strategy = this.strategyFactory.create(tournament.configuration.competitionMode);
-        const tournamentWithStatus = await this.buildTournamentStatus(
-            strategy,
-            nextSessionTournament,
+        const currentSession = tournament.matchsSessions.sort(
+            (a, b) => b.sessionNumber - a.sessionNumber,
+        )[0];
+        // ====================
+
+        // Strategy step: Check if next session could be started.
+        if (!currentSession || !strategy.canStartNextSession(currentSession)) {
+            throw new BadRequestException(
+                'Tous les matchs de la session en cours doivent être validés avant de lancer la suivante.',
+            );
+        }
+
+        // Common step: Close current session
+        const currentSessionClosed = await this.sessionRepo.updateStatus(
+            currentSession,
+            MatchesSessionStatus.CLOSED,
+        );
+        const tournamentWithSessionUpdated = updateTournamentWithUpdatedSession(
+            tournament,
+            currentSessionClosed,
         );
 
-        return toAdminTournamentDto(nextSessionTournament, tournamentWithStatus);
+        // Common step: Generate new next session
+        const newSession = await this.sessionRepo.save(
+            this.sessionRepo.create({
+                tournament: { id: tournamentId } as Tournament,
+                sessionNumber: currentSession.sessionNumber + 1,
+            }),
+        );
+        // Common step: emit session update
+        this.gateway.emitSessionUpdated(tournamentCode, toSessionResponseDto(currentSessionClosed));
+        // Common step: emit history update for just closed session
+        await this.emitHistoryForSession(tournamentCode, currentSessionClosed);
+
+        // Strategy step: Generate new session with match associated
+        const tournamentWithMatches = appendMatchesSessionToTournament(
+            tournamentWithSessionUpdated,
+            newSession,
+            await strategy.generateSessionMatches(tournamentWithSessionUpdated, newSession),
+        );
+
+        // ======= Common steps =======
+        // data
+        const newSessionMatches = tournamentWithMatches.matchsSessions.find(
+            (s) => s.sessionNumber === newSession.sessionNumber,
+        )!;
+        // Common step: Emit new session data
+        this.gateway.emitSessionUpdated(tournamentCode, toSessionResponseDto(newSessionMatches));
+        // Common step: Emit match for every team in new session
+        this.emitNewMatchForEachTeam(tournamentCode, newSessionMatches);
+
+        // Common step: Emit new tournament information
+        const tournamentStatusInfoForNextSession = await this.buildTournamentStatus(
+            strategy,
+            tournamentWithMatches,
+        );
+        this.gateway.emitTournamentUpdated(
+            tournamentCode,
+            toTournamentMetaDto(tournamentWithMatches, tournamentStatusInfoForNextSession),
+        );
+
+        return toAdminTournamentDto(
+            sanitizeTournament(tournament),
+            tournamentStatusInfoForNextSession,
+        );
     }
 
-    async getSessions(code: string): Promise<SessionResponseDto[]> {
-        const tournament = await this.tournamentRepo.findByCode(code);
+    async completeTournament(code: string, password: string): Promise<AdminTournamentDto> {
+        const tournament = await this.tournamentAuthService.findWithAdminAuth({ code }, password, {
+            withTeams: true,
+            withSessions: true,
+        });
+
+        // ==== Common data ====
+        const tournamentCode = tournament.code;
+        const strategy = this.strategyFactory.create(tournament.configuration.competitionMode);
+        const openSession = tournament.matchsSessions.find(
+            (s) => s.status === MatchesSessionStatus.OPEN,
+        );
+        // ====================
+
+        // Strategy step: Check if tournament could be completed.
+        if (!openSession || !strategy.canCompleteTournament(tournament)) {
+            throw new BadRequestException(
+                `Le tournoi et une session doivent être ACTIVE pour clôturer le tournoi. Statut actuel : "${tournament.status}".`,
+            );
+        }
+        this.logger.log(
+            `Tournament ${tournamentCode} completing — transitioning ACTIVE → COMPLETED`,
+        );
+
+        // Common step: Close last session
+        const closedSession = await this.sessionRepo.updateStatus(
+            openSession,
+            MatchesSessionStatus.CLOSED,
+        );
+        const tounramentWithSessionUpdated = updateTournamentWithUpdatedSession(
+            tournament,
+            closedSession,
+        );
+
+        // Common step: emit updated session data
+        this.gateway.emitSessionUpdated(tournamentCode, toSessionResponseDto(closedSession));
+        // Common step: emit history update for just closed session
+        await this.emitHistoryForSession(tournamentCode, closedSession);
+
+        // Common step: Complete tournament
+        const completedTournament = await this.tournamentRepo.updateStatus(
+            tounramentWithSessionUpdated,
+            TournamentStatus.COMPLETED,
+        );
+
+        // Common step: Emit new tournament information
+        const statusAfterComplete = await this.buildTournamentStatus(strategy, completedTournament);
+        this.gateway.emitTournamentUpdated(
+            tournamentCode,
+            toTournamentMetaDto(completedTournament, statusAfterComplete),
+        );
+
+        return toAdminTournamentDto(completedTournament, statusAfterComplete);
+    }
+
+    async getSessions(tournamentCode: string): Promise<SessionResponseDto[]> {
+        const tournament = await this.tournamentRepo.findByCode(tournamentCode);
         if (!tournament) throw new NotFoundException('Tournoi introuvable');
         const sessions = await this.sessionRepo.findAllByTournament(tournament.id);
         return sessions.map(toSessionResponseDto);
     }
 
-    async getSession(code: string, sessionNumber: number): Promise<SessionResponseDto> {
-        const tournament = await this.tournamentRepo.findByCode(code);
+    async getSessionByNumber(
+        tournamentCode: string,
+        sessionNumber: number,
+    ): Promise<SessionResponseDto> {
+        const tournament = await this.tournamentRepo.findByCode(tournamentCode);
         if (!tournament) throw new NotFoundException('Tournoi introuvable');
 
         const session = await this.sessionRepo.findOneByTournamentAndNumber(
@@ -137,110 +276,6 @@ export class SessionService {
         return toSessionResponseDto(session);
     }
 
-    async completeTournament(code: string, password: string): Promise<AdminTournamentDto> {
-        const tournament = await this.tournamentAuthService.findWithAdminAuth({ code }, password, {
-            withTeams: true,
-        });
-
-        const strategy = this.strategyFactory.create(tournament.configuration.competitionMode);
-        if (!strategy.canCompleteTournament(tournament)) {
-            throw new BadRequestException(
-                `Le tournoi doit être ACTIVE pour être clôturé. Statut actuel : "${tournament.status}".`,
-            );
-        }
-
-        this.logger.log(
-            `Tournament ${tournament.code} completing — transitioning ACTIVE → COMPLETED`,
-        );
-        const openSession = await this.sessionRepo.findOpenByTournament(tournament.id);
-        if (openSession) {
-            await this.sessionRepo.updateStatus(openSession.id, MatchesSessionStatus.CLOSED);
-            const closedSession = await this.sessionRepo.findByIdWithMatches(openSession.id);
-            if (closedSession) {
-                this.gateway.emitSessionUpdated(
-                    tournament.code,
-                    toSessionResponseDto(closedSession),
-                );
-                await this.emitHistoryForSession(tournament.code, closedSession);
-            }
-        }
-
-        await this.tournamentRepo.updateStatus(tournament.id, TournamentStatus.COMPLETED);
-
-        const result = await this.tournamentRepo.findWithRelations(
-            { id: tournament.id },
-            { withTeams: true },
-        );
-        if (!result) throw new NotFoundException('Tournoi introuvable après clôture.');
-
-        const statusAfterComplete = await this.buildTournamentStatus(strategy, result);
-        this.gateway.emitTournamentUpdated(
-            tournament.code,
-            toTournamentMetaDto(result, statusAfterComplete),
-        );
-
-        return toAdminTournamentDto(result, statusAfterComplete);
-    }
-
-    private async advanceToNextSession(tournament: Tournament): Promise<Tournament> {
-        const currentSession = await this.sessionRepo.findLatestByTournament(tournament.id);
-        if (!currentSession) {
-            throw new BadRequestException('Aucune session trouvée.');
-        }
-
-        const strategy = this.strategyFactory.create(tournament.configuration.competitionMode);
-        if (!strategy.canStartNextSession(currentSession)) {
-            throw new BadRequestException(
-                'Tous les matchs de la session en cours doivent être validés avant de lancer la suivante.',
-            );
-        }
-
-        await this.sessionRepo.updateStatus(currentSession.id, MatchesSessionStatus.CLOSED);
-        this.logger.log(
-            `Tournament ${tournament.code} — session ${currentSession.sessionNumber} closed, advancing to session ${currentSession.sessionNumber + 1}`,
-        );
-
-        const closedSession = await this.sessionRepo.findByIdWithMatches(currentSession.id);
-        if (closedSession) {
-            this.gateway.emitSessionUpdated(tournament.code, toSessionResponseDto(closedSession));
-            await this.emitHistoryForSession(tournament.code, closedSession);
-        }
-
-        const pastMatches = await this.matchRepo.findByTournament(tournament.id);
-
-        const newSession = await this.sessionRepo.save(
-            this.sessionRepo.create({
-                tournament: { id: tournament.id } as Tournament,
-                sessionNumber: currentSession.sessionNumber + 1,
-            }),
-        );
-
-        await strategy.generateSessionMatches(tournament, newSession, pastMatches);
-
-        const result = await this.tournamentRepo.findWithRelations(
-            { id: tournament.id },
-            { withTeams: true, withMatchesInTeams: true, withSessions: true },
-        );
-
-        if (!result) throw new NotFoundException('Tournoi introuvable après session.');
-
-        const loadedNewSession = await this.sessionRepo.findByIdWithMatches(newSession.id);
-        if (loadedNewSession) {
-            this.gateway.emitSessionUpdated(
-                tournament.code,
-                toSessionResponseDto(loadedNewSession),
-            );
-            this.emitNewMatchForEachTeam(tournament.code, loadedNewSession);
-        }
-        const statusAfterAdvance = await this.buildTournamentStatus(strategy, result);
-        this.gateway.emitTournamentUpdated(
-            tournament.code,
-            toTournamentMetaDto(result, statusAfterAdvance),
-        );
-
-        return sanitizeTournament(result);
-    }
-
     public async buildTournamentStatus(
         strategy: TournamentStrategy | null,
         tournament: Tournament,
@@ -248,7 +283,9 @@ export class SessionService {
         try {
             const strat: TournamentStrategy =
                 strategy || this.strategyFactory.create(tournament.configuration.competitionMode);
-            const sessions = await this.sessionRepo.findAllByTournament(tournament.id);
+            const sessions =
+                tournament.matchsSessions ||
+                (await this.sessionRepo.findAllByTournament(tournament.id));
             return strat.computeTournamentStatus(tournament, sessions);
         } catch (e) {
             this.logger.error(`Tournament status failed`, e);

@@ -2,7 +2,6 @@ import { NotImplementedException } from '@nestjs/common';
 import { MatchesSession } from 'src/entities/matches-session.entity';
 import { Team } from 'src/entities/team.entity';
 import { TournamentMatch } from 'src/entities/tounament-match.entity';
-import { TournamentPool } from 'src/entities/tournament-pool.entity';
 import { Tournament } from 'src/entities/tournament.entity';
 import { MatchesSessionStatus, MatchStatus, TournamentStatus } from 'src/enum/status.enum';
 import { MatchHistoryDto, toMatchHistoryDto } from '../../tournaments/responses/match-history.dto';
@@ -12,10 +11,23 @@ import {
     computeEntryScore,
     computeTournamentScorePoints,
 } from '../../tournaments/utils/score-calculation.utils';
+import { TournamentPool } from 'src/entities/tournament-pool.entity';
 
 export abstract class TournamentStrategy {
     canStartNextSession(session: MatchesSession): boolean {
-        return session.matches.every((m) => m.status === MatchStatus.VALIDATED);
+        return (
+            session.status === MatchesSessionStatus.OPEN &&
+            session.matches.every((m) => m.status === MatchStatus.VALIDATED)
+        );
+    }
+
+    canCompleteTournament(tournament: Tournament): boolean {
+        return (
+            tournament.status === TournamentStatus.ACTIVE &&
+            tournament.matchsSessions.every((ms) =>
+                ms.matches.every((m) => m.status === MatchStatus.VALIDATED),
+            )
+        );
     }
 
     computeGlobalRanking(tournament: Tournament, matches: TournamentMatch[]): GlobalRankingEntry[] {
@@ -53,20 +65,6 @@ export abstract class TournamentStrategy {
         sessions: MatchesSession[],
     ): TournamentStatusInfo;
 
-    canCompleteTournament(tournament: Tournament): boolean {
-        return tournament.status === TournamentStatus.ACTIVE;
-    }
-
-    protected currentSessionNumber(sessions: MatchesSession[]): number {
-        return sessions.length ? Math.max(...sessions.map((s) => s.sessionNumber)) : 0;
-    }
-
-    protected allMatchesValidated(sessions: MatchesSession[]): boolean {
-        const open = sessions.find((s) => s.status !== MatchesSessionStatus.CLOSED);
-        if (!open) return false;
-        return open.matches.every((m) => m.status === MatchStatus.VALIDATED);
-    }
-
     assignPlateNumbers(
         matches: TournamentMatch[],
         numberOfPlaques: number = Number.MAX_VALUE,
@@ -93,30 +91,42 @@ export abstract class TournamentStrategy {
         return assignedMatches;
     }
 
-    computeRawScoreToPoints(score: number): number {
-        return score;
-    }
-
-    async prepareTournamentStart(_tournament: Tournament): Promise<void> {
+    /**
+     * Mutating strategy method: persists its own changes via the repos it was
+     * constructed with and returns the saved entity. Callers must merge this
+     * return value into their in-memory state instead of re-reading from the DB.
+     */
+    async prepareTournamentStart(_tournament: Tournament): Promise<Tournament> {
         // No-op par défaut — surcharger pour initialiser des données au démarrage
+        return _tournament;
     }
 
-    async assignTeamsToPools(_tournament: Tournament): Promise<TournamentPool[]> {
+    /**
+     * Mutating strategy method: persists its own changes via the repos it was
+     * constructed with and returns the saved entities. Callers must merge this
+     * return value into their in-memory state instead of re-reading from the DB.
+     */
+    async assignTeamsToFirstPools(_tournament: Tournament): Promise<TournamentPool[]> {
         throw new NotImplementedException(
             `assignTeamsToPools must be implemented for ${this.constructor.name}`,
         );
     }
 
+    /**
+     * Mutating strategy method: persists its own changes via the repos it was
+     * constructed with and returns the saved entities. Callers must merge this
+     * return value into their in-memory state instead of re-reading from the DB.
+     */
     async generateSessionMatches(
         _tournament: Tournament,
         _session: MatchesSession,
-        _pastMatches: TournamentMatch[],
     ): Promise<TournamentMatch[]> {
         throw new NotImplementedException(
             `generateSessionMatches must be implemented for ${this.constructor.name}`,
         );
     }
 
+    // ========= Helpers =========
     protected computeStats(
         teams: Team[],
         matches: TournamentMatch[],
@@ -154,4 +164,13 @@ export abstract class TournamentStrategy {
             };
         });
     }
+    protected currentSessionNumber(sessions: MatchesSession[]): number {
+        return sessions.length ? Math.max(...sessions.map((s) => s.sessionNumber)) : 0;
+    }
+    protected allMatchesValidated(sessions: MatchesSession[]): boolean {
+        const open = sessions.find((s) => s.status !== MatchesSessionStatus.CLOSED);
+        if (!open) return false;
+        return open.matches.every((m) => m.status === MatchStatus.VALIDATED);
+    }
+    // ===========================
 }

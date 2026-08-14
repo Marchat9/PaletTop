@@ -22,8 +22,15 @@ export class PoolService {
         numberOfPools = numberOfPools ?? 1;
         const teams = shuffleFisherYates([...tournament.teams]);
 
+        // `tournament` is stubbed to its id here — embedding the full entity would make
+        // `pool.tournament.teams` point back to these same teams once `team.pool` is set
+        // below, and that cycle blows the call stack the moment a match carrying the full
+        // team entity (team.pool.tournament.teams...) is passed to matchRepo.create().
         const poolDrafts = Array.from({ length: numberOfPools }, (_, i) =>
-            this.poolRepository.create({ tournament, poolNumber: i + 1 }),
+            this.poolRepository.create({
+                tournament: { id: tournament.id } as Tournament,
+                poolNumber: i + 1,
+            }),
         );
         const savedPools = await this.poolRepository.save(poolDrafts);
 

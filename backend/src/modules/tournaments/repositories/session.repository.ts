@@ -14,7 +14,7 @@ export class SessionRepository {
     findLatestByTournament(tournamentId: string): Promise<MatchesSession | null> {
         return this.repo.findOne({
             where: { tournament: { id: tournamentId } },
-            relations: { matches: true },
+            relations: { matches: { teamA: true, teamB: true, pool: true } },
             order: { sessionNumber: 'DESC' },
         });
     }
@@ -30,7 +30,7 @@ export class SessionRepository {
     findOpenByTournament(tournamentId: string): Promise<MatchesSession | null> {
         return this.repo.findOne({
             where: { tournament: { id: tournamentId }, status: MatchesSessionStatus.OPEN },
-            relations: { matches: { teamA: true, teamB: true } },
+            relations: { matches: { teamA: true, teamB: true, pool: true } },
         });
     }
 
@@ -61,8 +61,15 @@ export class SessionRepository {
         });
     }
 
-    async updateStatus(sessionId: string, status: MatchesSessionStatus): Promise<void> {
-        await this.repo.update(sessionId, { status });
+    async updateStatus(
+        session: MatchesSession,
+        status: MatchesSessionStatus,
+    ): Promise<MatchesSession> {
+        await this.repo.update(session.id, { status });
+        return {
+            ...session,
+            status,
+        };
     }
 
     save(session: Partial<MatchesSession>): Promise<MatchesSession> {

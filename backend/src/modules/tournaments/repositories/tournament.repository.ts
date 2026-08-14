@@ -3,14 +3,17 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { LessThan, Repository } from 'typeorm';
 import { Team } from 'src/entities/team.entity';
 import { TournamentMatch } from 'src/entities/tounament-match.entity';
+import { TournamentPool } from 'src/entities/tournament-pool.entity';
 import { Tournament } from 'src/entities/tournament.entity';
 import { TournamentStatus } from 'src/enum/status.enum';
+import { MatchesSession } from 'src/entities/matches-session.entity';
 
 export interface TournamentLoadOptions {
     withTeams?: boolean;
     withMatchesInTeams?: boolean;
     withMatches?: boolean;
     withSessions?: boolean;
+    withPools?: boolean;
 }
 
 const ADMIN_TOURNAMENT_SORTABLE_COLUMNS: Record<string, string> = {
@@ -75,16 +78,38 @@ export class TournamentRepository {
         const tournament = await queryBuilder.getOne();
         if (!tournament) return null;
 
-        // Loaded as its own query rather than joined onto the one above: teams and matches
-        // are both one-to-many off the tournament row, so joining them together multiplies
-        // their row counts (team_count x match_count) instead of just adding them — this is
-        // what caused an OOM on large tournaments.
+        // Loaded as their own query rather than joined onto the one above: teams, matches and
+        // pools are all one-to-many off the tournament row, so joining any two of them together
+        // multiplies their row counts (e.g. team_count x match_count) instead of just adding
+        // them — this is what caused an OOM on large tournaments.
         if (options.withMatches) {
             tournament.matches = await this.repo.manager
                 .createQueryBuilder(TournamentMatch, 'match')
                 .leftJoinAndSelect('match.teamA', 'matchTeamA')
                 .leftJoinAndSelect('match.teamB', 'matchTeamB')
                 .where('match.tournament = :tournamentId', { tournamentId: tournament.id })
+                .getMany();
+        }
+
+        if (options.withPools) {
+            tournament.pools = await this.repo.manager
+                .createQueryBuilder(TournamentPool, 'pool')
+                .leftJoinAndSelect('pool.teams', 'pool_team')
+                .leftJoinAndSelect('pool_team.players', 'pool_player')
+                .leftJoinAndSelect('pool_player.club', 'pool_club')
+                .where('pool.tournament = :tournamentId', { tournamentId: tournament.id })
+                .orderBy('pool.poolNumber', 'ASC')
+                .getMany();
+        }
+
+        if (options.withSessions) {
+            tournament.matchsSessions = await this.repo.manager
+                .createQueryBuilder(MatchesSession, 'session')
+                .leftJoinAndSelect('session.matches', 'session_match')
+                .leftJoinAndSelect('session_match.teamA', 'session_match_team_a')
+                .leftJoinAndSelect('session_match.teamB', 'session_match_team_b')
+                .where('session.tournament = :tournamentId', { tournamentId: tournament.id })
+                .orderBy('session.sessionNumber', 'ASC')
                 .getMany();
         }
 
@@ -193,8 +218,13 @@ export class TournamentRepository {
         }
     }
 
-    async updateStatus(id: string, status: TournamentStatus): Promise<void> {
-        await this.repo.update(id, { status, ...this.statusTimestamps(status) });
+    async updateStatus(tournament: Tournament, status: TournamentStatus): Promise<Tournament> {
+        const newData = { status, ...this.statusTimestamps(status) };
+        await this.repo.update(tournament.id, newData);
+        return {
+            ...tournament,
+            ...newData,
+        };
     }
 
     save(tournament: Partial<Tournament>): Promise<Tournament> {

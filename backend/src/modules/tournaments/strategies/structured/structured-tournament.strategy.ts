@@ -32,7 +32,7 @@ export class StructuredTournamentStrategy extends TournamentStrategy {
         super();
     }
 
-    override async prepareTournamentStart(tournament: Tournament): Promise<void> {
+    override async prepareTournamentStart(tournament: Tournament): Promise<Tournament> {
         this.logger.debug(
             'Starting prepareTournamentStart with tournament code: ' + tournament.code,
         );
@@ -41,13 +41,16 @@ export class StructuredTournamentStrategy extends TournamentStrategy {
         config.principalBracketSize =
             config.principalBracketSize ?? computePrincipalBracketSize(tournament.teams.length);
 
-        await this.tournamentRepo.save({
-            id: tournament.id,
-            configuration: tournament.configuration,
+        return await this.tournamentRepo.save({
+            ...tournament,
+            configuration: {
+                ...tournament.configuration,
+                competitionConfiguration: config,
+            },
         });
     }
 
-    override async assignTeamsToPools(tournament: Tournament): Promise<TournamentPool[]> {
+    override async assignTeamsToFirstPools(tournament: Tournament): Promise<TournamentPool[]> {
         this.logger.debug('Starting assignTeamsToPools with tournament code: ' + tournament.code);
         const config = this.getConfig(tournament);
 
@@ -57,7 +60,6 @@ export class StructuredTournamentStrategy extends TournamentStrategy {
     override async generateSessionMatches(
         tournament: Tournament,
         session: MatchesSession,
-        pastMatches: TournamentMatch[],
     ): Promise<TournamentMatch[]> {
         this.logger.debug(
             'Starting generateSessionMatches with tournament code: ' + tournament.code,
@@ -66,14 +68,12 @@ export class StructuredTournamentStrategy extends TournamentStrategy {
 
         const qualifyingRounds = config.numberOfQualifyingRounds ?? 0;
         const isElimination = session.sessionNumber > qualifyingRounds;
+        const pastMatches = tournament.matches || [];
 
         let partialMatches: DeepPartial<TournamentMatch>[];
         const generationStartedAt = Date.now();
         if (isElimination) {
-            const ranking = this.computeGlobalRanking(
-                tournament,
-                pastMatches.filter((m) => (m.sessionNumber ?? 0) <= qualifyingRounds),
-            );
+            const ranking = this.computeGlobalRanking(tournament, pastMatches);
             const virtualPools: TournamentPool[] = await this.getOrCreateVirtualPools(
                 tournament.id,
                 Object.values(MatchGroupKey),
@@ -97,9 +97,7 @@ export class StructuredTournamentStrategy extends TournamentStrategy {
         const matches = partialMatches.map((match) => this.matchRepo.create(match));
 
         const assignedMatches = this.assignPlateNumbers(matches);
-
-        const saved = await this.matchRepo.save(assignedMatches);
-        return saved;
+        return await this.matchRepo.save(assignedMatches);
     }
 
     override computeTournamentStatus(

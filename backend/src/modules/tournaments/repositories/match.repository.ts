@@ -24,13 +24,6 @@ export class MatchRepository {
         });
     }
 
-    findByTournament(tournamentId: string): Promise<TournamentMatch[]> {
-        return this.repo.find({
-            where: { tournament: { id: tournamentId } },
-            relations: { teamA: true, teamB: true, pool: true },
-        });
-    }
-
     findByPool(poolId: string): Promise<TournamentMatch[]> {
         return this.repo.find({
             where: { pool: { id: poolId } },
