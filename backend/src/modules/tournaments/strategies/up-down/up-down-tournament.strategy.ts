@@ -29,12 +29,12 @@ export class UpDownTournamentStrategy extends TournamentStrategy {
     override async generateSessionMatches(
         tournament: Tournament,
         session: MatchesSession,
-        pastMatches: TournamentMatch[],
     ): Promise<TournamentMatch[]> {
         this.logger.debug(
             'Starting generateSessionMatches with tournament code: ' + tournament.code,
         );
         const constraintConfig: ConstraintConfig = extractContraintConfig(tournament.configuration);
+        const pastMatches = tournament.matches || [];
 
         const pool = tournament.pools[0] ?? null;
         if (!pool) {
@@ -55,10 +55,10 @@ export class UpDownTournamentStrategy extends TournamentStrategy {
         const matches = partialMatches.map((match) => this.matchRepo.create(match));
 
         const assignedMatches = this.assignPlateNumbers(matches);
-        return this.matchRepo.save(assignedMatches);
+        return await this.matchRepo.save(assignedMatches);
     }
 
-    override async assignTeamsToPools(tournament: Tournament): Promise<TournamentPool[]> {
+    override async assignTeamsToFirstPools(tournament: Tournament): Promise<TournamentPool[]> {
         this.logger.debug('Starting assignTeamsToPools with tournament code: ' + tournament.code);
 
         // No Pool (1) in this monde, everyone is again everyone.

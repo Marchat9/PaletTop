@@ -10,7 +10,6 @@
  * @returns DeepPartial<TournamentMatch>[]
  */
 
-import { Logger } from '@nestjs/common';
 import { MatchesSession } from 'src/entities/matches-session.entity';
 import { Team } from 'src/entities/team.entity';
 import { TournamentMatch } from 'src/entities/tounament-match.entity';
@@ -20,9 +19,19 @@ import { MatchStatus } from 'src/enum/status.enum';
 import { ConstraintConfig } from 'src/model/constraint.model';
 import { buildByeMatchData, selectByeTeam } from 'src/modules/tournaments/utils/bye.utils';
 import { generatePairsWithContraints } from 'src/modules/tournaments/utils/draw.utils';
+import {
+    toSessionRef,
+    toTeamRef,
+    toTournamentRef,
+} from 'src/modules/tournaments/utils/type-orm-ref.utils';
 import { DeepPartial } from 'typeorm';
 
-const logger = new Logger('MatchUtils');
+// A match only ever needs id/name/code from its teams (see toSessionMatchResponseDto,
+// toPlayerMatchDto). Passing the full Team entity is unsafe: Team's @BeforeInsert/@BeforeUpdate
+// hook (validatePlayers) sets `player.team = this` on every player, so a team fetched with its
+// players loaded becomes self-referencing (team.players[i].team === team) the moment it's
+// saved — and that cycle sends matchRepo.create() into infinite recursion once a match carries
+// that team as teamA/teamB.
 
 export function generateMatchesInPool(
     poll: TournamentPool,
@@ -32,11 +41,10 @@ export function generateMatchesInPool(
     constraintConfig: ConstraintConfig,
     pastMatches: TournamentMatch[],
 ): DeepPartial<TournamentMatch>[] {
-    logger.debug(`generateMatchesInPool: pool=${poll.id ?? '(virtual)'} — ${teams.length} teams`);
     const allMatches: DeepPartial<TournamentMatch>[] = [];
 
-    const tournamentRef: Tournament = { id: tournament.id } as Tournament;
-    const sessionRef: MatchesSession = { id: session.id } as MatchesSession;
+    const tournamentRef: Tournament = toTournamentRef(tournament);
+    const sessionRef: MatchesSession = toSessionRef(session);
     const currentTeams = [...teams];
 
     // Byes
@@ -44,7 +52,7 @@ export function generateMatchesInPool(
         const byeTeam = selectByeTeam(currentTeams, []);
         allMatches.push(
             buildByeMatchData(
-                { id: byeTeam.id } as Team,
+                toTeamRef(byeTeam),
                 tournamentRef,
                 poll,
                 sessionRef,
@@ -59,11 +67,7 @@ export function generateMatchesInPool(
     }
 
     // Matches
-    const pairingStartedAt = Date.now();
     const pairs = generatePairsWithContraints(constraintConfig, currentTeams, pastMatches);
-    logger.debug(
-        `generateMatchesInPool: generatePairsWithContraints returned ${pairs.length} pairs in ${Date.now() - pairingStartedAt} ms`,
-    );
 
     for (const [teamA, teamB] of pairs) {
         allMatches.push({
@@ -71,8 +75,8 @@ export function generateMatchesInPool(
             session: sessionRef,
             sessionNumber: session.sessionNumber,
             pool: poll,
-            teamA: { id: teamA.id } as Team,
-            teamB: { id: teamB.id } as Team,
+            teamA: toTeamRef(teamA),
+            teamB: toTeamRef(teamB),
             isBye: false,
             status: MatchStatus.PENDING,
         });

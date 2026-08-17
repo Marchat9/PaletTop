@@ -8,6 +8,7 @@ import { EliminationTableau, MatchGroupKey } from 'src/enum/tounament.enum';
 import { ConstraintConfig } from 'src/model/constraint.model';
 import { generateMatchesInPool } from 'src/modules/tournaments/utils/match.utils';
 import { extractContraintConfig } from 'src/modules/tournaments/utils/tournament.utils';
+import { toPoolRef } from 'src/modules/tournaments/utils/type-orm-ref.utils';
 import { DeepPartial } from 'typeorm';
 import { GlobalRankingEntry } from '../../../tournaments/responses/ranking.dto';
 import { computeTableTeamRankIndex } from '../../../tournaments/utils/bracket.utils';
@@ -28,7 +29,7 @@ export function generateQualifyingMatches(
 
     return tournament.pools
         .map((pool) => ({
-            poolRef: { id: pool.id } as TournamentPool,
+            poolRef: toPoolRef(pool),
             poolPastMatches: pastMatches.filter((m) => m.pool?.id === pool.id),
             poolTeams: pool.teams,
         }))

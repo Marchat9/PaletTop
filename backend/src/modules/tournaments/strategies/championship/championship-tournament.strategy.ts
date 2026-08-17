@@ -1,13 +1,13 @@
 import { NotImplementedException } from '@nestjs/common';
 import { MatchesSession } from 'src/entities/matches-session.entity';
-import { TournamentMatch } from 'src/entities/tounament-match.entity';
-import { TournamentPool } from 'src/entities/tournament-pool.entity';
 import { Tournament } from 'src/entities/tournament.entity';
 import { TournamentStatusInfo } from '../../../tournaments/responses/tournament-status.dto';
 import { TournamentStrategy } from '../tournament-strategy.abstract';
+import { TournamentMatch } from 'src/entities/tounament-match.entity';
+import { TournamentPool } from 'src/entities/tournament-pool.entity';
 
 export class ChampionshipTournamentStrategy extends TournamentStrategy {
-    override async assignTeamsToPools(_tournament: Tournament): Promise<TournamentPool[]> {
+    override async assignTeamsToFirstPools(_tournament: Tournament): Promise<TournamentPool[]> {
         // TODO: Attribution fixe hôte/visiteur
         //
         // Principe :
@@ -31,7 +31,6 @@ export class ChampionshipTournamentStrategy extends TournamentStrategy {
     override async generateSessionMatches(
         _tournament: Tournament,
         _session: MatchesSession,
-        _pastMatches: TournamentMatch[],
     ): Promise<TournamentMatch[]> {
         // TODO: Génération des matchs selon la rotation hôte/visiteur
         //
@@ -45,7 +44,7 @@ export class ChampionshipTournamentStrategy extends TournamentStrategy {
         // - tournament.configuration.eliminationTableaux → peut contenir la configuration des planches
         // - pastMatches → pour calculer quelle rotation de visiteurs est en cours
         //
-        // Output : liste de TournamentMatch[] à persister
+        // Output : Liste des TournamentMatch persistés
         throw new NotImplementedException(
             'Championship — generateSessionMatches non encore implémenté',
         );
@@ -60,20 +59,20 @@ export class ChampionshipTournamentStrategy extends TournamentStrategy {
         );
     }
 
-    override computeRawScoreToPoints(_score: number): number {
-        // TODO: Calcul de points par paliers de score
-        //
-        // Principe : le score brut (nombre de palets) est converti en points selon une grille
-        // Exemple de grille possible :
-        //   0–4  palets → 0 pt
-        //   5–9  palets → 1 pt
-        //   10–14 palets → 2 pts
-        //   15+  palets → 3 pts
-        //
-        // La grille exacte est à définir avec l'organisateur.
-        // La configuration pourrait être stockée dans tournament.configuration (champ à ajouter).
-        throw new NotImplementedException(
-            'Championship — computeRawScoreToPoints non encore implémenté',
-        );
-    }
+    // override computeRawScoreToPoints(_score: number): number {
+    //     // TODO: Calcul de points par paliers de score
+    //     //
+    //     // Principe : le score brut (nombre de palets) est converti en points selon une grille
+    //     // Exemple de grille possible :
+    //     //   0–4  palets → 0 pt
+    //     //   5–9  palets → 1 pt
+    //     //   10–14 palets → 2 pts
+    //     //   15+  palets → 3 pts
+    //     //
+    //     // La grille exacte est à définir avec l'organisateur.
+    //     // La configuration pourrait être stockée dans tournament.configuration (champ à ajouter).
+    //     throw new NotImplementedException(
+    //         'Championship — computeRawScoreToPoints non encore implémenté',
+    //     );
+    // }
 }

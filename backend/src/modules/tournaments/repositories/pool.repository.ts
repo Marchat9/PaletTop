@@ -10,14 +10,6 @@ export class PoolRepository {
         private readonly repo: Repository<TournamentPool>,
     ) {}
 
-    findByTournamentWithTeams(tournamentId: string): Promise<TournamentPool[]> {
-        return this.repo.find({
-            where: { tournament: { id: tournamentId } },
-            relations: { teams: { players: { club: true } } },
-            order: { poolNumber: 'ASC' },
-        });
-    }
-
     findByIdWithTeams(poolId: string): Promise<TournamentPool | null> {
         return this.repo.findOne({
             where: { id: poolId },
