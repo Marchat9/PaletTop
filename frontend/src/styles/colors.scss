@@ -49,9 +49,9 @@
   --color-status-ongoing-text: #a8e3c1;
   --color-status-ongoing-bg: rgb(56 128 94 / 28%);
   --color-status-ongoing-border: rgb(95 201 149 / 45%);
-  --color-status-ended-text: #d0d8e5;
-  --color-status-ended-bg: rgb(47 53 62 / 48%);
-  --color-status-ended-border: rgb(156 143 127 / 42%);
+  --color-status-ended-text: var(--color-status-success-text);
+  --color-status-ended-bg: var(--color-status-success-bg);
+  --color-status-ended-border: var(--color-status-success-border);
 
   --color-status-success-text: #a8e3c1;
   --color-status-success-bg: rgb(56 128 94 / 24%);
@@ -111,12 +111,12 @@
   --color-status-ongoing-text: #22523f;
   --color-status-ongoing-bg: rgb(86 156 122 / 18%);
   --color-status-ongoing-border: rgb(86 156 122 / 38%);
-  --color-status-ended-text: #4a3f31;
-  --color-status-ended-bg: rgb(182 165 143 / 24%);
-  --color-status-ended-border: rgb(125 109 88 / 38%);
+  --color-status-ended-text: var(--color-status-success-text);
+  --color-status-ended-bg: var(--color-status-success-bg);
+  --color-status-ended-border: var(--color-status-success-border);
 
-  --color-status-success-text: #22523f;
-  --color-status-success-bg: rgb(86 156 122 / 16%);
+  --color-status-success-text: #184d38;
+  --color-status-success-bg: rgba(26, 158, 94, 30%);
   --color-status-success-border: rgb(86 156 122 / 40%);
   --color-status-error-text: #8f271f;
   --color-status-error-bg: rgb(214 64 51 / 14%);

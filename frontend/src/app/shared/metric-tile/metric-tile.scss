@@ -36,9 +36,17 @@
       border-color 150ms ease,
       transform 100ms ease;
 
-    &:hover {
-      background: var(--color-surface-container-high);
-      border-color: var(--color-primary);
+    // Gated behind (hover: hover) so a tap on touch devices doesn't leave the tile
+    // stuck in its "hovered" look until the user taps elsewhere.
+    @media (hover: hover) {
+      &:hover {
+        background: var(--color-surface-container-high);
+        border-color: var(--color-primary);
+
+        ::ng-deep .clickable-hint {
+          opacity: 0.45;
+        }
+      }
     }
 
     &:active {
@@ -48,6 +56,16 @@
     &:focus-visible {
       outline: 2px solid var(--color-primary);
       outline-offset: 2px;
+    }
+
+    ::ng-deep .clickable-hint {
+      position: absolute;
+      top: 0.3rem;
+      right: 0.2rem;
+      font-size: 2rem;
+      opacity: 0.22;
+      pointer-events: none;
+      transition: opacity 150ms ease;
     }
   }
 

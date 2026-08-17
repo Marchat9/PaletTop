@@ -48,7 +48,7 @@ import { PlayerMatchResultsComponent } from './player-match-results/player-match
 import { PlayerTeamHeaderComponent } from './player-team-header/player-team-header';
 import { PlayerTeamMembersComponent } from './player-team-members/player-team-members';
 
-export type TeamMatchStatus = 'NOT_STARTED' | 'FINISH' | null;
+export type TeamMatchStatus = 'NOT_STARTED' | 'CANCELLED' | 'FINISH';
 
 @Component({
   selector: 'app-player-team-match-page',
@@ -102,16 +102,19 @@ export class PlayerTeamMatchPageComponent {
       ? this.match()
       : null,
   );
-  public readonly teamMatchStatus: Signal<TeamMatchStatus> = computed(() => {
+  public readonly teamMatchStatus: Signal<Nullable<TeamMatchStatus>> = computed(() => {
     const teamId = this.team()?.id;
 
     const isDraft = this.tournamentData()?.status === TournamentStatus.DRAFT;
+    const isCancelled = this.tournamentData()?.status === TournamentStatus.CANCELLED;
     const isFinishedForTeam = !this.currentSession()?.matches.some(
       (match) => match.teamA.id === teamId || match.teamB?.id === teamId,
     );
     switch (true) {
       case isDraft:
         return 'NOT_STARTED';
+      case isCancelled:
+        return 'CANCELLED';
       case isFinishedForTeam:
         return 'FINISH';
       default:
@@ -134,6 +137,7 @@ export class PlayerTeamMatchPageComponent {
     return entry ? `${entry.wins} / ${entry.matchesPlayed}` : '—';
   });
 
+  public readonly nbTeams = computed(() => this.ranking().length);
   public readonly rank = computed(() => {
     const team = this.team();
     if (!team) return '—';

@@ -1,31 +1,31 @@
 <div class="spectator-page">
   <div class="header">
-    <div class="tournament-info">
-      <h1 class="name">
-        <span>Tournoi : </span>
-        {{ tournament()?.name ?? '—' }}
-      </h1>
+    <h1 class="tournament-name">
+      <span>Tournoi : </span>
+      {{ tournament()?.name ?? '—' }}
+    </h1>
+    <div class="tournament-info" [class.ended]="isTournamentEnded()">
       @if (tournament()) {
         <div>
-          @switch (tournament()?.status) {
+          @switch (tournamentStatus()) {
             @case ('DRAFT') {
-              <span class="status-badge">Tounoi non démarré</span>
+              <span class="badge draft">Tounoi non démarré</span>
             }
             @case ('ACTIVE') {
-              <span class="status-badge">Phase : {{ tournament()!.phaseName || '' }}</span>
+              <span class="badge active">Phase : {{ tournament()!.phaseName || '' }}</span>
             }
             @case ('COMPLETED') {
-              <span class="status-badge">Tounoi terminé !</span>
+              <span class="badge completed">🎉 Tounoi terminé ! 🎉</span>
             }
             @case ('CANCELLED') {
-              <span class="status-badge">Tounoi Annulé</span>
+              <span class="badge cancelled">Tounoi Annulé</span>
             }
           }
         </div>
       }
-      @if (currentSession()) {
+      @if (currentSession() && !isTournamentEnded()) {
         <div>
-          <span class="round">Round : {{ currentSession()!.sessionNumber || '-' }}</span>
+          <span class="badge">Round : {{ currentSession()!.sessionNumber || '-' }}</span>
         </div>
       }
     </div>
@@ -52,9 +52,11 @@
     </div>
   } @else {
     <div class="content">
-      <div class="column matches" [appAutoScroll]="autoScrollOn() && !isMobile()">
-        <app-spectator-match-list [session]="currentSession()" />
-      </div>
+      @if (!isTournamentEnded()) {
+        <div class="column matches" [appAutoScroll]="autoScrollOn() && !isMobile()">
+          <app-spectator-match-list [session]="currentSession()" />
+        </div>
+      }
       <div class="column ranking" [appAutoScroll]="autoScrollOn() && !isMobile()">
         <app-ranking-card
           [ranking]="ranking()"

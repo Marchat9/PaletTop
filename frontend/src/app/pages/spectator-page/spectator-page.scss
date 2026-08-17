@@ -30,28 +30,54 @@
     gap: 1rem;
     flex-wrap: wrap;
 
+    .tournament-name {
+      flex: 1;
+      margin: 0;
+      font-family: var(--font-headline);
+      font-size: 1.5rem;
+    }
+
     .tournament-info {
-      flex: 2;
+      flex: 1;
       display: flex;
       justify-content: space-between;
       align-items: center;
       gap: 0.75rem;
       flex-wrap: wrap;
 
-      .name {
-        margin: 0;
-        font-family: var(--font-headline);
-        font-size: 1.5rem;
+      &.ended {
+        justify-content: center;
       }
 
-      .status-badge,
-      .round {
+      .badge {
         font-size: 1rem;
         font-weight: 600;
         padding: 0.4rem 0.8rem;
         border-radius: 999px;
         background: var(--color-surface-container-high);
         color: var(--color-on-surface-variant);
+        border: 1px solid var(--color-border-default);
+
+        &.draft {
+          color: var(--color-status-draft-text);
+          background: var(--color-status-draft-bg);
+          border-color: var(--color-status-draft-border);
+        }
+        &.active {
+          color: var(--color-status-ongoing-text);
+          background: var(--color-status-ongoing-bg);
+          border-color: var(--color-status-ongoing-border);
+        }
+        &.completed {
+          color: var(--color-status-ended-text);
+          background: var(--color-status-ended-bg);
+          border-color: var(--color-status-ended-border);
+        }
+        &.cancelled {
+          color: var(--color-status-error-text);
+          background: var(--color-status-error-bg);
+          border-color: var(--color-status-error-border);
+        }
       }
     }
 

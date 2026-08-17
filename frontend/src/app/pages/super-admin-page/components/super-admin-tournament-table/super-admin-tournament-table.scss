@@ -203,7 +203,6 @@
     border-color: var(--color-status-ongoing-border);
   }
 
-  // tournament.status.toLowerCase() on TournamentStatus.FINISHED ('COMPLETED') yields 'completed', not 'finished'.
   &.badge-completed {
     color: var(--color-status-ended-text);
     background: var(--color-status-ended-bg);

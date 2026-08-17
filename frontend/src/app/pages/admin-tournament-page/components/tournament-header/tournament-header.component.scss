@@ -154,7 +154,7 @@
             border-color: var(--color-status-ongoing-border);
           }
 
-          &.ended {
+          &.finished {
             color: var(--color-status-ended-text);
             background: var(--color-status-ended-bg);
             border-color: var(--color-status-ended-border);
@@ -206,7 +206,6 @@
       margin: 0;
       font-family: var(--font-label);
       font-size: 0.85rem;
-      text-transform: uppercase;
       letter-spacing: 0.08em;
       color: var(--color-on-surface-variant);
     }

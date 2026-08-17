@@ -1,6 +1,7 @@
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import { Nullable } from 'src/app/models/nullable.model';
+import { StructuredTournamentConfig } from 'src/app/models/tournament-configuration-detail.model';
 import { TournamentStatus } from 'src/app/models/tournament-status.enum';
 import { Button } from 'src/app/shared/button/button';
 import { Card } from 'src/app/shared/card/card';
@@ -38,11 +39,19 @@ export class TournamentHeaderComponent {
   public readonly phaseName = computed(() => this.tournamentStatus()?.phaseName ?? null);
 
   public readonly teamCount = computed(() => this.tournament()?.teams?.length ?? 0);
-  public readonly matchCount = computed(
-    () =>
-      new Set((this.tournament()?.teams ?? []).flatMap((t) => t.matches ?? []).map((m) => m.id))
-        .size,
-  );
+  public readonly tournamentMode = computed(() => {
+    switch (this.tournament()?.configuration.competitionMode) {
+      case 'standard':
+        const hasQualifications =
+          ((this.tournament()?.configuration.competitionConfiguration as StructuredTournamentConfig)
+            .numberOfQualifyingRounds || 0) > 0;
+        return `Tournoi ${hasQualifications ? 'avec qualifications et ' : 'avec'} éliminations`;
+      case 'up_down':
+        return 'Montante / Descendante';
+      default:
+        return '-';
+    }
+  });
   public readonly hasDescription = computed(() => !!this.tournament()?.description?.trim());
   public readonly statusPresentation = computed(() => {
     const status = this.tournament()?.status ?? 'UNKNOWN';

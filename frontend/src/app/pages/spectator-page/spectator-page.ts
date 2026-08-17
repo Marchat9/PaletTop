@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   DestroyRef,
   effect,
   inject,
@@ -26,6 +27,7 @@ import {
   selectSpectatorTournamentIsLoading,
 } from 'src/app/store/spectator/spectator.selectors';
 import { SpectatorMatchListComponent } from './spectator-match-list/spectator-match-list';
+import { TournamentStatus } from 'src/app/models/tournament-status.enum';
 
 @Component({
   selector: 'app-spectator-page',
@@ -49,6 +51,12 @@ export class SpectatorPageComponent {
 
   public readonly autoScrollOn = signal(true);
   public readonly isMobile = signal(false);
+  public readonly tournamentStatus = computed(() => this.tournament()?.status);
+  public readonly isTournamentEnded = computed(
+    () =>
+      this.tournamentStatus() === TournamentStatus.FINISHED ||
+      this.tournamentStatus() === TournamentStatus.CANCELLED,
+  );
 
   constructor() {
     effect(() => {

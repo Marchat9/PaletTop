@@ -11,7 +11,7 @@
   padding: 1.5rem;
   border-radius: 1.25rem;
   background: var(--color-surface-container-low);
-  border-left: 5px solid var(--color-outline-variant);
+  border-left: var(--border-size, 5px) solid var(--color-outline-variant);
   min-height: 320px;
   color: var(--color-on-surface-variant);
   font-size: 0.9rem;
@@ -19,10 +19,85 @@
   @media (min-height: 600px) {
     min-height: 420px;
     padding: 2rem;
+    --border-size: 0px;
   }
 
   ::ng-deep .material-symbols-outlined {
     font-size: 2.5rem;
     opacity: 0.5;
+  }
+
+  &.match-card-finish {
+    border-left-color: var(--color-primary);
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-primary) 12%, var(--color-surface-container-low)) 0%,
+      var(--color-surface-container-low) 65%
+    );
+
+    .finish-icon {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      animation: celebrate 1s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+
+      .confetti {
+        font-size: 1.5rem;
+        line-height: 1;
+      }
+
+      ::ng-deep .cup-icon {
+        font-size: 3rem;
+        opacity: 1;
+        color: var(--color-primary);
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        animation: none;
+      }
+    }
+
+    .end-tournament-text {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.6rem;
+      text-align: center;
+
+      .headline {
+        margin: 0;
+        font-family: var(--font-headline);
+        font-size: 1.15rem;
+        font-weight: 600;
+        color: var(--color-on-surface);
+      }
+
+      .rank-line {
+        margin: 0;
+        font-size: 0.95rem;
+
+        .rank-badge {
+          display: inline-block;
+          margin-left: 0.35rem;
+          padding: 0.25rem 0.75rem;
+          border-radius: 999px;
+          background: var(--gradient-brass);
+          color: var(--color-on-primary);
+          font-weight: 700;
+          font-size: 1rem;
+        }
+      }
+    }
+  }
+}
+
+@keyframes celebrate {
+  from {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
   }
 }
