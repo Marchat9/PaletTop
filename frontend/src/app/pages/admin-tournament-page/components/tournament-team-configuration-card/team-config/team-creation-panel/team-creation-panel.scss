@@ -1,0 +1,41 @@
+@use '../team-form-fields' as fields;
+
+:host {
+  display: block;
+}
+
+.creation-section {
+  padding: 1rem;
+  border-radius: 1rem;
+  background: var(--color-surface-container-low);
+  border: 1px solid var(--color-border-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+
+  .section-header {
+    @include fields.section-header;
+  }
+
+  .creation-tabs {
+    display: flex;
+    gap: 0.4rem;
+    padding: 0.3rem;
+    border-radius: 0.75rem;
+    background: var(--color-surface-container);
+
+    app-button {
+      flex: 1 1 0;
+    }
+  }
+
+  .tab-panel {
+    @include fields.team-form-fields;
+
+    > .description {
+      margin: -0.5rem 0 0;
+      color: var(--color-on-surface-variant);
+      line-height: 1.45;
+    }
+  }
+}

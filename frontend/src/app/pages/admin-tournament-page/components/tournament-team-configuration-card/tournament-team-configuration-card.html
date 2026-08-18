@@ -13,15 +13,6 @@
           )
         </span>
       </div>
-
-      <app-button
-        title="Imprimer la liste des équipes"
-        icon="print"
-        variant="secondary"
-        [disabled]="!hasTeams()"
-        [stopPropagation]="true"
-        (clicked)="printTeamList()"
-      />
     </div>
 
     <div class="header-description">
@@ -30,10 +21,16 @@
   </div>
 
   <div content class="config-content">
-    <app-team-config
-      [tournament]="tournament()"
-      (teamUpdated)="onTeamUpdate.emit($event)"
-    ></app-team-config>
+    <app-team-config [tournament]="tournament()" (teamUpdated)="onTeamUpdate.emit($event)">
+      <app-button
+        actions
+        title="Imprimer la liste des équipes"
+        icon="print"
+        variant="secondary"
+        [disabled]="!hasTeams()"
+        (clicked)="printTeamList()"
+      />
+    </app-team-config>
   </div>
 </app-card-collapsible>
 

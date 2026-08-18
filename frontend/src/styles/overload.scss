@@ -56,6 +56,46 @@ span.tournament {
 // ###################################
 
 // ###################################
+// Team creation panel: fixed side panel on desktop, bottom sheet on mobile (FAB-triggered)
+.team-creation-sheet-panel {
+  display: block;
+  width: 100%;
+  max-width: 100vw;
+  padding: 0 0.75rem env(safe-area-inset-bottom, 0.75rem);
+
+  .cdk-dialog-container {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    outline: none;
+  }
+
+  .cdk-dialog-container:focus,
+  .cdk-dialog-container:focus-visible {
+    outline: none;
+  }
+
+  .creation-section {
+    max-height: 85vh;
+    overflow-y: auto;
+    border-radius: 1rem 1rem 0 0 !important;
+    padding-top: 0.4rem;
+
+    &::before {
+      content: '';
+      display: block;
+      width: 2.5rem;
+      height: 0.3rem;
+      margin: 0 auto 0.6rem;
+      border-radius: 999px;
+      background: var(--color-border-subtle);
+    }
+  }
+}
+// ###################################
+
+// ###################################
 // Calendar picker overlay styles
 .cdk-overlay-pane {
   &.calendar-overlay {

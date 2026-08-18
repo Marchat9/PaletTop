@@ -10,37 +10,26 @@ import {
   output,
   signal,
 } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { map } from 'rxjs';
 import { Nullable } from 'src/app/models/nullable.model';
-import {
-  TeamConfigCreateTeamPayload,
-  TeamConfigEvent,
-  TeamConfigEventType,
-} from 'src/app/models/team-config.model';
+import { TeamConfigEvent, TeamConfigEventType } from 'src/app/models/team-config.model';
 import { Button } from 'src/app/shared/button/button';
 import { ButtonIcon } from 'src/app/shared/button-icon/button-icon';
-import { InputFile } from 'src/app/shared/input-file/input-file';
 import { InputText } from 'src/app/shared/input-text/input-text';
 import { Icon } from 'src/app/shared/icon/icon';
 import { TounamentTeamDto, TournamentDto } from 'src/app/store/tournament/tournament.models';
 import { TeamAction, TeamActionsMenu } from './team-actions-menu/team-actions-menu';
-import { downloadBlob, generateTeamsExcelTemplate, parseTeamsExcelFile } from './team-excel.utils';
-import { filterTeams } from './team-config.utils';
 import {
-  TeamImportPreviewDialog,
-  TeamImportPreviewDialogData,
-} from './team-import-preview-dialog/team-import-preview-dialog';
-import {
-  TeamImportTemplateDialog,
-  TeamImportTemplateDialogData,
-} from './team-import-template-dialog/team-import-template-dialog';
+  filterTeams,
+  generateDefaultPlayerRow,
+  summarizeClubs,
+  type TeamPlayerFormValue,
+} from './team-config.utils';
+import { TeamCreationPanel } from './team-creation-panel/team-creation-panel';
 import { environment } from '@environment';
 
 const MOBILE_BREAKPOINT = '(max-width: ' + environment.limitMobileSizePx + 'px)';
-
-interface TeamPlayerFormValue {
-  name: string;
-  club: string;
-}
 
 interface TeamEditFormValue {
   teamId: string;
@@ -50,7 +39,7 @@ interface TeamEditFormValue {
 
 @Component({
   selector: 'app-team-config',
-  imports: [Button, ButtonIcon, InputFile, InputText, Icon],
+  imports: [Button, ButtonIcon, InputText, Icon, TeamCreationPanel],
   templateUrl: './team-config.html',
   styleUrl: './team-config.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -65,19 +54,30 @@ export class TeamConfig {
   public readonly teamUpdated = output<TeamConfigEvent>();
   // ==============================
 
-  public readonly teamName = signal('');
-  public readonly teamSearch = signal('');
-  public readonly teamPlayers = signal<TeamPlayerFormValue[]>([this.generateDefaultPlayerRow()]);
+  // Drives which of the two creation UIs is actually in the DOM — not just CSS-hidden —
+  // so the desktop inline panel and the mobile sheet's panel never coexist (duplicate ids).
+  public readonly isMobile = toSignal(
+    this.breakpointObserver.observe(MOBILE_BREAKPOINT).pipe(map((state) => state.matches)),
+    { initialValue: this.breakpointObserver.isMatched(MOBILE_BREAKPOINT) },
+  );
 
-  public readonly existingTeamCount = computed(() => this.tournament()?.teams?.length ?? 0);
-  public readonly suggestedTeamName = computed(() => `Equipe ${this.existingTeamCount() + 1}`);
+  public readonly teamSearch = signal('');
 
   public readonly filteredTeams = computed(() =>
     filterTeams(this.tournament()?.teams ?? [], this.teamSearch()),
   );
-  public readonly canSubmitTeam = computed(() =>
-    this.teamPlayers().every((player) => !!player.name.trim()),
-  );
+
+  // Player rosters are collapsed by default and expand on demand — keeps the table
+  // scannable for tournaments with many teams instead of always showing every roster.
+  public readonly expandedTeamIds = signal<ReadonlySet<string>>(new Set());
+  public readonly teamRows = computed(() => {
+    const expanded = this.expandedTeamIds();
+    return this.filteredTeams().map((team) => ({
+      team,
+      clubsSummary: summarizeClubs(team),
+      expanded: expanded.has(team.id),
+    }));
+  });
 
   public readonly editingTeam = signal<Nullable<TeamEditFormValue>>(null);
   public readonly canSubmitEditTeam = computed(() => {
@@ -85,132 +85,36 @@ export class TeamConfig {
     return !!current && current.players.every((player) => !!player.name.trim());
   });
 
-  public readonly importFileFormats = '.xlsx,.xlsm,.xls,.xlt,.ods,.csv';
-  public readonly importError = signal<Nullable<string>>(null);
-
-  private generateDefaultPlayerRow(): TeamPlayerFormValue {
-    return { name: '', club: '' };
-  }
-
   // ======= Actions =======
-  public updateTeamName(value: string): void {
-    this.teamName.set(value);
-  }
-
   public updateSearch(value: string): void {
     this.teamSearch.set(value);
   }
 
-  public addPlayerRow(): void {
-    this.teamPlayers.update((players) => [...players, this.generateDefaultPlayerRow()]);
-  }
-
-  public removePlayerRow(index: number): void {
-    this.teamPlayers.update((players) => {
-      if (players.length <= 1) {
-        return players;
+  public toggleTeamExpanded(teamId: string): void {
+    this.expandedTeamIds.update((current) => {
+      const next = new Set(current);
+      if (next.has(teamId)) {
+        next.delete(teamId);
+      } else {
+        next.add(teamId);
       }
-
-      return players.filter((_, playerIndex) => playerIndex !== index);
+      return next;
     });
   }
 
-  public updatePlayerName(index: number, value: string): void {
-    this.patchPlayer(index, { name: value });
-  }
-
-  public updatePlayerClub(index: number, value: string): void {
-    this.patchPlayer(index, { club: value });
-  }
-
-  public onCreateTeam(): void {
-    if (!this.canSubmitTeam()) {
-      return;
-    }
-
-    this.teamUpdated.emit({
-      type: TeamConfigEventType.CREATE_TEAM,
-      payload: {
-        name: this.teamName().trim() || this.suggestedTeamName(),
-        players: this.teamPlayers()
-          .map((player) => ({
-            name: player.name.trim(),
-            club: player.club.trim() ?? null,
-          }))
-          .filter((player) => !!player.name),
-      },
-    });
-
-    // reset form
-    this.teamName.set('');
-    this.teamPlayers.set(this.teamPlayers().map((_) => this.generateDefaultPlayerRow()));
-  }
-
-  private patchPlayer(index: number, patch: Partial<TeamPlayerFormValue>): void {
-    this.teamPlayers.update((players) =>
-      players.map((player, playerIndex) => ({
-        ...player,
-        ...(playerIndex === index ? patch : {}),
-      })),
-    );
-  }
-
-  // ======= Excel import =======
-  public openDownloadTemplateDialog(): void {
-    const maxPlayers = environment.tournamentConfiguration.teamImport.maxPlayersPerTeam;
-    const fileName = environment.tournamentConfiguration.teamImport.fileName;
-
+  // ======= Creation sheet (mobile) =======
+  public openCreationSheet(): void {
     this.dialog
-      .open<number | undefined, TeamImportTemplateDialogData>(TeamImportTemplateDialog, {
-        data: { defaultPlayers: Math.min(2, maxPlayers), maxPlayers },
-        panelClass: 'dialog-panel',
+      .open<TeamConfigEvent | undefined>(TeamCreationPanel, {
+        data: { tournament: this.tournament() },
+        positionStrategy: this.overlay.position().global().bottom('0').width('100%'),
+        panelClass: 'team-creation-sheet-panel',
         backdropClass: 'dialog-backdrop-light',
       })
-      .closed.subscribe((playersCount) => {
-        if (!playersCount) {
-          return;
+      .closed.subscribe((event) => {
+        if (event) {
+          this.teamUpdated.emit(event);
         }
-
-        void generateTeamsExcelTemplate(playersCount).then((blob) =>
-          downloadBlob(blob, `${fileName}.xlsx`),
-        );
-      });
-  }
-
-  public async onFileSelected(file: File): Promise<void> {
-    const result = await parseTeamsExcelFile(file, environment.tournamentConfiguration.teamImport);
-
-    if (result.globalError) {
-      this.importError.set(result.globalError);
-      return;
-    }
-
-    if (result.rows.length === 0) {
-      this.importError.set('Aucune équipe trouvée dans le fichier.');
-      return;
-    }
-
-    this.importError.set(null);
-
-    this.dialog
-      .open<TeamConfigCreateTeamPayload[] | undefined, TeamImportPreviewDialogData>(
-        TeamImportPreviewDialog,
-        {
-          data: {
-            rows: result.rows,
-            tournamentTeamCount: this.existingTeamCount(),
-            maxTeamCapacity: this.tournament()?.configuration?.maxTeamCapacity ?? 0,
-          },
-          panelClass: 'dialog-panel',
-          backdropClass: 'dialog-backdrop-light',
-        },
-      )
-      .closed.subscribe((payload) => {
-        if (!payload || payload.length === 0) {
-          return;
-        }
-
-        this.teamUpdated.emit({ type: TeamConfigEventType.IMPORT_TEAMS, payload });
       });
   }
 
@@ -263,9 +167,7 @@ export class TeamConfig {
 
   public addEditPlayerRow(): void {
     this.editingTeam.update((current) =>
-      current
-        ? { ...current, players: [...current.players, this.generateDefaultPlayerRow()] }
-        : current,
+      current ? { ...current, players: [...current.players, generateDefaultPlayerRow()] } : current,
     );
   }
 
