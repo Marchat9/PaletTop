@@ -27,21 +27,15 @@ jobs:
     changes:
         runs-on: ubuntu-latest
         outputs:
-            backend: ${{ steps.filter.outputs.backend }}
-            frontend: ${{ steps.filter.outputs.frontend }}
+            backend: ${{ steps.detect.outputs.backend }}
+            frontend: ${{ steps.detect.outputs.frontend }}
         steps:
             - name: Checkout
               uses: actions/checkout@v4
 
             - name: Detect changed projects
-              uses: dorny/paths-filter@v3
-              id: filter
-              with:
-                  filters: |
-                      backend:
-                          - 'backend/**'
-                      frontend:
-                          - 'frontend/**'
+              uses: ./.github/actions/detect-changes
+              id: detect
 
     build:
         needs: changes

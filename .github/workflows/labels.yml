@@ -1,0 +1,49 @@
+name: Labels
+
+on:
+    pull_request:
+        branches: [main]
+
+permissions:
+    contents: read
+    # Both PR comments and PR labels go through the Issues API under the hood,
+    # so they need `issues: write` — `pull-requests: write` alone isn't enough.
+    issues: write
+    pull-requests: write
+
+jobs:
+    label:
+        runs-on: ubuntu-latest
+        timeout-minutes: 5
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            # Label name -> directory that triggers it. Edit this map to add, rename or
+            # rescope a label — everything below reads from it. Labels that don't exist
+            # yet in the repo are created automatically by the API call below.
+            - name: Detect changed projects
+              uses: dorny/paths-filter@v3
+              id: filter
+              with:
+                  filters: |
+                      frontend:
+                          - 'frontend/**'
+                      backend:
+                          - 'backend/**'
+                      ci:
+                          - '.github/**'
+
+            - name: Apply labels
+              if: steps.filter.outputs.changes != '[]'
+              uses: actions/github-script@v7
+              with:
+                  script: |
+                      const labels = ${{ steps.filter.outputs.changes }};
+
+                      await github.rest.issues.addLabels({
+                          owner: context.repo.owner,
+                          repo: context.repo.repo,
+                          issue_number: context.issue.number,
+                          labels,
+                      });
