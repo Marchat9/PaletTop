@@ -1,0 +1,55 @@
+name: Labels
+
+on:
+    pull_request:
+        branches: [main]
+
+permissions:
+    contents: read
+    # Both PR comments and PR labels go through the Issues API under the hood,
+    # so they need `issues: write` — `pull-requests: write` alone isn't enough.
+    issues: write
+    pull-requests: write
+
+jobs:
+    label:
+        runs-on: ubuntu-latest
+        timeout-minutes: 5
+        steps:
+            - name: Checkout
+              uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+              with:
+                  persist-credentials: false
+
+            # Label name -> directory that triggers it. Edit this map to add, rename or
+            # rescope a label — everything below reads from it. Labels that don't exist
+            # yet in the repo are created automatically by the API call below.
+            - name: Detect changed projects
+              uses: dorny/paths-filter@0e4a8c6effa4802afeda77dc8d303f8176d7dfad # v3
+              id: filter
+              with:
+                  filters: |
+                      frontend:
+                          - 'frontend/**'
+                      backend:
+                          - 'backend/**'
+                      ci:
+                          - '.github/**'
+
+            - name: Apply labels
+              if: steps.filter.outputs.changes != '[]'
+              uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
+              # Passed through env rather than expanded directly into the script, so the
+              # value is treated as data, not spliced into the script text before it runs.
+              env:
+                  CHANGED_PROJECTS: ${{ steps.filter.outputs.changes }}
+              with:
+                  script: |
+                      const labels = JSON.parse(process.env.CHANGED_PROJECTS);
+
+                      await github.rest.issues.addLabels({
+                          owner: context.repo.owner,
+                          repo: context.repo.repo,
+                          issue_number: context.issue.number,
+                          labels,
+                      });

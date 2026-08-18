@@ -1,0 +1,22 @@
+name: Detect changed projects
+description: Detects whether frontend/** or backend/** files changed
+
+outputs:
+    frontend:
+        description: 'true if frontend/** changed'
+        value: ${{ steps.filter.outputs.frontend }}
+    backend:
+        description: 'true if backend/** changed'
+        value: ${{ steps.filter.outputs.backend }}
+
+runs:
+    using: composite
+    steps:
+        - uses: dorny/paths-filter@0e4a8c6effa4802afeda77dc8d303f8176d7dfad # v3
+          id: filter
+          with:
+              filters: |
+                  frontend:
+                      - 'frontend/**'
+                  backend:
+                      - 'backend/**'

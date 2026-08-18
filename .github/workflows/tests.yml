@@ -1,12 +1,12 @@
-name: Lint
+name: Tests
 
 on:
     pull_request:
         branches: [main]
 
-# A new push to the same PR obsoletes the previous lint run.
+# A new push to the same PR obsoletes the previous test run.
 concurrency:
-    group: lint-${{ github.ref }}
+    group: tests-${{ github.ref }}
     cancel-in-progress: true
 
 permissions:
@@ -14,7 +14,7 @@ permissions:
 
 jobs:
     # Detects which project(s) the PR actually touches, so a PR that only changes
-    # `frontend/` doesn't also lint an untouched backend (and vice versa).
+    # `frontend/` doesn't also test an untouched backend (and vice versa).
     changes:
         runs-on: ubuntu-latest
         outputs:
@@ -30,41 +30,37 @@ jobs:
               uses: ./.github/actions/detect-changes
               id: detect
 
-    lint:
+    test:
         needs: changes
         # Without an explicit `name:`, the status check context GitHub reports (and
         # what a branch protection rule would have to match on) concatenates every
-        # matrix property (name, context, command) instead of just `name` — fragile,
-        # since editing `command` would silently change the check's name.
-        name: lint (${{ matrix.name }})
+        # matrix property (name, context) instead of just `name` — fragile, since
+        # editing `context` would silently change the check's name.
+        name: test (${{ matrix.name }})
         runs-on: ubuntu-latest
         timeout-minutes: 10
         strategy:
             fail-fast: false
             matrix:
                 include:
-                    # Backend has real ESLint. Frontend has no ESLint config yet, so it
-                    # only gets a Prettier format check for now.
                     - name: backend
                       context: ./backend
-                      command: npm run lint
                     - name: frontend
                       context: ./frontend
-                      command: npm run format:check
-        # Only lint a project if something under its directory actually changed. A
+        # Only test a project if something under its directory actually changed. A
         # job-level `env:` (unlike a job-level `if:`) has access to `matrix`/`needs`,
-        # so the check lives here and is reused as `env.SHOULD_LINT` below.
+        # so the check lives here and is reused as `env.SHOULD_TEST` below.
         env:
-            SHOULD_LINT: ${{ (matrix.name == 'backend' && needs.changes.outputs.backend == 'true') || (matrix.name == 'frontend' && needs.changes.outputs.frontend == 'true') }}
+            SHOULD_TEST: ${{ (matrix.name == 'backend' && needs.changes.outputs.backend == 'true') || (matrix.name == 'frontend' && needs.changes.outputs.frontend == 'true') }}
         steps:
             - name: Checkout
-              if: env.SHOULD_LINT == 'true'
+              if: env.SHOULD_TEST == 'true'
               uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
               with:
                   persist-credentials: false
 
             - name: Set up Node.js
-              if: env.SHOULD_LINT == 'true'
+              if: env.SHOULD_TEST == 'true'
               uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
               with:
                   node-version: '22'
@@ -72,15 +68,11 @@ jobs:
                   cache-dependency-path: ${{ matrix.context }}/package-lock.json
 
             - name: Install dependencies
-              if: env.SHOULD_LINT == 'true'
+              if: env.SHOULD_TEST == 'true'
               working-directory: ${{ matrix.context }}
               run: npm ci
 
-            - name: Run lint
-              if: env.SHOULD_LINT == 'true'
+            - name: Run tests
+              if: env.SHOULD_TEST == 'true'
               working-directory: ${{ matrix.context }}
-              # NO_COLOR tells eslint/prettier (via chalk) to skip ANSI color codes,
-              # since the output ends up in the GitHub Actions log, not a terminal.
-              env:
-                  NO_COLOR: '1'
-              run: ${{ matrix.command }}
+              run: npm test
