@@ -54,6 +54,10 @@
       grid-template-rows 220ms ease,
       opacity 160ms ease;
 
+    @media (width < 320px) {
+      padding: 1.2rem 0;
+    }
+
     &.collapsed {
       padding: 0;
     }

@@ -27,6 +27,20 @@
     padding: 1.4rem;
   }
 
+  // Same look as "big", but falls back to "normal" sizing below the mobile
+  // breakpoint so the tile doesn't dominate the layout on small screens.
+  &.responsive {
+    --label-font-size: 1rem;
+    --value-font-size: 2rem;
+    padding: 1.4rem;
+
+    @media (width < 768px) {
+      --label-font-size: 0.62rem;
+      --value-font-size: 1.45rem;
+      padding: 1rem;
+    }
+  }
+
   &.clickable {
     cursor: pointer;
     border-color: var(--color-outline-variant);

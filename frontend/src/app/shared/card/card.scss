@@ -11,4 +11,8 @@
   gap: 1rem;
   padding: 1.2rem;
   background: var(--color-surface-container-low);
+
+  @media (width < 375px) {
+    padding: 1.2rem 5px;
+  }
 }

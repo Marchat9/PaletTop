@@ -81,16 +81,6 @@ span.tournament {
     overflow-y: auto;
     border-radius: 1rem 1rem 0 0 !important;
     padding-top: 0.4rem;
-
-    &::before {
-      content: '';
-      display: block;
-      width: 2.5rem;
-      height: 0.3rem;
-      margin: 0 auto 0.6rem;
-      border-radius: 999px;
-      background: var(--color-border-subtle);
-    }
   }
 }
 // ###################################

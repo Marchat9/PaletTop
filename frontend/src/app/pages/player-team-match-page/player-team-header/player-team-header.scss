@@ -77,6 +77,9 @@
     flex: 1 1 auto;
     justify-content: space-between;
     gap: 1.4rem;
+    @media (width < 785px) {
+      justify-content: space-evenly;
+    }
   }
 
   .bold {

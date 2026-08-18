@@ -29,6 +29,7 @@
   .content {
     display: flex;
     flex-direction: row;
+    flex-wrap: wrap;
 
     .description {
       flex: 1 1 18rem;
