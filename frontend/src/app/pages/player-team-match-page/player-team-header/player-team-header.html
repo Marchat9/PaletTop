@@ -17,7 +17,7 @@
     <app-metric-tile label="Victoires" [value]="wins()" size="big" />
     <app-metric-tile
       label="Classement"
-      [value]="rank()"
+      [value]="rankLabel()"
       size="big"
       [clickable]="true"
       (clicked)="openRank.emit()"

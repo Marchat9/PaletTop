@@ -1,8 +1,9 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import { Icon } from 'src/app/shared/icon/icon';
 
 @Component({
   selector: 'app-metric-tile',
-  imports: [],
+  imports: [Icon],
   templateUrl: './metric-tile.html',
   styleUrl: './metric-tile.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

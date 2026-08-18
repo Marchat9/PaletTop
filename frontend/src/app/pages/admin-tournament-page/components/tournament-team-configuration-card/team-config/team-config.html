@@ -1,118 +1,36 @@
 <div class="team-config">
-  <div class="creation-section">
-    <div class="section-header">
-      <span class="eyebrow">Creation rapide</span>
-      <span class="title">Ajouter une équipe</span>
-      <span class="description"> Renseignez un nom d'équipe et/ou les joueurs puis validez. </span>
-    </div>
-
-    <div class="field-group">
-      <label for="team-name">Nom de l'equipe (optionnel)</label>
-      <app-input-text
-        id="team-name"
-        icon="groups"
-        [value]="teamName()"
-        [placeholder]="suggestedTeamName()"
-        (valueChange)="updateTeamName($event)"
+  @if (!isMobile()) {
+    <div class="creation-column">
+      <app-team-creation-panel
+        [tournament]="tournament()"
+        (teamUpdated)="teamUpdated.emit($event)"
       />
     </div>
-
-    <div class="players-block">
-      <div class="players-block-header">
-        <div class="header">
-          <span class="title">Joueurs</span>
-          <span class="description">{{ teamPlayers().length }} joueur(s) dans le formulaire</span>
-        </div>
-        <app-button
-          title="Ajouter un joueur"
-          variant="tertiary"
-          icon="person_add"
-          (clicked)="addPlayerRow()"
-        />
-      </div>
-
-      @for (player of teamPlayers(); track $index) {
-        <div class="player-row">
-          <app-input-text
-            id="player-name-{{ $index }}"
-            icon="badge"
-            placeholder="Nom du joueur"
-            [value]="player.name"
-            (valueChange)="updatePlayerName($index, $event)"
-          />
-          <app-input-text
-            id="player-club-{{ $index }}"
-            icon="location_city"
-            placeholder="Club (optionnel)"
-            [value]="player.club"
-            (valueChange)="updatePlayerClub($index, $event)"
-          />
-          <app-button
-            title="Retirer"
-            icon="person_remove"
-            variant="tertiary"
-            [disabled]="teamPlayers().length <= 1"
-            (clicked)="removePlayerRow($index)"
-          />
-        </div>
-      }
-    </div>
-
-    <div class="actions-row flex-end">
-      <app-button
-        title="Creer l'equipe"
-        icon="group_add"
-        [disabled]="!canSubmitTeam()"
-        (clicked)="onCreateTeam()"
-      />
-    </div>
-
-    <div class="import-section">
-      <div class="section-header">
-        <span class="eyebrow">Import en masse</span>
-        <span class="title">Depuis un fichier Excel</span>
-        <span class="description">
-          Téléchargez un modèle, remplissez-le, puis importez-le pour créer plusieurs équipes en une
-          fois.
-        </span>
-      </div>
-
-      <div class="actions-row flex-space gap wrap">
-        <app-button
-          title="Télécharger un modèle Excel"
-          icon="download"
-          variant="secondary"
-          (clicked)="openDownloadTemplateDialog()"
-        />
-        <app-input-file
-          title="Importer un fichier Excel"
-          icon="upload_file"
-          variant="secondary"
-          [accept]="importFileFormats"
-          (fileSelected)="onFileSelected($event)"
-        />
-      </div>
-
-      @if (importError(); as error) {
-        <span class="import-error">{{ error }}</span>
-      }
-    </div>
-  </div>
+  }
 
   <div class="team-list-section">
     <div class="team-list-header">
       <div class="section-header">
         <span class="eyebrow">Vue d'ensemble</span>
-        <span class="title">Equipes inscrites ({{ tournament()?.teams?.length ?? 0 }})</span>
+        <div class="title-row">
+          <span class="title">Equipes inscrites ({{ tournament()?.teams?.length ?? 0 }})</span>
+          <ng-content select="[actions]" />
+        </div>
       </div>
 
-      <app-input-text
-        id="team-search"
-        icon="search"
-        placeholder="Filtrer par equipe, code, joueur ou club"
-        [value]="teamSearch()"
-        (valueChange)="updateSearch($event)"
-      />
+      <div class="team-list-toolbar">
+        <app-input-text
+          id="team-search"
+          icon="search"
+          placeholder="Filtrer par equipe, code, joueur ou club"
+          [value]="teamSearch()"
+          (valueChange)="updateSearch($event)"
+        />
+
+        @if (isMobile()) {
+          <app-button-icon class="icon-btn" icon="add" (clicked)="openCreationSheet()" />
+        }
+      </div>
     </div>
 
     @if ((tournament()?.teams?.length ?? 0) === 0) {
@@ -122,106 +40,144 @@
     } @else if (filteredTeams().length === 0) {
       <span class="team-config-empty">Aucune equipe ne correspond à ce filtre.</span>
     } @else {
-      <div class="team-list-scroll">
-        @for (team of filteredTeams(); track team.id) {
-          <article class="team-item">
-            @if (editingTeam()?.teamId === team.id) {
-              <div class="team-item-edit">
-                <div class="field-group">
-                  <label for="edit-team-name-{{ team.id }}">Nom de l'equipe</label>
-                  <app-input-text
-                    id="edit-team-name-{{ team.id }}"
-                    icon="groups"
-                    [value]="editingTeam()?.name ?? ''"
-                    (valueChange)="updateEditTeamName($event)"
-                  />
-                </div>
+      <div class="team-table" role="table">
+        <div class="team-row team-row-header" role="row">
+          <span class="cell cell-name" role="columnheader">Équipe</span>
+          <span class="cell cell-players" role="columnheader">Joueurs</span>
+          <span class="cell cell-code" role="columnheader">Code</span>
+          <span class="cell cell-clubs" role="columnheader">Club(s)</span>
+          <span class="cell cell-actions" role="columnheader"></span>
+        </div>
 
-                <div class="players-block">
-                  <div class="players-block-header">
-                    <div class="header">
-                      <span class="title">Joueurs</span>
-                    </div>
-                    <app-button
-                      title="Ajouter un joueur"
-                      variant="tertiary"
-                      icon="person_add"
-                      (clicked)="addEditPlayerRow()"
+        <div class="team-table-scroll" role="rowgroup">
+          @for (row of teamRows(); track row.team.id) {
+            @if (editingTeam()?.teamId === row.team.id) {
+              <div class="team-row team-row-editing" role="row">
+                <div class="team-item-edit">
+                  <div class="field-group">
+                    <label for="edit-team-name-{{ row.team.id }}">Nom de l'equipe</label>
+                    <app-input-text
+                      id="edit-team-name-{{ row.team.id }}"
+                      icon="groups"
+                      [value]="editingTeam()?.name ?? ''"
+                      (valueChange)="updateEditTeamName($event)"
                     />
                   </div>
 
-                  @for (player of editingTeam()?.players ?? []; track $index) {
-                    <div class="player-row">
-                      <app-input-text
-                        id="edit-player-name-{{ team.id }}-{{ $index }}"
-                        icon="badge"
-                        placeholder="Nom du joueur"
-                        [value]="player.name"
-                        (valueChange)="updateEditPlayerName($index, $event)"
-                      />
-                      <app-input-text
-                        id="edit-player-club-{{ team.id }}-{{ $index }}"
-                        icon="location_city"
-                        placeholder="Club (optionnel)"
-                        [value]="player.club"
-                        (valueChange)="updateEditPlayerClub($index, $event)"
-                      />
+                  <div class="players-block">
+                    <div class="players-block-header">
+                      <div class="header">
+                        <span class="title">Joueurs</span>
+                      </div>
                       <app-button
-                        title="Retirer"
-                        icon="person_remove"
+                        title="Ajouter un joueur"
                         variant="tertiary"
-                        [disabled]="(editingTeam()?.players?.length ?? 0) <= 1"
-                        (clicked)="removeEditPlayerRow($index)"
+                        icon="person_add"
+                        (clicked)="addEditPlayerRow()"
                       />
                     </div>
-                  }
-                </div>
 
-                <div class="actions-row flex-end gap">
-                  <app-button
-                    title="Annuler"
-                    variant="tertiary"
-                    icon="close"
-                    (clicked)="cancelEditTeam()"
-                  />
-                  <app-button
-                    title="Enregistrer"
-                    icon="save"
-                    [disabled]="!canSubmitEditTeam()"
-                    (clicked)="onUpdateTeam()"
-                  />
+                    @for (player of editingTeam()?.players ?? []; track $index) {
+                      <div class="player-row">
+                        <app-input-text
+                          id="edit-player-name-{{ row.team.id }}-{{ $index }}"
+                          icon="badge"
+                          placeholder="Nom du joueur"
+                          [value]="player.name"
+                          (valueChange)="updateEditPlayerName($index, $event)"
+                        />
+                        <app-input-text
+                          id="edit-player-club-{{ row.team.id }}-{{ $index }}"
+                          icon="location_city"
+                          placeholder="Club (optionnel)"
+                          [value]="player.club"
+                          (valueChange)="updateEditPlayerClub($index, $event)"
+                        />
+                        <app-button
+                          title="Retirer"
+                          icon="person_remove"
+                          variant="tertiary"
+                          [disabled]="(editingTeam()?.players?.length ?? 0) <= 1"
+                          (clicked)="removeEditPlayerRow($index)"
+                        />
+                      </div>
+                    }
+                  </div>
+
+                  <div class="actions-row flex-end gap">
+                    <app-button
+                      title="Annuler"
+                      variant="tertiary"
+                      icon="close"
+                      (clicked)="cancelEditTeam()"
+                    />
+                    <app-button
+                      title="Enregistrer"
+                      icon="save"
+                      [disabled]="!canSubmitEditTeam()"
+                      (clicked)="onUpdateTeam()"
+                    />
+                  </div>
                 </div>
               </div>
             } @else {
-              <div class="team-item-header">
-                <div class="left-side">
-                  <span class="title">{{ team.name }}</span>
-                  <span class="description">{{ team.players.length }} joueur(s)</span>
-                </div>
-                <div class="right-side">
-                  <span class="code">Code : {{ team.code || 'code auto' }}</span>
-                  <span class="team-item-actions" #actionsAnchor>
-                    <app-button-icon
-                      icon="more_vert"
-                      (clicked)="openTeamActions(team, actionsAnchor)"
-                    />
+              <div class="team-row" role="row" [class.expanded]="row.expanded">
+                <button
+                  type="button"
+                  class="cell cell-name row-toggle"
+                  role="cell"
+                  [attr.aria-expanded]="row.expanded"
+                  (click)="toggleTeamExpanded(row.team.id)"
+                >
+                  <app-icon name="chevron_right" iconClass="expand-chevron" [ariaHidden]="true" />
+                  <span class="name">{{ row.team.name }}</span>
+                </button>
+
+                <span class="cell cell-code" role="cell">
+                  <span class="mobile-label">Code:&nbsp;</span
+                  ><span class="code">{{ row.team.code || 'auto' }}</span>
+                </span>
+
+                <span class="cell cell-actions" role="cell" #actionsAnchor>
+                  <app-button-icon
+                    icon="more_vert"
+                    (clicked)="openTeamActions(row.team, actionsAnchor)"
+                  />
+                </span>
+
+                <span class="cell-meta-group">
+                  <span class="cell cell-players" role="cell">
+                    <span class="mobile-label">Joueurs:&nbsp;</span>{{ row.team.players.length }}
                   </span>
-                </div>
+                  <span class="cell cell-clubs" role="cell"
+                    ><app-icon iconClass="club-icon" name="strategy" />{{ row.clubsSummary }}</span
+                  >
+                </span>
               </div>
 
-              <div class="team-item-players">
-                @for (player of team.players; track player.id) {
-                  <div class="team-player">
-                    <span class="name">{{ player.name }}</span>
-                    @if (!!player.club) {
-                      <span class="club"><app-icon name="strategy" />{{ player.club }}</span>
-                    }
-                  </div>
-                }
-              </div>
+              @if (row.expanded) {
+                <div class="team-row-detail" role="row">
+                  @for (player of row.team.players; track player.id) {
+                    <div class="team-player">
+                      <span class="name">
+                        <app-icon name="badge" />
+                        <span class="max-two-lines">{{ player.name }}</span>
+                      </span>
+                      <span class="club">
+                        @if (player.club) {
+                          <app-icon name="strategy" />
+                          <span class="max-two-lines">{{ player.club }}</span>
+                        } @else {
+                          —
+                        }
+                      </span>
+                    </div>
+                  }
+                </div>
+              }
             }
-          </article>
-        }
+          }
+        </div>
       </div>
     }
   </div>

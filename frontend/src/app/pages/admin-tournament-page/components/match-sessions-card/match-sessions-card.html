@@ -26,8 +26,8 @@
 
   <div content class="card-content">
     @if (isDraft()) {
-      <div class="draft-section">
-        <p class="section-info">
+      <div class="info-section">
+        <p class="message">
           Le tournoi n'a pas encore démarré. En démarrant, les équipes seront réparties dans les
           poules et les matchs de la première session seront générés.
         </p>
@@ -48,6 +48,19 @@
         [scoreUpdateLoading]="scoreUpdateLoading()"
         (scoreUpdate)="scoreUpdate.emit($event)"
       />
+    }
+
+    @if (isFinished()) {
+      <div class="info-section">
+        <p class="message">🎉 Le tournoi est terminé, félicitation à tout le monde. 🎉</p>
+      </div>
+    }
+    @if (isCancelled()) {
+      <div class="info-section">
+        <p class="message">
+          Le tournoi est annulé. Contactez l'administrateur pour plus d'informations.
+        </p>
+      </div>
     }
   </div>
 </app-card-collapsible>

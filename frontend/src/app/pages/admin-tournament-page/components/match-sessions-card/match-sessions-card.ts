@@ -32,6 +32,12 @@ export class MatchSessionsCardComponent {
 
   public readonly isDraft = computed(() => this.tournament()?.status === TournamentStatus.DRAFT);
   public readonly isActive = computed(() => this.tournament()?.status === TournamentStatus.ACTIVE);
+  public readonly isFinished = computed(
+    () => this.tournament()?.status === TournamentStatus.FINISHED,
+  );
+  public readonly isCancelled = computed(
+    () => this.tournament()?.status === TournamentStatus.CANCELLED,
+  );
 
   public readonly canGenerateNewSession = computed(
     () => this.tournament()?.tournamentStatus?.canGenerateNewSession ?? false,

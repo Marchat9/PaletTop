@@ -6,4 +6,7 @@
 >
   <p class="value">{{ value() }}</p>
   <p class="label">{{ label() }}</p>
+  @if (clickable()) {
+    <app-icon name="chevron_right" iconClass="clickable-hint" [ariaHidden]="true" />
+  }
 </article>

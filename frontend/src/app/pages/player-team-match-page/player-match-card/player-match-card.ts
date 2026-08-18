@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import { Nullable } from 'src/app/models/nullable.model';
 import { PlayerMatchDto } from 'src/app/models/player-match.model';
 import { PlayerMatchCardInnerComponent } from './player-match-card-inner/player-match-card-inner';
@@ -28,6 +28,12 @@ export class PlayerMatchCardComponent {
   public readonly startMatchLoading = input<boolean>(false);
   public readonly validateMatchLoading = input<boolean>(false);
   public readonly rank = input<string>('');
+
+  public readonly rankLabel = computed(() => {
+    const value = Number(this.rank());
+    if (!Number.isInteger(value) || value <= 0) return null;
+    return `${value}${value === 1 ? 'er' : 'ème'}`;
+  });
 
   public readonly startMatch = output<StartMatch>();
   public readonly updateScore = output<TeamScoreUpdate>();

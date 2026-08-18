@@ -22,13 +22,27 @@
       </div>
     }
     @case ('FINISH') {
-      <div class="match-card-empty">
-        <app-icon name="sports_score" />
-        <p>
-          Fin du tournoi, merci d'avoir participé.
-          @if (rank() !== '') {
-            Vous avez fini <b>{{ rank() }}</b> <sup>ème</sup>
+      <div class="match-card-empty match-card-finish">
+        <div class="finish-icon">
+          <span class="confetti" aria-hidden="true">🎉</span>
+          <app-icon name="emoji_events" iconClass="cup-icon" />
+          <span class="confetti" aria-hidden="true">🎉</span>
+        </div>
+        <div class="end-tournament-text">
+          <p class="headline">C'est fini, merci d'avoir joué avec nous !</p>
+          @if (rankLabel(); as label) {
+            <p class="rank-line">
+              Vous terminez <span class="rank-badge">{{ label }}</span>
+            </p>
           }
+        </div>
+      </div>
+    }
+    @case ('CANCELLED') {
+      <div class="match-card-empty">
+        <app-icon name="event_busy" />
+        <p>
+          Ce tournoi a été annulé. Merci d'avoir participé, à bientôt pour une prochaine partie !
         </p>
       </div>
     }

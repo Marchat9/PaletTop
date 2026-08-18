@@ -1,7 +1,7 @@
 import { createFeatureSelector, createSelector } from '@ngrx/store';
 import { SpectatorState } from './spectator.models';
 
-export const spectatorFeatureKey = 'Spectator';
+export const spectatorFeatureKey = 'spectator';
 
 export const selectSpectatorState = createFeatureSelector<SpectatorState>(spectatorFeatureKey);
 
