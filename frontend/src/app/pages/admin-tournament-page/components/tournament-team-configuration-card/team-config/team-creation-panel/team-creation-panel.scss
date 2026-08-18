@@ -27,6 +27,10 @@
     app-button {
       flex: 1 1 0;
     }
+
+    @media (width < 375px) {
+      flex-wrap: wrap;
+    }
   }
 
   .tab-panel {
