@@ -86,15 +86,34 @@ directly to the internet. Set real secrets, put it behind a reverse proxy/TLS, e
 
 `Dockerfile` is multi-stage: `docker-compose.yml` builds the `dev` target above, but there's also
 a `production` target (`npm ci --omit=dev` + `node dist/main.js`, no dev dependencies or
-TypeScript source in the final image) — built automatically by
-[`.github/workflows/docker-images.yml`](../.github/workflows/docker-images.yml) on every push to
-`main` and published to GitHub Container Registry as `ghcr.io/<owner>/<repo>-backend:latest`. Build
-it yourself with `docker build --target production .`.
+TypeScript source in the final image).
+[`.github/workflows/docker-images.yml`](../.github/workflows/docker-images.yml) validates it still
+builds on every PR, and builds **and publishes** it to GitHub Container Registry as
+`ghcr.io/<owner>/<repo>-backend:<version>` (plus a `latest` tag) whenever a `vX.Y.Z` tag is pushed.
+Build it yourself with `docker build --target production .`.
+
+To run that published image against a fresh PostgreSQL instance without building anything
+locally, use the root [`docker-compose.prod.yml`](../docker-compose.prod.yml):
+
+```bash
+echo "SUPER_ADMIN_PASSWORD=<a strong password>" > .env
+docker compose -f docker-compose.prod.yml up -d
+```
+
+Pending migrations run automatically on boot (`migrationsRun` in `src/database/typeorm.config.ts`)
+— there's no separate migration step to run, and the production image doesn't ship the TypeScript
+source `npm run migration:run` needs anyway. Pin a specific release instead of `latest` with
+`BACKEND_IMAGE_TAG=1.4.2` in `.env`.
 
 ## Testing
 
-No automated test suite exists yet. If you add one, `@nestjs/testing` + Jest is the conventional
-choice for NestJS projects — please wire a `test` script in `package.json` alongside it.
+```bash
+npm run test       # Vitest, single run
+npm run test:cov   # Vitest, with coverage
+```
+
+Tests are unit-level (no database required) and live alongside the code as `*.spec.ts` files. Runs
+automatically in CI on every PR via [`tests.yml`](../.github/workflows/tests.yml).
 
 ## Linting & formatting
 
@@ -125,6 +144,7 @@ opening a pull request that touches this project:
 ```bash
 npm run lint
 npm run format:check
+npm test
 npm run build
 ```
 

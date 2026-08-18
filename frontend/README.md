@@ -52,9 +52,10 @@ for local development but not what you'd want for a real production deployment.
 
 `Dockerfile` is multi-stage: `docker-compose.yml` builds the `dev` target above, but there's also
 a `production` target — an Nginx image serving the static production build
-(`dist/PaletTop/browser`), with SPA-aware routing (see `nginx.conf`). It's built automatically by
-[`.github/workflows/docker-images.yml`](../.github/workflows/docker-images.yml) on every push to
-`main` and published to GitHub Container Registry as `ghcr.io/<owner>/<repo>-frontend:latest`.
+(`dist/PaletTop/browser`), with SPA-aware routing (see `nginx.conf`).
+[`.github/workflows/docker-images.yml`](../.github/workflows/docker-images.yml) validates it still
+builds on every PR, and builds **and publishes** it to GitHub Container Registry as
+`ghcr.io/<owner>/<repo>-frontend:<version>` (plus a `latest` tag) whenever a `vX.Y.Z` tag is pushed.
 
 The backend API URL is baked into the build (see `src/environments/environment.prod.ts`). Override
 it at build time for your own deployment instead of editing the file:
@@ -69,8 +70,9 @@ docker build --target production --build-arg API_BASE_URL=https://api.example.co
 npm test   # ng test — Vitest
 ```
 
-Test coverage is minimal today (a single smoke test on the root component). Contributions adding
-tests for store logic (reducers/effects/selectors) or components are very welcome.
+Runs automatically in CI on every PR via [`tests.yml`](../.github/workflows/tests.yml).
+Contributions adding tests for store logic (reducers/effects/selectors) or components are very
+welcome.
 
 ## Linting & formatting
 
