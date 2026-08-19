@@ -30,16 +30,16 @@ ENV APP_VERSION=$APP_VERSION
 
 RUN npm run build
 
-# ---- production: Nginx serving the static build ----
-FROM nginx:alpine AS production
+# ---- production: Nginx (non-root) serving the static build ----
+FROM nginxinc/nginx-unprivileged:alpine AS production
 
-COPY --from=build /app/dist/PaletTop/browser /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=build --chown=nginx:nginx /app/dist/PaletTop/browser /usr/share/nginx/html
+COPY --chown=nginx:nginx nginx.conf /etc/nginx/conf.d/default.conf
 
 # Backend URL is resolved at container startup, not baked into the build — see
 # docker-entrypoint.d/20-envsubst-runtime-config.sh and src/assets/env.js.
 # Override with: docker run -e API_BASE_URL=https://api.example.com ...
-COPY docker-entrypoint.d/20-envsubst-runtime-config.sh /docker-entrypoint.d/20-envsubst-runtime-config.sh
+COPY --chown=nginx:nginx docker-entrypoint.d/20-envsubst-runtime-config.sh /docker-entrypoint.d/20-envsubst-runtime-config.sh
 RUN chmod +x /docker-entrypoint.d/20-envsubst-runtime-config.sh
 
-EXPOSE 80
+EXPOSE 8080
