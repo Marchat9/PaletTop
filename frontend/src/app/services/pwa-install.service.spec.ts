@@ -18,6 +18,9 @@ function stubMatchMedia(matches: boolean): void {
     media: query,
     addEventListener: () => {},
     removeEventListener: () => {},
+    // Legacy aliases — Angular CDK's BreakpointObserver still calls these on some paths.
+    addListener: () => {},
+    removeListener: () => {},
   })) as unknown as typeof window.matchMedia;
 }
 
@@ -26,6 +29,13 @@ function stubUserAgent(userAgent: string): void {
 }
 
 describe('PwaInstallService', () => {
+  const originalMatchMedia = window.matchMedia;
+
+  afterEach(() => {
+    // reset to original matchmedia to avoid errors on other tests
+    window.matchMedia = originalMatchMedia;
+  });
+
   beforeEach(() => {
     localStorage.clear();
     stubMatchMedia(false);

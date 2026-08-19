@@ -68,7 +68,6 @@ export class TeamCreationPanel {
     () => this.dialogData?.tournament ?? this.tournament(),
   );
 
-
   private readonly editingTeam = this.dialogData?.editingTeam ?? null;
   public readonly isEditMode = !!this.editingTeam;
 
