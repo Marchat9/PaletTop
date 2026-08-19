@@ -24,18 +24,17 @@ import {
   filterTeams,
   generateDefaultPlayerRow,
   summarizeClubs,
+  toTeamEditFormValue,
+  type TeamEditFormValue,
   type TeamPlayerFormValue,
 } from './team-config.utils';
-import { TeamCreationPanel } from './team-creation-panel/team-creation-panel';
+import {
+  TeamCreationPanel,
+  TeamCreationPanelData,
+} from './team-creation-panel/team-creation-panel';
 import { environment } from '@environment';
 
 const MOBILE_BREAKPOINT = '(max-width: ' + environment.limitMobileSizePx + 'px)';
-
-interface TeamEditFormValue {
-  teamId: string;
-  name: string;
-  players: TeamPlayerFormValue[];
-}
 
 @Component({
   selector: 'app-team-config',
@@ -102,11 +101,22 @@ export class TeamConfig {
     });
   }
 
-  // ======= Creation sheet (mobile) =======
+  // ======= Creation / edition sheet (mobile) =======
   public openCreationSheet(): void {
+    this.openTeamPanelSheet({ tournament: this.tournament() });
+  }
+
+  public openEditSheet(team: TounamentTeamDto): void {
+    this.openTeamPanelSheet({
+      tournament: this.tournament(),
+      editingTeam: toTeamEditFormValue(team),
+    });
+  }
+
+  private openTeamPanelSheet(data: TeamCreationPanelData): void {
     this.dialog
-      .open<TeamConfigEvent | undefined>(TeamCreationPanel, {
-        data: { tournament: this.tournament() },
+      .open<TeamConfigEvent | undefined, TeamCreationPanelData>(TeamCreationPanel, {
+        data,
         positionStrategy: this.overlay.position().global().bottom('0').width('100%'),
         panelClass: 'team-creation-sheet-panel',
         backdropClass: 'dialog-backdrop-light',
@@ -141,20 +151,20 @@ export class TeamConfig {
       })
       .closed.subscribe((action) => {
         if (action === 'edit') {
-          this.startEditTeam(team);
+          if (isMobile) {
+            this.openEditSheet(team);
+          } else {
+            this.startEditTeam(team);
+          }
         } else if (action === 'delete') {
           this.onRemoveTeam(team);
         }
       });
   }
 
-  // ======= Edit team =======
+  // ======= Edit team (desktop inline row) =======
   public startEditTeam(team: TounamentTeamDto): void {
-    this.editingTeam.set({
-      teamId: team.id,
-      name: team.name,
-      players: team.players.map((player) => ({ name: player.name, club: player.club ?? '' })),
-    });
+    this.editingTeam.set(toTeamEditFormValue(team));
   }
 
   public cancelEditTeam(): void {

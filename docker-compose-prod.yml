@@ -1,0 +1,86 @@
+services:
+    db:
+        image: postgres:16-alpine
+        container_name: palettop-db
+        restart: unless-stopped
+        environment:
+            POSTGRES_DB: ${DB_NAME}
+            POSTGRES_USER: ${DB_USER}
+            POSTGRES_PASSWORD: ${DB_PASSWORD}
+        # No "ports:" DB is not reachable form outside
+        volumes:
+            - palettop-db-data:/var/lib/postgresql/data
+        networks:
+            - palettop
+        healthcheck:
+            test: ['CMD-SHELL', 'pg_isready -U ${DB_USER} -d ${DB_NAME}']
+            interval: 5s
+            timeout: 5s
+            retries: 10
+        security_opt:
+            - no-new-privileges:true
+
+    backend:
+        image: ghcr.io/marchat9/palettop-backend:latest
+        container_name: palettop-backend
+        restart: unless-stopped
+        depends_on:
+            db:
+                condition: service_healthy
+        environment:
+            NODE_ENV: production
+            PORT: 3000
+            DB_HOST: db
+            DB_PORT: 5432
+            DB_NAME: ${DB_NAME}
+            DB_USER: ${DB_USER}
+            DB_PASSWORD: ${DB_PASSWORD}
+            SUPER_ADMIN_PASSWORD: ${SUPER_ADMIN_PASSWORD}
+        ports:
+            - '0.0.0.0:3000:3000'
+        networks:
+            - palettop
+        healthcheck:
+            test:
+                [
+                    'CMD',
+                    'wget',
+                    '--quiet',
+                    '--tries=1',
+                    '--spider',
+                    'http://localhost:3000/health',
+                ]
+            interval: 10s
+            timeout: 5s
+            retries: 10
+            start_period: 30s
+        security_opt:
+            - no-new-privileges:true
+        read_only: true
+        tmpfs:
+            - /tmp
+
+    frontend:
+        image: ghcr.io/marchat9/palettop-frontend:latest
+        container_name: palettop-frontend
+        restart: unless-stopped
+        depends_on:
+            backend:
+                condition: service_healthy
+        environment:
+            API_BASE_URL: ${API_BASE_URL}
+        ports:
+            - '0.0.0.0:8080:8080'
+        networks:
+            - palettop
+        security_opt:
+            - no-new-privileges:true
+
+# Networks
+networks:
+    palettop:
+        driver: bridge
+
+# Volumes
+volumes:
+    palettop-db-data:

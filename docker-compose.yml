@@ -4,15 +4,15 @@ services:
         container_name: palet-db
         restart: unless-stopped
         environment:
-            POSTGRES_DB: palet
-            POSTGRES_USER: postgres
-            POSTGRES_PASSWORD: postgres
+            POSTGRES_DB: ${DB_NAME:-palet}
+            POSTGRES_USER: ${DB_USER:-postgres}
+            POSTGRES_PASSWORD: ${DB_PASSWORD-postgres}
         ports:
-            - '5432:5432'
+            - '127.0.0.1:5432:5432' # Access only from local ## '5432:5432' # For all access
         volumes:
             - postgres_data:/var/lib/postgresql/data
         healthcheck:
-            test: ['CMD-SHELL', 'pg_isready -U postgres -d palet']
+            test: ['CMD-SHELL', 'pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-palet}']
             interval: 5s
             timeout: 5s
             retries: 10
@@ -31,9 +31,10 @@ services:
             PORT: 3000
             DB_HOST: db
             DB_PORT: 5432
-            DB_NAME: palet
-            DB_USER: postgres
-            DB_PASSWORD: postgres
+            DB_NAME: ${DB_NAME:-palet}
+            DB_USER: ${DB_USER:-postgres}
+            DB_PASSWORD: ${DB_PASSWORD-postgres}
+            SUPER_ADMIN_PASSWORD: ${SUPER_ADMIN_PASSWORD-PaletTopPassword}
         ports:
             - '3000:3000'
         volumes:
@@ -41,7 +42,15 @@ services:
             - /app/node_modules
         command: sh -c "npm install && npm run start:dev"
         healthcheck:
-            test: ['CMD', 'wget', '--quiet', '--tries=1', '--spider', 'http://localhost:3000/health']
+            test:
+                [
+                    'CMD',
+                    'wget',
+                    '--quiet',
+                    '--tries=1',
+                    '--spider',
+                    'http://localhost:3000/health',
+                ]
             interval: 5s
             timeout: 5s
             retries: 10

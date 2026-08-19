@@ -14,11 +14,11 @@
   </div>
 
   <div class="team-metrics">
-    <app-metric-tile label="Victoires" [value]="wins()" size="big" />
+    <app-metric-tile label="Victoires" [value]="wins()" size="responsive" />
     <app-metric-tile
       label="Classement"
       [value]="rankLabel()"
-      size="big"
+      size="responsive"
       [clickable]="true"
       (clicked)="openRank.emit()"
     />

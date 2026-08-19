@@ -50,15 +50,29 @@ on its own (with hot reload, without Docker), see the sub-project READMEs below.
 
 ```
 palettop/
-├── backend/    NestJS REST + WebSocket API — see backend/README.md
-├── frontend/   Angular admin/player web client — see frontend/README.md
-├── API.md      HTTP + WebSocket API reference
-└── docker-compose.yml
+├── backend/                  NestJS REST + WebSocket API — see backend/README.md
+├── frontend/                 Angular admin/player web client — see frontend/README.md
+├── API.md                    HTTP + WebSocket API reference
+└── docker-compose.yml        Local dev stack — builds both apps from source
 ```
 
 - [`backend/README.md`](backend/README.md) — setup, running, migrations, architecture.
 - [`frontend/README.md`](frontend/README.md) — setup, running, building, architecture.
 - [`API.md`](API.md) — endpoint and WebSocket event reference for both clients.
+
+## CI
+
+GitHub Actions runs on every pull request against `main`:
+
+| Workflow                                                           | What it does                                                                                                                |
+| ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------- |
+| [`lint.yml`](.github/workflows/lint.yml)                           | ESLint (backend) / Prettier check (frontend) — only for the project(s) the PR actually touches                              |
+| [`tests.yml`](.github/workflows/tests.yml)                         | Runs each project's test suite, same touched-project detection                                                              |
+| [`docker-images.yml`](.github/workflows/docker-images.yml)         | Validates the Docker image(s) a PR touches still build; builds **and publishes** both to GHCR when a `vX.Y.Z` tag is pushed |
+| [`labels.yml`](.github/workflows/labels.yml)                       | Auto-labels the PR `frontend` / `backend` / `ci` based on the paths it touches                                              |
+| [`codeql.yml`](.github/workflows/codeql.yml)                       | Static security analysis (JavaScript/TypeScript), plus a weekly scheduled scan                                              |
+| [`dependency-review.yml`](.github/workflows/dependency-review.yml) | Flags newly introduced vulnerable or license-incompatible dependencies                                                      |
+| [`zizmor.yml`](.github/workflows/zizmor.yml)                       | Security linting for the workflow files themselves                                                                          |
 
 ## Contributing
 
@@ -68,9 +82,9 @@ Contributions are welcome — bug reports, feature ideas, or pull requests.
    `fix/short-description`, …).
 2. Make your change in the relevant project (`frontend/` and `backend/` are independent — see
    their READMEs for setup).
-3. Before opening a PR, run that project's checks (typecheck, lint/format, build — each README
-   lists the exact commands). Neither project has CI configured yet, so this is on the honor
-   system for now.
+3. Before opening a PR, run that project's checks locally (typecheck, lint/format, tests, build —
+   each README lists the exact commands). CI runs the lint and test checks automatically on every
+   PR (see [CI](#ci) above), but catching issues locally first saves a round trip.
 4. Commit messages follow a loose [Conventional Commits](https://www.conventionalcommits.org/)
    style already used throughout the history — `feat: ...`, `fix: ...`, `chore: ...`, etc.
 5. Open a **Pull Request** against `main` describing what changed and why. Link any related issue.

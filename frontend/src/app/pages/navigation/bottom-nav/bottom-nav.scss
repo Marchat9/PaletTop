@@ -12,6 +12,11 @@
   background: var(--color-surface);
   border-top: 1px solid rgb(80 69 56 / 30%);
 
+  @media (width < 360px) {
+    gap: 2px;
+    padding: 0.25rem 0.2rem 0.5rem;
+  }
+
   .item {
     display: flex;
     flex-direction: column;

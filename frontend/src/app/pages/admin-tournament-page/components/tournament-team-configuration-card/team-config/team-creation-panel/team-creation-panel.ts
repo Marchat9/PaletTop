@@ -20,7 +20,11 @@ import { InputText } from 'src/app/shared/input-text/input-text';
 import { TournamentDto } from 'src/app/store/tournament/tournament.models';
 import { environment } from '@environment';
 import { downloadBlob, generateTeamsExcelTemplate, parseTeamsExcelFile } from '../team-excel.utils';
-import { generateDefaultPlayerRow, type TeamPlayerFormValue } from '../team-config.utils';
+import {
+  generateDefaultPlayerRow,
+  type TeamEditFormValue,
+  type TeamPlayerFormValue,
+} from '../team-config.utils';
 import {
   TeamImportPreviewDialog,
   TeamImportPreviewDialogData,
@@ -32,6 +36,7 @@ import {
 
 export interface TeamCreationPanelData {
   tournament: Nullable<TournamentDto>;
+  editingTeam?: TeamEditFormValue;
 }
 
 type TeamCreationTab = 'manual' | 'import';
@@ -40,6 +45,8 @@ type TeamCreationTab = 'manual' | 'import';
 // via Dialog.open() as a mobile bottom sheet (tournament from DIALOG_DATA, result reported
 // by closing the DialogRef instead of emitting). inject(..., { optional: true }) returns
 // null outside a dialog context, which is how the component tells the two modes apart.
+// The sheet variant also doubles as the mobile team editor when DIALOG_DATA carries an
+// `editingTeam` — desktop editing stays on the inline row editor in team-config.html.
 @Component({
   selector: 'app-team-creation-panel',
   imports: [Button, InputFile, InputText],
@@ -61,8 +68,13 @@ export class TeamCreationPanel {
     () => this.dialogData?.tournament ?? this.tournament(),
   );
 
-  public readonly teamName = signal('');
-  public readonly teamPlayers = signal<TeamPlayerFormValue[]>([generateDefaultPlayerRow()]);
+  private readonly editingTeam = this.dialogData?.editingTeam ?? null;
+  public readonly isEditMode = !!this.editingTeam;
+
+  public readonly teamName = signal(this.editingTeam?.name ?? '');
+  public readonly teamPlayers = signal<TeamPlayerFormValue[]>(
+    this.editingTeam?.players ?? [generateDefaultPlayerRow()],
+  );
 
   public readonly existingTeamCount = computed(() => this.resolvedTournament()?.teams?.length ?? 0);
   public readonly suggestedTeamName = computed(() => `Equipe ${this.existingTeamCount() + 1}`);
@@ -100,22 +112,30 @@ export class TeamCreationPanel {
     this.patchPlayer(index, { club: value });
   }
 
-  public onCreateTeam(): void {
+  public onSubmitTeam(): void {
     if (!this.canSubmitTeam()) {
+      return;
+    }
+
+    const players = this.teamPlayers()
+      .map((player) => ({ name: player.name.trim(), club: player.club.trim() || undefined }))
+      .filter((player) => !!player.name);
+
+    if (this.editingTeam) {
+      this.emitOrClose({
+        type: TeamConfigEventType.UPDATE_TEAM,
+        payload: {
+          teamId: this.editingTeam.teamId,
+          name: this.teamName().trim() || undefined,
+          players,
+        },
+      });
       return;
     }
 
     this.emitOrClose({
       type: TeamConfigEventType.CREATE_TEAM,
-      payload: {
-        name: this.teamName().trim() || this.suggestedTeamName(),
-        players: this.teamPlayers()
-          .map((player) => ({
-            name: player.name.trim(),
-            club: player.club.trim() ?? null,
-          }))
-          .filter((player) => !!player.name),
-      },
+      payload: { name: this.teamName().trim() || this.suggestedTeamName(), players },
     });
 
     // reset form

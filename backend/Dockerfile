@@ -34,6 +34,10 @@ RUN npm ci --omit=dev
 
 COPY --from=build /app/dist ./dist
 
+# Use non-root "node" USER, already provided in "node:22-alpine" image
+RUN chown -R node:node /app
+USER node
+
 EXPOSE 3000
 
 CMD ["node", "dist/main.js"]

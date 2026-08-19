@@ -1,27 +1,35 @@
 <div class="creation-section">
   <div class="section-header">
     <span class="eyebrow">Equipes</span>
-    <span class="title">Ajouter une équipe</span>
+    <span class="title">{{ isEditMode ? "Modifier l'équipe" : 'Ajouter une équipe' }}</span>
   </div>
 
-  <div class="creation-tabs" role="tablist">
-    <app-button
-      title="Ajout manuel"
-      icon="edit_note"
-      [variant]="activeTab() === 'manual' ? 'primary' : 'secondary'"
-      (clicked)="activeTab.set('manual')"
-    />
-    <app-button
-      title="Import Excel"
-      icon="upload_file"
-      [variant]="activeTab() === 'import' ? 'primary' : 'secondary'"
-      (clicked)="activeTab.set('import')"
-    />
-  </div>
+  @if (!isEditMode) {
+    <div class="creation-tabs" role="tablist">
+      <app-button
+        title="Ajout manuel"
+        icon="edit_note"
+        [variant]="activeTab() === 'manual' ? 'primary' : 'secondary'"
+        (clicked)="activeTab.set('manual')"
+      />
+      <app-button
+        title="Import Excel"
+        icon="upload_file"
+        [variant]="activeTab() === 'import' ? 'primary' : 'secondary'"
+        (clicked)="activeTab.set('import')"
+      />
+    </div>
+  }
 
   @if (activeTab() === 'manual') {
     <div class="tab-panel">
-      <p class="description">Renseignez un nom d'équipe et/ou les joueurs puis validez.</p>
+      <p class="description">
+        {{
+          isEditMode
+            ? "Modifiez le nom d'équipe et/ou les joueurs puis validez."
+            : "Renseignez un nom d'équipe et/ou les joueurs puis validez."
+        }}
+      </p>
 
       <div class="field-group">
         <label for="team-name">Nom de l'equipe (optionnel)</label>
@@ -77,10 +85,10 @@
 
       <div class="actions-row flex-end">
         <app-button
-          title="Creer l'equipe"
-          icon="group_add"
+          [title]="isEditMode ? 'Enregistrer' : 'Creer l\'equipe'"
+          [icon]="isEditMode ? 'save' : 'group_add'"
           [disabled]="!canSubmitTeam()"
-          (clicked)="onCreateTeam()"
+          (clicked)="onSubmitTeam()"
         />
       </div>
     </div>

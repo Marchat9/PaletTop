@@ -12,7 +12,9 @@ export class MetricTileComponent {
   public readonly value = input.required<string>();
   public readonly label = input.required<string>();
 
-  public readonly size = input<'small' | 'normal' | 'big'>('normal');
+  // "responsive" looks like "big" by default and falls back to "normal" sizing
+  // below the mobile breakpoint (see metric-tile.scss).
+  public readonly size = input<'small' | 'normal' | 'big' | 'responsive'>('normal');
   public readonly clickable = input<boolean>(false);
 
   public readonly clicked = output<void>();

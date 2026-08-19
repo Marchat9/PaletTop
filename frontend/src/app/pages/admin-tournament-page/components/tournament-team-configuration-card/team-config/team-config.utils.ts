@@ -5,8 +5,22 @@ export interface TeamPlayerFormValue {
   club: string;
 }
 
+export interface TeamEditFormValue {
+  teamId: string;
+  name: string;
+  players: TeamPlayerFormValue[];
+}
+
 export function generateDefaultPlayerRow(): TeamPlayerFormValue {
   return { name: '', club: '' };
+}
+
+export function toTeamEditFormValue(team: TounamentTeamDto): TeamEditFormValue {
+  return {
+    teamId: team.id,
+    name: team.name,
+    players: team.players.map((player) => ({ name: player.name, club: player.club ?? '' })),
+  };
 }
 
 // Unique, comma-joined list of the team's players' clubs, for the team list's Club(s) column.

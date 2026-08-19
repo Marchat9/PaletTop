@@ -57,6 +57,7 @@
         background: var(--color-surface-container-high);
         color: var(--color-on-surface-variant);
         border: 1px solid var(--color-border-default);
+        text-wrap-mode: nowrap;
 
         &.draft {
           color: var(--color-status-draft-text);
