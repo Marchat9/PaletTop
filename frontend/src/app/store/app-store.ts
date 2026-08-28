@@ -28,6 +28,7 @@ import { RankingEffects } from './ranking/ranking.effects';
 import { RankingState } from './ranking/ranking.reducer';
 import { rankingReducer } from './ranking/ranking.reducer';
 import { rankingFeatureKey } from './ranking/ranking.selectors';
+import { FriendlyMatchEffects } from './friendly-match/friendly-match.effects';
 import { FriendlyMatchState } from './friendly-match/friendly-match.reducer';
 import { friendlyMatchReducer } from './friendly-match/friendly-match.reducer';
 import { friendlyMatchFeatureKey } from './friendly-match/friendly-match.selectors';
@@ -93,6 +94,7 @@ export const effects = [
   MatchEffects,
   MatchHistoryEffects,
   RankingEffects,
+  FriendlyMatchEffects,
   SuperAdminEffects,
   MetricsEffects,
   SuperAdminTournamentsEffects,

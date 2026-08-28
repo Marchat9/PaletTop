@@ -4,10 +4,12 @@
     [team2Name]="team2Name()"
     [targetScore]="targetScore()"
     [isMatchFinished]="isMatchFinished()"
+    [hasModifications]="hasModifications()"
     (team1NameChange)="onTeam1NameChange($event)"
     (team2NameChange)="onTeam2NameChange($event)"
     (targetScoreChange)="onTargetScoreChange($event)"
     (nextMatch)="onNextMatch()"
+    (reset)="onReset()"
   />
 
   <app-friendly-match-score

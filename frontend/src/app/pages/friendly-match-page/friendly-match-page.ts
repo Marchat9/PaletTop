@@ -1,7 +1,8 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { Store } from '@ngrx/store';
 import {
   resetFriendlyMatch,
+  resetHistoryMatch,
   setTargetScore,
   setTeam1Name,
   setTeam2Name,
@@ -22,6 +23,7 @@ import {
 import { FriendlyMatchConfig } from './components/friendly-match-config/friendly-match-config';
 import { FriendlyMatchHistory } from './components/friendly-match-history/friendly-match-history';
 import { FriendlyMatchScore } from './components/friendly-match-score/friendly-match-score';
+import { initialFriendlyMatchState } from 'src/app/store/friendly-match/friendly-match.reducer';
 
 @Component({
   selector: 'app-friendly-match-page',
@@ -41,6 +43,17 @@ export class FriendlyMatchPageComponent {
   readonly isMatchFinished = this.store.selectSignal(selectIsMatchFinished);
   readonly winner = this.store.selectSignal(selectWinner);
   readonly matchHistory = this.store.selectSignal(selectMatchHistory);
+
+  readonly hasModifications = computed(() => {
+    const hasHistory = this.matchHistory().length > 0;
+    const hasNamesChanged =
+      this.team1Name() !== initialFriendlyMatchState.team1Name ||
+      this.team2Name() !== initialFriendlyMatchState.team2Name;
+    const hasTargetScoreChanged = this.targetScore() !== initialFriendlyMatchState.targetScore;
+    const hasScoreChanged = this.team1Score() || this.team2Score();
+
+    return hasHistory || hasNamesChanged || hasTargetScoreChanged || !!hasScoreChanged;
+  });
 
   onTeam1NameChange(name: string): void {
     this.store.dispatch(setTeam1Name({ name }));
@@ -67,6 +80,10 @@ export class FriendlyMatchPageComponent {
   }
 
   onDeleteHistory(): void {
+    this.store.dispatch(resetHistoryMatch());
+  }
+
+  onReset(): void {
     this.store.dispatch(resetFriendlyMatch());
   }
 }

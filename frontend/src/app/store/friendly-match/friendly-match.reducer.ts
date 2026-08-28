@@ -1,4 +1,6 @@
 import { createReducer, on } from '@ngrx/store';
+import { STORAGE_FRIENDLY_MATCH_KEY } from '../app-config/app-config.effects';
+import { updateLocalStorageData } from '../app-config/app-config.actions';
 import {
   resetFriendlyMatch,
   resetHistoryMatch,
@@ -37,6 +39,12 @@ export const initialFriendlyMatchState: FriendlyMatchState = {
 
 export const friendlyMatchReducer = createReducer(
   initialFriendlyMatchState,
+  on(updateLocalStorageData, (state, { data }) => {
+    const saved = data[STORAGE_FRIENDLY_MATCH_KEY];
+    return saved && typeof saved === 'object'
+      ? { ...state, ...(saved as FriendlyMatchState) }
+      : state;
+  }),
   on(setTeam1Name, (state, { name }) => ({ ...state, team1Name: name })),
   on(setTeam2Name, (state, { name }) => ({ ...state, team2Name: name })),
   on(setTargetScore, (state, { targetScore }) => ({ ...state, targetScore })),
