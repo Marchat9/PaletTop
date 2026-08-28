@@ -28,3 +28,7 @@ export const wsRankingUpdated = createAction(
   '[WS] Ranking Updated',
   props<{ ranking: GlobalRankingEntry[] }>(),
 );
+
+// Generic signal that the app may have missed updates (websocket reconnected, or the
+// tab/app came back to the foreground) and consumers should resync their own data.
+export const resyncRequested = createAction('[Realtime] Resync Requested');

@@ -26,6 +26,7 @@ import {
   selectSpectatorTournamentError,
   selectSpectatorTournamentIsLoading,
 } from 'src/app/store/spectator/spectator.selectors';
+import { onResyncRequested } from 'src/app/utils/resync-on-reconnect.util';
 import { SpectatorMatchListComponent } from './spectator-match-list/spectator-match-list';
 import { TournamentStatus } from 'src/app/models/tournament-status.enum';
 
@@ -64,6 +65,11 @@ export class SpectatorPageComponent {
       if (!this.tournament() && !this.isLoading() && !this.error()) {
         this.store.dispatch(loadSpectatorTournament({ tournamentCode: this.tournamentCode }));
       }
+    });
+
+    onResyncRequested(() => {
+      if (!this.tournamentCode) return;
+      this.store.dispatch(loadSpectatorTournament({ tournamentCode: this.tournamentCode }));
     });
 
     this.destroyRef.onDestroy(() => {

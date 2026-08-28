@@ -55,6 +55,7 @@ import { TournamentHeaderComponent } from './components/tournament-header/tourna
 import { TournamentTeamConfigurationCard } from './components/tournament-team-configuration-card/tournament-team-configuration-card';
 import { selectSessions } from 'src/app/store/session/session.selectors';
 import { selectAdminUpdateScoreLoading } from 'src/app/store/match/match.selectors';
+import { onResyncRequested } from 'src/app/utils/resync-on-reconnect.util';
 
 @Component({
   selector: 'app-admin-tournament-page',
@@ -125,6 +126,14 @@ export class AdminTournamentPageComponent implements OnInit {
     effect(() => {
       if (!this.tournament() && !this.isLoading()) {
         this.reconnectAsAdmin();
+      }
+    });
+
+    onResyncRequested(() => {
+      const code = this.tournament()?.code;
+      const password = this.adminPassword();
+      if (code && password) {
+        this.store.dispatch(connectTournamentAdministrator({ code, password }));
       }
     });
   }

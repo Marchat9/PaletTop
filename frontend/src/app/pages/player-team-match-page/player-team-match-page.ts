@@ -43,6 +43,7 @@ import {
   selectCurrentTournament,
   selectCurrentTournamentData,
 } from 'src/app/store/tournament/tournament.selectors';
+import { onResyncRequested } from 'src/app/utils/resync-on-reconnect.util';
 import { PlayerMatchCardComponent } from './player-match-card/player-match-card';
 import { PlayerMatchResultsComponent } from './player-match-results/player-match-results';
 import { PlayerTeamHeaderComponent } from './player-team-header/player-team-header';
@@ -168,6 +169,17 @@ export class PlayerTeamMatchPageComponent {
       if (!this.sessions() || this.sessions()?.length === 0) {
         this.store.dispatch(loadSessions({ code: this.tournamentPathCode! }));
       }
+    });
+
+    onResyncRequested(() => {
+      if (!this.tournamentPathCode || !this.teamCode) return;
+      this.store.dispatch(
+        loadTournamentInformation({
+          tournamentCode: this.tournamentPathCode,
+          teamCode: this.teamCode,
+        }),
+      );
+      this.store.dispatch(loadSessions({ code: this.tournamentPathCode }));
     });
   }
 

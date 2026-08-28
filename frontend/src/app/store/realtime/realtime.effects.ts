@@ -1,10 +1,11 @@
 import { inject, Injectable } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { Store } from '@ngrx/store';
-import { map, merge, switchMap, tap, withLatestFrom } from 'rxjs';
+import { debounceTime, map, merge, switchMap, tap, withLatestFrom } from 'rxjs';
 import { MatchesSessionDto } from 'src/app/models/matches-session.model';
 import { MatchHistoryDto, PlayerMatchDto } from 'src/app/models/player-match.model';
 import { GlobalRankingEntry } from 'src/app/models/global-ranking.model';
+import { AppVisibilityService } from 'src/app/services/app-visibility.service';
 import { WebSocketService } from 'src/app/services/websocket.service';
 import {
   leaveSpectatorPage,
@@ -20,18 +21,28 @@ import { connectTournamentAdministratorSuccess } from 'src/app/store/tournament/
 import { selectCurrentTournamentAdminInformations } from 'src/app/store/tournament/tournament.selectors';
 import { TournamentDto } from 'src/app/store/tournament/tournament.models';
 import {
+  resyncRequested,
   wsHistoryUpdated,
   wsMatchUpdated,
   wsRankingUpdated,
   wsSessionUpdated,
   wsTournamentUpdated,
 } from './realtime.actions';
+import { environment } from '@environment';
 
 @Injectable()
 export class RealtimeEffects {
   private readonly actions$ = inject(Actions);
   private readonly wsService = inject(WebSocketService);
+  private readonly appVisibility = inject(AppVisibilityService);
   private readonly store = inject(Store);
+
+  resyncOnReconnect$ = createEffect(() =>
+    merge(this.wsService.reconnected$, this.appVisibility.resumed$).pipe(
+      debounceTime(environment.apiConfiguration.mobileResyncDebounce),
+      map(() => resyncRequested()),
+    ),
+  );
 
   disconnectWebSocket$ = createEffect(
     () =>

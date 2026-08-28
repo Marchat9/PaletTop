@@ -9,6 +9,10 @@ export class WebSocketService implements OnDestroy {
   private socket: Nullable<Socket> = null;
   private currentCode: Nullable<string> = null;
 
+  private readonly reconnected = new Subject<void>();
+  /** Emits when the socket re-establishes a connection after the initial one (e.g. after a mobile lock/network drop). */
+  readonly reconnected$ = this.reconnected.asObservable();
+
   connect(tournamentCode: string, context: { teamCode?: string; password?: string }): void {
     if (this.currentCode === tournamentCode && this.socket?.connected) return;
 
@@ -20,8 +24,13 @@ export class WebSocketService implements OnDestroy {
       auth: { tournamentCode, ...context },
     });
 
+    let hasConnectedOnce = false;
     this.socket.on('connect', () => {
       this.socket!.emit('join-tournament');
+      if (hasConnectedOnce) {
+        this.reconnected.next();
+      }
+      hasConnectedOnce = true;
     });
   }
 
