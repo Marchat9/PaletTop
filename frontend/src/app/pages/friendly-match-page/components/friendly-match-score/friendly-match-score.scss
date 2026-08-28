@@ -8,6 +8,7 @@
     justify-content: space-around;
 
     .name {
+      flex: 1;
       font-size: 1.25rem;
       font-weight: 700;
       text-align: center;
@@ -55,6 +56,5 @@
     font-weight: 600;
     color: #4caf50;
     text-align: center;
-    white-space: nowrap;
   }
 }
