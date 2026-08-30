@@ -4,6 +4,7 @@
     <p class="print-tournament-code">
       Code du tournoi : <span class="code-value">{{ tournament()?.code }}</span>
     </p>
+    <app-qr-code [url]="appUrl" [size]="80" alt="Application QR code" />
   </div>
   <table class="print-table">
     <thead>
@@ -11,6 +12,7 @@
         <th>Équipe</th>
         <th>Code</th>
         <th>Joueurs</th>
+        <th class="join">Rejoindre</th>
       </tr>
     </thead>
     <tbody>
@@ -21,6 +23,11 @@
             <b>{{ team.code }}</b>
           </td>
           <td>{{ team.playerNames }}</td>
+          <td class="join">
+            @if (team.playerUrl) {
+              <app-qr-code [url]="team.playerUrl" [size]="60" alt="QR code pour rejoindre" />
+            }
+          </td>
         </tr>
       }
     </tbody>

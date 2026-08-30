@@ -4,10 +4,11 @@ import { NgOptimizedImage } from '@angular/common';
 import { environment } from 'src/environments/environment';
 import { ButtonIcon } from '../../shared/button-icon/button-icon';
 import { Icon } from 'src/app/shared/icon/icon';
+import { QrCode } from 'src/app/shared/qr-code/qr-code';
 
 @Component({
   selector: 'app-about-popup',
-  imports: [ButtonIcon, Icon, NgOptimizedImage],
+  imports: [ButtonIcon, Icon, NgOptimizedImage, QrCode],
   templateUrl: './about-popup.html',
   styleUrl: './about-popup.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -15,6 +16,7 @@ import { Icon } from 'src/app/shared/icon/icon';
 export class AboutPopupComponent {
   readonly dialogRef = inject(DialogRef<void>);
 
+  readonly appUrl: string = window.location.origin;
   readonly appVersion = environment.version;
   readonly githubRepoUrl = environment.githubRepoUrl;
   readonly githubIssuesUrl = `${environment.githubRepoUrl}/issues`;
