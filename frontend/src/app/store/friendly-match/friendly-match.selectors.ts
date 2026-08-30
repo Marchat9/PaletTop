@@ -3,7 +3,8 @@ import { FriendlyMatchState } from './friendly-match.reducer';
 
 export const friendlyMatchFeatureKey = 'friendlyMatch';
 
-const selectFriendlyMatchState = createFeatureSelector<FriendlyMatchState>(friendlyMatchFeatureKey);
+export const selectFriendlyMatchState =
+  createFeatureSelector<FriendlyMatchState>(friendlyMatchFeatureKey);
 
 export const selectTeam1Name = createSelector(selectFriendlyMatchState, (s) => s.team1Name);
 export const selectTeam2Name = createSelector(selectFriendlyMatchState, (s) => s.team2Name);

@@ -1,15 +1,15 @@
 <div class="friendly-match-score">
   <div class="teams">
-    <span class="name left" [class.winner]="winner() === team1Name()">
+    <span class="name max-two-lines" [class.winner]="winner() === team1Name()">
       {{ team1Name() || 'Équipe 1' }}
     </span>
-    <span class="name right" [class.winner]="winner() === team2Name()">
+    <span class="name max-two-lines" [class.winner]="winner() === team2Name()">
       {{ team2Name() || 'Équipe 2' }}
     </span>
   </div>
 
   <div class="scores">
-    <div class="score left">
+    <div class="score">
       <app-score-number
         [colorRed]="true"
         [value]="team1Score()"
@@ -19,7 +19,7 @@
       />
     </div>
     <div class="separator"></div>
-    <div class="score right">
+    <div class="score">
       <app-score-number
         [colorRed]="false"
         [value]="team2Score()"
@@ -32,7 +32,7 @@
 
   @if (isMatchFinished() && winner()) {
     <div class="winner-information">
-      <span class="winner-label">{{ winner() }} gagne !</span>
+      <span class="winner-label max-two-lines">{{ winner() }} gagne !</span>
     </div>
   }
 </div>

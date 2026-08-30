@@ -1,8 +1,12 @@
 import { ActivatedRoute } from '@angular/router';
 import { TestBed } from '@angular/core/testing';
+import { Actions } from '@ngrx/effects';
+import { Action } from '@ngrx/store';
 import { provideMockStore, MockStore } from '@ngrx/store/testing';
+import { Subject } from 'rxjs';
 import { describe, expect, it, vi } from 'vitest';
 import { TournamentStatus } from 'src/app/models/tournament-status.enum';
+import { resyncRequested } from 'src/app/store/realtime/realtime.actions';
 import {
   selectSpectatorCurrentSession,
   selectSpectatorRanking,
@@ -17,11 +21,13 @@ function setup(tournamentData: unknown = null) {
   const activatedRoute = {
     snapshot: { paramMap: { get: () => 'ABC123' } },
   } as unknown as ActivatedRoute;
+  const actions$ = new Subject<Action>();
 
   TestBed.configureTestingModule({
     imports: [SpectatorPageComponent],
     providers: [
       { provide: ActivatedRoute, useValue: activatedRoute },
+      { provide: Actions, useValue: actions$ },
       provideMockStore({
         selectors: [
           { selector: selectSpectatorTournamentData, value: tournamentData },
@@ -36,7 +42,7 @@ function setup(tournamentData: unknown = null) {
 
   const fixture = TestBed.createComponent(SpectatorPageComponent);
   const store = TestBed.inject(MockStore);
-  return { fixture, store };
+  return { fixture, store, actions$ };
 }
 
 describe('SpectatorPageComponent', () => {
@@ -64,5 +70,21 @@ describe('SpectatorPageComponent', () => {
     expect(dispatchSpy).not.toHaveBeenCalledWith(
       expect.objectContaining({ type: loadSpectatorTournament.type }),
     );
+  });
+
+  it('re-fetches the spectator tournament when a resync is requested', () => {
+    const { fixture, store, actions$ } = setup({
+      id: 't-1',
+      code: 'ABC123',
+      name: 'Tournoi',
+      status: TournamentStatus.ACTIVE,
+      scoreCalculation: 'score',
+    });
+    fixture.detectChanges();
+    const dispatchSpy = vi.spyOn(store, 'dispatch');
+
+    actions$.next(resyncRequested());
+
+    expect(dispatchSpy).toHaveBeenCalledWith(loadSpectatorTournament({ tournamentCode: 'ABC123' }));
   });
 });

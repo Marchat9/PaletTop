@@ -26,6 +26,7 @@ import {
   selectSpectatorTournamentError,
   selectSpectatorTournamentIsLoading,
 } from 'src/app/store/spectator/spectator.selectors';
+import { onResyncRequested } from 'src/app/utils/resync-on-reconnect.util';
 import { SpectatorMatchListComponent } from './spectator-match-list/spectator-match-list';
 import { TournamentStatus } from 'src/app/models/tournament-status.enum';
 
@@ -44,7 +45,9 @@ export class SpectatorPageComponent {
   private readonly tournamentCode = this.route.snapshot.paramMap.get('tournamentCode');
 
   public readonly tournament = this.store.selectSignal(selectSpectatorTournamentData);
-  public readonly isLoading = this.store.selectSignal(selectSpectatorTournamentIsLoading);
+  public readonly isLoading = computed(
+    () => !this.tournament() && this.store.selectSignal(selectSpectatorTournamentIsLoading)(),
+  );
   public readonly error = this.store.selectSignal(selectSpectatorTournamentError);
   public readonly currentSession = this.store.selectSignal(selectSpectatorCurrentSession);
   public readonly ranking = this.store.selectSignal(selectSpectatorRanking);
@@ -64,6 +67,11 @@ export class SpectatorPageComponent {
       if (!this.tournament() && !this.isLoading() && !this.error()) {
         this.store.dispatch(loadSpectatorTournament({ tournamentCode: this.tournamentCode }));
       }
+    });
+
+    onResyncRequested(() => {
+      if (!this.tournamentCode) return;
+      this.store.dispatch(loadSpectatorTournament({ tournamentCode: this.tournamentCode }));
     });
 
     this.destroyRef.onDestroy(() => {

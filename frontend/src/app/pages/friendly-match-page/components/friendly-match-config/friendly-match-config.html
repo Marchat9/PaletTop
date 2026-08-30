@@ -37,5 +37,15 @@
         [disabled]="!isMatchFinished()"
       />
     </div>
+
+    <div class="line">
+      <app-button
+        title="Réinitialiser"
+        icon="restart_alt"
+        variant="error"
+        [disabled]="!hasModifications()"
+        (clicked)="reset.emit()"
+      />
+    </div>
   </div>
 </app-card>

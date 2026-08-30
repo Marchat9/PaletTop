@@ -55,6 +55,7 @@ import { TournamentHeaderComponent } from './components/tournament-header/tourna
 import { TournamentTeamConfigurationCard } from './components/tournament-team-configuration-card/tournament-team-configuration-card';
 import { selectSessions } from 'src/app/store/session/session.selectors';
 import { selectAdminUpdateScoreLoading } from 'src/app/store/match/match.selectors';
+import { onResyncRequested } from 'src/app/utils/resync-on-reconnect.util';
 
 @Component({
   selector: 'app-admin-tournament-page',
@@ -80,13 +81,15 @@ export class AdminTournamentPageComponent implements OnInit {
   readonly tournamentCode = signal<string | null>(null);
 
   // Selects
-  private readonly tournamentData = this.store.selectSignal(selectCurrentTournamentData);
+  public readonly tournament = this.store.selectSignal(selectCurrentTournamentData);
   private readonly adminSession = this.store.selectSignal(selectCurrentTournamentAdminInformations);
   public readonly sessions = this.store.selectSignal(selectSessions);
   public readonly ranking = this.store.selectSignal(selectRanking);
 
   // Loadings
-  public readonly tournamentLoading = this.store.selectSignal(selectCurrentTournamentIsLoading);
+  public readonly tournamentLoading = computed(
+    () => !this.tournament() && this.store.selectSignal(selectCurrentTournamentIsLoading)(),
+  );
   public readonly completeLoading = this.store.selectSignal(selectCompleteTournamentLoading);
   public readonly isUpdateConfigLoading = this.store.selectSignal(
     selectTournamentUpdateConfigLoading,
@@ -94,12 +97,12 @@ export class AdminTournamentPageComponent implements OnInit {
   public readonly startLoading = this.store.selectSignal(selectStartTournamentLoading);
   public readonly nextLoading = this.store.selectSignal(selectNextSessionLoading);
   public readonly scoreUpdateLoading = this.store.selectSignal(selectAdminUpdateScoreLoading);
-  public readonly rankingLoading = this.store.selectSignal(selectRankingIsLoading);
+  public readonly rankingLoading = computed(
+    () => !this.ranking() && this.store.selectSignal(selectRankingIsLoading)(),
+  );
 
   // Compute
-  public readonly tournament = computed<Nullable<TournamentDto>>(() => this.tournamentData());
   public readonly adminPassword = computed(() => this.adminSession()?.password ?? null);
-  public readonly isLoading = computed(() => this.tournamentLoading());
 
   // Data
   public readonly hiddenFields: TournamentConfigurationField[] = environment.tournamentConfiguration
@@ -123,8 +126,16 @@ export class AdminTournamentPageComponent implements OnInit {
 
     // check if all required data are present or redirect to admin login page
     effect(() => {
-      if (!this.tournament() && !this.isLoading()) {
+      if (!this.tournament() && !this.tournamentLoading()) {
         this.reconnectAsAdmin();
+      }
+    });
+
+    onResyncRequested(() => {
+      const code = this.tournament()?.code;
+      const password = this.adminPassword();
+      if (code && password) {
+        this.store.dispatch(connectTournamentAdministrator({ code, password }));
       }
     });
   }

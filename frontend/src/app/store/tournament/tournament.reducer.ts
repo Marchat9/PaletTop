@@ -129,7 +129,7 @@ export const tournamentReducer = createReducer(
   on(connectTournamentAdministrator, (state, { code, password }) => ({
     ...state,
     tournament: {
-      ...initialTournamentState.tournament,
+      ...state.tournament,
       isLoading: true,
     },
     adminInformations: {
@@ -159,7 +159,7 @@ export const tournamentReducer = createReducer(
   on(loadTournamentInformation, (state) => ({
     ...state,
     tournament: {
-      ...initialTournamentState.tournament,
+      ...state.tournament,
       isLoading: true,
     },
   })),

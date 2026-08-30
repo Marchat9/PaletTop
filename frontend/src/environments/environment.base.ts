@@ -12,6 +12,7 @@ export const environment = {
 
   apiConfiguration: {
     delayToUpdateScore: 500, // ms
+    mobileResyncDebounce: 1_000, //ms
   },
 
   pwa: {

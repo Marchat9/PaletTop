@@ -16,9 +16,11 @@ export class FriendlyMatchConfig {
   readonly team2Name = input<string>('');
   readonly targetScore = input<number>(15);
   readonly isMatchFinished = input<boolean>(false);
+  readonly hasModifications = input<boolean>(false);
 
   readonly team1NameChange = output<string>();
   readonly team2NameChange = output<string>();
   readonly targetScoreChange = output<number>();
   readonly nextMatch = output<void>();
+  readonly reset = output<void>();
 }
