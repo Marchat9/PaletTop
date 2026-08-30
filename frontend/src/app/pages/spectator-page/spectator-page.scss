@@ -30,6 +30,10 @@
     gap: 1rem;
     flex-wrap: wrap;
 
+    @media (width <= 580px) {
+      flex-direction: column;
+    }
+
     .tournament-name {
       flex: 1;
       margin: 0;
@@ -42,8 +46,11 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 0.75rem;
-      flex-wrap: wrap;
+      gap: 0.5rem;
+
+      @media (width < 1024px) {
+        flex-wrap: wrap;
+      }
 
       &.ended {
         justify-content: center;
@@ -57,7 +64,10 @@
         background: var(--color-surface-container-high);
         color: var(--color-on-surface-variant);
         border: 1px solid var(--color-border-default);
-        text-wrap-mode: nowrap;
+
+        @media (width >= 320px) {
+          text-wrap-mode: nowrap;
+        }
 
         &.draft {
           color: var(--color-status-draft-text);

@@ -13,7 +13,19 @@ function findButtonByTitle(root: HTMLElement, title: string): HTMLElement {
 }
 
 describe('FriendlyMatchConfig', () => {
-  it('emits reset when the reset button is clicked', () => {
+  it('emits reset when the reset button is clicked and there are modifications', () => {
+    const fixture = TestBed.createComponent(FriendlyMatchConfig);
+    const resetSpy = vi.fn();
+    fixture.componentInstance.reset.subscribe(resetSpy);
+    fixture.componentRef.setInput('hasModifications', true);
+    fixture.detectChanges();
+
+    findButtonByTitle(fixture.nativeElement, 'Réinitialiser').click();
+
+    expect(resetSpy).toHaveBeenCalled();
+  });
+
+  it('disables the reset button when there are no modifications', () => {
     const fixture = TestBed.createComponent(FriendlyMatchConfig);
     const resetSpy = vi.fn();
     fixture.componentInstance.reset.subscribe(resetSpy);
@@ -21,6 +33,6 @@ describe('FriendlyMatchConfig', () => {
 
     findButtonByTitle(fixture.nativeElement, 'Réinitialiser').click();
 
-    expect(resetSpy).toHaveBeenCalled();
+    expect(resetSpy).not.toHaveBeenCalled();
   });
 });

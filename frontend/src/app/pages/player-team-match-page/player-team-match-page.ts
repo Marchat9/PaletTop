@@ -124,7 +124,8 @@ export class PlayerTeamMatchPageComponent {
   });
   public readonly recentResults = computed(() => historyToResults(this.matchHistory()));
   public readonly isLoading = computed(
-    () => this.tournamentState().isLoading || this.teamIsLoading(),
+    () =>
+      !this.tournamentState().data && (this.tournamentState().isLoading || this.teamIsLoading()),
   );
   public readonly tournamentCode = computed(() => this.tournamentData()?.code ?? '—');
   public readonly pointsPerGame = computed(() =>
@@ -152,6 +153,7 @@ export class PlayerTeamMatchPageComponent {
         this.router.navigate(['/player']);
         return;
       }
+      const isActive = this.tournamentData()?.status === TournamentStatus.ACTIVE;
 
       if (
         !this.tournamentState().data &&
@@ -166,7 +168,7 @@ export class PlayerTeamMatchPageComponent {
         );
       }
 
-      if (!this.sessions() || this.sessions()?.length === 0) {
+      if (isActive && (!this.sessions() || this.sessions()?.length === 0)) {
         this.store.dispatch(loadSessions({ code: this.tournamentPathCode! }));
       }
     });

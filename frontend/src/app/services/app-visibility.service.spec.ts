@@ -29,14 +29,14 @@ describe('AppVisibilityService', () => {
     expect(spy).not.toHaveBeenCalled();
   });
 
-  it('emits resumed$ when the window regains focus', () => {
+  it('does not emit resumed$ on a plain window focus (e.g. desktop alt-tab)', () => {
     const service = TestBed.inject(AppVisibilityService);
     const spy = vi.fn();
     service.resumed$.subscribe(spy);
 
     window.dispatchEvent(new Event('focus'));
 
-    expect(spy).toHaveBeenCalledTimes(1);
+    expect(spy).not.toHaveBeenCalled();
   });
 
   it('emits resumed$ when the network comes back online', () => {

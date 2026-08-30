@@ -45,7 +45,9 @@ export class SpectatorPageComponent {
   private readonly tournamentCode = this.route.snapshot.paramMap.get('tournamentCode');
 
   public readonly tournament = this.store.selectSignal(selectSpectatorTournamentData);
-  public readonly isLoading = this.store.selectSignal(selectSpectatorTournamentIsLoading);
+  public readonly isLoading = computed(
+    () => !this.tournament() && this.store.selectSignal(selectSpectatorTournamentIsLoading)(),
+  );
   public readonly error = this.store.selectSignal(selectSpectatorTournamentError);
   public readonly currentSession = this.store.selectSignal(selectSpectatorCurrentSession);
   public readonly ranking = this.store.selectSignal(selectSpectatorRanking);

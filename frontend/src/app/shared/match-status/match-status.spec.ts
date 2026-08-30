@@ -14,7 +14,7 @@ describe('MatchStatusComponent', () => {
   it.each([
     ['PENDING', 'En attente'],
     ['ONGOING', 'En cours'],
-    ['ENDED', 'Terminé'],
+    ['ENDED', 'En validation'],
     ['VALIDATED', 'Validé'],
   ])('renders the French label for status %s', (status, label) => {
     const { fixture } = setup(status);

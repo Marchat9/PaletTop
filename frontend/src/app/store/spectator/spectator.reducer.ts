@@ -24,7 +24,7 @@ export const spectatorReducer = createReducer(
 
   on(loadSpectatorTournament, (state) => ({
     ...state,
-    tournament: { ...initialSpectatorState.tournament, isLoading: true },
+    tournament: { ...state.tournament, isLoading: true },
   })),
   on(loadSpectatorTournamentSuccess, (state, { tournament, sessions, ranking }) => ({
     ...state,

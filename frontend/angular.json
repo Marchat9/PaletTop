@@ -72,6 +72,17 @@
               "optimization": false,
               "extractLicenses": false,
               "sourceMap": true
+            },
+            "dev-network": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true,
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.network.ts"
+                }
+              ]
             }
           },
           "defaultConfiguration": "production"
@@ -84,6 +95,9 @@
             },
             "development": {
               "buildTarget": "PaletTop:build:development"
+            },
+            "dev-network": {
+              "buildTarget": "PaletTop:build:dev-network"
             }
           },
           "defaultConfiguration": "development"

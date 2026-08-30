@@ -81,13 +81,15 @@ export class AdminTournamentPageComponent implements OnInit {
   readonly tournamentCode = signal<string | null>(null);
 
   // Selects
-  private readonly tournamentData = this.store.selectSignal(selectCurrentTournamentData);
+  public readonly tournament = this.store.selectSignal(selectCurrentTournamentData);
   private readonly adminSession = this.store.selectSignal(selectCurrentTournamentAdminInformations);
   public readonly sessions = this.store.selectSignal(selectSessions);
   public readonly ranking = this.store.selectSignal(selectRanking);
 
   // Loadings
-  public readonly tournamentLoading = this.store.selectSignal(selectCurrentTournamentIsLoading);
+  public readonly tournamentLoading = computed(
+    () => !this.tournament() && this.store.selectSignal(selectCurrentTournamentIsLoading)(),
+  );
   public readonly completeLoading = this.store.selectSignal(selectCompleteTournamentLoading);
   public readonly isUpdateConfigLoading = this.store.selectSignal(
     selectTournamentUpdateConfigLoading,
@@ -95,12 +97,12 @@ export class AdminTournamentPageComponent implements OnInit {
   public readonly startLoading = this.store.selectSignal(selectStartTournamentLoading);
   public readonly nextLoading = this.store.selectSignal(selectNextSessionLoading);
   public readonly scoreUpdateLoading = this.store.selectSignal(selectAdminUpdateScoreLoading);
-  public readonly rankingLoading = this.store.selectSignal(selectRankingIsLoading);
+  public readonly rankingLoading = computed(
+    () => !this.ranking() && this.store.selectSignal(selectRankingIsLoading)(),
+  );
 
   // Compute
-  public readonly tournament = computed<Nullable<TournamentDto>>(() => this.tournamentData());
   public readonly adminPassword = computed(() => this.adminSession()?.password ?? null);
-  public readonly isLoading = computed(() => this.tournamentLoading());
 
   // Data
   public readonly hiddenFields: TournamentConfigurationField[] = environment.tournamentConfiguration
@@ -124,7 +126,7 @@ export class AdminTournamentPageComponent implements OnInit {
 
     // check if all required data are present or redirect to admin login page
     effect(() => {
-      if (!this.tournament() && !this.isLoading()) {
+      if (!this.tournament() && !this.tournamentLoading()) {
         this.reconnectAsAdmin();
       }
     });

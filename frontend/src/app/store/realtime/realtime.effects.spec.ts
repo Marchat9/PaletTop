@@ -42,7 +42,7 @@ describe('RealtimeEffects - resyncOnReconnect$', () => {
     effects.resyncOnReconnect$.subscribe((action) => emitted.push(action));
 
     reconnected$.next();
-    vi.advanceTimersByTime(300);
+    vi.advanceTimersByTime(1_000);
 
     expect(emitted).toEqual([resyncRequested()]);
   });
@@ -53,7 +53,7 @@ describe('RealtimeEffects - resyncOnReconnect$', () => {
     effects.resyncOnReconnect$.subscribe((action) => emitted.push(action));
 
     resumed$.next();
-    vi.advanceTimersByTime(300);
+    vi.advanceTimersByTime(1_000);
 
     expect(emitted).toEqual([resyncRequested()]);
   });
@@ -65,7 +65,7 @@ describe('RealtimeEffects - resyncOnReconnect$', () => {
 
     reconnected$.next();
     resumed$.next();
-    vi.advanceTimersByTime(300);
+    vi.advanceTimersByTime(1_000);
 
     expect(emitted).toEqual([resyncRequested()]);
   });

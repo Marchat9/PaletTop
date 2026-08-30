@@ -16,7 +16,6 @@ export class AppVisibilityService {
         this.resumed.next();
       }
     });
-    window.addEventListener('focus', () => this.resumed.next());
     window.addEventListener('online', () => this.resumed.next());
   }
 }
