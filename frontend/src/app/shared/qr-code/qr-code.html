@@ -1,0 +1,12 @@
+@if (svgMarkup(); as svg) {
+  <div
+    class="qr-code"
+    [style.width.px]="size()"
+    [style.height.px]="size()"
+    [innerHTML]="svg"
+    role="img"
+    [attr.aria-label]="alt()"
+  ></div>
+} @else {
+  <div class="qr-code-placeholder" [style.width.px]="size()" [style.height.px]="size()"></div>
+}

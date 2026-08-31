@@ -1,0 +1,13 @@
+// inline-block (not block) so text-align: center on an ancestor (e.g. a table
+// cell) can center it - block-level content ignores the parent's text-align.
+.qr-code {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.qr-code-placeholder {
+  display: inline-block;
+  vertical-align: middle;
+  background-color: var(--color-surface-variant, #e0e0e0);
+  border-radius: 4px;
+}

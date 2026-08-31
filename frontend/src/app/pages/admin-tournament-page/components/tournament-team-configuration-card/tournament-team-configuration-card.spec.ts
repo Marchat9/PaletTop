@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { TournamentTeamConfigurationCard } from './tournament-team-configuration-card';
+import { Nullable } from 'src/app/models/nullable.model';
 import { TounamentTeamDto, TournamentDto } from 'src/app/store/tournament/tournament.models';
 import { TournamentStatus } from 'src/app/models/tournament-status.enum';
 
@@ -46,6 +47,30 @@ describe('TournamentTeamConfigurationCard', () => {
 
     expect(fixture.nativeElement.querySelector('app-team-print-sheet')).not.toBeNull();
     expect(printSpy).toHaveBeenCalled();
+  });
+
+  it('has the QR code svg (not the loading placeholder) in the DOM by the time window.print() fires', async () => {
+    let qrCellHtmlAtPrintTime = '';
+    const printSpy = vi.spyOn(window, 'print').mockImplementation(() => {
+      const qrCell: Nullable<HTMLElement> = fixture.nativeElement.querySelector(
+        'app-team-print-sheet td:last-child',
+      );
+      qrCellHtmlAtPrintTime = qrCell?.innerHTML ?? '';
+    });
+    const fixture = TestBed.createComponent(TournamentTeamConfigurationCard);
+    fixture.componentRef.setInput(
+      'tournament',
+      buildTournament([{ id: 'team-1', code: '1234', name: 'Alpha', players: [] }]),
+    );
+    fixture.detectChanges();
+
+    fixture.componentInstance.printTeamList();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(printSpy).toHaveBeenCalled();
+    expect(qrCellHtmlAtPrintTime).toContain('<svg');
+    expect(qrCellHtmlAtPrintTime).not.toContain('qr-code-placeholder');
   });
 
   it('unmounts the print sheet when the browser fires afterprint', async () => {
