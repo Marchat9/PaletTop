@@ -9,6 +9,7 @@ import { MatchStatus } from 'src/enum/status.enum';
 import { DeepPartial } from 'typeorm';
 import { TournamentStatusInfo } from '../../../tournaments/responses/tournament-status.dto';
 import { MatchRepository } from '../../repositories/match.repository';
+import { TournamentRepository } from '../../repositories/tournament.repository';
 import { PoolService } from '../../services/pool.service';
 import { extractCompetitionConfiguration } from '../../utils/tournament.utils';
 import { toPoolRef, toSessionRef, toTeamRef, toTournamentRef } from '../../utils/type-orm-ref.utils';
@@ -23,6 +24,7 @@ export class ChampionshipTournamentStrategy extends TournamentStrategy {
     constructor(
         private readonly poolService: PoolService,
         private readonly matchRepo: MatchRepository,
+        private readonly tournamentRepo: TournamentRepository,
     ) {
         super();
     }
@@ -41,7 +43,13 @@ export class ChampionshipTournamentStrategy extends TournamentStrategy {
             throw new Error(`Il n'y a pas le même nombre d'équipe dans les deux clubs`);
         }
 
-        return tournament;
+        return await this.tournamentRepo.save({
+            ...tournament,
+            configuration: {
+                ...tournament.configuration,
+                maxTeamCapacity: 8
+            },
+        });
     }
 
     override async assignTeamsToFirstPools(tournament: Tournament): Promise<TournamentPool[]> {

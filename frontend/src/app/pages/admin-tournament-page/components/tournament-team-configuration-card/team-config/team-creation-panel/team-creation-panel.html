@@ -31,12 +31,16 @@
         }}
       </p>
 
-      <app-team-form
-        [tournament]="resolvedTournament()"
-        [editingTeam]="editingTeam"
-        (submitted)="emitOrClose($event)"
-        (cancelled)="closeSheet()"
-      />
+      @if (canCreateTeam()) {
+        <app-team-form
+          [tournament]="resolvedTournament()"
+          [editingTeam]="editingTeam"
+          (submitted)="emitOrClose($event)"
+          (cancelled)="closeSheet()"
+        />
+      } @else {
+        <span class="title icon-text"><app-icon name="info"/> Nombre d'équipe maximum atteinte</span>
+      }
     </div>
   } @else {
     <div class="tab-panel">
@@ -57,8 +61,12 @@
           icon="upload_file"
           variant="secondary"
           [accept]="importFileFormats"
+          [disabled]="!canCreateTeam()"
           (fileSelected)="onFileSelected($event)"
-        />
+        /> 
+        @if(!canCreateTeam()) {
+          <span class="title icon-text"><app-icon name="info"/> Nombre d'équipe maximum atteinte</span>
+        }
       </div>
 
       @if (importError(); as error) {

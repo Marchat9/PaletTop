@@ -1,5 +1,6 @@
 import { DIALOG_DATA, Dialog, DialogRef } from '@angular/cdk/dialog';
 import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
+import { environment } from '@environment';
 import { Nullable } from 'src/app/models/nullable.model';
 import {
   TeamConfigCreateTeamPayload,
@@ -9,9 +10,8 @@ import {
 import { Button } from 'src/app/shared/button/button';
 import { InputFile } from 'src/app/shared/input-file/input-file';
 import { TournamentDto } from 'src/app/store/tournament/tournament.models';
-import { environment } from '@environment';
-import { downloadBlob, generateTeamsExcelTemplate, parseTeamsExcelFile } from '../team-excel.utils';
 import { type TeamEditFormValue } from '../team-config.utils';
+import { downloadBlob, generateTeamsExcelTemplate, parseTeamsExcelFile } from '../team-excel.utils';
 import { TeamForm } from '../team-form/team-form';
 import {
   TeamImportPreviewDialog,
@@ -21,6 +21,7 @@ import {
   TeamImportTemplateDialog,
   TeamImportTemplateDialogData,
 } from '../team-import-template-dialog/team-import-template-dialog';
+import { Icon } from 'src/app/shared/icon/icon';
 
 export interface TeamCreationPanelData {
   tournament: Nullable<TournamentDto>;
@@ -37,7 +38,7 @@ type TeamCreationTab = 'manual' | 'import';
 // `editingTeam` — desktop editing stays on the inline row editor in team-config.html.
 @Component({
   selector: 'app-team-creation-panel',
-  imports: [Button, InputFile, TeamForm],
+  imports: [Button, InputFile, TeamForm, Icon],
   templateUrl: './team-creation-panel.html',
   styleUrl: './team-creation-panel.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -60,6 +61,7 @@ export class TeamCreationPanel {
   public readonly isEditMode = !!this.editingTeam;
 
   public readonly existingTeamCount = computed(() => this.resolvedTournament()?.teams?.length ?? 0);
+  public readonly canCreateTeam = computed(() => this.isEditMode === true || (this.resolvedTournament()?.teams?.length ?? 0) < (this.resolvedTournament()?.configuration.maxTeamCapacity ?? 254));
 
   public readonly importFileFormats = '.xlsx,.xlsm,.xls,.xlt,.ods,.csv';
   public readonly importError = signal<Nullable<string>>(null);

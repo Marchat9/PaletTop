@@ -10,6 +10,7 @@ import {
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { environment } from '@environment';
 import { Nullable } from 'src/app/models/nullable.model';
 import {
   ChampionShipTournamentConfig,
@@ -56,6 +57,8 @@ export class TournamentConfiguration implements OnInit {
   public readonly invalidFields = output<string[] | null>();
   public form!: TournamentConfigurationForm;
 
+  private readonly teamCapacity = environment.tournamentConfiguration.maxTeamCapacity;
+
   private readonly injector = inject(Injector);
 
   ngOnInit(): void {
@@ -67,6 +70,7 @@ export class TournamentConfiguration implements OnInit {
       (tournament?.configuration.competitionConfiguration as UpDownTournamentConfig) ?? {};
     const championShipConfig: ChampionShipTournamentConfig =
       (tournament?.configuration.competitionConfiguration as ChampionShipTournamentConfig) ?? {};
+
 
     this.form = new FormGroup({
       parameters: new FormGroup({
@@ -90,7 +94,7 @@ export class TournamentConfiguration implements OnInit {
       }),
 
       rules: new FormGroup({
-        maxTeamCapacity: new FormControl(tournament?.configuration?.maxTeamCapacity ?? 254, {
+        maxTeamCapacity: new FormControl(tournament?.configuration?.maxTeamCapacity ?? this.teamCapacity.max, {
           nonNullable: true,
           validators: [Validators.required, Validators.min(2)],
         }),
@@ -169,13 +173,36 @@ export class TournamentConfiguration implements OnInit {
       }),
     });
 
+    // Signals
     const formValues = toSignal(this.form.valueChanges, { injector: this.injector });
+    const competitionMode = toSignal(
+      this.form.controls.modeParameter.controls.competitionMode.valueChanges,
+      { injector: this.injector },
+    );
 
+    // effect to agregate fields in error state
     effect(
       () => {
         formValues();
         const fields = getInvalidFieldNames(this.form);
         this.invalidFields.emit(fields.length ? fields : null);
+      },
+      { injector: this.injector },
+    );
+
+    // effect to change maxTeamCapacity on competitionMode changes
+    effect(
+      () => {
+        const mode = competitionMode();
+        if (mode === undefined) {
+          return;
+        }
+
+        this.form.controls.rules.controls.maxTeamCapacity.setValue(
+          mode === 'championship' ?
+            this.teamCapacity.maxChampionship
+            : this.teamCapacity.max,
+        );
       },
       { injector: this.injector },
     );
