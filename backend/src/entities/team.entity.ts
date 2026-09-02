@@ -23,6 +23,9 @@ export class Team {
     @Column()
     code!: string;
 
+    @Column({ nullable: true })
+    club?: string;
+
     @OneToMany(() => Player, (player: Player) => player.team, {
         cascade: true,
         orphanedRowAction: 'delete',

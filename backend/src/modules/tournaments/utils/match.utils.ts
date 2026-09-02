@@ -34,7 +34,7 @@ import { DeepPartial } from 'typeorm';
 // that team as teamA/teamB.
 
 export function generateMatchesInPool(
-    poll: TournamentPool,
+    pool: TournamentPool,
     teams: Team[],
     tournament: Tournament,
     session: MatchesSession,
@@ -54,7 +54,7 @@ export function generateMatchesInPool(
             buildByeMatchData(
                 toTeamRef(byeTeam),
                 tournamentRef,
-                poll,
+                pool,
                 sessionRef,
                 tournament.configuration.pointsPerGame,
                 session.sessionNumber,
@@ -74,7 +74,7 @@ export function generateMatchesInPool(
             tournament: tournamentRef,
             session: sessionRef,
             sessionNumber: session.sessionNumber,
-            pool: poll,
+            pool: pool,
             teamA: toTeamRef(teamA),
             teamB: toTeamRef(teamB),
             isBye: false,

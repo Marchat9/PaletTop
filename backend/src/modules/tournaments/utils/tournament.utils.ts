@@ -1,6 +1,7 @@
 import { Tournament } from 'src/entities/tournament.entity';
 import { TournamentConfigurationDto } from '../dto/tournament-configuration.dto';
 import {
+    ChampionShipCompetitionConfiguration,
     StructuredCompetitionConfiguration,
     TournamentCompetitionConfiguration,
     UpDownCompetitionConfiguration,
@@ -60,6 +61,13 @@ export function extractCompetitionConfiguration(
             const upDownConfig = config.competitionConfiguration as UpDownCompetitionConfiguration;
             return {
                 numberOfRound: upDownConfig.numberOfRound,
+            };
+        }
+        case CompetitionMode.CHAMPIONSHIP: {
+            const championshipConfig = config.competitionConfiguration as ChampionShipCompetitionConfiguration;
+            return {
+                homeClub: championshipConfig.homeClub,
+                awayClub: championshipConfig.awayClub,
             };
         }
         default:
