@@ -29,3 +29,11 @@ export class UpDownCompetitionConfiguration extends TournamentCompetitionConfigu
     @Column({ nullable: true })
     numberOfRound?: number;
 }
+
+export class ChampionShipCompetitionConfiguration extends TournamentCompetitionConfiguration {
+    @Column({ nullable: false })
+    homeClub!: string;
+
+    @Column({ nullable: false })
+    awayClub!: string;
+}

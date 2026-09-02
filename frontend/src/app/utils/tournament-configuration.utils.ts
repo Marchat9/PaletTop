@@ -64,6 +64,12 @@ export function extractCompetitionConfiguration(
       return {
         numberOfRound: upDownConfigControls.numberOfRound.value,
       };
+    case 'championship':
+      const championshipConfigControls = tournamentModeParameter.controls.championshipMode.controls;
+      return {
+        homeClub: championshipConfigControls.homeTeam.value,
+        awayClub: championshipConfigControls.awayTeam.value,
+      };
     default:
       return {};
   }

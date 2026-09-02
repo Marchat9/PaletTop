@@ -14,7 +14,6 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
 import { Nullable } from 'src/app/models/nullable.model';
 import { TeamConfigEvent, TeamConfigEventType } from 'src/app/models/team-config.model';
-import { Button } from 'src/app/shared/button/button';
 import { ButtonIcon } from 'src/app/shared/button-icon/button-icon';
 import { InputText } from 'src/app/shared/input-text/input-text';
 import { Icon } from 'src/app/shared/icon/icon';
@@ -22,23 +21,22 @@ import { TounamentTeamDto, TournamentDto } from 'src/app/store/tournament/tourna
 import { TeamAction, TeamActionsMenu } from './team-actions-menu/team-actions-menu';
 import {
   filterTeams,
-  generateDefaultPlayerRow,
   summarizeClubs,
   toTeamEditFormValue,
   type TeamEditFormValue,
-  type TeamPlayerFormValue,
 } from './team-config.utils';
 import {
   TeamCreationPanel,
   TeamCreationPanelData,
 } from './team-creation-panel/team-creation-panel';
+import { TeamForm } from './team-form/team-form';
 import { environment } from '@environment';
 
 const MOBILE_BREAKPOINT = '(max-width: ' + environment.limitMobileSizePx + 'px)';
 
 @Component({
   selector: 'app-team-config',
-  imports: [Button, ButtonIcon, InputText, Icon, TeamCreationPanel],
+  imports: [ButtonIcon, InputText, Icon, TeamCreationPanel, TeamForm],
   templateUrl: './team-config.html',
   styleUrl: './team-config.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -79,10 +77,6 @@ export class TeamConfig {
   });
 
   public readonly editingTeam = signal<Nullable<TeamEditFormValue>>(null);
-  public readonly canSubmitEditTeam = computed(() => {
-    const current = this.editingTeam();
-    return !!current && current.players.every((player) => !!player.name.trim());
-  });
 
   // ======= Actions =======
   public updateSearch(value: string): void {
@@ -171,54 +165,8 @@ export class TeamConfig {
     this.editingTeam.set(null);
   }
 
-  public updateEditTeamName(value: string): void {
-    this.editingTeam.update((current) => (current ? { ...current, name: value } : current));
-  }
-
-  public addEditPlayerRow(): void {
-    this.editingTeam.update((current) =>
-      current ? { ...current, players: [...current.players, generateDefaultPlayerRow()] } : current,
-    );
-  }
-
-  public removeEditPlayerRow(index: number): void {
-    this.editingTeam.update((current) => {
-      if (!current || current.players.length <= 1) {
-        return current;
-      }
-
-      return {
-        ...current,
-        players: current.players.filter((_, playerIndex) => playerIndex !== index),
-      };
-    });
-  }
-
-  public updateEditPlayerName(index: number, value: string): void {
-    this.patchEditPlayer(index, { name: value });
-  }
-
-  public updateEditPlayerClub(index: number, value: string): void {
-    this.patchEditPlayer(index, { club: value });
-  }
-
-  public onUpdateTeam(): void {
-    const current = this.editingTeam();
-    if (!current || !this.canSubmitEditTeam()) {
-      return;
-    }
-
-    this.teamUpdated.emit({
-      type: TeamConfigEventType.UPDATE_TEAM,
-      payload: {
-        teamId: current.teamId,
-        name: current.name.trim() || undefined,
-        players: current.players
-          .map((player) => ({ name: player.name.trim(), club: player.club.trim() || undefined }))
-          .filter((player) => !!player.name),
-      },
-    });
-
+  public onEditTeamSubmitted(event: TeamConfigEvent): void {
+    this.teamUpdated.emit(event);
     this.editingTeam.set(null);
   }
 
@@ -226,21 +174,6 @@ export class TeamConfig {
     this.teamUpdated.emit({
       type: TeamConfigEventType.REMOVE_TEAM,
       payload: { teamId: team.id },
-    });
-  }
-
-  private patchEditPlayer(index: number, patch: Partial<TeamPlayerFormValue>): void {
-    this.editingTeam.update((current) => {
-      if (!current) {
-        return current;
-      }
-
-      return {
-        ...current,
-        players: current.players.map((player, playerIndex) =>
-          playerIndex === index ? { ...player, ...patch } : player,
-        ),
-      };
     });
   }
 }

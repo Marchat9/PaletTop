@@ -30,7 +30,11 @@ export class TournamentStrategyFactory {
             case CompetitionMode.UP_DOWN:
                 return new UpDownTournamentStrategy(this.poolService, this.matchRepo);
             case CompetitionMode.CHAMPIONSHIP:
-                return new ChampionshipTournamentStrategy();
+                return new ChampionshipTournamentStrategy(
+                    this.poolService,
+                    this.matchRepo,
+                    this.tournamentRepo,
+                );
             default:
                 throw new BadRequestException(`Type de tournoi non supporté : ${mode}`);
         }

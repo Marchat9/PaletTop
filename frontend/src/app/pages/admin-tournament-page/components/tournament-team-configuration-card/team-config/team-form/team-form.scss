@@ -1,0 +1,5 @@
+@use '../team-form-fields' as fields;
+
+:host {
+  @include fields.team-form-fields;
+}

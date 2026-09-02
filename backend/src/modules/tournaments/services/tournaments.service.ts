@@ -179,6 +179,7 @@ export class TournamentsService {
 
             const team = this.teamRepo.create({
                 name: teamDto.name || `Equipe ${existingTeamCount + index + 1}`,
+                club: teamDto.club || undefined,
                 code,
                 tournament,
                 players: teamDto.players.map((playerDto) => {

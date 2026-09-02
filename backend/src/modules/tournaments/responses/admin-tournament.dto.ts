@@ -7,7 +7,8 @@ import { TournamentStatus } from 'src/enum/status.enum';
 export interface TeamDto {
     id: string;
     name: string;
-    code?: string | null;
+    code?: string;
+    club?: string;
     players: { id: string; name: string; club?: string }[];
 }
 
@@ -32,6 +33,7 @@ export function toTeamDto(team: Team): TeamDto {
         id: team.id,
         name: team.name,
         code: team.code,
+        club: team.club,
         players: (team.players ?? []).map((p) => ({
             id: p.id,
             name: p.name,

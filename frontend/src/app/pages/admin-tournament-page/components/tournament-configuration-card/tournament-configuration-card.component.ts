@@ -4,7 +4,6 @@ import { CardCollapsible } from 'src/app/shared/card-collapsible/card-collapsibl
 import { Icon } from 'src/app/shared/icon/icon';
 import { TournamentDto } from 'src/app/store/tournament/tournament.models';
 import { ConfigurationFormComponent } from './configuration-form/configuration-form.component';
-import { TournamentConfigurationDetailsDto } from 'src/app/models/tournament-configuration-detail.model';
 import { TournamentConfigurationField } from 'src/app/shared/tournament-configuration/tournament-configuration-form.model';
 import { TournamentConfigurationDto } from 'src/app/models/tournament-configuration.model';
 

@@ -9,12 +9,14 @@ export enum TeamConfigEventType {
 
 export interface TeamConfigCreateTeamPayload {
   name?: string;
+  club?: string;
   players: Pick<TounamentTeamPlayerDto, 'name' | 'club'>[];
 }
 
 export interface TeamConfigUpdateTeamPayload {
   teamId: string;
   name?: string;
+  club?: string;
   players: Pick<TounamentTeamPlayerDto, 'name' | 'club'>[];
 }
 

@@ -26,6 +26,7 @@ export interface TournamentDto {
 export interface TounamentTeamDto {
   id: string;
   code?: string;
+  club?: string;
   name: string;
   players: TounamentTeamPlayerDto[];
   matches?: TounamentTeamMatchDto[];

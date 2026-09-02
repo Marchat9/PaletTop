@@ -1,13 +1,22 @@
-<select
-  [id]="id() || null"
-  class="input-select"
-  [value]="internalValue()"
-  [disabled]="disabled()"
-  (change)="onChange($any($event.target).value)"
->
-  @for (option of options(); track option.value) {
-    <option [value]="option.value" [selected]="internalValue() === option.value">
-      {{ option.label }}
-    </option>
+<div class="input-select-wrapper">
+  @if (icon()) {
+    <app-icon [name]="icon()" iconClass="input-icon" [ariaHidden]="true" />
   }
-</select>
+
+  <select
+    [id]="id() || null"
+    class="input-select"
+    [class.with-icon]="!!icon()"
+    [value]="internalValue()"
+    [disabled]="disabled()"
+    (change)="onChange($any($event.target).value)"
+  >
+    @for (option of options(); track option.value) {
+      <option [value]="option.value" [selected]="internalValue() === option.value">
+        {{ option.label }}
+      </option>
+    }
+  </select>
+
+  <app-icon name="expand_more" iconClass="select-chevron" [ariaHidden]="true" />
+</div>

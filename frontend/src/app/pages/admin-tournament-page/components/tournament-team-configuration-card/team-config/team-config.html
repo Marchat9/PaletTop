@@ -53,72 +53,12 @@
           @for (row of teamRows(); track row.team.id) {
             @if (editingTeam()?.teamId === row.team.id) {
               <div class="team-row team-row-editing" role="row">
-                <div class="team-item-edit">
-                  <div class="field-group">
-                    <label for="edit-team-name-{{ row.team.id }}">Nom de l'equipe</label>
-                    <app-input-text
-                      id="edit-team-name-{{ row.team.id }}"
-                      icon="groups"
-                      [value]="editingTeam()?.name ?? ''"
-                      (valueChange)="updateEditTeamName($event)"
-                    />
-                  </div>
-
-                  <div class="players-block">
-                    <div class="players-block-header">
-                      <div class="header">
-                        <span class="title">Joueurs</span>
-                      </div>
-                      <app-button
-                        title="Ajouter un joueur"
-                        variant="tertiary"
-                        icon="person_add"
-                        (clicked)="addEditPlayerRow()"
-                      />
-                    </div>
-
-                    @for (player of editingTeam()?.players ?? []; track $index) {
-                      <div class="player-row">
-                        <app-input-text
-                          id="edit-player-name-{{ row.team.id }}-{{ $index }}"
-                          icon="badge"
-                          placeholder="Nom du joueur"
-                          [value]="player.name"
-                          (valueChange)="updateEditPlayerName($index, $event)"
-                        />
-                        <app-input-text
-                          id="edit-player-club-{{ row.team.id }}-{{ $index }}"
-                          icon="location_city"
-                          placeholder="Club (optionnel)"
-                          [value]="player.club"
-                          (valueChange)="updateEditPlayerClub($index, $event)"
-                        />
-                        <app-button
-                          title="Retirer"
-                          icon="person_remove"
-                          variant="tertiary"
-                          [disabled]="(editingTeam()?.players?.length ?? 0) <= 1"
-                          (clicked)="removeEditPlayerRow($index)"
-                        />
-                      </div>
-                    }
-                  </div>
-
-                  <div class="actions-row flex-end gap">
-                    <app-button
-                      title="Annuler"
-                      variant="tertiary"
-                      icon="close"
-                      (clicked)="cancelEditTeam()"
-                    />
-                    <app-button
-                      title="Enregistrer"
-                      icon="save"
-                      [disabled]="!canSubmitEditTeam()"
-                      (clicked)="onUpdateTeam()"
-                    />
-                  </div>
-                </div>
+                <app-team-form
+                  [tournament]="tournament()"
+                  [editingTeam]="editingTeam()"
+                  (submitted)="onEditTeamSubmitted($event)"
+                  (cancelled)="cancelEditTeam()"
+                />
               </div>
             } @else {
               <div class="team-row" role="row" [class.expanded]="row.expanded">
@@ -150,7 +90,9 @@
                     <span class="mobile-label">Joueurs:&nbsp;</span>{{ row.team.players.length }}
                   </span>
                   <span class="cell cell-clubs" role="cell"
-                    ><app-icon iconClass="club-icon" name="strategy" />{{ row.clubsSummary }}</span
+                    ><app-icon iconClass="club-icon" name="strategy" />{{
+                      row.team.club ?? row.clubsSummary
+                    }}</span
                   >
                 </span>
               </div>

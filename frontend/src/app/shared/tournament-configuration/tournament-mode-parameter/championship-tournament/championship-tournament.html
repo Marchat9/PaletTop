@@ -1,0 +1,22 @@
+<div class="card-content">
+  <div class="info-text">
+    <app-icon name="info"></app-icon>
+    <label class="info-label">Pensez à utiliser le calcul des points 'Points championnat'</label>
+  </div>
+
+  <div class="form-group">
+    <label class="form-label">Équipe à domicile <span class="mandatory">*</span></label>
+    <app-input-text
+      placeholder="Ex: Club de la Boule d'Or"
+      [formControl]="group().controls.homeTeam"
+    ></app-input-text>
+  </div>
+
+  <div class="form-group">
+    <label class="form-label">Équipe à l'extérieur <span class="mandatory">*</span></label>
+    <app-input-text
+      placeholder="Ex: Club du Cochonnet Fringant"
+      [formControl]="group().controls.awayTeam"
+    ></app-input-text>
+  </div>
+</div>

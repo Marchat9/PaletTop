@@ -8,7 +8,7 @@ export const competitionModeOptions: {
 }[] = [
   {
     value: 'standard',
-    icon: 'emoji_events',
+    icon: 'social_leaderboard',
     label: 'Tournoi structuré',
     description: 'Phase de qualification et/ou phases finales à élimination directe',
   },
@@ -17,6 +17,12 @@ export const competitionModeOptions: {
     icon: 'swap_vert',
     label: 'Montantes / Descendantes',
     description: 'Classement par accumulation de points à chaque partie',
+  },
+  {
+    value: 'championship',
+    icon: 'emoji_events',
+    label: 'Championnat',
+    description: 'Affrontement de 2 clubs ayant chacun 4 équipes',
   },
 ];
 
@@ -42,8 +48,8 @@ export const scoreCalculationOptions: {
   {
     value: 'tournament_score',
     icon: 'workspace_premium',
-    label: 'Points tournoi',
-    description: 'Règles spécifiques au tournoi',
+    label: 'Points championnat',
+    description: 'Règles spécifiques au championnat',
     htmlDescription: `
       <div class="flex">
         <span>0-2 = 0pt</span>

@@ -33,6 +33,7 @@ export const environment = {
     maxTeamCapacity: {
       min: 2,
       max: 256,
+      maxChampionship: 8,
     },
     teamImport: {
       fileName: 'PaletTop-modele-equipes',

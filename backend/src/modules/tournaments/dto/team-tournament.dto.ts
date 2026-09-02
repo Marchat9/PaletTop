@@ -5,6 +5,9 @@ export class TournamentTeamDto {
     @IsString()
     name?: string;
 
+    @IsString()
+    club?: string;
+
     @IsNotEmpty()
     players: TeamPlayerDto[] = [];
 }
