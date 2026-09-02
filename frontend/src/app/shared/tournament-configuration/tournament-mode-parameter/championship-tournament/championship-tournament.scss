@@ -1,0 +1,12 @@
+.card-content {
+  .info-text {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    color: var(--color-on-surface-variant);
+
+    .info-label {
+      font-size: 0.9rem;
+    }
+  }
+}

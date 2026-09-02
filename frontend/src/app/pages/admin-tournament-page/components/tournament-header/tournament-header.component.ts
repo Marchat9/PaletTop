@@ -48,6 +48,8 @@ export class TournamentHeaderComponent {
         return `Tournoi ${hasQualifications ? 'avec qualifications et ' : 'avec'} éliminations`;
       case 'up_down':
         return 'Montante / Descendante';
+      case 'championship':
+        return 'Championnat';
       default:
         return '-';
     }

@@ -6,6 +6,7 @@ import { InputCardRadio } from '../../input-card-radio/input-card-radio';
 import { InputSelectOption } from '../../input-select/input-select';
 import { TournamentConfigurationField } from '../tournament-configuration-form.model';
 import * as configuration from '../tournament-create.data';
+import { ChampionshipTournament } from './championship-tournament/championship-tournament';
 import { StructuredTournament } from './structured-tournament/structured-tournament';
 import { TournamentModeParameterForm } from './tournament-mode-parameter-form.model';
 import { UpDownTournament } from './up-down-tournament/up-down-tournament';
@@ -19,6 +20,7 @@ import { Icon } from '../../icon/icon';
     InputCardRadio,
     StructuredTournament,
     UpDownTournament,
+    ChampionshipTournament,
     Icon,
   ],
   templateUrl: './tournament-mode-parameter.html',

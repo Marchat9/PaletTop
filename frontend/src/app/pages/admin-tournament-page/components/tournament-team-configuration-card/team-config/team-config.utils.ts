@@ -8,6 +8,7 @@ export interface TeamPlayerFormValue {
 export interface TeamEditFormValue {
   teamId: string;
   name: string;
+  club?: string;
   players: TeamPlayerFormValue[];
 }
 

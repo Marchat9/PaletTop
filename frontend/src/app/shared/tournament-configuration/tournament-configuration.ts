@@ -12,6 +12,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Nullable } from 'src/app/models/nullable.model';
 import {
+  ChampionShipTournamentConfig,
   StructuredTournamentConfig,
   UpDownTournamentConfig,
 } from 'src/app/models/tournament-configuration-detail.model';
@@ -34,6 +35,8 @@ export const FIELD_LABELS: Record<string, string> = {
   'rules.scoreCalculation': 'Calcul des scores',
   'rules.pointsPerGame': 'Points par partie',
   'modeParameter.competitionMode': 'Mode de compétition',
+  'modeParameter.championshipMode.homeTeam': 'Équipe à domicile',
+  'modeParameter.championshipMode.awayTeam': 'Équipe exterieur',
 };
 
 @Component({
@@ -60,8 +63,10 @@ export class TournamentConfiguration implements OnInit {
 
     const structuredConfig: StructuredTournamentConfig =
       (tournament?.configuration.competitionConfiguration as StructuredTournamentConfig) ?? {};
-    const UpDownConfig: UpDownTournamentConfig =
+    const upDownConfig: UpDownTournamentConfig =
       (tournament?.configuration.competitionConfiguration as UpDownTournamentConfig) ?? {};
+    const championShipConfig: ChampionShipTournamentConfig =
+      (tournament?.configuration.competitionConfiguration as ChampionShipTournamentConfig) ?? {};
 
     this.form = new FormGroup({
       parameters: new FormGroup({
@@ -85,7 +90,7 @@ export class TournamentConfiguration implements OnInit {
       }),
 
       rules: new FormGroup({
-        maxTeamCapacity: new FormControl(tournament?.configuration?.maxTeamCapacity ?? 96, {
+        maxTeamCapacity: new FormControl(tournament?.configuration?.maxTeamCapacity ?? 254, {
           nonNullable: true,
           validators: [Validators.required, Validators.min(2)],
         }),
@@ -147,8 +152,18 @@ export class TournamentConfiguration implements OnInit {
           }),
         }),
         upDownMode: new FormGroup({
-          numberOfRound: new FormControl(UpDownConfig.numberOfRound ?? undefined, {
+          numberOfRound: new FormControl(upDownConfig.numberOfRound ?? undefined, {
             nonNullable: true,
+          }),
+        }),
+        championshipMode: new FormGroup({
+          homeTeam: new FormControl(championShipConfig.homeClub ?? undefined, {
+            nonNullable: true,
+            validators: [Validators.required],
+          }),
+          awayTeam: new FormControl(championShipConfig.awayClub ?? undefined, {
+            nonNullable: true,
+            validators: [Validators.required],
           }),
         }),
       }),

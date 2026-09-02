@@ -1,4 +1,4 @@
-export type CompetitionMode = 'standard' | 'up_down';
+export type CompetitionMode = 'standard' | 'up_down' | 'championship';
 export type ScoreCalculation = 'victory_ga' | 'score' | 'tournament_score';
 
 export interface TournamentConfigurationDetailsDto {
@@ -27,4 +27,10 @@ export interface StructuredTournamentConfig extends SpecificTournamentConfig {
 
 export interface UpDownTournamentConfig extends SpecificTournamentConfig {
   numberOfRound?: number;
+}
+
+
+export interface ChampionShipTournamentConfig extends SpecificTournamentConfig {
+  homeClub: string;
+  awayClub: string;
 }

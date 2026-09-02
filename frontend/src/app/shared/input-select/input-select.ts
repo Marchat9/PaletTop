@@ -8,6 +8,7 @@ import {
   signal,
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { Icon } from '../icon/icon';
 
 export interface InputSelectOption {
   value: string;
@@ -16,7 +17,7 @@ export interface InputSelectOption {
 
 @Component({
   selector: 'app-input-select',
-  imports: [],
+  imports: [Icon],
   templateUrl: './input-select.html',
   styleUrl: './input-select.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -33,6 +34,7 @@ export class InputSelect implements ControlValueAccessor {
   readonly value = input<string>('');
   readonly disabled = input<boolean>(false);
   readonly options = input<readonly InputSelectOption[]>([]);
+  readonly icon = input<string>('');
 
   readonly valueChange = output<string>();
 

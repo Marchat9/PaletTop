@@ -31,66 +31,12 @@
         }}
       </p>
 
-      <div class="field-group">
-        <label for="team-name">Nom de l'equipe (optionnel)</label>
-        <app-input-text
-          id="team-name"
-          icon="groups"
-          [value]="teamName()"
-          [placeholder]="suggestedTeamName()"
-          (valueChange)="updateTeamName($event)"
-        />
-      </div>
-
-      <div class="players-block">
-        <div class="players-block-header">
-          <div class="header">
-            <span class="title">Joueurs</span>
-            <span class="description">{{ teamPlayers().length }} joueur(s) dans le formulaire</span>
-          </div>
-          <app-button
-            title="Ajouter un joueur"
-            variant="tertiary"
-            icon="person_add"
-            (clicked)="addPlayerRow()"
-          />
-        </div>
-
-        @for (player of teamPlayers(); track $index) {
-          <div class="player-row">
-            <app-input-text
-              id="player-name-{{ $index }}"
-              icon="badge"
-              placeholder="Nom du joueur"
-              [value]="player.name"
-              (valueChange)="updatePlayerName($index, $event)"
-            />
-            <app-input-text
-              id="player-club-{{ $index }}"
-              icon="location_city"
-              placeholder="Club (optionnel)"
-              [value]="player.club"
-              (valueChange)="updatePlayerClub($index, $event)"
-            />
-            <app-button
-              title="Retirer"
-              icon="person_remove"
-              variant="tertiary"
-              [disabled]="teamPlayers().length <= 1"
-              (clicked)="removePlayerRow($index)"
-            />
-          </div>
-        }
-      </div>
-
-      <div class="actions-row flex-end">
-        <app-button
-          [title]="isEditMode ? 'Enregistrer' : 'Creer l\'equipe'"
-          [icon]="isEditMode ? 'save' : 'group_add'"
-          [disabled]="!canSubmitTeam()"
-          (clicked)="onSubmitTeam()"
-        />
-      </div>
+      <app-team-form
+        [tournament]="resolvedTournament()"
+        [editingTeam]="editingTeam"
+        (submitted)="emitOrClose($event)"
+        (cancelled)="closeSheet()"
+      />
     </div>
   } @else {
     <div class="tab-panel">

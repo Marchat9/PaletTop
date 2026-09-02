@@ -1,13 +1,5 @@
 import { DIALOG_DATA, Dialog, DialogRef } from '@angular/cdk/dialog';
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  inject,
-  input,
-  output,
-  signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
 import { Nullable } from 'src/app/models/nullable.model';
 import {
   TeamConfigCreateTeamPayload,
@@ -16,15 +8,11 @@ import {
 } from 'src/app/models/team-config.model';
 import { Button } from 'src/app/shared/button/button';
 import { InputFile } from 'src/app/shared/input-file/input-file';
-import { InputText } from 'src/app/shared/input-text/input-text';
 import { TournamentDto } from 'src/app/store/tournament/tournament.models';
 import { environment } from '@environment';
 import { downloadBlob, generateTeamsExcelTemplate, parseTeamsExcelFile } from '../team-excel.utils';
-import {
-  generateDefaultPlayerRow,
-  type TeamEditFormValue,
-  type TeamPlayerFormValue,
-} from '../team-config.utils';
+import { type TeamEditFormValue } from '../team-config.utils';
+import { TeamForm } from '../team-form/team-form';
 import {
   TeamImportPreviewDialog,
   TeamImportPreviewDialogData,
@@ -49,7 +37,7 @@ type TeamCreationTab = 'manual' | 'import';
 // `editingTeam` — desktop editing stays on the inline row editor in team-config.html.
 @Component({
   selector: 'app-team-creation-panel',
-  imports: [Button, InputFile, InputText],
+  imports: [Button, InputFile, TeamForm],
   templateUrl: './team-creation-panel.html',
   styleUrl: './team-creation-panel.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -64,92 +52,29 @@ export class TeamCreationPanel {
   public readonly tournament = input<Nullable<TournamentDto>>(null);
   public readonly teamUpdated = output<TeamConfigEvent>();
 
-  private readonly resolvedTournament = computed(
+  public readonly resolvedTournament = computed(
     () => this.dialogData?.tournament ?? this.tournament(),
   );
 
-  private readonly editingTeam = this.dialogData?.editingTeam ?? null;
+  public readonly editingTeam: Nullable<TeamEditFormValue> = this.dialogData?.editingTeam ?? null;
   public readonly isEditMode = !!this.editingTeam;
 
-  public readonly teamName = signal(this.editingTeam?.name ?? '');
-  public readonly teamPlayers = signal<TeamPlayerFormValue[]>(
-    this.editingTeam?.players ?? [generateDefaultPlayerRow()],
-  );
-
   public readonly existingTeamCount = computed(() => this.resolvedTournament()?.teams?.length ?? 0);
-  public readonly suggestedTeamName = computed(() => `Equipe ${this.existingTeamCount() + 1}`);
-  public readonly canSubmitTeam = computed(() =>
-    this.teamPlayers().every((player) => !!player.name.trim()),
-  );
 
   public readonly importFileFormats = '.xlsx,.xlsm,.xls,.xlt,.ods,.csv';
   public readonly importError = signal<Nullable<string>>(null);
 
   // ======= Actions =======
-  public updateTeamName(value: string): void {
-    this.teamName.set(value);
-  }
-
-  public addPlayerRow(): void {
-    this.teamPlayers.update((players) => [...players, generateDefaultPlayerRow()]);
-  }
-
-  public removePlayerRow(index: number): void {
-    this.teamPlayers.update((players) => {
-      if (players.length <= 1) {
-        return players;
-      }
-
-      return players.filter((_, playerIndex) => playerIndex !== index);
-    });
-  }
-
-  public updatePlayerName(index: number, value: string): void {
-    this.patchPlayer(index, { name: value });
-  }
-
-  public updatePlayerClub(index: number, value: string): void {
-    this.patchPlayer(index, { club: value });
-  }
-
-  public onSubmitTeam(): void {
-    if (!this.canSubmitTeam()) {
-      return;
+  public emitOrClose(event: TeamConfigEvent): void {
+    if (this.dialogRef) {
+      this.dialogRef.close(event);
+    } else {
+      this.teamUpdated.emit(event);
     }
-
-    const players = this.teamPlayers()
-      .map((player) => ({ name: player.name.trim(), club: player.club.trim() || undefined }))
-      .filter((player) => !!player.name);
-
-    if (this.editingTeam) {
-      this.emitOrClose({
-        type: TeamConfigEventType.UPDATE_TEAM,
-        payload: {
-          teamId: this.editingTeam.teamId,
-          name: this.teamName().trim() || undefined,
-          players,
-        },
-      });
-      return;
-    }
-
-    this.emitOrClose({
-      type: TeamConfigEventType.CREATE_TEAM,
-      payload: { name: this.teamName().trim() || this.suggestedTeamName(), players },
-    });
-
-    // reset form
-    this.teamName.set('');
-    this.teamPlayers.set(this.teamPlayers().map(() => generateDefaultPlayerRow()));
   }
 
-  private patchPlayer(index: number, patch: Partial<TeamPlayerFormValue>): void {
-    this.teamPlayers.update((players) =>
-      players.map((player, playerIndex) => ({
-        ...player,
-        ...(playerIndex === index ? patch : {}),
-      })),
-    );
+  public closeSheet(): void {
+    this.dialogRef?.close(undefined);
   }
 
   // ======= Excel import =======
@@ -209,13 +134,5 @@ export class TeamCreationPanel {
 
         this.emitOrClose({ type: TeamConfigEventType.IMPORT_TEAMS, payload });
       });
-  }
-
-  private emitOrClose(event: TeamConfigEvent): void {
-    if (this.dialogRef) {
-      this.dialogRef.close(event);
-    } else {
-      this.teamUpdated.emit(event);
-    }
   }
 }

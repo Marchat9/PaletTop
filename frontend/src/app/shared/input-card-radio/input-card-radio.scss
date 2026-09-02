@@ -19,6 +19,7 @@
 
   .card-radio-content {
     padding: 0 1rem;
+
     .card-radio-name {
       margin: 0;
       font-weight: 600;
@@ -30,6 +31,7 @@
       font-size: 0.8rem;
       color: var(--color-on-surface-variant);
     }
+
     .card-radio-html-description {
       margin: 0.25rem 0 0;
       font-size: 0.7rem;
@@ -67,12 +69,8 @@
       color: var(--color-on-primary);
     }
 
-    .card-radio-content .card-radio-name {
+    .card-radio-content * {
       color: var(--color-on-primary);
-    }
-
-    .card-radio-content .card-radio-description {
-      color: color-mix(in srgb, var(--color-on-primary) 75%, transparent);
     }
   }
 

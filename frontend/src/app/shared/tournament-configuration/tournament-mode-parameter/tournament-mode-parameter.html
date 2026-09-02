@@ -31,6 +31,13 @@
           [hiddenFields]="hiddenFields()"
         />
       }
+      @case ('championship') {
+        <app-championship-tournament
+          [group]="group().controls.championshipMode"
+          [readonlyFields]="readonlyFields()"
+          [hiddenFields]="hiddenFields()"
+        />
+      }
       @default {
         <span class="no-competition-configured"
           >Pas de configuration supplémentaire pour ce type de compétition.</span
