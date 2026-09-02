@@ -129,12 +129,12 @@ export class TeamConfig {
     const positionStrategy = isMobile
       ? this.overlay.position().global().bottom('0').width('100%')
       : this.overlay
-        .position()
-        .flexibleConnectedTo(anchor)
-        .withPositions([
-          { originX: 'end', originY: 'bottom', overlayX: 'end', overlayY: 'top', offsetY: 6 },
-          { originX: 'end', originY: 'top', overlayX: 'end', overlayY: 'bottom', offsetY: -6 },
-        ]);
+          .position()
+          .flexibleConnectedTo(anchor)
+          .withPositions([
+            { originX: 'end', originY: 'bottom', overlayX: 'end', overlayY: 'top', offsetY: 6 },
+            { originX: 'end', originY: 'top', overlayX: 'end', overlayY: 'bottom', offsetY: -6 },
+          ]);
 
     this.dialog
       .open<TeamAction | undefined>(TeamActionsMenu, {

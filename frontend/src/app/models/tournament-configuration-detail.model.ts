@@ -29,7 +29,6 @@ export interface UpDownTournamentConfig extends SpecificTournamentConfig {
   numberOfRound?: number;
 }
 
-
 export interface ChampionShipTournamentConfig extends SpecificTournamentConfig {
   homeClub: string;
   awayClub: string;

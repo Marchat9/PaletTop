@@ -71,7 +71,6 @@ export class TournamentConfiguration implements OnInit {
     const championShipConfig: ChampionShipTournamentConfig =
       (tournament?.configuration.competitionConfiguration as ChampionShipTournamentConfig) ?? {};
 
-
     this.form = new FormGroup({
       parameters: new FormGroup({
         name: new FormControl(tournament?.name ?? '', {
@@ -94,10 +93,13 @@ export class TournamentConfiguration implements OnInit {
       }),
 
       rules: new FormGroup({
-        maxTeamCapacity: new FormControl(tournament?.configuration?.maxTeamCapacity ?? this.teamCapacity.max, {
-          nonNullable: true,
-          validators: [Validators.required, Validators.min(2)],
-        }),
+        maxTeamCapacity: new FormControl(
+          tournament?.configuration?.maxTeamCapacity ?? this.teamCapacity.max,
+          {
+            nonNullable: true,
+            validators: [Validators.required, Validators.min(2)],
+          },
+        ),
         scoreCalculation: new FormControl(
           tournament?.configuration?.scoreCalculation ?? 'victory_ga',
           { nonNullable: true, validators: [Validators.required] },
@@ -199,9 +201,7 @@ export class TournamentConfiguration implements OnInit {
         }
 
         this.form.controls.rules.controls.maxTeamCapacity.setValue(
-          mode === 'championship' ?
-            this.teamCapacity.maxChampionship
-            : this.teamCapacity.max,
+          mode === 'championship' ? this.teamCapacity.maxChampionship : this.teamCapacity.max,
         );
       },
       { injector: this.injector },

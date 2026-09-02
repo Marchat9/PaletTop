@@ -13,8 +13,7 @@ const MODE_PARAMETER_GROUP_BY_COMPETITION_MODE: Record<CompetitionMode, string> 
 
 export function getInvalidFieldNames(form: FormGroup): string[] {
   const competitionMode = form.get('modeParameter.competitionMode')?.value as
-    | CompetitionMode
-    | undefined;
+    CompetitionMode | undefined;
   const activeModeGroup = competitionMode
     ? MODE_PARAMETER_GROUP_BY_COMPETITION_MODE[competitionMode]
     : undefined;

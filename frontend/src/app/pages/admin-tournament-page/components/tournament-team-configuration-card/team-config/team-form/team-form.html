@@ -7,15 +7,15 @@
     [placeholder]="suggestedTeamName()"
     (valueChange)="updateTeamName($event)"
   />
-  @if(isChampionship()) {
-      <label for="{{ formId }}-team-name">Club de l'équipe</label>
-      <app-input-select
-        id="{{ formId }}-team-club"
-        icon="location_city"
-        [options]="championshipClubs()"
-        [value]="teamClub()"
-        (valueChange)="updateTeamClub($event)"
-        />
+  @if (isChampionship()) {
+    <label for="{{ formId }}-team-name">Club de l'équipe</label>
+    <app-input-select
+      id="{{ formId }}-team-club"
+      icon="location_city"
+      [options]="championshipClubs()"
+      [value]="teamClub()"
+      (valueChange)="updateTeamClub($event)"
+    />
   }
 </div>
 
@@ -42,14 +42,14 @@
         [value]="player.name"
         (valueChange)="updatePlayerName($index, $event)"
       />
-      @if(!isChampionship()) {
-      <app-input-text
-        id="{{ formId }}-player-club-{{ $index }}"
-        icon="location_city"
-        placeholder="Club (optionnel)"
-        [value]="player.club"
-        (valueChange)="updatePlayerClub($index, $event)"
-      />
+      @if (!isChampionship()) {
+        <app-input-text
+          id="{{ formId }}-player-club-{{ $index }}"
+          icon="location_city"
+          placeholder="Club (optionnel)"
+          [value]="player.club"
+          (valueChange)="updatePlayerClub($index, $event)"
+        />
       }
       <app-button
         title="Retirer"

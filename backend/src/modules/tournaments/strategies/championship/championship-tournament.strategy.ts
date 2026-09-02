@@ -12,7 +12,12 @@ import { MatchRepository } from '../../repositories/match.repository';
 import { TournamentRepository } from '../../repositories/tournament.repository';
 import { PoolService } from '../../services/pool.service';
 import { extractCompetitionConfiguration } from '../../utils/tournament.utils';
-import { toPoolRef, toSessionRef, toTeamRef, toTournamentRef } from '../../utils/type-orm-ref.utils';
+import {
+    toPoolRef,
+    toSessionRef,
+    toTeamRef,
+    toTournamentRef,
+} from '../../utils/type-orm-ref.utils';
 import { TournamentStrategy } from '../tournament-strategy.abstract';
 import { computePhaseName } from './championship-session.utils';
 
@@ -36,8 +41,8 @@ export class ChampionshipTournamentStrategy extends TournamentStrategy {
 
         const config = this.getConfig(tournament);
 
-        const homeTeam = tournament.teams.filter(t => t.club === config.homeClub);
-        const awayTeam = tournament.teams.filter(t => t.club === config.awayClub);
+        const homeTeam = tournament.teams.filter((t) => t.club === config.homeClub);
+        const awayTeam = tournament.teams.filter((t) => t.club === config.awayClub);
         // Si il n'y a pas le même nombre d'equipe ou que ce n'est pas pair
         if (homeTeam.length !== awayTeam.length) {
             throw new Error(`Il n'y a pas le même nombre d'équipe dans les deux clubs`);
@@ -47,7 +52,7 @@ export class ChampionshipTournamentStrategy extends TournamentStrategy {
             ...tournament,
             configuration: {
                 ...tournament.configuration,
-                maxTeamCapacity: 8
+                maxTeamCapacity: 8,
             },
         });
     }
@@ -63,29 +68,33 @@ export class ChampionshipTournamentStrategy extends TournamentStrategy {
     ): Promise<TournamentMatch[]> {
         const config = this.getConfig(tournament);
 
-        // ref 
+        // ref
         const tournamentRef: Tournament = toTournamentRef(tournament);
         const sessionRef: MatchesSession = toSessionRef(session);
         const poolRef = toPoolRef(tournament.pools[0]);
 
-        // Data 
-        const homeClubTeams: Team[] = tournament.teams.filter(t => t.club === config.homeClub).sort((a, b) => a.id.localeCompare(b.id));
-        const awayClubTeams: Team[] = tournament.teams.filter(t => t.club === config.awayClub).sort((a, b) => a.id.localeCompare(b.id));
+        // Data
+        const homeClubTeams: Team[] = tournament.teams
+            .filter((t) => t.club === config.homeClub)
+            .sort((a, b) => a.id.localeCompare(b.id));
+        const awayClubTeams: Team[] = tournament.teams
+            .filter((t) => t.club === config.awayClub)
+            .sort((a, b) => a.id.localeCompare(b.id));
 
         const currentSessionNumber: number = session.sessionNumber;
         const sessionIndex: number = currentSessionNumber - 1;
 
-
-        const partialMatchs: DeepPartial<TournamentMatch[]> = homeClubTeams.map((homeTeam, index) => ({
-            tournament: tournamentRef,
-            session: sessionRef,
-            sessionNumber: session.sessionNumber,
-            pool: poolRef,
-            teamA: toTeamRef(homeTeam),
-            teamB: toTeamRef(awayClubTeams[(sessionIndex + index) % awayClubTeams.length]),
-            isBye: false,
-            status: MatchStatus.PENDING,
-        })
+        const partialMatchs: DeepPartial<TournamentMatch[]> = homeClubTeams.map(
+            (homeTeam, index) => ({
+                tournament: tournamentRef,
+                session: sessionRef,
+                sessionNumber: session.sessionNumber,
+                pool: poolRef,
+                teamA: toTeamRef(homeTeam),
+                teamB: toTeamRef(awayClubTeams[(sessionIndex + index) % awayClubTeams.length]),
+                isBye: false,
+                status: MatchStatus.PENDING,
+            }),
         );
 
         const matches = partialMatchs.map((match) => this.matchRepo.create(match));
@@ -103,10 +112,7 @@ export class ChampionshipTournamentStrategy extends TournamentStrategy {
 
         return {
             currentSession: currentSessionNumber,
-            phaseName: computePhaseName(
-                tournament.status,
-                currentSessionNumber
-            ),
+            phaseName: computePhaseName(tournament.status, currentSessionNumber),
             canFinishTournament: allValidated && isFinal,
             canGenerateNewSession: allValidated && !isFinal,
         };

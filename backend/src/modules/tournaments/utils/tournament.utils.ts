@@ -64,7 +64,8 @@ export function extractCompetitionConfiguration(
             };
         }
         case CompetitionMode.CHAMPIONSHIP: {
-            const championshipConfig = config.competitionConfiguration as ChampionShipCompetitionConfiguration;
+            const championshipConfig =
+                config.competitionConfiguration as ChampionShipCompetitionConfiguration;
             return {
                 homeClub: championshipConfig.homeClub,
                 awayClub: championshipConfig.awayClub,

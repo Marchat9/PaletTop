@@ -1,9 +1,8 @@
 import { TournamentStatus } from 'src/enum/status.enum';
 
-
 export function computePhaseName(
     tournamentStatus: TournamentStatus,
-    currentSessionNumber: number
+    currentSessionNumber: number,
 ): string {
     switch (true) {
         case tournamentStatus === TournamentStatus.DRAFT:

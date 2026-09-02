@@ -46,26 +46,36 @@ export class TeamForm {
     () => this.editingTeam()?.players ?? [generateDefaultPlayerRow()],
   );
 
-  public readonly isChampionship = computed(() => this.tournament()?.configuration.competitionMode === 'championship')
-  private readonly championshipConfig = computed(() => (this.isChampionship() ? this.tournament()?.configuration.competitionConfiguration : {}) as ChampionShipTournamentConfig);
-  public readonly championshipClubs = computed(() => this.isChampionship() ?
-    [
-      {
-        label: "---- Veuillez choisir un club ----",
-        value: "",
-      },
-      ...[
-        this.championshipConfig().homeClub,
-        this.championshipConfig().awayClub
-      ].map(club => ({ value: club, label: club }))]
-    : []
-  )
+  public readonly isChampionship = computed(
+    () => this.tournament()?.configuration.competitionMode === 'championship',
+  );
+  private readonly championshipConfig = computed(
+    () =>
+      (this.isChampionship()
+        ? this.tournament()?.configuration.competitionConfiguration
+        : {}) as ChampionShipTournamentConfig,
+  );
+  public readonly championshipClubs = computed(() =>
+    this.isChampionship()
+      ? [
+          {
+            label: '---- Veuillez choisir un club ----',
+            value: '',
+          },
+          ...[this.championshipConfig().homeClub, this.championshipConfig().awayClub].map(
+            (club) => ({ value: club, label: club }),
+          ),
+        ]
+      : [],
+  );
 
   public readonly existingTeamCount = computed(() => this.tournament()?.teams?.length ?? 0);
   public readonly suggestedTeamName = computed(() => `Equipe ${this.existingTeamCount() + 1}`);
-  public readonly canSubmit = computed(() =>
-    this.teamPlayers().every((player) => !!player.name.trim()) &&
-    this.isChampionship() && !!this.teamClub()
+  public readonly canSubmit = computed(
+    () =>
+      this.teamPlayers().every((player) => !!player.name.trim()) &&
+      this.isChampionship() &&
+      !!this.teamClub(),
   );
 
   // ======= Actions =======
@@ -127,7 +137,7 @@ export class TeamForm {
       payload: {
         name: this.teamName().trim() || this.suggestedTeamName(),
         club: this.teamClub().trim() || undefined,
-        players
+        players,
       },
     });
 

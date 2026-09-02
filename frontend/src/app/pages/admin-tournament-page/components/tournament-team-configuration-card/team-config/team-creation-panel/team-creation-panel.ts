@@ -1,5 +1,13 @@
 import { DIALOG_DATA, Dialog, DialogRef } from '@angular/cdk/dialog';
-import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  input,
+  output,
+  signal,
+} from '@angular/core';
 import { environment } from '@environment';
 import { Nullable } from 'src/app/models/nullable.model';
 import {
@@ -61,7 +69,12 @@ export class TeamCreationPanel {
   public readonly isEditMode = !!this.editingTeam;
 
   public readonly existingTeamCount = computed(() => this.resolvedTournament()?.teams?.length ?? 0);
-  public readonly canCreateTeam = computed(() => this.isEditMode === true || (this.resolvedTournament()?.teams?.length ?? 0) < (this.resolvedTournament()?.configuration.maxTeamCapacity ?? 254));
+  public readonly canCreateTeam = computed(
+    () =>
+      this.isEditMode === true ||
+      (this.resolvedTournament()?.teams?.length ?? 0) <
+        (this.resolvedTournament()?.configuration.maxTeamCapacity ?? 254),
+  );
 
   public readonly importFileFormats = '.xlsx,.xlsm,.xls,.xlt,.ods,.csv';
   public readonly importError = signal<Nullable<string>>(null);

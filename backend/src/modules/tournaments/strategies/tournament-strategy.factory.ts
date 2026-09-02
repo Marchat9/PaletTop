@@ -16,7 +16,7 @@ export class TournamentStrategyFactory {
         private readonly matchRepo: MatchRepository,
         private readonly poolRepo: PoolRepository,
         private readonly tournamentRepo: TournamentRepository,
-    ) { }
+    ) {}
 
     create(mode: CompetitionMode): TournamentStrategy {
         switch (mode) {
@@ -33,7 +33,7 @@ export class TournamentStrategyFactory {
                 return new ChampionshipTournamentStrategy(
                     this.poolService,
                     this.matchRepo,
-                    this.tournamentRepo
+                    this.tournamentRepo,
                 );
             default:
                 throw new BadRequestException(`Type de tournoi non supporté : ${mode}`);
