@@ -10,6 +10,7 @@ import { TrainingRound } from '../../entities/training-round.entity';
 import { TrainingMatch } from '../../entities/training-match.entity';
 import { TrainingController } from './controllers/training.controller';
 import { TrainingRoundController } from './controllers/training-round.controller';
+import { TrainingScoreController } from './controllers/training-score.controller';
 import { TrainingSessionController } from './controllers/training-session.controller';
 import { TrainingTeamController } from './controllers/training-team.controller';
 import { DefaultMatchmakingStrategy } from './domain/matchmaking/default-matchmaking.strategy';
@@ -24,6 +25,7 @@ import { TrainingTeamRepository } from './repositories/training-team.repository'
 import { TrainingRepository } from './repositories/training.repository';
 import { TrainingAuthService } from './services/training-auth.service';
 import { TrainingRoundsService } from './services/training-rounds.service';
+import { TrainingScoreService } from './services/training-score.service';
 import { TrainingSessionAuthService } from './services/training-session-auth.service';
 import { TrainingSessionsService } from './services/training-sessions.service';
 import { TrainingTeamsService } from './services/training-teams.service';
@@ -47,6 +49,7 @@ import { TrainingsService } from './services/trainings.service';
         TrainingSessionController,
         TrainingTeamController,
         TrainingRoundController,
+        TrainingScoreController,
     ],
     providers: [
         TrainingRepository,
@@ -63,6 +66,7 @@ import { TrainingsService } from './services/trainings.service';
         TrainingSessionsService,
         TrainingTeamsService,
         TrainingRoundsService,
+        TrainingScoreService,
         { provide: MATCHMAKING_PORT, useClass: DefaultMatchmakingStrategy },
     ],
     exports: [
@@ -80,6 +84,7 @@ import { TrainingsService } from './services/trainings.service';
         TrainingSessionsService,
         TrainingTeamsService,
         TrainingRoundsService,
+        TrainingScoreService,
     ],
 })
 export class TrainingModule {}
