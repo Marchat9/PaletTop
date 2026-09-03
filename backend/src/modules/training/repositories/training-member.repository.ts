@@ -18,6 +18,10 @@ export class TrainingMemberRepository {
         return this.repo.save(member as TrainingMember);
     }
 
+    findById(id: string): Promise<TrainingMember | null> {
+        return this.repo.findOne({ where: { id }, relations: { training: true } });
+    }
+
     async remove(member: TrainingMember): Promise<void> {
         await this.repo.remove(member);
     }

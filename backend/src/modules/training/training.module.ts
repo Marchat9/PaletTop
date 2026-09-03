@@ -9,9 +9,13 @@ import { TrainingTeamMember } from '../../entities/training-team-member.entity';
 import { TrainingRound } from '../../entities/training-round.entity';
 import { TrainingMatch } from '../../entities/training-match.entity';
 import { TrainingController } from './controllers/training.controller';
+import { TrainingSessionController } from './controllers/training-session.controller';
 import { TrainingMemberRepository } from './repositories/training-member.repository';
+import { TrainingParticipantRepository } from './repositories/training-participant.repository';
+import { TrainingSessionRepository } from './repositories/training-session.repository';
 import { TrainingRepository } from './repositories/training.repository';
 import { TrainingAuthService } from './services/training-auth.service';
+import { TrainingSessionsService } from './services/training-sessions.service';
 import { TrainingsService } from './services/trainings.service';
 
 @Module({
@@ -27,13 +31,24 @@ import { TrainingsService } from './services/trainings.service';
             TrainingMatch,
         ]),
     ],
-    controllers: [TrainingController],
+    controllers: [TrainingController, TrainingSessionController],
     providers: [
         TrainingRepository,
         TrainingMemberRepository,
+        TrainingSessionRepository,
+        TrainingParticipantRepository,
         TrainingAuthService,
         TrainingsService,
+        TrainingSessionsService,
     ],
-    exports: [TrainingRepository, TrainingMemberRepository, TrainingAuthService, TrainingsService],
+    exports: [
+        TrainingRepository,
+        TrainingMemberRepository,
+        TrainingSessionRepository,
+        TrainingParticipantRepository,
+        TrainingAuthService,
+        TrainingsService,
+        TrainingSessionsService,
+    ],
 })
 export class TrainingModule {}

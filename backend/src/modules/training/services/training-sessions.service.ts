@@ -1,0 +1,158 @@
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { CheckinParticipantDto } from '../dto/checkin-participant.dto';
+import { CreateTrainingSessionDto } from '../dto/create-training-session.dto';
+import { TrainingMemberRepository } from '../repositories/training-member.repository';
+import { TrainingParticipantRepository } from '../repositories/training-participant.repository';
+import { TrainingSessionRepository } from '../repositories/training-session.repository';
+import {
+    TrainingSessionAdminDto,
+    TrainingSessionPublicDto,
+    toTrainingSessionAdminDto,
+    toTrainingSessionPublicDto,
+} from '../responses/training-session.dto';
+import { generateNumericCode } from '../utils/code.utils';
+import { TrainingParticipantStatus, TrainingSessionStatus } from 'src/enum/training.enum';
+import { TrainingSession } from 'src/entities/training-session.entity';
+import { TrainingMember } from 'src/entities/training-member.entity';
+import { TrainingAuthService } from './training-auth.service';
+
+@Injectable()
+export class TrainingSessionsService {
+    constructor(
+        private readonly trainingSessionRepo: TrainingSessionRepository,
+        private readonly trainingParticipantRepo: TrainingParticipantRepository,
+        private readonly trainingMemberRepo: TrainingMemberRepository,
+        private readonly trainingAuthService: TrainingAuthService,
+    ) {}
+
+    async create(
+        trainingCode: string,
+        dto: CreateTrainingSessionDto,
+    ): Promise<TrainingSessionAdminDto> {
+        const training = await this.trainingAuthService.findWithAdminAuth(
+            trainingCode,
+            dto.password,
+        );
+
+        const now = new Date();
+        const session = this.trainingSessionRepo.create({
+            training,
+            code: await this.generateUniqueSessionCode(),
+            date: dto.date,
+            status: TrainingSessionStatus.OPEN,
+            playersPerTeam: dto.playersPerTeam,
+            fallbackTeamSize: dto.fallbackTeamSize,
+            allowSitOut: dto.allowSitOut,
+            avoidSamePartnerConsecutive: dto.avoidSamePartnerConsecutive,
+            avoidSameOpponentConsecutive: dto.avoidSameOpponentConsecutive,
+            pointsPerGame: dto.pointsPerGame,
+            lastActivityAt: now,
+            closedAt: null,
+        });
+        const saved = await this.trainingSessionRepo.save(session);
+        return toTrainingSessionAdminDto(saved);
+    }
+
+    async getPublic(sessionCode: string): Promise<TrainingSessionPublicDto> {
+        const session = await this.findByCodeOrThrow(sessionCode);
+        return toTrainingSessionPublicDto(session);
+    }
+
+    async getAdmin(sessionCode: string, password: string): Promise<TrainingSessionAdminDto> {
+        const session = await this.findWithAuthOrThrow(sessionCode, password);
+        return toTrainingSessionAdminDto(session);
+    }
+
+    async close(sessionCode: string, password: string): Promise<TrainingSessionAdminDto> {
+        const session = await this.findWithAuthOrThrow(sessionCode, password);
+        session.status = TrainingSessionStatus.CLOSED;
+        session.closedAt = new Date();
+        const saved = await this.trainingSessionRepo.save(session);
+        return toTrainingSessionAdminDto(saved);
+    }
+
+    async checkin(
+        sessionCode: string,
+        dto: CheckinParticipantDto,
+    ): Promise<TrainingSessionAdminDto> {
+        const session = await this.findWithAuthOrThrow(sessionCode, dto.password);
+
+        if (!dto.memberId && !dto.name) {
+            throw new BadRequestException(
+                'Il faut renseigner soit memberId (roster existant), soit name (venue en découverte).',
+            );
+        }
+
+        let name = dto.name;
+        let member: TrainingMember | null = null;
+        if (dto.memberId) {
+            member = await this.trainingMemberRepo.findById(dto.memberId);
+            if (!member || member.training.id !== session.training.id) {
+                throw new NotFoundException('Membre introuvable pour cet entraînement.');
+            }
+            name = member.name;
+        }
+
+        const existingCodes = session.participants.map((p) => p.code);
+        const participant = this.trainingParticipantRepo.create({
+            session,
+            member,
+            name: name!,
+            code: generateNumericCode(existingCodes),
+            status: TrainingParticipantStatus.PRESENT,
+        });
+        const saved = await this.trainingParticipantRepo.save(participant);
+
+        session.participants = [...session.participants, saved];
+        await this.touchLastActivity(session.id);
+        return toTrainingSessionAdminDto(session);
+    }
+
+    async removeParticipant(
+        sessionCode: string,
+        participantId: string,
+        password: string,
+    ): Promise<TrainingSessionAdminDto> {
+        const session = await this.findWithAuthOrThrow(sessionCode, password);
+        const participant = session.participants.find((p) => p.id === participantId);
+        if (!participant) {
+            throw new NotFoundException('Participant introuvable pour cette session.');
+        }
+
+        participant.status = TrainingParticipantStatus.LEFT;
+        await this.trainingParticipantRepo.save(participant);
+        await this.touchLastActivity(session.id);
+        return toTrainingSessionAdminDto(session);
+    }
+
+    private async touchLastActivity(sessionId: string): Promise<void> {
+        await this.trainingSessionRepo.touchLastActivity(sessionId);
+    }
+
+    private async findByCodeOrThrow(sessionCode: string): Promise<TrainingSession> {
+        const session = await this.trainingSessionRepo.findByCode(sessionCode);
+        if (!session) {
+            throw new NotFoundException('Session introuvable.');
+        }
+        return session;
+    }
+
+    private async findWithAuthOrThrow(
+        sessionCode: string,
+        password: string,
+    ): Promise<TrainingSession> {
+        const session = await this.trainingSessionRepo.findWithTrainingAuth(sessionCode, password);
+        if (!session) {
+            throw new NotFoundException('Session introuvable ou mot de passe invalide.');
+        }
+        return session;
+    }
+
+    private async generateUniqueSessionCode(): Promise<string> {
+        let code: string;
+        do {
+            code = generateNumericCode([]);
+        } while (await this.trainingSessionRepo.codeExists(code));
+        return code;
+    }
+}
