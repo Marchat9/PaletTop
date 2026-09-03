@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, UpdateResult } from 'typeorm';
+import { LessThan, Repository, UpdateResult } from 'typeorm';
 import { TrainingSession } from 'src/entities/training-session.entity';
+import { TrainingSessionStatus } from 'src/enum/training.enum';
 
 @Injectable()
 export class TrainingSessionRepository {
@@ -56,5 +57,18 @@ export class TrainingSessionRepository {
 
     touchLastActivity(sessionId: string): Promise<UpdateResult> {
         return this.repo.update(sessionId, { lastActivityAt: new Date() });
+    }
+
+    findExpiredOpen(idleHours: number): Promise<TrainingSession[]> {
+        const threshold = new Date();
+        threshold.setHours(threshold.getHours() - idleHours);
+        return this.repo.find({
+            where: { status: TrainingSessionStatus.OPEN, lastActivityAt: LessThan(threshold) },
+        });
+    }
+
+    async closeMany(ids: string[]): Promise<void> {
+        if (!ids.length) return;
+        await this.repo.update(ids, { status: TrainingSessionStatus.CLOSED, closedAt: new Date() });
     }
 }

@@ -24,6 +24,7 @@ import { TrainingSessionRepository } from './repositories/training-session.repos
 import { TrainingTeamMemberRepository } from './repositories/training-team-member.repository';
 import { TrainingTeamRepository } from './repositories/training-team.repository';
 import { TrainingRepository } from './repositories/training.repository';
+import { TrainingAutoCloseService } from './services/training-auto-close.service';
 import { TrainingAuthService } from './services/training-auth.service';
 import { TrainingLeaderboardService } from './services/training-leaderboard.service';
 import { TrainingParticipantViewService } from './services/training-participant-view.service';
@@ -73,6 +74,7 @@ import { TrainingsService } from './services/trainings.service';
         TrainingScoreService,
         TrainingLeaderboardService,
         TrainingParticipantViewService,
+        TrainingAutoCloseService,
         { provide: MATCHMAKING_PORT, useClass: DefaultMatchmakingStrategy },
     ],
     exports: [
