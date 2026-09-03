@@ -24,10 +24,17 @@ export class TrainingSessionRepository {
     }
 
     findByCode(code: string): Promise<TrainingSession | null> {
-        return this.repo.findOne({
-            where: { code },
-            relations: { training: true, participants: true },
-        });
+        // Seules les équipes FIXED (round IS NULL) sont chargées ici : les équipes éphémères
+        // d'un round passé se consultent via le détail de ce round (Phase 6), pas ici.
+        return this.repo
+            .createQueryBuilder('session')
+            .innerJoinAndSelect('session.training', 'training')
+            .leftJoinAndSelect('session.participants', 'participant')
+            .leftJoinAndSelect('session.teams', 'team', 'team.round_id IS NULL')
+            .leftJoinAndSelect('team.members', 'teamMember')
+            .leftJoinAndSelect('teamMember.participant', 'teamMemberParticipant')
+            .where('session.code = :code', { code })
+            .getOne();
     }
 
     /**
@@ -39,6 +46,9 @@ export class TrainingSessionRepository {
             .createQueryBuilder('session')
             .innerJoinAndSelect('session.training', 'training')
             .leftJoinAndSelect('session.participants', 'participant')
+            .leftJoinAndSelect('session.teams', 'team', 'team.round_id IS NULL')
+            .leftJoinAndSelect('team.members', 'teamMember')
+            .leftJoinAndSelect('teamMember.participant', 'teamMemberParticipant')
             .where('session.code = :sessionCode', { sessionCode })
             .andWhere('training.adminPassword = :password', { password })
             .getOne();

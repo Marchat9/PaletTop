@@ -10,12 +10,17 @@ import { TrainingRound } from '../../entities/training-round.entity';
 import { TrainingMatch } from '../../entities/training-match.entity';
 import { TrainingController } from './controllers/training.controller';
 import { TrainingSessionController } from './controllers/training-session.controller';
+import { TrainingTeamController } from './controllers/training-team.controller';
 import { TrainingMemberRepository } from './repositories/training-member.repository';
 import { TrainingParticipantRepository } from './repositories/training-participant.repository';
 import { TrainingSessionRepository } from './repositories/training-session.repository';
+import { TrainingTeamMemberRepository } from './repositories/training-team-member.repository';
+import { TrainingTeamRepository } from './repositories/training-team.repository';
 import { TrainingRepository } from './repositories/training.repository';
 import { TrainingAuthService } from './services/training-auth.service';
+import { TrainingSessionAuthService } from './services/training-session-auth.service';
 import { TrainingSessionsService } from './services/training-sessions.service';
+import { TrainingTeamsService } from './services/training-teams.service';
 import { TrainingsService } from './services/trainings.service';
 
 @Module({
@@ -31,24 +36,32 @@ import { TrainingsService } from './services/trainings.service';
             TrainingMatch,
         ]),
     ],
-    controllers: [TrainingController, TrainingSessionController],
+    controllers: [TrainingController, TrainingSessionController, TrainingTeamController],
     providers: [
         TrainingRepository,
         TrainingMemberRepository,
         TrainingSessionRepository,
         TrainingParticipantRepository,
+        TrainingTeamRepository,
+        TrainingTeamMemberRepository,
         TrainingAuthService,
+        TrainingSessionAuthService,
         TrainingsService,
         TrainingSessionsService,
+        TrainingTeamsService,
     ],
     exports: [
         TrainingRepository,
         TrainingMemberRepository,
         TrainingSessionRepository,
         TrainingParticipantRepository,
+        TrainingTeamRepository,
+        TrainingTeamMemberRepository,
         TrainingAuthService,
+        TrainingSessionAuthService,
         TrainingsService,
         TrainingSessionsService,
+        TrainingTeamsService,
     ],
 })
 export class TrainingModule {}

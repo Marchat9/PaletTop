@@ -4,6 +4,7 @@ import { CreateTrainingSessionDto } from '../dto/create-training-session.dto';
 import { TrainingMemberRepository } from '../repositories/training-member.repository';
 import { TrainingParticipantRepository } from '../repositories/training-participant.repository';
 import { TrainingSessionRepository } from '../repositories/training-session.repository';
+import { TrainingTeamMemberRepository } from '../repositories/training-team-member.repository';
 import {
     TrainingSessionAdminDto,
     TrainingSessionPublicDto,
@@ -15,6 +16,7 @@ import { TrainingParticipantStatus, TrainingSessionStatus } from 'src/enum/train
 import { TrainingSession } from 'src/entities/training-session.entity';
 import { TrainingMember } from 'src/entities/training-member.entity';
 import { TrainingAuthService } from './training-auth.service';
+import { TrainingSessionAuthService } from './training-session-auth.service';
 
 @Injectable()
 export class TrainingSessionsService {
@@ -22,7 +24,9 @@ export class TrainingSessionsService {
         private readonly trainingSessionRepo: TrainingSessionRepository,
         private readonly trainingParticipantRepo: TrainingParticipantRepository,
         private readonly trainingMemberRepo: TrainingMemberRepository,
+        private readonly trainingTeamMemberRepo: TrainingTeamMemberRepository,
         private readonly trainingAuthService: TrainingAuthService,
+        private readonly trainingSessionAuthService: TrainingSessionAuthService,
     ) {}
 
     async create(
@@ -59,12 +63,18 @@ export class TrainingSessionsService {
     }
 
     async getAdmin(sessionCode: string, password: string): Promise<TrainingSessionAdminDto> {
-        const session = await this.findWithAuthOrThrow(sessionCode, password);
+        const session = await this.trainingSessionAuthService.findWithAdminAuth(
+            sessionCode,
+            password,
+        );
         return toTrainingSessionAdminDto(session);
     }
 
     async close(sessionCode: string, password: string): Promise<TrainingSessionAdminDto> {
-        const session = await this.findWithAuthOrThrow(sessionCode, password);
+        const session = await this.trainingSessionAuthService.findWithAdminAuth(
+            sessionCode,
+            password,
+        );
         session.status = TrainingSessionStatus.CLOSED;
         session.closedAt = new Date();
         const saved = await this.trainingSessionRepo.save(session);
@@ -75,7 +85,10 @@ export class TrainingSessionsService {
         sessionCode: string,
         dto: CheckinParticipantDto,
     ): Promise<TrainingSessionAdminDto> {
-        const session = await this.findWithAuthOrThrow(sessionCode, dto.password);
+        const session = await this.trainingSessionAuthService.findWithAdminAuth(
+            sessionCode,
+            dto.password,
+        );
 
         if (!dto.memberId && !dto.name) {
             throw new BadRequestException(
@@ -113,10 +126,22 @@ export class TrainingSessionsService {
         participantId: string,
         password: string,
     ): Promise<TrainingSessionAdminDto> {
-        const session = await this.findWithAuthOrThrow(sessionCode, password);
+        const session = await this.trainingSessionAuthService.findWithAdminAuth(
+            sessionCode,
+            password,
+        );
         const participant = session.participants.find((p) => p.id === participantId);
         if (!participant) {
             throw new NotFoundException('Participant introuvable pour cette session.');
+        }
+
+        const activeMembership = await this.trainingTeamMemberRepo.findActiveByParticipant(
+            participant.id,
+        );
+        if (activeMembership) {
+            throw new BadRequestException(
+                "Ce participant fait partie d'une équipe fixe active ; dissolvez l'équipe avant de le retirer.",
+            );
         }
 
         participant.status = TrainingParticipantStatus.LEFT;
@@ -133,17 +158,6 @@ export class TrainingSessionsService {
         const session = await this.trainingSessionRepo.findByCode(sessionCode);
         if (!session) {
             throw new NotFoundException('Session introuvable.');
-        }
-        return session;
-    }
-
-    private async findWithAuthOrThrow(
-        sessionCode: string,
-        password: string,
-    ): Promise<TrainingSession> {
-        const session = await this.trainingSessionRepo.findWithTrainingAuth(sessionCode, password);
-        if (!session) {
-            throw new NotFoundException('Session introuvable ou mot de passe invalide.');
         }
         return session;
     }
