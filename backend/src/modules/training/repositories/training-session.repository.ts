@@ -71,4 +71,13 @@ export class TrainingSessionRepository {
         if (!ids.length) return;
         await this.repo.update(ids, { status: TrainingSessionStatus.CLOSED, closedAt: new Date() });
     }
+
+    findAllByTraining(trainingId: string): Promise<TrainingSession[]> {
+        return this.repo
+            .createQueryBuilder('session')
+            .leftJoinAndSelect('session.participants', 'participant')
+            .where('session.training_id = :trainingId', { trainingId })
+            .orderBy('session.date', 'DESC')
+            .getMany();
+    }
 }

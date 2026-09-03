@@ -39,4 +39,12 @@ export class TrainingRoundRepository {
             relations: MATCH_TEAM_RELATIONS,
         });
     }
+
+    findAllBySession(sessionId: string): Promise<TrainingRound[]> {
+        return this.repo.find({
+            where: { session: { id: sessionId } },
+            order: { roundNumber: 'ASC' },
+            relations: MATCH_TEAM_RELATIONS,
+        });
+    }
 }

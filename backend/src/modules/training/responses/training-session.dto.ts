@@ -131,3 +131,20 @@ export function toTrainingSessionAdminDto(session: TrainingSession): TrainingSes
         teams: activeTeams(session).map((team) => toTrainingTeamDto(team)),
     };
 }
+
+// Vue allégée pour lister les sessions passées d'un Training (pas de participants/équipes/codes).
+export interface TrainingSessionSummaryDto {
+    code: string;
+    date: string;
+    status: TrainingSessionStatus;
+    participantsCount: number;
+}
+
+export function toTrainingSessionSummaryDto(session: TrainingSession): TrainingSessionSummaryDto {
+    return {
+        code: session.code,
+        date: session.date.toISOString(),
+        status: session.status,
+        participantsCount: (session.participants ?? []).length,
+    };
+}

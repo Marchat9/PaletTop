@@ -6,6 +6,7 @@ import { TrainingLeaderboardEntryDto } from '../responses/training-leaderboard.d
 import {
     TrainingSessionAdminDto,
     TrainingSessionPublicDto,
+    TrainingSessionSummaryDto,
 } from '../responses/training-session.dto';
 import { TrainingLeaderboardService } from '../services/training-leaderboard.service';
 import { TrainingSessionsService } from '../services/training-sessions.service';
@@ -23,6 +24,14 @@ export class TrainingSessionController {
         @Body() dto: CreateTrainingSessionDto,
     ): Promise<TrainingSessionAdminDto> {
         return this.sessionsService.create(code, dto);
+    }
+
+    @Post(':code/sessions/list')
+    listSessions(
+        @Param('code') code: string,
+        @Body() dto: TrainingPasswordDto,
+    ): Promise<TrainingSessionSummaryDto[]> {
+        return this.sessionsService.listSessions(code, dto.password);
     }
 
     @Get('sessions/:sessionCode')

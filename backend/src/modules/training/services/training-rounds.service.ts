@@ -148,6 +148,15 @@ export class TrainingRoundsService {
         return toTrainingRoundDto(round);
     }
 
+    async listRounds(sessionCode: string): Promise<TrainingRoundDto[]> {
+        const session = await this.trainingSessionRepo.findByCode(sessionCode);
+        if (!session) {
+            throw new NotFoundException('Session introuvable.');
+        }
+        const rounds = await this.trainingRoundRepo.findAllBySession(session.id);
+        return rounds.map(toTrainingRoundDto);
+    }
+
     /**
      * Un seul round de recul (N-1), cf. contrat du port. Les partenaires ne sont dérivés QUE des
      * équipes EPHEMERAL (une équipe FIXED est censée rejouer ensemble, ce n'est pas une répétition

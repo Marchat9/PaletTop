@@ -15,6 +15,11 @@ export class TrainingRoundController {
         return this.roundsService.generateNextRound(sessionCode, dto.password);
     }
 
+    @Get()
+    listAll(@Param('sessionCode') sessionCode: string): Promise<TrainingRoundDto[]> {
+        return this.roundsService.listRounds(sessionCode);
+    }
+
     @Get(':roundNumber')
     get(
         @Param('sessionCode') sessionCode: string,

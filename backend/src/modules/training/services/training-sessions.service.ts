@@ -8,8 +8,10 @@ import { TrainingTeamMemberRepository } from '../repositories/training-team-memb
 import {
     TrainingSessionAdminDto,
     TrainingSessionPublicDto,
+    TrainingSessionSummaryDto,
     toTrainingSessionAdminDto,
     toTrainingSessionPublicDto,
+    toTrainingSessionSummaryDto,
 } from '../responses/training-session.dto';
 import { generateNumericCode } from '../utils/code.utils';
 import { assertSessionOpen } from '../utils/session-guard.utils';
@@ -69,6 +71,15 @@ export class TrainingSessionsService {
             password,
         );
         return toTrainingSessionAdminDto(session);
+    }
+
+    async listSessions(
+        trainingCode: string,
+        password: string,
+    ): Promise<TrainingSessionSummaryDto[]> {
+        const training = await this.trainingAuthService.findWithAdminAuth(trainingCode, password);
+        const sessions = await this.trainingSessionRepo.findAllByTraining(training.id);
+        return sessions.map(toTrainingSessionSummaryDto);
     }
 
     async close(sessionCode: string, password: string): Promise<TrainingSessionAdminDto> {
