@@ -6,6 +6,7 @@ import { MatchStatus } from 'src/enum/status.enum';
 import { TrainingMatchRepository } from '../repositories/training-match.repository';
 import { TrainingSessionRepository } from '../repositories/training-session.repository';
 import { TrainingMatchDto, toTrainingMatchDto } from '../responses/training-round.dto';
+import { assertSessionOpen } from '../utils/session-guard.utils';
 import { TrainingSessionAuthService } from './training-session-auth.service';
 
 @Injectable()
@@ -26,6 +27,7 @@ export class TrainingScoreService {
             matchId,
             participantCode,
         );
+        assertSessionOpen(session);
 
         this.rejectBye(match);
         if (match.status !== MatchStatus.PENDING) {
@@ -51,6 +53,7 @@ export class TrainingScoreService {
             matchId,
             participantCode,
         );
+        assertSessionOpen(session);
 
         this.rejectBye(match);
         if (match.status === MatchStatus.VALIDATED) {

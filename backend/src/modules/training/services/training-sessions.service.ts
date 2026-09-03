@@ -12,6 +12,7 @@ import {
     toTrainingSessionPublicDto,
 } from '../responses/training-session.dto';
 import { generateNumericCode } from '../utils/code.utils';
+import { assertSessionOpen } from '../utils/session-guard.utils';
 import { TrainingParticipantStatus, TrainingSessionStatus } from 'src/enum/training.enum';
 import { TrainingSession } from 'src/entities/training-session.entity';
 import { TrainingMember } from 'src/entities/training-member.entity';
@@ -75,10 +76,13 @@ export class TrainingSessionsService {
             sessionCode,
             password,
         );
-        session.status = TrainingSessionStatus.CLOSED;
-        session.closedAt = new Date();
-        const saved = await this.trainingSessionRepo.save(session);
-        return toTrainingSessionAdminDto(saved);
+        // Idempotent : reclôturer une session déjà fermée ne doit pas écraser son closedAt d'origine.
+        if (session.status !== TrainingSessionStatus.CLOSED) {
+            session.status = TrainingSessionStatus.CLOSED;
+            session.closedAt = new Date();
+            await this.trainingSessionRepo.save(session);
+        }
+        return toTrainingSessionAdminDto(session);
     }
 
     async checkin(
@@ -89,6 +93,7 @@ export class TrainingSessionsService {
             sessionCode,
             dto.password,
         );
+        assertSessionOpen(session);
 
         if (!dto.memberId && !dto.name) {
             throw new BadRequestException(
@@ -130,6 +135,7 @@ export class TrainingSessionsService {
             sessionCode,
             password,
         );
+        assertSessionOpen(session);
         const participant = session.participants.find((p) => p.id === participantId);
         if (!participant) {
             throw new NotFoundException('Participant introuvable pour cette session.');

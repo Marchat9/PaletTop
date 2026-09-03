@@ -19,6 +19,7 @@ import { TrainingSessionRepository } from '../repositories/training-session.repo
 import { TrainingTeamMemberRepository } from '../repositories/training-team-member.repository';
 import { TrainingTeamRepository } from '../repositories/training-team.repository';
 import { TrainingRoundDto, toTrainingRoundDto } from '../responses/training-round.dto';
+import { assertSessionOpen } from '../utils/session-guard.utils';
 import { TrainingSessionAuthService } from './training-session-auth.service';
 
 @Injectable()
@@ -38,6 +39,7 @@ export class TrainingRoundsService {
             sessionCode,
             password,
         );
+        assertSessionOpen(session);
 
         const previousRound = await this.trainingRoundRepo.findLatestBySession(session.id);
         if (previousRound && previousRound.status === TrainingRoundStatus.OPEN) {

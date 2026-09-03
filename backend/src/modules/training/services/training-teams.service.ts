@@ -13,6 +13,7 @@ import {
     toTrainingSessionAdminDto,
 } from '../responses/training-session.dto';
 import { TrainingParticipantStatus, TrainingTeamKind } from 'src/enum/training.enum';
+import { assertSessionOpen } from '../utils/session-guard.utils';
 import { TrainingSessionAuthService } from './training-session-auth.service';
 
 @Injectable()
@@ -32,6 +33,7 @@ export class TrainingTeamsService {
             sessionCode,
             dto.password,
         );
+        assertSessionOpen(session);
 
         const size = dto.participantIds.length;
         if (size !== session.playersPerTeam && size !== session.fallbackTeamSize) {
@@ -93,6 +95,7 @@ export class TrainingTeamsService {
             sessionCode,
             password,
         );
+        assertSessionOpen(session);
         const team = session.teams.find((t) => t.id === teamId);
         if (!team) {
             throw new NotFoundException('Équipe introuvable pour cette session.');
