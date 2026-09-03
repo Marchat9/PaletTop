@@ -34,14 +34,20 @@ export interface TrainingTeamDto {
     members: TrainingTeamMemberSummaryDto[];
 }
 
-export function toTrainingTeamDto(team: TrainingTeam): TrainingTeamDto {
+// `activeOnly` distingue deux usages : la liste "équipes de la session" doit refléter la
+// composition ACTUELLE (donc filtrer les membres partis) ; l'affichage d'un match (round detail,
+// current-match, history) doit montrer QUI A JOUÉ ce match précis, même si l'équipe a depuis été
+// dissoute — sinon un match validé se retrouve affiché avec une équipe vide (score correct, mais
+// plus aucun nom), alors que le classement (qui n'agrège jamais avec ce filtre) reste, lui, exact.
+export function toTrainingTeamDto(team: TrainingTeam, activeOnly = true): TrainingTeamDto {
+    const members = activeOnly
+        ? (team.members ?? []).filter((m) => !m.leftAt)
+        : (team.members ?? []);
     return {
         id: team.id,
         kind: team.kind,
         name: team.name,
-        members: (team.members ?? [])
-            .filter((m) => !m.leftAt)
-            .map((m) => ({ id: m.participant.id, name: m.participant.name })),
+        members: members.map((m) => ({ id: m.participant.id, name: m.participant.name })),
     };
 }
 
@@ -114,7 +120,7 @@ export function toTrainingSessionPublicDto(session: TrainingSession): TrainingSe
     return {
         ...baseSessionFields(session),
         participants: (session.participants ?? []).map(toTrainingParticipantPublicDto),
-        teams: activeTeams(session).map(toTrainingTeamDto),
+        teams: activeTeams(session).map((team) => toTrainingTeamDto(team)),
     };
 }
 
@@ -122,6 +128,6 @@ export function toTrainingSessionAdminDto(session: TrainingSession): TrainingSes
     return {
         ...baseSessionFields(session),
         participants: (session.participants ?? []).map(toTrainingParticipantAdminDto),
-        teams: activeTeams(session).map(toTrainingTeamDto),
+        teams: activeTeams(session).map((team) => toTrainingTeamDto(team)),
     };
 }
