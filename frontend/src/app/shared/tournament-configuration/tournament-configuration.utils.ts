@@ -1,6 +1,7 @@
-import { FormControl, FormGroup } from '@angular/forms';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { CompetitionMode } from 'src/app/models/tournament-configuration-detail.model';
 import { FIELD_LABELS } from './tournament-configuration';
+import { TournamentConfigurationForm } from './tournament-configuration-form.model';
 
 // Each competition mode has its own `modeParameter.xxxMode` sub-group; only the one matching
 // the currently selected mode should ever contribute to validation — the other two stay
@@ -10,6 +11,28 @@ const MODE_PARAMETER_GROUP_BY_COMPETITION_MODE: Record<CompetitionMode, string> 
   up_down: 'upDownMode',
   championship: 'championshipMode',
 };
+
+// Applies the side effects specific to the selected competition mode: only championship
+// requires homeTeam/awayTeam, and it caps maxTeamCapacity at a single home/away match instead
+// of the usual default. Called once at form construction (for the tournament's initial mode)
+// and again from an effect on every subsequent competitionMode change, so both paths stay in
+// sync from this single place.
+export function applyCompetitionModeSideEffects(
+  form: TournamentConfigurationForm,
+  mode: CompetitionMode,
+  teamCapacity: { max: number; maxChampionship: number },
+): void {
+  const championshipControls = form.controls.modeParameter.controls.championshipMode.controls;
+  const championshipValidators = mode === 'championship' ? [Validators.required] : [];
+  championshipControls.homeTeam.setValidators(championshipValidators);
+  championshipControls.homeTeam.updateValueAndValidity();
+  championshipControls.awayTeam.setValidators(championshipValidators);
+  championshipControls.awayTeam.updateValueAndValidity();
+
+  form.controls.rules.controls.maxTeamCapacity.setValue(
+    mode === 'championship' ? teamCapacity.maxChampionship : teamCapacity.max,
+  );
+}
 
 export function getInvalidFieldNames(form: FormGroup): string[] {
   const competitionMode = form.get('modeParameter.competitionMode')?.value as

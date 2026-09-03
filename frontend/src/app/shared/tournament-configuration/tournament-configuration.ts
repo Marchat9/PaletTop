@@ -22,7 +22,10 @@ import {
   TournamentConfigurationField,
   TournamentConfigurationForm,
 } from './tournament-configuration-form.model';
-import { getInvalidFieldNames } from './tournament-configuration.utils';
+import {
+  applyCompetitionModeSideEffects,
+  getInvalidFieldNames,
+} from './tournament-configuration.utils';
 import { TournamentModeParameter } from './tournament-mode-parameter/tournament-mode-parameter';
 import { TournamentParameters } from './tournament-parameters/tournament-parameters';
 import { TournamentRules } from './tournament-rules/tournament-rules';
@@ -70,6 +73,8 @@ export class TournamentConfiguration implements OnInit {
       (tournament?.configuration.competitionConfiguration as UpDownTournamentConfig) ?? {};
     const championShipConfig: ChampionShipTournamentConfig =
       (tournament?.configuration.competitionConfiguration as ChampionShipTournamentConfig) ?? {};
+
+    const initialCompetitionMode = tournament?.configuration.competitionMode ?? 'standard';
 
     this.form = new FormGroup({
       parameters: new FormGroup({
@@ -126,7 +131,7 @@ export class TournamentConfiguration implements OnInit {
       }),
 
       modeParameter: new FormGroup({
-        competitionMode: new FormControl(tournament?.configuration.competitionMode ?? 'standard', {
+        competitionMode: new FormControl(initialCompetitionMode, {
           nonNullable: true,
           validators: [Validators.required],
         }),
@@ -163,13 +168,16 @@ export class TournamentConfiguration implements OnInit {
           }),
         }),
         championshipMode: new FormGroup({
+          // Required only while championship is the active mode — otherwise these two
+          // empty-by-default controls would make the whole form permanently invalid.
+          // (Subsequent mode changes are handled by applyCompetitionModeSideEffects below.)
           homeTeam: new FormControl(championShipConfig.homeClub ?? undefined, {
             nonNullable: true,
-            validators: [Validators.required],
+            validators: initialCompetitionMode === 'championship' ? [Validators.required] : [],
           }),
           awayTeam: new FormControl(championShipConfig.awayClub ?? undefined, {
             nonNullable: true,
-            validators: [Validators.required],
+            validators: initialCompetitionMode === 'championship' ? [Validators.required] : [],
           }),
         }),
       }),
@@ -192,7 +200,8 @@ export class TournamentConfiguration implements OnInit {
       { injector: this.injector },
     );
 
-    // effect to change maxTeamCapacity on competitionMode changes
+    // effect to change maxTeamCapacity and the championship fields' requiredness on
+    // competitionMode changes (the initial value is handled above, at form construction)
     effect(
       () => {
         const mode = competitionMode();
@@ -200,9 +209,7 @@ export class TournamentConfiguration implements OnInit {
           return;
         }
 
-        this.form.controls.rules.controls.maxTeamCapacity.setValue(
-          mode === 'championship' ? this.teamCapacity.maxChampionship : this.teamCapacity.max,
-        );
+        applyCompetitionModeSideEffects(this.form, mode, this.teamCapacity);
       },
       { injector: this.injector },
     );
