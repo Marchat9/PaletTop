@@ -9,15 +9,21 @@ import { TrainingTeamMember } from '../../entities/training-team-member.entity';
 import { TrainingRound } from '../../entities/training-round.entity';
 import { TrainingMatch } from '../../entities/training-match.entity';
 import { TrainingController } from './controllers/training.controller';
+import { TrainingRoundController } from './controllers/training-round.controller';
 import { TrainingSessionController } from './controllers/training-session.controller';
 import { TrainingTeamController } from './controllers/training-team.controller';
+import { DefaultMatchmakingStrategy } from './domain/matchmaking/default-matchmaking.strategy';
+import { MATCHMAKING_PORT } from './domain/matchmaking/matchmaking.types';
+import { TrainingMatchRepository } from './repositories/training-match.repository';
 import { TrainingMemberRepository } from './repositories/training-member.repository';
 import { TrainingParticipantRepository } from './repositories/training-participant.repository';
+import { TrainingRoundRepository } from './repositories/training-round.repository';
 import { TrainingSessionRepository } from './repositories/training-session.repository';
 import { TrainingTeamMemberRepository } from './repositories/training-team-member.repository';
 import { TrainingTeamRepository } from './repositories/training-team.repository';
 import { TrainingRepository } from './repositories/training.repository';
 import { TrainingAuthService } from './services/training-auth.service';
+import { TrainingRoundsService } from './services/training-rounds.service';
 import { TrainingSessionAuthService } from './services/training-session-auth.service';
 import { TrainingSessionsService } from './services/training-sessions.service';
 import { TrainingTeamsService } from './services/training-teams.service';
@@ -36,7 +42,12 @@ import { TrainingsService } from './services/trainings.service';
             TrainingMatch,
         ]),
     ],
-    controllers: [TrainingController, TrainingSessionController, TrainingTeamController],
+    controllers: [
+        TrainingController,
+        TrainingSessionController,
+        TrainingTeamController,
+        TrainingRoundController,
+    ],
     providers: [
         TrainingRepository,
         TrainingMemberRepository,
@@ -44,11 +55,15 @@ import { TrainingsService } from './services/trainings.service';
         TrainingParticipantRepository,
         TrainingTeamRepository,
         TrainingTeamMemberRepository,
+        TrainingRoundRepository,
+        TrainingMatchRepository,
         TrainingAuthService,
         TrainingSessionAuthService,
         TrainingsService,
         TrainingSessionsService,
         TrainingTeamsService,
+        TrainingRoundsService,
+        { provide: MATCHMAKING_PORT, useClass: DefaultMatchmakingStrategy },
     ],
     exports: [
         TrainingRepository,
@@ -57,11 +72,14 @@ import { TrainingsService } from './services/trainings.service';
         TrainingParticipantRepository,
         TrainingTeamRepository,
         TrainingTeamMemberRepository,
+        TrainingRoundRepository,
+        TrainingMatchRepository,
         TrainingAuthService,
         TrainingSessionAuthService,
         TrainingsService,
         TrainingSessionsService,
         TrainingTeamsService,
+        TrainingRoundsService,
     ],
 })
 export class TrainingModule {}
