@@ -9,6 +9,7 @@ import { RealtimeModule } from './modules/realtime/realtime.module';
 import { CleanupModule } from './modules/cleanup/cleanup.module';
 import { SuperAdminModule } from './modules/super-admin/super-admin.module';
 import { HealthModule } from './modules/health/health.module';
+import { TrainingModule } from './modules/training/training.module';
 
 @Module({
     imports: [
@@ -19,6 +20,7 @@ import { HealthModule } from './modules/health/health.module';
         CleanupModule,
         SuperAdminModule,
         HealthModule,
+        TrainingModule,
     ],
 })
 export class AppModule {}
