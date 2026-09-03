@@ -11,10 +11,12 @@ import { TrainingTeamRepository } from '../repositories/training-team.repository
 import {
     TrainingSessionAdminDto,
     toTrainingSessionAdminDto,
+    toTrainingSessionPublicDto,
 } from '../responses/training-session.dto';
 import { TrainingParticipantStatus, TrainingTeamKind } from 'src/enum/training.enum';
 import { assertSessionOpen } from '../utils/session-guard.utils';
 import { TrainingSessionAuthService } from './training-session-auth.service';
+import { TrainingRealtimeGateway } from '../training-realtime.gateway';
 
 @Injectable()
 export class TrainingTeamsService {
@@ -23,6 +25,7 @@ export class TrainingTeamsService {
         private readonly trainingTeamRepo: TrainingTeamRepository,
         private readonly trainingTeamMemberRepo: TrainingTeamMemberRepository,
         private readonly trainingSessionAuthService: TrainingSessionAuthService,
+        private readonly trainingRealtimeGateway: TrainingRealtimeGateway,
     ) {}
 
     async createFixedTeam(
@@ -113,6 +116,10 @@ export class TrainingTeamsService {
         const session = await this.trainingSessionAuthService.findWithAdminAuth(
             sessionCode,
             password,
+        );
+        this.trainingRealtimeGateway.emitSessionUpdated(
+            session.code,
+            toTrainingSessionPublicDto(session),
         );
         return toTrainingSessionAdminDto(session);
     }

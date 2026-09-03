@@ -8,6 +8,8 @@ import { TrainingSessionRepository } from '../repositories/training-session.repo
 import { TrainingMatchDto, toTrainingMatchDto } from '../responses/training-round.dto';
 import { assertSessionOpen } from '../utils/session-guard.utils';
 import { TrainingSessionAuthService } from './training-session-auth.service';
+import { TrainingLeaderboardService } from './training-leaderboard.service';
+import { TrainingRealtimeGateway } from '../training-realtime.gateway';
 
 @Injectable()
 export class TrainingScoreService {
@@ -15,6 +17,8 @@ export class TrainingScoreService {
         private readonly trainingMatchRepo: TrainingMatchRepository,
         private readonly trainingSessionRepo: TrainingSessionRepository,
         private readonly trainingSessionAuthService: TrainingSessionAuthService,
+        private readonly trainingLeaderboardService: TrainingLeaderboardService,
+        private readonly trainingRealtimeGateway: TrainingRealtimeGateway,
     ) {}
 
     async startMatch(
@@ -38,7 +42,7 @@ export class TrainingScoreService {
         match.startedAt = new Date();
         const [saved] = await this.trainingMatchRepo.save([match]);
         await this.trainingSessionRepo.touchLastActivity(session.id);
-        return toTrainingMatchDto(saved);
+        return this.emitMatchUpdate(sessionCode, saved);
     }
 
     async updateScore(
@@ -72,7 +76,7 @@ export class TrainingScoreService {
 
         const [saved] = await this.trainingMatchRepo.save([match]);
         await this.trainingSessionRepo.touchLastActivity(session.id);
-        return toTrainingMatchDto(saved);
+        return this.emitMatchUpdate(sessionCode, saved);
     }
 
     async validateMatch(
@@ -109,7 +113,7 @@ export class TrainingScoreService {
 
         const [saved] = await this.trainingMatchRepo.save([match]);
         await this.trainingSessionRepo.touchLastActivity(session.id);
-        return toTrainingMatchDto(saved);
+        return this.emitMatchUpdate(sessionCode, saved);
     }
 
     async adminUpdateScore(
@@ -149,7 +153,20 @@ export class TrainingScoreService {
 
         const [saved] = await this.trainingMatchRepo.save([match]);
         await this.trainingSessionRepo.touchLastActivity(session.id);
-        return toTrainingMatchDto(saved);
+        return this.emitMatchUpdate(sessionCode, saved);
+    }
+
+    private async emitMatchUpdate(
+        sessionCode: string,
+        match: TrainingMatch,
+    ): Promise<TrainingMatchDto> {
+        const dto = toTrainingMatchDto(match);
+        this.trainingRealtimeGateway.emitMatchUpdated(sessionCode, dto);
+        if (match.status === MatchStatus.VALIDATED) {
+            const leaderboard = await this.trainingLeaderboardService.getLeaderboard(sessionCode);
+            this.trainingRealtimeGateway.emitLeaderboardUpdated(sessionCode, leaderboard);
+        }
+        return dto;
     }
 
     private rejectBye(match: TrainingMatch): void {

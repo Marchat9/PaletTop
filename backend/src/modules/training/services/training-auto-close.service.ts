@@ -4,6 +4,8 @@ import { SchedulerRegistry } from '@nestjs/schedule';
 import { CronJob } from 'cron';
 import { TrainingAutoCloseConfig } from 'src/config/training-auto-close.config';
 import { TrainingSessionRepository } from '../repositories/training-session.repository';
+import { toTrainingSessionPublicDto } from '../responses/training-session.dto';
+import { TrainingRealtimeGateway } from '../training-realtime.gateway';
 
 @Injectable()
 export class TrainingAutoCloseService implements OnModuleInit {
@@ -14,6 +16,7 @@ export class TrainingAutoCloseService implements OnModuleInit {
         private readonly configService: ConfigService,
         private readonly schedulerRegistry: SchedulerRegistry,
         private readonly trainingSessionRepo: TrainingSessionRepository,
+        private readonly trainingRealtimeGateway: TrainingRealtimeGateway,
     ) {
         this.config = this.configService.getOrThrow<TrainingAutoCloseConfig>('trainingAutoClose');
     }
@@ -48,5 +51,15 @@ export class TrainingAutoCloseService implements OnModuleInit {
                 .map((s) => s.code)
                 .join(', ')}]`,
         );
+
+        for (const session of expired) {
+            const reloaded = await this.trainingSessionRepo.findByCode(session.code);
+            if (reloaded) {
+                this.trainingRealtimeGateway.emitSessionUpdated(
+                    reloaded.code,
+                    toTrainingSessionPublicDto(reloaded),
+                );
+            }
+        }
     }
 }

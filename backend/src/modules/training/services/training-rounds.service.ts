@@ -21,6 +21,7 @@ import { TrainingTeamRepository } from '../repositories/training-team.repository
 import { TrainingRoundDto, toTrainingRoundDto } from '../responses/training-round.dto';
 import { assertSessionOpen } from '../utils/session-guard.utils';
 import { TrainingSessionAuthService } from './training-session-auth.service';
+import { TrainingRealtimeGateway } from '../training-realtime.gateway';
 
 @Injectable()
 export class TrainingRoundsService {
@@ -31,6 +32,7 @@ export class TrainingRoundsService {
         private readonly trainingTeamMemberRepo: TrainingTeamMemberRepository,
         private readonly trainingMatchRepo: TrainingMatchRepository,
         private readonly trainingSessionAuthService: TrainingSessionAuthService,
+        private readonly trainingRealtimeGateway: TrainingRealtimeGateway,
         @Inject(MATCHMAKING_PORT) private readonly matchmaking: MatchmakingPort,
     ) {}
 
@@ -133,7 +135,9 @@ export class TrainingRoundsService {
 
         await this.trainingSessionRepo.touchLastActivity(session.id);
 
-        return this.getRound(sessionCode, nextRoundNumber);
+        const roundDto = await this.getRound(sessionCode, nextRoundNumber);
+        this.trainingRealtimeGateway.emitRoundGenerated(sessionCode, roundDto);
+        return roundDto;
     }
 
     async getRound(sessionCode: string, roundNumber: number): Promise<TrainingRoundDto> {

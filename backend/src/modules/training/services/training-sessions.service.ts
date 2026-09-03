@@ -20,6 +20,7 @@ import { TrainingSession } from 'src/entities/training-session.entity';
 import { TrainingMember } from 'src/entities/training-member.entity';
 import { TrainingAuthService } from './training-auth.service';
 import { TrainingSessionAuthService } from './training-session-auth.service';
+import { TrainingRealtimeGateway } from '../training-realtime.gateway';
 
 @Injectable()
 export class TrainingSessionsService {
@@ -30,6 +31,7 @@ export class TrainingSessionsService {
         private readonly trainingTeamMemberRepo: TrainingTeamMemberRepository,
         private readonly trainingAuthService: TrainingAuthService,
         private readonly trainingSessionAuthService: TrainingSessionAuthService,
+        private readonly trainingRealtimeGateway: TrainingRealtimeGateway,
     ) {}
 
     async create(
@@ -92,6 +94,7 @@ export class TrainingSessionsService {
             session.status = TrainingSessionStatus.CLOSED;
             session.closedAt = new Date();
             await this.trainingSessionRepo.save(session);
+            this.emitSessionUpdated(session);
         }
         return toTrainingSessionAdminDto(session);
     }
@@ -134,6 +137,7 @@ export class TrainingSessionsService {
 
         session.participants = [...session.participants, saved];
         await this.touchLastActivity(session.id);
+        this.emitSessionUpdated(session);
         return toTrainingSessionAdminDto(session);
     }
 
@@ -164,11 +168,19 @@ export class TrainingSessionsService {
         participant.status = TrainingParticipantStatus.LEFT;
         await this.trainingParticipantRepo.save(participant);
         await this.touchLastActivity(session.id);
+        this.emitSessionUpdated(session);
         return toTrainingSessionAdminDto(session);
     }
 
     private async touchLastActivity(sessionId: string): Promise<void> {
         await this.trainingSessionRepo.touchLastActivity(sessionId);
+    }
+
+    private emitSessionUpdated(session: TrainingSession): void {
+        this.trainingRealtimeGateway.emitSessionUpdated(
+            session.code,
+            toTrainingSessionPublicDto(session),
+        );
     }
 
     private async findByCodeOrThrow(sessionCode: string): Promise<TrainingSession> {

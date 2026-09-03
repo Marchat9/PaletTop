@@ -34,6 +34,7 @@ import { TrainingSessionAuthService } from './services/training-session-auth.ser
 import { TrainingSessionsService } from './services/training-sessions.service';
 import { TrainingTeamsService } from './services/training-teams.service';
 import { TrainingsService } from './services/trainings.service';
+import { TrainingRealtimeGateway } from './training-realtime.gateway';
 
 @Module({
     imports: [
@@ -75,6 +76,7 @@ import { TrainingsService } from './services/trainings.service';
         TrainingLeaderboardService,
         TrainingParticipantViewService,
         TrainingAutoCloseService,
+        TrainingRealtimeGateway,
         { provide: MATCHMAKING_PORT, useClass: DefaultMatchmakingStrategy },
     ],
     exports: [
