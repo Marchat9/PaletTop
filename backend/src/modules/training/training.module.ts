@@ -9,6 +9,7 @@ import { TrainingTeamMember } from '../../entities/training-team-member.entity';
 import { TrainingRound } from '../../entities/training-round.entity';
 import { TrainingMatch } from '../../entities/training-match.entity';
 import { TrainingController } from './controllers/training.controller';
+import { TrainingParticipantController } from './controllers/training-participant.controller';
 import { TrainingRoundController } from './controllers/training-round.controller';
 import { TrainingScoreController } from './controllers/training-score.controller';
 import { TrainingSessionController } from './controllers/training-session.controller';
@@ -24,6 +25,8 @@ import { TrainingTeamMemberRepository } from './repositories/training-team-membe
 import { TrainingTeamRepository } from './repositories/training-team.repository';
 import { TrainingRepository } from './repositories/training.repository';
 import { TrainingAuthService } from './services/training-auth.service';
+import { TrainingLeaderboardService } from './services/training-leaderboard.service';
+import { TrainingParticipantViewService } from './services/training-participant-view.service';
 import { TrainingRoundsService } from './services/training-rounds.service';
 import { TrainingScoreService } from './services/training-score.service';
 import { TrainingSessionAuthService } from './services/training-session-auth.service';
@@ -50,6 +53,7 @@ import { TrainingsService } from './services/trainings.service';
         TrainingTeamController,
         TrainingRoundController,
         TrainingScoreController,
+        TrainingParticipantController,
     ],
     providers: [
         TrainingRepository,
@@ -67,6 +71,8 @@ import { TrainingsService } from './services/trainings.service';
         TrainingTeamsService,
         TrainingRoundsService,
         TrainingScoreService,
+        TrainingLeaderboardService,
+        TrainingParticipantViewService,
         { provide: MATCHMAKING_PORT, useClass: DefaultMatchmakingStrategy },
     ],
     exports: [
@@ -85,6 +91,8 @@ import { TrainingsService } from './services/trainings.service';
         TrainingTeamsService,
         TrainingRoundsService,
         TrainingScoreService,
+        TrainingLeaderboardService,
+        TrainingParticipantViewService,
     ],
 })
 export class TrainingModule {}

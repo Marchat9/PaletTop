@@ -2,15 +2,20 @@ import { Body, Controller, Delete, Get, Param, Post } from '@nestjs/common';
 import { CheckinParticipantDto } from '../dto/checkin-participant.dto';
 import { CreateTrainingSessionDto } from '../dto/create-training-session.dto';
 import { TrainingPasswordDto } from '../dto/training-password.dto';
+import { TrainingLeaderboardEntryDto } from '../responses/training-leaderboard.dto';
 import {
     TrainingSessionAdminDto,
     TrainingSessionPublicDto,
 } from '../responses/training-session.dto';
+import { TrainingLeaderboardService } from '../services/training-leaderboard.service';
 import { TrainingSessionsService } from '../services/training-sessions.service';
 
 @Controller('trainings')
 export class TrainingSessionController {
-    constructor(private readonly sessionsService: TrainingSessionsService) {}
+    constructor(
+        private readonly sessionsService: TrainingSessionsService,
+        private readonly leaderboardService: TrainingLeaderboardService,
+    ) {}
 
     @Post(':code/sessions')
     create(
@@ -56,5 +61,12 @@ export class TrainingSessionController {
         @Body() dto: TrainingPasswordDto,
     ): Promise<TrainingSessionAdminDto> {
         return this.sessionsService.removeParticipant(sessionCode, participantId, dto.password);
+    }
+
+    @Get('sessions/:sessionCode/leaderboard')
+    getLeaderboard(
+        @Param('sessionCode') sessionCode: string,
+    ): Promise<TrainingLeaderboardEntryDto[]> {
+        return this.leaderboardService.getLeaderboard(sessionCode);
     }
 }
