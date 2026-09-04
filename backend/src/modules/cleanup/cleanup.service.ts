@@ -1,7 +1,7 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { SchedulerRegistry } from '@nestjs/schedule';
-import { CronJob } from 'cron';
+import { registerIdleCron } from 'src/common/scheduling/register-idle-cron.util';
 import { CleanupConfig } from 'src/config/cleanup.config';
 import { Tournament } from 'src/entities/tournament.entity';
 import { TournamentRepository } from 'src/modules/tournaments/repositories/tournament.repository';
@@ -20,20 +20,18 @@ export class CleanupService implements OnModuleInit {
     }
 
     onModuleInit(): void {
-        if (!this.config.enabled) {
-            this.logger.debug(
-                'Nettoyage automatique des tournois désactivé (CLEANUP_ENABLED=false).',
-            );
-            return;
-        }
-
-        const job = new CronJob(this.config.cronExpression, () => {
-            void this.runCleanup();
-        });
-        this.schedulerRegistry.addCronJob('tournament-cleanup', job);
-        job.start();
-        this.logger.log(
-            `Nettoyage automatique des tournois planifié (cron: "${this.config.cronExpression}").`,
+        registerIdleCron(
+            this.logger,
+            this.schedulerRegistry,
+            {
+                enabled: this.config.enabled,
+                cronExpression: this.config.cronExpression,
+                jobName: 'tournament-cleanup',
+                disabledMessage:
+                    'Nettoyage automatique des tournois désactivé (CLEANUP_ENABLED=false).',
+                scheduledMessage: `Nettoyage automatique des tournois planifié (cron: "${this.config.cronExpression}").`,
+            },
+            () => void this.runCleanup(),
         );
     }
 

@@ -1,7 +1,7 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { SchedulerRegistry } from '@nestjs/schedule';
-import { CronJob } from 'cron';
+import { registerIdleCron } from 'src/common/scheduling/register-idle-cron.util';
 import { TrainingAutoCloseConfig } from 'src/config/training-auto-close.config';
 import { TrainingSessionRepository } from '../repositories/training-session.repository';
 import { toTrainingSessionPublicDto } from '../responses/training-session.dto';
@@ -24,20 +24,18 @@ export class TrainingAutoCloseService implements OnModuleInit {
     // Pas de ScheduleModule.forRoot() ici : ce module est @Global() et déjà initialisé par
     // CleanupModule dans AppModule — injecter SchedulerRegistry suffit.
     onModuleInit(): void {
-        if (!this.config.enabled) {
-            this.logger.debug(
-                "Clôture automatique des sessions d'entraînement désactivée (TRAINING_AUTOCLOSE_ENABLED=false).",
-            );
-            return;
-        }
-
-        const job = new CronJob(this.config.cronExpression, () => {
-            void this.runAutoClose();
-        });
-        this.schedulerRegistry.addCronJob('training-session-auto-close', job);
-        job.start();
-        this.logger.log(
-            `Clôture automatique des sessions d'entraînement planifiée (cron: "${this.config.cronExpression}").`,
+        registerIdleCron(
+            this.logger,
+            this.schedulerRegistry,
+            {
+                enabled: this.config.enabled,
+                cronExpression: this.config.cronExpression,
+                jobName: 'training-session-auto-close',
+                disabledMessage:
+                    "Clôture automatique des sessions d'entraînement désactivée (TRAINING_AUTOCLOSE_ENABLED=false).",
+                scheduledMessage: `Clôture automatique des sessions d'entraînement planifiée (cron: "${this.config.cronExpression}").`,
+            },
+            () => void this.runAutoClose(),
         );
     }
 
@@ -52,14 +50,14 @@ export class TrainingAutoCloseService implements OnModuleInit {
                 .join(', ')}]`,
         );
 
-        for (const session of expired) {
-            const reloaded = await this.trainingSessionRepo.findByCode(session.code);
-            if (reloaded) {
-                this.trainingRealtimeGateway.emitSessionUpdated(
-                    reloaded.code,
-                    toTrainingSessionPublicDto(reloaded),
-                );
-            }
+        const reloaded = await this.trainingSessionRepo.findAllByIdsWithRelations(
+            expired.map((s) => s.id),
+        );
+        for (const session of reloaded) {
+            this.trainingRealtimeGateway.emitSessionUpdated(
+                session.code,
+                toTrainingSessionPublicDto(session),
+            );
         }
     }
 }

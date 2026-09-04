@@ -82,6 +82,22 @@ export class TrainingSessionRepository {
         await this.repo.update(ids, { status: TrainingSessionStatus.CLOSED, closedAt: new Date() });
     }
 
+    // Utilisée après un batch closeMany() pour reconstruire les payloads de diffusion websocket en
+    // UNE requête plutôt qu'un findByCode() par session (cf. runAutoClose).
+    findAllByIdsWithRelations(ids: string[]): Promise<TrainingSession[]> {
+        if (!ids.length) return Promise.resolve([]);
+        return this.repo
+            .createQueryBuilder('session')
+            .innerJoinAndSelect('session.training', 'training')
+            .leftJoinAndSelect('session.participants', 'participant')
+            .leftJoinAndSelect('participant.member', 'participantMember')
+            .leftJoinAndSelect('session.teams', 'team', 'team.round_id IS NULL')
+            .leftJoinAndSelect('team.members', 'teamMember')
+            .leftJoinAndSelect('teamMember.participant', 'teamMemberParticipant')
+            .where('session.id IN (:...ids)', { ids })
+            .getMany();
+    }
+
     findAllByTraining(trainingId: string): Promise<TrainingSession[]> {
         return this.repo
             .createQueryBuilder('session')
