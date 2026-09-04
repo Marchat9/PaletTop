@@ -4,6 +4,8 @@ import {
     Injectable,
     NotFoundException,
 } from '@nestjs/common';
+import { InjectDataSource } from '@nestjs/typeorm';
+import { DataSource } from 'typeorm';
 import { CreateFixedTeamDto } from '../dto/create-fixed-team.dto';
 import { TrainingSessionRepository } from '../repositories/training-session.repository';
 import { TrainingTeamMemberRepository } from '../repositories/training-team-member.repository';
@@ -15,6 +17,8 @@ import {
 } from '../responses/training-session.dto';
 import { TrainingParticipantStatus, TrainingTeamKind } from 'src/enum/training.enum';
 import { TrainingSession } from 'src/entities/training-session.entity';
+import { TrainingTeam } from 'src/entities/training-team.entity';
+import { TrainingTeamMember } from 'src/entities/training-team-member.entity';
 import { assertSessionOpen } from '../utils/session-guard.utils';
 import { TrainingSessionAuthService } from './training-session-auth.service';
 import { TrainingRealtimeGateway } from '../training-realtime.gateway';
@@ -27,6 +31,7 @@ export class TrainingTeamsService {
         private readonly trainingTeamMemberRepo: TrainingTeamMemberRepository,
         private readonly trainingSessionAuthService: TrainingSessionAuthService,
         private readonly trainingRealtimeGateway: TrainingRealtimeGateway,
+        @InjectDataSource() private readonly dataSource: DataSource,
     ) {}
 
     async createFixedTeam(
@@ -75,23 +80,31 @@ export class TrainingTeamsService {
             );
         }
 
-        const team = this.trainingTeamRepo.create({
-            session,
-            round: null,
-            kind: TrainingTeamKind.FIXED,
-            name: dto.name,
-        });
-        const savedTeam = await this.trainingTeamRepo.save(team);
+        // Équipe + membres dans une seule transaction : un échec entre les deux écritures ne doit
+        // jamais laisser une équipe fixe orpheline, sans aucun membre, en base.
+        const savedTeam = await this.dataSource.transaction(async (manager) => {
+            const teamRepo = manager.getRepository(TrainingTeam);
+            const teamMemberRepo = manager.getRepository(TrainingTeamMember);
 
-        const memberRows = participants.map((participant) =>
-            this.trainingTeamMemberRepo.create({
-                team: savedTeam,
-                participant,
+            const team = teamRepo.create({
+                session,
+                round: null,
                 kind: TrainingTeamKind.FIXED,
-                leftAt: null,
-            }),
-        );
-        savedTeam.members = await this.trainingTeamMemberRepo.save(memberRows);
+                name: dto.name,
+            });
+            const savedTeam = await teamRepo.save(team);
+
+            const memberRows = participants.map((participant) =>
+                teamMemberRepo.create({
+                    team: savedTeam,
+                    participant,
+                    kind: TrainingTeamKind.FIXED,
+                    leftAt: null,
+                }),
+            );
+            savedTeam.members = await teamMemberRepo.save(memberRows);
+            return savedTeam;
+        });
 
         await this.trainingSessionRepo.touchLastActivity(session.id);
         session.teams = [...session.teams, savedTeam];

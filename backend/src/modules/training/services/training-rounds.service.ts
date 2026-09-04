@@ -1,7 +1,11 @@
 import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { InjectDataSource } from '@nestjs/typeorm';
+import { DataSource } from 'typeorm';
+import { TrainingMatch } from 'src/entities/training-match.entity';
 import { TrainingParticipant } from 'src/entities/training-participant.entity';
 import { TrainingRound } from 'src/entities/training-round.entity';
 import { TrainingTeam } from 'src/entities/training-team.entity';
+import { TrainingTeamMember } from 'src/entities/training-team-member.entity';
 import { MatchStatus } from 'src/enum/status.enum';
 import {
     TrainingParticipantStatus,
@@ -13,11 +17,8 @@ import {
     MATCHMAKING_PORT,
     MatchmakingPort,
 } from '../domain/matchmaking/matchmaking.types';
-import { TrainingMatchRepository } from '../repositories/training-match.repository';
 import { TrainingRoundRepository } from '../repositories/training-round.repository';
 import { TrainingSessionRepository } from '../repositories/training-session.repository';
-import { TrainingTeamMemberRepository } from '../repositories/training-team-member.repository';
-import { TrainingTeamRepository } from '../repositories/training-team.repository';
 import { TrainingRoundDto, toTrainingRoundDto } from '../responses/training-round.dto';
 import { assertSessionOpen } from '../utils/session-guard.utils';
 import { TrainingSessionAuthService } from './training-session-auth.service';
@@ -28,12 +29,10 @@ export class TrainingRoundsService {
     constructor(
         private readonly trainingSessionRepo: TrainingSessionRepository,
         private readonly trainingRoundRepo: TrainingRoundRepository,
-        private readonly trainingTeamRepo: TrainingTeamRepository,
-        private readonly trainingTeamMemberRepo: TrainingTeamMemberRepository,
-        private readonly trainingMatchRepo: TrainingMatchRepository,
         private readonly trainingSessionAuthService: TrainingSessionAuthService,
         private readonly trainingRealtimeGateway: TrainingRealtimeGateway,
         @Inject(MATCHMAKING_PORT) private readonly matchmaking: MatchmakingPort,
+        @InjectDataSource() private readonly dataSource: DataSource,
     ) {}
 
     async generateNextRound(sessionCode: string, password: string): Promise<TrainingRoundDto> {
@@ -53,10 +52,6 @@ export class TrainingRoundsService {
                     'Tous les matchs du round précédent doivent être validés avant de générer le suivant.',
                 );
             }
-        }
-        if (previousRound && previousRound.status === TrainingRoundStatus.OPEN) {
-            previousRound.status = TrainingRoundStatus.CLOSED;
-            await this.trainingRoundRepo.save(previousRound);
         }
         const nextRoundNumber = (previousRound?.roundNumber ?? 0) + 1;
 
@@ -93,68 +88,95 @@ export class TrainingRoundsService {
         };
 
         const plan = this.matchmaking.generateRound(input);
-
-        const round = this.trainingRoundRepo.create({
-            session,
-            roundNumber: nextRoundNumber,
-            status: TrainingRoundStatus.OPEN,
-        });
-        const savedRound = await this.trainingRoundRepo.save(round);
-
         const participantById = new Map<string, TrainingParticipant>(
             session.participants.map((p) => [p.id, p]),
         );
 
-        // fixedTeam.id se référence lui-même (déjà une id réelle) ; les équipes éphémères ont
-        // besoin d'être créées pour obtenir une id réelle avant de pouvoir être référencées par
-        // les matchs.
-        const refToTeamId = new Map<string, string>(activeFixedTeams.map((t) => [t.id, t.id]));
+        // Round, équipes/membres éphémères et matchs dans une seule transaction : un échec en
+        // cours de route (crash, coupure DB) ne doit jamais laisser un round à moitié créé (ex.
+        // round ouvert sans aucun match, que le garde-fou ci-dessus ne détecterait pas — il ne
+        // voit rien à valider sur un round vide).
+        const { savedRound, matchRows } = await this.dataSource.transaction(async (manager) => {
+            const roundRepo = manager.getRepository(TrainingRound);
+            const teamRepo = manager.getRepository(TrainingTeam);
+            const teamMemberRepo = manager.getRepository(TrainingTeamMember);
+            const matchRepo = manager.getRepository(TrainingMatch);
 
-        // Équipes puis membres en deux requêtes batchées (au lieu de 2 requêtes par équipe
-        // éphémère) : les créations sont indépendantes entre elles, seules les lignes membres ont
-        // besoin des ids générés par le premier batch.
-        if (plan.ephemeralTeams.length > 0) {
-            const ephemeralTeamRows = plan.ephemeralTeams.map(() =>
-                this.trainingTeamRepo.create({
-                    session,
-                    round: savedRound,
-                    kind: TrainingTeamKind.EPHEMERAL,
-                }),
+            if (previousRound && previousRound.status === TrainingRoundStatus.OPEN) {
+                previousRound.status = TrainingRoundStatus.CLOSED;
+                await roundRepo.save(previousRound);
+            }
+
+            const round = roundRepo.create({
+                session,
+                roundNumber: nextRoundNumber,
+                status: TrainingRoundStatus.OPEN,
+            });
+            const savedRound = await roundRepo.save(round);
+
+            // Sert à construire la réponse en mémoire ensuite (cf. plus bas), sans re-fetch :
+            // équipes fixes déjà pleinement chargées via session.teams, équipes éphémères
+            // complétées ci-dessous au fur et à mesure de leur création.
+            const teamById = new Map<string, TrainingTeam>(
+                session.teams
+                    .filter((team) => team.kind === TrainingTeamKind.FIXED)
+                    .map((team) => [team.id, team]),
             );
-            const savedEphemeralTeams = await this.trainingTeamRepo.saveMany(ephemeralTeamRows);
 
-            const memberRows = plan.ephemeralTeams.flatMap((ephemeral, index) => {
-                const savedTeam = savedEphemeralTeams[index];
-                refToTeamId.set(ephemeral.tempId, savedTeam.id);
-                return ephemeral.participantIds.map((participantId) =>
-                    this.trainingTeamMemberRepo.create({
-                        team: savedTeam,
-                        participant: participantById.get(participantId),
+            // fixedTeam.id se référence lui-même (déjà une id réelle) ; les équipes éphémères ont
+            // besoin d'être créées pour obtenir une id réelle avant de pouvoir être référencées
+            // par les matchs.
+            const refToTeamId = new Map<string, string>(activeFixedTeams.map((t) => [t.id, t.id]));
+
+            // Équipes puis membres en deux requêtes batchées (au lieu de 2 requêtes par équipe
+            // éphémère) : les créations sont indépendantes entre elles, seules les lignes membres
+            // ont besoin des ids générés par le premier batch.
+            if (plan.ephemeralTeams.length > 0) {
+                const ephemeralTeamRows = plan.ephemeralTeams.map(() =>
+                    teamRepo.create({
+                        session,
+                        round: savedRound,
                         kind: TrainingTeamKind.EPHEMERAL,
-                        leftAt: null,
                     }),
                 );
-            });
-            await this.trainingTeamMemberRepo.save(memberRows);
-        }
+                const savedEphemeralTeams = await teamRepo.save(ephemeralTeamRows);
 
-        const matchRows = plan.matches.map((m) =>
-            this.trainingMatchRepo.create({
-                round: savedRound,
-                session,
-                status: MatchStatus.PENDING,
-                teamA: { id: refToTeamId.get(m.teamRef) } as TrainingTeam,
-                teamB: m.opponentRef
-                    ? ({ id: refToTeamId.get(m.opponentRef) } as TrainingTeam)
-                    : null,
-                isBye: m.opponentRef === null,
-            }),
-        );
-        await this.trainingMatchRepo.save(matchRows);
+                const memberRows = plan.ephemeralTeams.flatMap((ephemeral, index) => {
+                    const savedTeam = savedEphemeralTeams[index];
+                    refToTeamId.set(ephemeral.tempId, savedTeam.id);
+                    const members = ephemeral.participantIds.map((participantId) =>
+                        teamMemberRepo.create({
+                            team: savedTeam,
+                            participant: participantById.get(participantId),
+                            kind: TrainingTeamKind.EPHEMERAL,
+                            leftAt: null,
+                        }),
+                    );
+                    savedTeam.members = members;
+                    teamById.set(savedTeam.id, savedTeam);
+                    return members;
+                });
+                await teamMemberRepo.save(memberRows);
+            }
+
+            const matchRows = plan.matches.map((m) =>
+                matchRepo.create({
+                    round: savedRound,
+                    session,
+                    status: MatchStatus.PENDING,
+                    teamA: teamById.get(refToTeamId.get(m.teamRef)!)!,
+                    teamB: m.opponentRef ? teamById.get(refToTeamId.get(m.opponentRef)!)! : null,
+                    isBye: m.opponentRef === null,
+                }),
+            );
+            await matchRepo.save(matchRows);
+
+            return { savedRound, matchRows };
+        });
 
         await this.trainingSessionRepo.touchLastActivity(session.id);
 
-        const roundDto = await this.getRound(sessionCode, nextRoundNumber);
+        const roundDto = toTrainingRoundDto({ ...savedRound, matches: matchRows });
         this.trainingRealtimeGateway.emitRoundGenerated(sessionCode, roundDto);
         return roundDto;
     }
