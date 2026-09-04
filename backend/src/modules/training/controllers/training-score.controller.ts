@@ -1,4 +1,4 @@
-import { Body, Controller, Logger, Param, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Logger, Param, ParseUUIDPipe, Patch, Post } from '@nestjs/common';
 import { runGuarded } from 'src/common/http/run-guarded.util';
 import { AdminUpdateTrainingScoreDto } from '../dto/admin-update-training-score.dto';
 import { StartTrainingMatchDto } from '../dto/start-training-match.dto';
@@ -16,7 +16,7 @@ export class TrainingScoreController {
     @Post('start')
     start(
         @Param('sessionCode') sessionCode: string,
-        @Param('matchId') matchId: string,
+        @Param('matchId', ParseUUIDPipe) matchId: string,
         @Body() dto: StartTrainingMatchDto,
     ): Promise<TrainingMatchDto> {
         return runGuarded(this.logger, 'Erreur lors du démarrage du match.', () =>
@@ -27,7 +27,7 @@ export class TrainingScoreController {
     @Patch('score')
     updateScore(
         @Param('sessionCode') sessionCode: string,
-        @Param('matchId') matchId: string,
+        @Param('matchId', ParseUUIDPipe) matchId: string,
         @Body() dto: UpdateTrainingScoreDto,
     ): Promise<TrainingMatchDto> {
         return runGuarded(this.logger, 'Erreur lors de la mise à jour du score.', () =>
@@ -44,7 +44,7 @@ export class TrainingScoreController {
     @Post('validate')
     validate(
         @Param('sessionCode') sessionCode: string,
-        @Param('matchId') matchId: string,
+        @Param('matchId', ParseUUIDPipe) matchId: string,
         @Body() dto: ValidateTrainingMatchDto,
     ): Promise<TrainingMatchDto> {
         return runGuarded(this.logger, 'Erreur lors de la validation du match.', () =>
@@ -60,7 +60,7 @@ export class TrainingScoreController {
     @Patch('score/admin')
     adminUpdateScore(
         @Param('sessionCode') sessionCode: string,
-        @Param('matchId') matchId: string,
+        @Param('matchId', ParseUUIDPipe) matchId: string,
         @Body() dto: AdminUpdateTrainingScoreDto,
     ): Promise<TrainingMatchDto> {
         return runGuarded(this.logger, 'Erreur lors de la correction du score.', () =>

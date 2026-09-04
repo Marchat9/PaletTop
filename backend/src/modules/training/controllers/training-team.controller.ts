@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Logger, Param, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Logger, Param, ParseUUIDPipe, Post } from '@nestjs/common';
 import { runGuarded } from 'src/common/http/run-guarded.util';
 import { CreateFixedTeamDto } from '../dto/create-fixed-team.dto';
 import { TrainingPasswordDto } from '../dto/training-password.dto';
@@ -33,7 +33,7 @@ export class TrainingTeamController {
     @Delete(':teamId')
     dissolve(
         @Param('sessionCode') sessionCode: string,
-        @Param('teamId') teamId: string,
+        @Param('teamId', ParseUUIDPipe) teamId: string,
         @Body() dto: TrainingPasswordDto,
     ): Promise<TrainingSessionAdminDto> {
         return runGuarded(this.logger, "Erreur lors de la dissolution de l'équipe.", () =>
