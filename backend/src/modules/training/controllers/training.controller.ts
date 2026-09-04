@@ -1,16 +1,5 @@
-import {
-    Body,
-    ConflictException,
-    Controller,
-    Delete,
-    HttpException,
-    InternalServerErrorException,
-    Logger,
-    Param,
-    Patch,
-    Post,
-} from '@nestjs/common';
-import { QueryFailedError } from 'typeorm';
+import { Body, Controller, Delete, Logger, Param, Patch, Post } from '@nestjs/common';
+import { runGuarded } from 'src/common/http/run-guarded.util';
 import { AddTrainingMemberDto } from '../dto/add-training-member.dto';
 import { CreateTrainingDto } from '../dto/create-training.dto';
 import { TrainingAdminAccessDto } from '../dto/training-admin-access.dto';
@@ -26,37 +15,27 @@ export class TrainingController {
     constructor(private readonly trainingsService: TrainingsService) {}
 
     @Post()
-    async create(@Body() dto: CreateTrainingDto): Promise<AdminTrainingDto> {
-        try {
-            return await this.trainingsService.create(dto);
-        } catch (error: unknown) {
-            if (error instanceof HttpException) {
-                throw error;
-            }
-
-            this.logger.error('Training creation failed', error);
-
-            if (error instanceof QueryFailedError) {
-                const driverError = error.driverError as { code?: string } | undefined;
-                if (driverError?.code === '23505') {
-                    throw new ConflictException("Le code d'entraînement existe déjà.");
-                }
-            }
-
-            throw new InternalServerErrorException(
-                "Erreur interne lors de la création de l'entraînement.",
-            );
-        }
+    create(@Body() dto: CreateTrainingDto): Promise<AdminTrainingDto> {
+        return runGuarded(
+            this.logger,
+            "Erreur interne lors de la création de l'entraînement.",
+            () => this.trainingsService.create(dto),
+            { uniqueViolationMessage: "Le code d'entraînement existe déjà." },
+        );
     }
 
     @Post('admin-access')
     adminAccess(@Body() dto: TrainingAdminAccessDto): Promise<AdminTrainingDto> {
-        return this.trainingsService.authenticateAdmin(dto.code, dto.password);
+        return runGuarded(this.logger, "Erreur lors de l'accès administrateur.", () =>
+            this.trainingsService.authenticateAdmin(dto.code, dto.password),
+        );
     }
 
     @Patch(':code')
     update(@Param('code') code: string, @Body() dto: UpdateTrainingDto): Promise<AdminTrainingDto> {
-        return this.trainingsService.update(code, dto);
+        return runGuarded(this.logger, "Erreur lors de la mise à jour de l'entraînement.", () =>
+            this.trainingsService.update(code, dto),
+        );
     }
 
     @Post(':code/members')
@@ -64,7 +43,9 @@ export class TrainingController {
         @Param('code') code: string,
         @Body() dto: AddTrainingMemberDto,
     ): Promise<AdminTrainingDto> {
-        return this.trainingsService.addMember(code, dto);
+        return runGuarded(this.logger, "Erreur lors de l'ajout du membre.", () =>
+            this.trainingsService.addMember(code, dto),
+        );
     }
 
     @Delete(':code/members/:memberId')
@@ -73,6 +54,8 @@ export class TrainingController {
         @Param('memberId') memberId: string,
         @Body() dto: TrainingPasswordDto,
     ): Promise<AdminTrainingDto> {
-        return this.trainingsService.removeMember(code, memberId, dto.password);
+        return runGuarded(this.logger, 'Erreur lors du retrait du membre.', () =>
+            this.trainingsService.removeMember(code, memberId, dto.password),
+        );
     }
 }

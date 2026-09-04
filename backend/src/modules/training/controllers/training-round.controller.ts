@@ -1,10 +1,13 @@
-import { Body, Controller, Get, Param, ParseIntPipe, Post } from '@nestjs/common';
+import { Body, Controller, Get, Logger, Param, ParseIntPipe, Post } from '@nestjs/common';
+import { runGuarded } from 'src/common/http/run-guarded.util';
 import { TrainingPasswordDto } from '../dto/training-password.dto';
 import { TrainingRoundDto } from '../responses/training-round.dto';
 import { TrainingRoundsService } from '../services/training-rounds.service';
 
 @Controller('trainings/sessions/:sessionCode/rounds')
 export class TrainingRoundController {
+    private readonly logger = new Logger(TrainingRoundController.name);
+
     constructor(private readonly roundsService: TrainingRoundsService) {}
 
     @Post()
@@ -12,12 +15,16 @@ export class TrainingRoundController {
         @Param('sessionCode') sessionCode: string,
         @Body() dto: TrainingPasswordDto,
     ): Promise<TrainingRoundDto> {
-        return this.roundsService.generateNextRound(sessionCode, dto.password);
+        return runGuarded(this.logger, 'Erreur lors de la génération du round.', () =>
+            this.roundsService.generateNextRound(sessionCode, dto.password),
+        );
     }
 
     @Get()
     listAll(@Param('sessionCode') sessionCode: string): Promise<TrainingRoundDto[]> {
-        return this.roundsService.listRounds(sessionCode);
+        return runGuarded(this.logger, 'Erreur lors de la récupération des rounds.', () =>
+            this.roundsService.listRounds(sessionCode),
+        );
     }
 
     @Get(':roundNumber')
@@ -25,6 +32,8 @@ export class TrainingRoundController {
         @Param('sessionCode') sessionCode: string,
         @Param('roundNumber', ParseIntPipe) roundNumber: number,
     ): Promise<TrainingRoundDto> {
-        return this.roundsService.getRound(sessionCode, roundNumber);
+        return runGuarded(this.logger, 'Erreur lors de la récupération du round.', () =>
+            this.roundsService.getRound(sessionCode, roundNumber),
+        );
     }
 }
