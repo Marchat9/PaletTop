@@ -1,7 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Training } from 'src/entities/training.entity';
+import { deleteManyByIds, updateAdminPasswordById } from 'src/common/repositories/admin-crud.util';
+import { paginateAdminSearch } from 'src/common/repositories/admin-search.util';
 
 export interface AdminTrainingSearchOptions {
     page: number;
@@ -65,11 +67,6 @@ export class TrainingRepository {
     async searchForAdmin(
         options: AdminTrainingSearchOptions,
     ): Promise<{ items: (Training & { sessionsCount: number })[]; total: number }> {
-        const sortColumn =
-            (options.sortBy && ADMIN_TRAINING_SORTABLE_COLUMNS[options.sortBy]) ||
-            'training.createdAt';
-        const sortDir = options.sortDir === 'ASC' ? 'ASC' : 'DESC';
-
         const queryBuilder = this.repo
             .createQueryBuilder('training')
             .loadRelationCountAndMap('training.sessionsCount', 'training.sessions')
@@ -83,31 +80,22 @@ export class TrainingRepository {
                 'sessions_count',
             );
 
-        if (options.search) {
-            queryBuilder.andWhere(
-                "(unaccent(training.name) ILIKE unaccent(:search) OR unaccent(training.code) ILIKE unaccent(:search) OR unaccent(COALESCE(training.club, '')::text) ILIKE unaccent(:search))",
-                { search: `%${options.search}%` },
-            );
-        }
-
-        const [items, total] = await queryBuilder
-            .orderBy(sortColumn, sortDir)
-            .skip((options.page - 1) * options.pageSize)
-            .take(options.pageSize)
-            .getManyAndCount();
+        const { items, total } = await paginateAdminSearch(
+            queryBuilder,
+            options,
+            "(unaccent(training.name) ILIKE unaccent(:search) OR unaccent(training.code) ILIKE unaccent(:search) OR unaccent(COALESCE(training.club, '')::text) ILIKE unaccent(:search))",
+            ADMIN_TRAINING_SORTABLE_COLUMNS,
+            'training.createdAt',
+        );
 
         return { items: items as (Training & { sessionsCount: number })[], total };
     }
 
-    async deleteMany(ids: string[]): Promise<void> {
-        if (!ids.length) return;
-        await this.repo.delete(ids);
+    deleteMany(ids: string[]): Promise<void> {
+        return deleteManyByIds(this.repo, ids);
     }
 
-    async updateAdminPassword(id: string, newPassword: string): Promise<void> {
-        const result = await this.repo.update(id, { adminPassword: newPassword });
-        if (!result.affected) {
-            throw new NotFoundException('Entraînement introuvable.');
-        }
+    updateAdminPassword(id: string, newPassword: string): Promise<void> {
+        return updateAdminPasswordById(this.repo, id, newPassword, 'Entraînement introuvable.');
     }
 }
