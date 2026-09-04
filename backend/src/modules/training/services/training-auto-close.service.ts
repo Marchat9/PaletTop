@@ -21,8 +21,8 @@ export class TrainingAutoCloseService implements OnModuleInit {
         this.config = this.configService.getOrThrow<TrainingAutoCloseConfig>('trainingAutoClose');
     }
 
-    // Pas de ScheduleModule.forRoot() ici : ce module est @Global() et déjà initialisé par
-    // CleanupModule dans AppModule — injecter SchedulerRegistry suffit.
+    // Pas de ScheduleModule.forRoot() ici : il est enregistré une seule fois dans AppModule (module
+    // @Global()) — injecter SchedulerRegistry suffit, sans dépendre d'un autre module métier.
     onModuleInit(): void {
         registerIdleCron(
             this.logger,

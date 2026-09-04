@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { getTypeOrmConfig } from './database/typeorm.config';
 import cleanupConfig from './config/cleanup.config';
@@ -19,6 +20,10 @@ import { TrainingModule } from './modules/training/training.module';
             load: [cleanupConfig, superAdminConfig, trainingAutoCloseConfig],
         }),
         TypeOrmModule.forRoot(getTypeOrmConfig()),
+        // Enregistré ici (racine de composition) plutôt que dans CleanupModule : aucun module
+        // consommateur de SchedulerRegistry (CleanupModule, TrainingModule) ne doit dépendre d'un
+        // effet de bord d'un autre module pour fonctionner.
+        ScheduleModule.forRoot(),
         TournamentsModule,
         RealtimeModule,
         CleanupModule,

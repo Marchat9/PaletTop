@@ -1,10 +1,11 @@
 import { Module } from '@nestjs/common';
-import { ScheduleModule } from '@nestjs/schedule';
 import { TournamentsModule } from 'src/modules/tournaments/tournaments.module';
 import { CleanupService } from './cleanup.service';
 
+// ScheduleModule.forRoot() est enregistré dans AppModule, pas ici : CleanupService en dépend
+// (SchedulerRegistry) sans avoir à le posséder lui-même.
 @Module({
-    imports: [ScheduleModule.forRoot(), TournamentsModule],
+    imports: [TournamentsModule],
     providers: [CleanupService],
 })
 export class CleanupModule {}
