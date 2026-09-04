@@ -99,7 +99,7 @@ export class TrainingTeamsService {
             password,
         );
         assertSessionOpen(session);
-        const team = session.teams.find((t) => t.id === teamId);
+        const team = await this.trainingTeamRepo.findByIdInSession(teamId, session.id);
         if (!team) {
             throw new NotFoundException('Équipe introuvable pour cette session.');
         }
