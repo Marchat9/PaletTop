@@ -1,4 +1,4 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { TrainingParticipant } from 'src/entities/training-participant.entity';
 import { TrainingRound } from 'src/entities/training-round.entity';
 import { TrainingTeam } from 'src/entities/training-team.entity';
@@ -44,6 +44,16 @@ export class TrainingRoundsService {
         assertSessionOpen(session);
 
         const previousRound = await this.trainingRoundRepo.findLatestBySession(session.id);
+        if (previousRound) {
+            const hasUnfinishedMatch = previousRound.matches.some(
+                (match) => !match.isBye && match.status !== MatchStatus.VALIDATED,
+            );
+            if (hasUnfinishedMatch) {
+                throw new BadRequestException(
+                    'Tous les matchs du round précédent doivent être validés avant de générer le suivant.',
+                );
+            }
+        }
         if (previousRound && previousRound.status === TrainingRoundStatus.OPEN) {
             previousRound.status = TrainingRoundStatus.CLOSED;
             await this.trainingRoundRepo.save(previousRound);
@@ -100,22 +110,31 @@ export class TrainingRoundsService {
         // les matchs.
         const refToTeamId = new Map<string, string>(activeFixedTeams.map((t) => [t.id, t.id]));
 
-        for (const ephemeral of plan.ephemeralTeams) {
-            const team = this.trainingTeamRepo.create({
-                session,
-                round: savedRound,
-                kind: TrainingTeamKind.EPHEMERAL,
-            });
-            const savedTeam = await this.trainingTeamRepo.save(team);
-            refToTeamId.set(ephemeral.tempId, savedTeam.id);
-
-            const memberRows = ephemeral.participantIds.map((participantId) =>
-                this.trainingTeamMemberRepo.create({
-                    team: savedTeam,
-                    participant: participantById.get(participantId),
-                    leftAt: null,
+        // Équipes puis membres en deux requêtes batchées (au lieu de 2 requêtes par équipe
+        // éphémère) : les créations sont indépendantes entre elles, seules les lignes membres ont
+        // besoin des ids générés par le premier batch.
+        if (plan.ephemeralTeams.length > 0) {
+            const ephemeralTeamRows = plan.ephemeralTeams.map(() =>
+                this.trainingTeamRepo.create({
+                    session,
+                    round: savedRound,
+                    kind: TrainingTeamKind.EPHEMERAL,
                 }),
             );
+            const savedEphemeralTeams = await this.trainingTeamRepo.saveMany(ephemeralTeamRows);
+
+            const memberRows = plan.ephemeralTeams.flatMap((ephemeral, index) => {
+                const savedTeam = savedEphemeralTeams[index];
+                refToTeamId.set(ephemeral.tempId, savedTeam.id);
+                return ephemeral.participantIds.map((participantId) =>
+                    this.trainingTeamMemberRepo.create({
+                        team: savedTeam,
+                        participant: participantById.get(participantId),
+                        kind: TrainingTeamKind.EPHEMERAL,
+                        leftAt: null,
+                    }),
+                );
+            });
             await this.trainingTeamMemberRepo.save(memberRows);
         }
 
