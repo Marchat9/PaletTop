@@ -57,9 +57,6 @@ export class TrainingMatch {
     @Column({ type: 'timestamptz', nullable: true })
     finishedAt!: Date | null;
 
-    @Column({ type: 'int', nullable: true })
-    duration!: number | null;
-
     @CreateDateColumn()
     createdAt!: Date;
 

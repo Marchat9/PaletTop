@@ -102,14 +102,8 @@ export class TrainingScoreService {
             throw new BadRequestException('Code participant adverse incorrect.');
         }
 
-        const finishedAt = match.finishedAt ?? new Date();
-        const duration = match.startedAt
-            ? Math.round((finishedAt.getTime() - match.startedAt.getTime()) / 1000)
-            : null;
-
         match.status = MatchStatus.VALIDATED;
-        match.finishedAt = finishedAt;
-        match.duration = duration;
+        match.finishedAt = match.finishedAt ?? new Date();
 
         const [saved] = await this.trainingMatchRepo.save([match]);
         await this.trainingSessionRepo.touchLastActivity(session.id);
@@ -135,21 +129,11 @@ export class TrainingScoreService {
 
         this.validateScores(scoreA, scoreB, session.pointsPerGame);
         const isFinished = scoreA === session.pointsPerGame || scoreB === session.pointsPerGame;
-        const finishedAt = isFinished ? (match.finishedAt ?? new Date()) : null;
-        const duration =
-            isFinished && match.startedAt && finishedAt
-                ? Math.round((finishedAt.getTime() - match.startedAt.getTime()) / 1000)
-                : null;
 
         match.scoreA = scoreA;
         match.scoreB = scoreB;
-        match.status = isFinished
-            ? MatchStatus.VALIDATED
-            : match.status === MatchStatus.VALIDATED || match.status === MatchStatus.ENDED
-              ? MatchStatus.ONGOING
-              : match.status;
-        match.finishedAt = finishedAt;
-        if (duration !== null) match.duration = duration;
+        match.status = this.nextStatusForAdminEdit(match.status, isFinished);
+        match.finishedAt = isFinished ? (match.finishedAt ?? new Date()) : null;
 
         const [saved] = await this.trainingMatchRepo.save([match]);
         await this.trainingSessionRepo.touchLastActivity(session.id);
@@ -167,6 +151,19 @@ export class TrainingScoreService {
             this.trainingRealtimeGateway.emitLeaderboardUpdated(sessionCode, leaderboard);
         }
         return dto;
+    }
+
+    // Correction admin d'un score : un score qui atteint pointsPerGame valide le match ; sinon, un
+    // match déjà ENDED/VALIDATED est rouvert en ONGOING (l'admin vient de le "dé-finir"), tout
+    // autre statut (PENDING/ONGOING) reste inchangé.
+    private nextStatusForAdminEdit(currentStatus: MatchStatus, isFinished: boolean): MatchStatus {
+        if (isFinished) {
+            return MatchStatus.VALIDATED;
+        }
+        if (currentStatus === MatchStatus.VALIDATED || currentStatus === MatchStatus.ENDED) {
+            return MatchStatus.ONGOING;
+        }
+        return currentStatus;
     }
 
     private rejectBye(match: TrainingMatch): void {
