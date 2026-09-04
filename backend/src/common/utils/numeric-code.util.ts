@@ -1,5 +1,5 @@
-// Générateur de code numérique réutilisé pour les codes de session et de participant (mirror de
-// generateTeamCode côté tournois), vérifié contre une liste de codes déjà pris.
+// Générateur de code numérique partagé (sessions/participants training, équipes tournoi),
+// vérifié contre une liste de codes déjà pris.
 export function generateNumericCode(existingCodes: string[], length = 4): string {
     const max = 10 ** length;
     let code: string;

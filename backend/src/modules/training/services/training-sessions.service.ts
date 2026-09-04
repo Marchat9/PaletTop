@@ -13,7 +13,7 @@ import {
     toTrainingSessionPublicDto,
     toTrainingSessionSummaryDto,
 } from '../responses/training-session.dto';
-import { generateNumericCode } from '../utils/code.utils';
+import { generateNumericCode } from 'src/common/utils/numeric-code.util';
 import { assertSessionOpen } from '../utils/session-guard.utils';
 import { TrainingParticipantStatus, TrainingSessionStatus } from 'src/enum/training.enum';
 import { TrainingSession } from 'src/entities/training-session.entity';
