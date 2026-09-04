@@ -20,7 +20,7 @@ export class DefaultMatchmakingStrategy implements MatchmakingPort {
             ? toPairSet(input.history.previousRoundPartnerPairs)
             : new Set<string>();
 
-        const { groups, sitOut } = this.splitSolosIntoGroups(
+        const { groups } = this.splitSolosIntoGroups(
             input.soloParticipantIds,
             input.config,
             forbiddenPartners,
@@ -50,7 +50,7 @@ export class DefaultMatchmakingStrategy implements MatchmakingPort {
 
         const matches = this.pairTeamRefs(this.shuffle(teamRefs), forbiddenOpponents);
 
-        return { ephemeralTeams, matches, sitOutParticipantIds: sitOut };
+        return { ephemeralTeams, matches };
     }
 
     /**

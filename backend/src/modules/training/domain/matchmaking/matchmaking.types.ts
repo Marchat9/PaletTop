@@ -24,7 +24,6 @@ export interface RoundPlan {
     // Une entrée par match : teamRef = fixedTeamId ou tempId côté A, opponentRef = idem côté B
     // (null = bye).
     matches: { teamRef: string; opponentRef: string | null }[];
-    sitOutParticipantIds: string[];
 }
 
 export const MATCHMAKING_PORT = Symbol('MATCHMAKING_PORT');

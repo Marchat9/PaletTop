@@ -42,7 +42,6 @@ describe('DefaultMatchmakingStrategy', () => {
             history: baseHistory(),
         });
 
-        expect(plan.sitOutParticipantIds).toEqual([]);
         expect(plan.ephemeralTeams).toHaveLength(2);
         for (const team of plan.ephemeralTeams) {
             expect(team.participantIds).toHaveLength(2);
@@ -59,12 +58,15 @@ describe('DefaultMatchmakingStrategy', () => {
             history: baseHistory(),
         });
 
-        expect(plan.sitOutParticipantIds).toHaveLength(1);
         expect(plan.ephemeralTeams).toHaveLength(2);
         for (const team of plan.ephemeralTeams) {
             expect(team.participantIds).toHaveLength(2);
         }
-        expect(allParticipants(plan)).toEqual(new Set(solos(5)));
+        // 1 participant sur 5 doit être laissé de côté : ni dans une équipe éphémère, ni dans un
+        // match (RoundPlan n'expose plus de liste dédiée, on l'observe par absence).
+        const grouped = allParticipants(plan);
+        expect(grouped.size).toBe(4);
+        expect(solos(5).filter((id) => !grouped.has(id))).toHaveLength(1);
     });
 
     it('effectif impair + allowSitOut=false absorbe le reste via fallbackTeamSize', () => {
@@ -76,7 +78,6 @@ describe('DefaultMatchmakingStrategy', () => {
             history: baseHistory(),
         });
 
-        expect(plan.sitOutParticipantIds).toEqual([]);
         const sizes = plan.ephemeralTeams.map((t) => t.participantIds.length).sort();
         expect(sizes).toEqual([2, 3]); // 5 = 2 + 3
         expect(allParticipants(plan)).toEqual(new Set(solos(5)));
@@ -93,7 +94,6 @@ describe('DefaultMatchmakingStrategy', () => {
             history: baseHistory(),
         });
 
-        expect(plan.sitOutParticipantIds).toEqual([]);
         expect(allParticipants(plan)).toEqual(new Set(solos(7)));
         // Pas de contrainte de taille exacte ici : on vérifie juste qu'aucun joueur n'est perdu
         // ni dupliqué (cas de config incompatible avec l'effectif, comportement de dernier recours).
@@ -112,7 +112,6 @@ describe('DefaultMatchmakingStrategy', () => {
         });
 
         expect(plan.ephemeralTeams).toEqual([]);
-        expect(plan.sitOutParticipantIds).toEqual([]);
         expect(plan.matches).toHaveLength(1);
         expect(
             new Set(
@@ -173,12 +172,6 @@ describe('DefaultMatchmakingStrategy', () => {
     });
 });
 
-function allParticipants(plan: {
-    ephemeralTeams: { participantIds: string[] }[];
-    sitOutParticipantIds: string[];
-}): Set<string> {
-    return new Set([
-        ...plan.ephemeralTeams.flatMap((t) => t.participantIds),
-        ...plan.sitOutParticipantIds,
-    ]);
+function allParticipants(plan: { ephemeralTeams: { participantIds: string[] }[] }): Set<string> {
+    return new Set(plan.ephemeralTeams.flatMap((t) => t.participantIds));
 }
