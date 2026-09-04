@@ -99,8 +99,11 @@ export class DefaultMatchmakingStrategy implements MatchmakingPort {
             return { groups: [...fallbackGroups, ...targetGroups], sitOut: [] };
         }
 
-        // Dernier recours (config incompatible avec n, cas limite) : autant de groupes de taille
-        // target que possible, le reste forme un dernier groupe de taille non standard.
+        // Dernier recours (aucune décomposition exacte en groupes `target`/`fallback` n'existe
+        // pour cet effectif, ex. n=5 avec target=4 et fallback=3) : la règle n°1 ci-dessus est
+        // non négociable, donc le reste est mis au repos plutôt que de former un groupe de taille
+        // invalide — y compris si allowSitOut=false, car une équipe hors {target, fallback} n'est
+        // jamais une sortie acceptable, quelle que soit la config.
         const groupCount = Math.floor(n / target);
         const groups = this.groupBySize(
             solos.slice(0, groupCount * target),
@@ -108,8 +111,7 @@ export class DefaultMatchmakingStrategy implements MatchmakingPort {
             forbiddenPartners,
         );
         const leftover = solos.slice(groupCount * target);
-        if (leftover.length > 0) groups.push(leftover);
-        return { groups, sitOut: [] };
+        return { groups, sitOut: leftover };
     }
 
     /** Bin-packing glouton en groupes de `size`, évitant les paires interdites quand possible. */

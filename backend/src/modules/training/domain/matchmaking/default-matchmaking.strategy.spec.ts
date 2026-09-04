@@ -83,10 +83,12 @@ describe('DefaultMatchmakingStrategy', () => {
         expect(allParticipants(plan)).toEqual(new Set(solos(5)));
     });
 
-    it('effectif incompatible avec target et fallback : dernier recours, aucun participant perdu', () => {
+    it('effectif incompatible avec target et fallback : le reste est mis au repos, jamais groupé à une taille invalide', () => {
         const strategy = new DefaultMatchmakingStrategy(NO_SHUFFLE);
         // playersPerTeam=4, fallbackTeamSize=5, n=7 : 7%4=3≠0, et le seul b possible (b=1,
         // fallback=5) laisse un reste de 2 non divisible par 4 -> aucune décomposition exacte.
+        // allowSitOut=false, mais la taille d'équipe reste non négociable : le reste (3 joueurs)
+        // doit être mis au repos plutôt que de former un groupe de taille 3 (ni target, ni fallback).
         const plan = strategy.generateRound({
             fixedTeams: [],
             soloParticipantIds: solos(7),
@@ -94,9 +96,12 @@ describe('DefaultMatchmakingStrategy', () => {
             history: baseHistory(),
         });
 
-        expect(allParticipants(plan)).toEqual(new Set(solos(7)));
-        // Pas de contrainte de taille exacte ici : on vérifie juste qu'aucun joueur n'est perdu
-        // ni dupliqué (cas de config incompatible avec l'effectif, comportement de dernier recours).
+        for (const team of plan.ephemeralTeams) {
+            expect([4, 5]).toContain(team.participantIds.length);
+        }
+        const grouped = allParticipants(plan);
+        expect(grouped.size).toBe(4);
+        expect(solos(7).filter((id) => !grouped.has(id))).toHaveLength(3);
     });
 
     it('ne forme aucune équipe éphémère quand tous les participants sont en équipe fixe', () => {
