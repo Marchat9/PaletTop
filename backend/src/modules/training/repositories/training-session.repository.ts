@@ -59,6 +59,14 @@ export class TrainingSessionRepository {
         return this.repo.update(sessionId, { lastActivityAt: new Date() });
     }
 
+    // Volontairement un .update() ciblé et non repo.save(session) : la session chargée par
+    // findWithTrainingAuth() porte un graphe de relations (teams/members) dont le côté inverse
+    // (team.session) n'est pas hydraté — un save() cascaderait et écrirait session_id = NULL sur
+    // ces équipes (violation de contrainte NOT NULL, cf. bug constaté en test de charge).
+    closeSession(sessionId: string, closedAt: Date): Promise<UpdateResult> {
+        return this.repo.update(sessionId, { status: TrainingSessionStatus.CLOSED, closedAt });
+    }
+
     findExpiredOpen(idleHours: number): Promise<TrainingSession[]> {
         const threshold = new Date();
         threshold.setHours(threshold.getHours() - idleHours);

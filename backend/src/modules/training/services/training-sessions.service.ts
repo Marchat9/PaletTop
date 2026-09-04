@@ -93,7 +93,7 @@ export class TrainingSessionsService {
         if (session.status !== TrainingSessionStatus.CLOSED) {
             session.status = TrainingSessionStatus.CLOSED;
             session.closedAt = new Date();
-            await this.trainingSessionRepo.save(session);
+            await this.trainingSessionRepo.closeSession(session.id, session.closedAt);
             this.emitSessionUpdated(session);
         }
         return toTrainingSessionAdminDto(session);
