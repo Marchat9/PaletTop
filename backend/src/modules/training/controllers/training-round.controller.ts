@@ -15,8 +15,16 @@ export class TrainingRoundController {
         @Param('sessionCode') sessionCode: string,
         @Body() dto: TrainingPasswordDto,
     ): Promise<TrainingRoundDto> {
-        return runGuarded(this.logger, 'Erreur lors de la génération du round.', () =>
-            this.roundsService.generateNextRound(sessionCode, dto.password),
+        return runGuarded(
+            this.logger,
+            'Erreur lors de la génération du round.',
+            () => this.roundsService.generateNextRound(sessionCode, dto.password),
+            {
+                // Filet contre deux générations concurrentes pour la même session : le perdant de
+                // la contrainte unique (session, numéro de round) obtient un 409 propre.
+                uniqueViolationMessage:
+                    'Un round est déjà en cours de génération pour cette session.',
+            },
         );
     }
 

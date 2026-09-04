@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Logger, Param, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Logger, Param, ParseUUIDPipe, Post } from '@nestjs/common';
 import { runGuarded } from 'src/common/http/run-guarded.util';
 import { CheckinParticipantDto } from '../dto/checkin-participant.dto';
 import { CreateTrainingSessionDto } from '../dto/create-training-session.dto';
@@ -73,15 +73,22 @@ export class TrainingSessionController {
         @Param('sessionCode') sessionCode: string,
         @Body() dto: CheckinParticipantDto,
     ): Promise<TrainingSessionAdminDto> {
-        return runGuarded(this.logger, 'Erreur lors du check-in.', () =>
-            this.sessionsService.checkin(sessionCode, dto),
+        return runGuarded(
+            this.logger,
+            'Erreur lors du check-in.',
+            () => this.sessionsService.checkin(sessionCode, dto),
+            {
+                // Filet contre deux check-in concurrents tirant le même code à 4 chiffres : le
+                // perdant de la contrainte unique (session, code) obtient un 409 propre, réessayable.
+                uniqueViolationMessage: 'Collision de code participant, merci de réessayer.',
+            },
         );
     }
 
     @Delete('sessions/:sessionCode/participants/:participantId')
     removeParticipant(
         @Param('sessionCode') sessionCode: string,
-        @Param('participantId') participantId: string,
+        @Param('participantId', ParseUUIDPipe) participantId: string,
         @Body() dto: TrainingPasswordDto,
     ): Promise<TrainingSessionAdminDto> {
         return runGuarded(this.logger, 'Erreur lors du retrait du participant.', () =>
