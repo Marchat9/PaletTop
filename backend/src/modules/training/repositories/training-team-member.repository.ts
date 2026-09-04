@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { IsNull, Repository } from 'typeorm';
+import { In, IsNull, Repository } from 'typeorm';
 import { TrainingTeamMember } from 'src/entities/training-team-member.entity';
 import { TrainingTeamKind } from 'src/enum/training.enum';
 
@@ -19,17 +19,30 @@ export class TrainingTeamMemberRepository {
         return this.repo.save(members as TrainingTeamMember[]);
     }
 
-    // Scopé à FIXED : les équipes EPHEMERAL n'ont pas de dissolution (leftAt reste toujours NULL
-    // pour elles), donc sans ce filtre tout participant ayant déjà joué un round se retrouve
-    // faussement détecté comme "déjà dans une équipe fixe active" (bug constaté en revue de code).
+    // `kind` est une colonne directe (dénormalisée depuis team.kind) : filtre sans jointure, et
+    // sert de filet de sécurité applicatif en complément de l'index unique partiel en base
+    // (UQ_training_team_member_active_fixed_participant) qui empêche la race condition.
     findActiveByParticipant(participantId: string): Promise<TrainingTeamMember | null> {
         return this.repo.findOne({
             where: {
                 participant: { id: participantId },
                 leftAt: IsNull(),
-                team: { kind: TrainingTeamKind.FIXED },
+                kind: TrainingTeamKind.FIXED,
             },
-            relations: { team: true },
+            relations: { participant: true },
+        });
+    }
+
+    // Une seule requête pour vérifier N participants d'un coup (au lieu de N requêtes séquentielles).
+    findActiveByParticipants(participantIds: string[]): Promise<TrainingTeamMember[]> {
+        if (!participantIds.length) return Promise.resolve([]);
+        return this.repo.find({
+            where: {
+                participant: { id: In(participantIds) },
+                leftAt: IsNull(),
+                kind: TrainingTeamKind.FIXED,
+            },
+            relations: { participant: true },
         });
     }
 

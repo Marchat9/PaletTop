@@ -14,6 +14,7 @@ import {
     toTrainingSessionPublicDto,
 } from '../responses/training-session.dto';
 import { TrainingParticipantStatus, TrainingTeamKind } from 'src/enum/training.enum';
+import { TrainingSession } from 'src/entities/training-session.entity';
 import { assertSessionOpen } from '../utils/session-guard.utils';
 import { TrainingSessionAuthService } from './training-session-auth.service';
 import { TrainingRealtimeGateway } from '../training-realtime.gateway';
@@ -61,15 +62,17 @@ export class TrainingTeamsService {
             return participant;
         });
 
-        for (const participant of participants) {
-            const activeMembership = await this.trainingTeamMemberRepo.findActiveByParticipant(
-                participant.id,
+        // Une seule requête pour vérifier tous les participants (au lieu d'une par participant) —
+        // filet applicatif à message clair ; la vraie garantie contre une race condition entre deux
+        // créations concurrentes est l'index unique partiel en base (cf. migration), dont la
+        // violation remonte en 409 via runGuarded côté contrôleur.
+        const activeMemberships = await this.trainingTeamMemberRepo.findActiveByParticipants(
+            dto.participantIds,
+        );
+        if (activeMemberships.length > 0) {
+            throw new ConflictException(
+                `${activeMemberships[0].participant.name} fait déjà partie d'une équipe fixe active.`,
             );
-            if (activeMembership) {
-                throw new ConflictException(
-                    `${participant.name} fait déjà partie d'une équipe fixe active.`,
-                );
-            }
         }
 
         const team = this.trainingTeamRepo.create({
@@ -81,12 +84,18 @@ export class TrainingTeamsService {
         const savedTeam = await this.trainingTeamRepo.save(team);
 
         const memberRows = participants.map((participant) =>
-            this.trainingTeamMemberRepo.create({ team: savedTeam, participant, leftAt: null }),
+            this.trainingTeamMemberRepo.create({
+                team: savedTeam,
+                participant,
+                kind: TrainingTeamKind.FIXED,
+                leftAt: null,
+            }),
         );
-        await this.trainingTeamMemberRepo.save(memberRows);
+        savedTeam.members = await this.trainingTeamMemberRepo.save(memberRows);
 
         await this.trainingSessionRepo.touchLastActivity(session.id);
-        return this.reload(sessionCode, dto.password);
+        session.teams = [...session.teams, savedTeam];
+        return this.emitAndReturn(session);
     }
 
     async dissolveTeam(
@@ -107,16 +116,21 @@ export class TrainingTeamsService {
             throw new BadRequestException('Seule une équipe fixe peut être dissoute manuellement.');
         }
 
+        const now = new Date();
         await this.trainingTeamMemberRepo.dissolveTeam(team.id);
+        team.members.forEach((member) => {
+            if (!member.leftAt) member.leftAt = now;
+        });
+        const index = session.teams.findIndex((t) => t.id === team.id);
+        if (index !== -1) session.teams[index] = team;
+
         await this.trainingSessionRepo.touchLastActivity(session.id);
-        return this.reload(sessionCode, password);
+        return this.emitAndReturn(session);
     }
 
-    private async reload(sessionCode: string, password: string): Promise<TrainingSessionAdminDto> {
-        const session = await this.trainingSessionAuthService.findWithAdminAuth(
-            sessionCode,
-            password,
-        );
+    // Construit la réponse et diffuse depuis la session déjà chargée en mémoire (mise à jour par
+    // l'appelant), sans re-fetch : la donnée qu'on vient d'écrire est déjà là.
+    private emitAndReturn(session: TrainingSession): TrainingSessionAdminDto {
         this.trainingRealtimeGateway.emitSessionUpdated(
             session.code,
             toTrainingSessionPublicDto(session),
