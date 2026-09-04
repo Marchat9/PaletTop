@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class SchemaUpdate1788442158957 implements MigrationInterface {
-    name = 'SchemaUpdate1788442158957';
+export class SchemaUpdate1788525926870 implements MigrationInterface {
+    name = 'SchemaUpdate1788525926870';
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(
@@ -17,7 +17,7 @@ export class SchemaUpdate1788442158957 implements MigrationInterface {
             `CREATE TYPE "public"."training_match_status_enum" AS ENUM('PENDING', 'ONGOING', 'ENDED', 'VALIDATED')`,
         );
         await queryRunner.query(
-            `CREATE TABLE "training_match" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "status" "public"."training_match_status_enum" NOT NULL DEFAULT 'PENDING', "isBye" boolean NOT NULL DEFAULT false, "scoreA" integer NOT NULL DEFAULT '0', "scoreB" integer NOT NULL DEFAULT '0', "startedAt" TIMESTAMP WITH TIME ZONE, "finishedAt" TIMESTAMP WITH TIME ZONE, "duration" integer, "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "updatedAt" TIMESTAMP NOT NULL DEFAULT now(), "round_id" uuid NOT NULL, "session_id" uuid NOT NULL, "team_a_id" uuid NOT NULL, "team_b_id" uuid, CONSTRAINT "PK_73220eed0b964c2c6d8a80aade7" PRIMARY KEY ("id"))`,
+            `CREATE TABLE "training_match" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "status" "public"."training_match_status_enum" NOT NULL DEFAULT 'PENDING', "isBye" boolean NOT NULL DEFAULT false, "scoreA" integer NOT NULL DEFAULT '0', "scoreB" integer NOT NULL DEFAULT '0', "startedAt" TIMESTAMP WITH TIME ZONE, "finishedAt" TIMESTAMP WITH TIME ZONE, "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "updatedAt" TIMESTAMP NOT NULL DEFAULT now(), "round_id" uuid NOT NULL, "session_id" uuid NOT NULL, "team_a_id" uuid NOT NULL, "team_b_id" uuid, CONSTRAINT "PK_73220eed0b964c2c6d8a80aade7" PRIMARY KEY ("id"))`,
         );
         await queryRunner.query(
             `CREATE TYPE "public"."training_round_status_enum" AS ENUM('OPEN', 'CLOSED')`,
@@ -26,7 +26,13 @@ export class SchemaUpdate1788442158957 implements MigrationInterface {
             `CREATE TABLE "training_round" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "roundNumber" integer NOT NULL, "status" "public"."training_round_status_enum" NOT NULL DEFAULT 'OPEN', "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "session_id" uuid NOT NULL, CONSTRAINT "UQ_9af5f209ab32b551a23ac3c3fbe" UNIQUE ("session_id", "roundNumber"), CONSTRAINT "PK_6fd10fa9d8bc58b40b9b229744d" PRIMARY KEY ("id"))`,
         );
         await queryRunner.query(
-            `CREATE TABLE "training_team_member" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "leftAt" TIMESTAMP WITH TIME ZONE, "team_id" uuid NOT NULL, "participant_id" uuid NOT NULL, CONSTRAINT "UQ_af2b46d70a96b5652e6fbf0bf77" UNIQUE ("team_id", "participant_id"), CONSTRAINT "PK_0f4fb3b0100496335ed019942b8" PRIMARY KEY ("id"))`,
+            `CREATE TYPE "public"."training_team_member_kind_enum" AS ENUM('FIXED', 'EPHEMERAL')`,
+        );
+        await queryRunner.query(
+            `CREATE TABLE "training_team_member" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "leftAt" TIMESTAMP WITH TIME ZONE, "kind" "public"."training_team_member_kind_enum" NOT NULL, "team_id" uuid NOT NULL, "participant_id" uuid NOT NULL, CONSTRAINT "UQ_af2b46d70a96b5652e6fbf0bf77" UNIQUE ("team_id", "participant_id"), CONSTRAINT "PK_0f4fb3b0100496335ed019942b8" PRIMARY KEY ("id"))`,
+        );
+        await queryRunner.query(
+            `CREATE UNIQUE INDEX "UQ_training_team_member_active_fixed_participant" ON "training_team_member" ("participant_id") WHERE "leftAt" IS NULL AND "kind" = 'FIXED'`,
         );
         await queryRunner.query(
             `CREATE TYPE "public"."training_team_kind_enum" AS ENUM('FIXED', 'EPHEMERAL')`,
@@ -129,7 +135,11 @@ export class SchemaUpdate1788442158957 implements MigrationInterface {
         await queryRunner.query(`DROP TYPE "public"."training_session_status_enum"`);
         await queryRunner.query(`DROP TABLE "training_team"`);
         await queryRunner.query(`DROP TYPE "public"."training_team_kind_enum"`);
+        await queryRunner.query(
+            `DROP INDEX "public"."UQ_training_team_member_active_fixed_participant"`,
+        );
         await queryRunner.query(`DROP TABLE "training_team_member"`);
+        await queryRunner.query(`DROP TYPE "public"."training_team_member_kind_enum"`);
         await queryRunner.query(`DROP TABLE "training_round"`);
         await queryRunner.query(`DROP TYPE "public"."training_round_status_enum"`);
         await queryRunner.query(`DROP TABLE "training_match"`);
