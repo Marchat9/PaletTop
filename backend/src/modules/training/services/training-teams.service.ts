@@ -13,7 +13,6 @@ import { TrainingTeamRepository } from '../repositories/training-team.repository
 import {
     TrainingSessionAdminDto,
     toTrainingSessionAdminDto,
-    toTrainingSessionPublicDto,
 } from '../responses/training-session.dto';
 import { TrainingParticipantStatus, TrainingTeamKind } from 'src/enum/training.enum';
 import { TrainingSession } from 'src/entities/training-session.entity';
@@ -71,7 +70,7 @@ export class TrainingTeamsService {
         // filet applicatif à message clair ; la vraie garantie contre une race condition entre deux
         // créations concurrentes est l'index unique partiel en base (cf. migration), dont la
         // violation remonte en 409 via runGuarded côté contrôleur.
-        const activeMemberships = await this.trainingTeamMemberRepo.findActiveByParticipants(
+        const activeMemberships = await this.trainingTeamMemberRepo.findActiveFixedMemberships(
             dto.participantIds,
         );
         if (activeMemberships.length > 0) {
@@ -144,10 +143,7 @@ export class TrainingTeamsService {
     // Construit la réponse et diffuse depuis la session déjà chargée en mémoire (mise à jour par
     // l'appelant), sans re-fetch : la donnée qu'on vient d'écrire est déjà là.
     private emitAndReturn(session: TrainingSession): TrainingSessionAdminDto {
-        this.trainingRealtimeGateway.emitSessionUpdated(
-            session.code,
-            toTrainingSessionPublicDto(session),
-        );
+        this.trainingRealtimeGateway.emitSessionUpdatedFrom(session);
         return toTrainingSessionAdminDto(session);
     }
 }

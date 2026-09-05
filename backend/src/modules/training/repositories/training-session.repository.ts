@@ -1,8 +1,13 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { LessThan, Repository, UpdateResult } from 'typeorm';
 import { TrainingSession } from 'src/entities/training-session.entity';
 import { TrainingSessionStatus } from 'src/enum/training.enum';
+
+// Chargée trois fois avec les mêmes jointures (session/équipes FIXED/participants) : équipes
+// FIXED uniquement (round_id NULL), les équipes éphémères d'un round passé se consultent via le
+// détail de ce round, pas ici.
+const FIXED_TEAM_JOIN_CONDITION = 'team.round_id IS NULL';
 
 @Injectable()
 export class TrainingSessionRepository {
@@ -32,7 +37,7 @@ export class TrainingSessionRepository {
             .innerJoinAndSelect('session.training', 'training')
             .leftJoinAndSelect('session.participants', 'participant')
             .leftJoinAndSelect('participant.member', 'participantMember')
-            .leftJoinAndSelect('session.teams', 'team', 'team.round_id IS NULL')
+            .leftJoinAndSelect('session.teams', 'team', FIXED_TEAM_JOIN_CONDITION)
             .leftJoinAndSelect('team.members', 'teamMember')
             .leftJoinAndSelect('teamMember.participant', 'teamMemberParticipant')
             .where('session.code = :code', { code })
@@ -49,12 +54,22 @@ export class TrainingSessionRepository {
             .innerJoinAndSelect('session.training', 'training')
             .leftJoinAndSelect('session.participants', 'participant')
             .leftJoinAndSelect('participant.member', 'participantMember')
-            .leftJoinAndSelect('session.teams', 'team', 'team.round_id IS NULL')
+            .leftJoinAndSelect('session.teams', 'team', FIXED_TEAM_JOIN_CONDITION)
             .leftJoinAndSelect('team.members', 'teamMember')
             .leftJoinAndSelect('teamMember.participant', 'teamMemberParticipant')
             .where('session.code = :sessionCode', { sessionCode })
             .andWhere('training.adminPassword = :password', { password })
             .getOne();
+    }
+
+    // Recopié tel quel dans 6 services avant extraction ici (cf. revue de code) : un seul endroit
+    // désormais si le message ou le comportement du lookup doit changer.
+    async findByCodeOrThrow(code: string): Promise<TrainingSession> {
+        const session = await this.findByCode(code);
+        if (!session) {
+            throw new NotFoundException('Session introuvable.');
+        }
+        return session;
     }
 
     touchLastActivity(sessionId: string): Promise<UpdateResult> {
@@ -91,7 +106,7 @@ export class TrainingSessionRepository {
             .innerJoinAndSelect('session.training', 'training')
             .leftJoinAndSelect('session.participants', 'participant')
             .leftJoinAndSelect('participant.member', 'participantMember')
-            .leftJoinAndSelect('session.teams', 'team', 'team.round_id IS NULL')
+            .leftJoinAndSelect('session.teams', 'team', FIXED_TEAM_JOIN_CONDITION)
             .leftJoinAndSelect('team.members', 'teamMember')
             .leftJoinAndSelect('teamMember.participant', 'teamMemberParticipant')
             .where('session.id IN (:...ids)', { ids })

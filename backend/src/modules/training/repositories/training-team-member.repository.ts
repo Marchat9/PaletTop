@@ -19,10 +19,12 @@ export class TrainingTeamMemberRepository {
         return this.repo.save(members as TrainingTeamMember[]);
     }
 
-    // `kind` est une colonne directe (dénormalisée depuis team.kind) : filtre sans jointure, et
-    // sert de filet de sécurité applicatif en complément de l'index unique partiel en base
-    // (UQ_training_team_member_active_fixed_participant) qui empêche la race condition.
-    findActiveByParticipant(participantId: string): Promise<TrainingTeamMember | null> {
+    // Nommée "FixedMembership" (pas juste "Active") : `kind` est une colonne directe (dénormalisée
+    // depuis team.kind), filtrée ici sans jointure, en filet de sécurité applicatif en complément
+    // de l'index unique partiel en base (UQ_training_team_member_active_fixed_participant) qui
+    // empêche la race condition. Un appelant voulant "n'importe quelle appartenance active"
+    // (y compris éphémère) ne doit pas utiliser cette méthode.
+    findActiveFixedMembership(participantId: string): Promise<TrainingTeamMember | null> {
         return this.repo.findOne({
             where: {
                 participant: { id: participantId },
@@ -34,7 +36,7 @@ export class TrainingTeamMemberRepository {
     }
 
     // Une seule requête pour vérifier N participants d'un coup (au lieu de N requêtes séquentielles).
-    findActiveByParticipants(participantIds: string[]): Promise<TrainingTeamMember[]> {
+    findActiveFixedMemberships(participantIds: string[]): Promise<TrainingTeamMember[]> {
         if (!participantIds.length) return Promise.resolve([]);
         return this.repo.find({
             where: {
