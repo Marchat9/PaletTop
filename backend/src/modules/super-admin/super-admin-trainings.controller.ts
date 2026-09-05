@@ -24,7 +24,7 @@ import {
 } from './responses/super-admin-training-summary.dto';
 import { SuperAdminActionDto } from './dto/super-admin-action.dto';
 import { SuperAdminIdsDto } from './dto/super-admin-ids.dto';
-import { SuperAdminTrainingPasswordDto } from './dto/super-admin-training-password.dto';
+import { SuperAdminResourcePasswordDto } from './dto/super-admin-resource-password.dto';
 import { SuperAdminTrainingSearchDto } from './dto/super-admin-training-search.dto';
 import { PaginatedDto } from './responses/paginated.dto';
 import { SuperAdminAuthGuard } from './super-admin-auth.guard';
@@ -95,7 +95,7 @@ export class SuperAdminTrainingsController {
     @HttpCode(HttpStatus.OK)
     resetPassword(
         @Param('id', ParseUUIDPipe) id: string,
-        @Body() dto: SuperAdminTrainingPasswordDto,
+        @Body() dto: SuperAdminResourcePasswordDto,
     ): Promise<void> {
         return runGuarded(this.logger, 'Erreur lors de la réinitialisation du mot de passe.', () =>
             this.trainingRepo.updateAdminPassword(id, dto.newPassword),

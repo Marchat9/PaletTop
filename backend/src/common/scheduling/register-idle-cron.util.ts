@@ -18,14 +18,20 @@ export function registerIdleCron(
     logger: Logger,
     schedulerRegistry: SchedulerRegistry,
     options: RegisterIdleCronOptions,
-    run: () => void,
+    run: () => Promise<void>,
 ): void {
     if (!options.enabled) {
         logger.debug(options.disabledMessage);
         return;
     }
 
-    const job = new CronJob(options.cronExpression, run);
+    // run() est catché ici : une rejection non gérée dans un CronJob remonte comme une unhandled
+    // promise rejection Node (qui tue le process par défaut) plutôt que d'être simplement loguée.
+    const job = new CronJob(options.cronExpression, () => {
+        run().catch((error: unknown) => {
+            logger.error(`Échec de l'exécution du job "${options.jobName}"`, error);
+        });
+    });
     schedulerRegistry.addCronJob(options.jobName, job);
     job.start();
     logger.log(options.scheduledMessage);

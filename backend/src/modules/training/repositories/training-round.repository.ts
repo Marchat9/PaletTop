@@ -28,7 +28,11 @@ export class TrainingRoundRepository {
     findLatestBySession(sessionId: string): Promise<TrainingRound | null> {
         return this.repo.findOne({
             where: { session: { id: sessionId } },
-            order: { roundNumber: 'DESC' },
+            // Sans cet ordre sur `matches`, Postgres ne garantit aucun ordre de ligne pour la
+            // relation jointe : deux lectures du même round pourraient renvoyer ses matchs dans un
+            // ordre différent (cf. TrainingMatchRepository.findByParticipant, qui ordonne pour la
+            // même raison).
+            order: { roundNumber: 'DESC', matches: { createdAt: 'ASC' } },
             relations: MATCH_TEAM_RELATIONS,
         });
     }
@@ -36,6 +40,7 @@ export class TrainingRoundRepository {
     findBySessionAndNumber(sessionId: string, roundNumber: number): Promise<TrainingRound | null> {
         return this.repo.findOne({
             where: { session: { id: sessionId }, roundNumber },
+            order: { matches: { createdAt: 'ASC' } },
             relations: MATCH_TEAM_RELATIONS,
         });
     }
@@ -43,7 +48,7 @@ export class TrainingRoundRepository {
     findAllBySession(sessionId: string): Promise<TrainingRound[]> {
         return this.repo.find({
             where: { session: { id: sessionId } },
-            order: { roundNumber: 'ASC' },
+            order: { roundNumber: 'ASC', matches: { createdAt: 'ASC' } },
             relations: MATCH_TEAM_RELATIONS,
         });
     }

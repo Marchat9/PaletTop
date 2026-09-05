@@ -19,7 +19,13 @@ export class TrainingLeaderboardService {
 
     async getLeaderboard(sessionCode: string): Promise<TrainingLeaderboardEntryDto[]> {
         const session = await this.trainingSessionRepo.findByCodeOrThrow(sessionCode);
-        const matches = await this.trainingMatchRepo.findValidatedBySession(session.id);
+        return this.getLeaderboardBySessionId(session.id);
+    }
+
+    // À utiliser quand l'appelant a déjà résolu/chargé la session (ex. juste après la validation
+    // d'un match) : évite de re-fetcher toute la session avec ses jointures rien que pour son id.
+    async getLeaderboardBySessionId(sessionId: string): Promise<TrainingLeaderboardEntryDto[]> {
+        const matches = await this.trainingMatchRepo.findValidatedBySession(sessionId);
 
         const totals = new Map<string, LeaderboardAccumulator>();
         for (const match of matches) {

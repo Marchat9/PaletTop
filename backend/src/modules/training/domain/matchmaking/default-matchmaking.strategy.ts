@@ -1,3 +1,4 @@
+import { BadRequestException } from '@nestjs/common';
 import { shuffleFisherYates } from 'src/modules/tournaments/utils/global.utils';
 import { GenerateRoundInput, MatchmakingPort, RoundPlan } from './matchmaking.types';
 
@@ -101,12 +102,18 @@ export class DefaultMatchmakingStrategy implements MatchmakingPort {
             return { groups: [...fallbackGroups, ...targetGroups], sitOut: [] };
         }
 
-        // Dernier recours (aucune décomposition exacte en groupes `target`/`fallback` n'existe
-        // pour cet effectif, ex. n=5 avec target=4 et fallback=3) : la règle n°1 ci-dessus est
-        // non négociable, donc le reste est mis au repos plutôt que de former un groupe de taille
-        // invalide — y compris si allowSitOut=false, car une équipe hors {target, fallback} n'est
-        // jamais une sortie acceptable, quelle que soit la config.
+        // Dernier recours : aucune décomposition exacte en groupes `target`/`fallback` n'existe
+        // pour cet effectif (ex. n=5 avec target=4 et fallback=3). La règle n°1 (taille d'équipe
+        // valide) reste non négociable, donc on ne peut pas non plus former un groupe de taille
+        // invalide avec le reste. Si allowSitOut=false, cette situation est un vrai conflit de
+        // configuration (l'admin a interdit le repos, mais l'effectif ne le permet pas) : on le
+        // signale explicitement plutôt que de violer silencieusement ce réglage.
         const { groups, leftover } = this.splitByGroupCount(solos, target, forbiddenPartners);
+        if (!config.allowSitOut && leftover.length > 0) {
+            throw new BadRequestException(
+                `Impossible de générer un round sans mettre ${leftover.length} participant(s) au repos avec les tailles d'équipe configurées (${target} ou ${fallback}) pour un effectif de ${n}. Ajustez l'effectif ou les tailles d'équipe, ou autorisez le repos.`,
+            );
+        }
         return { groups, sitOut: leftover };
     }
 

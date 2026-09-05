@@ -31,7 +31,7 @@ export class CleanupService implements OnModuleInit {
                     'Nettoyage automatique des tournois désactivé (CLEANUP_ENABLED=false).',
                 scheduledMessage: `Nettoyage automatique des tournois planifié (cron: "${this.config.cronExpression}").`,
             },
-            () => void this.runCleanup(),
+            () => this.runCleanup(),
         );
     }
 

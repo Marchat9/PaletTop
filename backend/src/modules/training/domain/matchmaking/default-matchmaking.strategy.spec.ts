@@ -83,25 +83,21 @@ describe('DefaultMatchmakingStrategy', () => {
         expect(allParticipants(plan)).toEqual(new Set(solos(5)));
     });
 
-    it('effectif incompatible avec target et fallback : le reste est mis au repos, jamais groupé à une taille invalide', () => {
+    it('effectif incompatible avec target et fallback + allowSitOut=false : lève une erreur plutôt que de mettre au repos silencieusement', () => {
         const strategy = new DefaultMatchmakingStrategy(NO_SHUFFLE);
         // playersPerTeam=4, fallbackTeamSize=5, n=7 : 7%4=3≠0, et le seul b possible (b=1,
         // fallback=5) laisse un reste de 2 non divisible par 4 -> aucune décomposition exacte.
-        // allowSitOut=false, mais la taille d'équipe reste non négociable : le reste (3 joueurs)
-        // doit être mis au repos plutôt que de former un groupe de taille 3 (ni target, ni fallback).
-        const plan = strategy.generateRound({
-            fixedTeams: [],
-            soloParticipantIds: solos(7),
-            config: baseConfig({ playersPerTeam: 4, fallbackTeamSize: 5, allowSitOut: false }),
-            history: baseHistory(),
-        });
-
-        for (const team of plan.ephemeralTeams) {
-            expect([4, 5]).toContain(team.participantIds.length);
-        }
-        const grouped = allParticipants(plan);
-        expect(grouped.size).toBe(4);
-        expect(solos(7).filter((id) => !grouped.has(id))).toHaveLength(3);
+        // La taille d'équipe reste non négociable (impossible de former un groupe de 3, ni target
+        // ni fallback), et allowSitOut=false interdit explicitement de mettre le reste au repos :
+        // ce conflit de configuration doit être signalé à l'admin, pas résolu silencieusement.
+        expect(() =>
+            strategy.generateRound({
+                fixedTeams: [],
+                soloParticipantIds: solos(7),
+                config: baseConfig({ playersPerTeam: 4, fallbackTeamSize: 5, allowSitOut: false }),
+                history: baseHistory(),
+            }),
+        ).toThrow(/repos/);
     });
 
     it('ne forme aucune équipe éphémère quand tous les participants sont en équipe fixe', () => {

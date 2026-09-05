@@ -40,9 +40,12 @@ export class TrainingScoreService {
 
         match.status = MatchStatus.ONGOING;
         match.startedAt = new Date();
-        const [saved] = await this.trainingMatchRepo.save([match]);
-        await this.trainingSessionRepo.touchLastActivity(session.id);
-        return this.emitMatchUpdate(sessionCode, saved);
+        // Écritures indépendantes (match vs session) : pas de raison de les sérialiser.
+        const [[saved]] = await Promise.all([
+            this.trainingMatchRepo.save([match]),
+            this.trainingSessionRepo.touchLastActivity(session.id),
+        ]);
+        return this.emitMatchUpdate(sessionCode, session.id, saved);
     }
 
     async updateScore(
@@ -80,9 +83,11 @@ export class TrainingScoreService {
             match.startedAt = new Date();
         }
 
-        const [saved] = await this.trainingMatchRepo.save([match]);
-        await this.trainingSessionRepo.touchLastActivity(session.id);
-        return this.emitMatchUpdate(sessionCode, saved);
+        const [[saved]] = await Promise.all([
+            this.trainingMatchRepo.save([match]),
+            this.trainingSessionRepo.touchLastActivity(session.id),
+        ]);
+        return this.emitMatchUpdate(sessionCode, session.id, saved);
     }
 
     async validateMatch(
@@ -111,9 +116,11 @@ export class TrainingScoreService {
         match.status = MatchStatus.VALIDATED;
         match.finishedAt = match.finishedAt ?? new Date();
 
-        const [saved] = await this.trainingMatchRepo.save([match]);
-        await this.trainingSessionRepo.touchLastActivity(session.id);
-        return this.emitMatchUpdate(sessionCode, saved);
+        const [[saved]] = await Promise.all([
+            this.trainingMatchRepo.save([match]),
+            this.trainingSessionRepo.touchLastActivity(session.id),
+        ]);
+        return this.emitMatchUpdate(sessionCode, session.id, saved);
     }
 
     async adminUpdateScore(
@@ -138,44 +145,46 @@ export class TrainingScoreService {
 
         match.scoreA = scoreA;
         match.scoreB = scoreB;
-        match.status = this.nextStatusForAdminEdit(match.status, isFinished);
+        match.status = this.nextStatusForAdminEdit(isFinished);
         match.finishedAt = isFinished ? (match.finishedAt ?? new Date()) : null;
-        // Une correction admin peut valider directement un match encore PENDING (jamais démarré
-        // par un joueur) : startedAt doit malgré tout être posé, sinon un match VALIDATED se
-        // retrouve avec une date de début à null pour toujours.
-        if (isFinished && !match.startedAt) {
-            match.startedAt = match.finishedAt;
+        // Une correction admin peut démarrer ou valider directement un match encore PENDING
+        // (jamais démarré par un joueur) : startedAt doit malgré tout être posé, sinon un match
+        // ONGOING/VALIDATED se retrouve avec une date de début à null pour toujours.
+        if (!match.startedAt) {
+            match.startedAt = isFinished ? match.finishedAt : new Date();
         }
 
-        const [saved] = await this.trainingMatchRepo.save([match]);
-        await this.trainingSessionRepo.touchLastActivity(session.id);
-        return this.emitMatchUpdate(sessionCode, saved);
+        const [[saved]] = await Promise.all([
+            this.trainingMatchRepo.save([match]),
+            this.trainingSessionRepo.touchLastActivity(session.id),
+        ]);
+        return this.emitMatchUpdate(sessionCode, session.id, saved);
     }
 
     private async emitMatchUpdate(
         sessionCode: string,
+        sessionId: string,
         match: TrainingMatch,
     ): Promise<TrainingMatchDto> {
         const dto = toTrainingMatchDto(match);
         this.trainingRealtimeGateway.emitMatchUpdated(sessionCode, dto);
         if (match.status === MatchStatus.VALIDATED) {
-            const leaderboard = await this.trainingLeaderboardService.getLeaderboard(sessionCode);
+            // sessionId réutilisé depuis la session déjà chargée par l'appelant : pas besoin de la
+            // re-résoudre par code rien que pour son id (cf. revue de code).
+            const leaderboard =
+                await this.trainingLeaderboardService.getLeaderboardBySessionId(sessionId);
             this.trainingRealtimeGateway.emitLeaderboardUpdated(sessionCode, leaderboard);
         }
         return dto;
     }
 
-    // Correction admin d'un score : un score qui atteint pointsPerGame valide le match ; sinon, un
-    // match déjà ENDED/VALIDATED est rouvert en ONGOING (l'admin vient de le "dé-finir"), tout
-    // autre statut (PENDING/ONGOING) reste inchangé.
-    private nextStatusForAdminEdit(currentStatus: MatchStatus, isFinished: boolean): MatchStatus {
-        if (isFinished) {
-            return MatchStatus.VALIDATED;
-        }
-        if (currentStatus === MatchStatus.VALIDATED || currentStatus === MatchStatus.ENDED) {
-            return MatchStatus.ONGOING;
-        }
-        return currentStatus;
+    // Correction admin d'un score : un score qui atteint pointsPerGame valide directement le
+    // match (quel que soit son statut précédent, y compris PENDING jamais démarré par un joueur).
+    // Sinon le match est/reste ONGOING : un match PENDING passe en cours (l'admin vient de lui
+    // donner un score, un joueur ne doit plus pouvoir le "démarrer" par-dessus), et un match déjà
+    // ENDED/VALIDATED est rouvert (l'admin vient de le "dé-finir").
+    private nextStatusForAdminEdit(isFinished: boolean): MatchStatus {
+        return isFinished ? MatchStatus.VALIDATED : MatchStatus.ONGOING;
     }
 
     private rejectBye(match: TrainingMatch): void {

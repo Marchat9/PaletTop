@@ -22,6 +22,7 @@ import { generateNumericCode } from 'src/common/utils/numeric-code.util';
 import { assertSessionOpen } from '../utils/session-guard.utils';
 import { TrainingParticipantStatus, TrainingSessionStatus } from 'src/enum/training.enum';
 import { TrainingMember } from 'src/entities/training-member.entity';
+import { TrainingSession } from 'src/entities/training-session.entity';
 import { TrainingAuthService } from './training-auth.service';
 import { TrainingSessionAuthService } from './training-session-auth.service';
 import { TrainingRealtimeGateway } from '../training-realtime.gateway';
@@ -152,8 +153,7 @@ export class TrainingSessionsService {
 
         session.participants = [...session.participants, saved];
         await this.touchLastActivity(session.id);
-        this.trainingRealtimeGateway.emitSessionUpdatedFrom(session);
-        return toTrainingSessionAdminDto(session);
+        return this.emitAndReturn(session);
     }
 
     async removeParticipant(
@@ -183,12 +183,18 @@ export class TrainingSessionsService {
         participant.status = TrainingParticipantStatus.LEFT;
         await this.trainingParticipantRepo.save(participant);
         await this.touchLastActivity(session.id);
-        this.trainingRealtimeGateway.emitSessionUpdatedFrom(session);
-        return toTrainingSessionAdminDto(session);
+        return this.emitAndReturn(session);
     }
 
     private async touchLastActivity(sessionId: string): Promise<void> {
         await this.trainingSessionRepo.touchLastActivity(sessionId);
+    }
+
+    // Construit la réponse et diffuse depuis la session déjà mise à jour en mémoire, cf.
+    // TrainingTeamsService.emitAndReturn.
+    private emitAndReturn(session: TrainingSession): TrainingSessionAdminDto {
+        this.trainingRealtimeGateway.emitSessionUpdatedFrom(session);
+        return toTrainingSessionAdminDto(session);
     }
 
     private async generateUniqueSessionCode(): Promise<string> {

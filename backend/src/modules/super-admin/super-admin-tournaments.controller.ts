@@ -20,7 +20,7 @@ import {
 } from 'src/modules/tournaments/responses/admin-tournament.dto';
 import { SuperAdminActionDto } from './dto/super-admin-action.dto';
 import { SuperAdminIdsDto } from './dto/super-admin-ids.dto';
-import { SuperAdminTournamentPasswordDto } from './dto/super-admin-tournament-password.dto';
+import { SuperAdminResourcePasswordDto } from './dto/super-admin-resource-password.dto';
 import { SuperAdminTournamentSearchDto } from './dto/super-admin-tournament-search.dto';
 import { SuperAdminTournamentStatusDto } from './dto/super-admin-tournament-status.dto';
 import { PaginatedDto } from './responses/paginated.dto';
@@ -100,7 +100,7 @@ export class SuperAdminTournamentsController {
     @HttpCode(HttpStatus.OK)
     resetPassword(
         @Param('id', ParseUUIDPipe) id: string,
-        @Body() dto: SuperAdminTournamentPasswordDto,
+        @Body() dto: SuperAdminResourcePasswordDto,
     ): Promise<void> {
         return runGuarded(this.logger, 'Erreur lors de la réinitialisation du mot de passe.', () =>
             this.tournamentRepo.updateAdminPassword(id, dto.newPassword),

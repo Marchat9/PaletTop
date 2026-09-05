@@ -34,7 +34,7 @@ export class TrainingAutoCloseService implements OnModuleInit {
                     "Clôture automatique des sessions d'entraînement désactivée (TRAINING_AUTOCLOSE_ENABLED=false).",
                 scheduledMessage: `Clôture automatique des sessions d'entraînement planifiée (cron: "${this.config.cronExpression}").`,
             },
-            () => void this.runAutoClose(),
+            () => this.runAutoClose(),
         );
     }
 

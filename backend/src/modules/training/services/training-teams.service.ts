@@ -19,6 +19,7 @@ import { TrainingSession } from 'src/entities/training-session.entity';
 import { TrainingTeam } from 'src/entities/training-team.entity';
 import { TrainingTeamMember } from 'src/entities/training-team-member.entity';
 import { assertSessionOpen } from '../utils/session-guard.utils';
+import { isActiveMember } from '../utils/team-member.utils';
 import { TrainingSessionAuthService } from './training-session-auth.service';
 import { TrainingRealtimeGateway } from '../training-realtime.gateway';
 
@@ -79,8 +80,9 @@ export class TrainingTeamsService {
             );
         }
 
-        // Équipe + membres dans une seule transaction : un échec entre les deux écritures ne doit
-        // jamais laisser une équipe fixe orpheline, sans aucun membre, en base.
+        // Équipe + membres + lastActivityAt dans une seule transaction : un échec sur l'une de ces
+        // écritures ne doit jamais laisser une équipe fixe orpheline, sans aucun membre, en base,
+        // ni faire échouer la requête (500) pour une création d'équipe qui a en réalité réussi.
         const savedTeam = await this.dataSource.transaction(async (manager) => {
             const teamRepo = manager.getRepository(TrainingTeam);
             const teamMemberRepo = manager.getRepository(TrainingTeamMember);
@@ -102,10 +104,10 @@ export class TrainingTeamsService {
                 }),
             );
             savedTeam.members = await teamMemberRepo.save(memberRows);
+            await manager.update(TrainingSession, session.id, { lastActivityAt: new Date() });
             return savedTeam;
         });
 
-        await this.trainingSessionRepo.touchLastActivity(session.id);
         session.teams = [...session.teams, savedTeam];
         return this.emitAndReturn(session);
     }
@@ -131,7 +133,7 @@ export class TrainingTeamsService {
         const now = new Date();
         await this.trainingTeamMemberRepo.dissolveTeam(team.id);
         team.members.forEach((member) => {
-            if (!member.leftAt) member.leftAt = now;
+            if (isActiveMember(member)) member.leftAt = now;
         });
         const index = session.teams.findIndex((t) => t.id === team.id);
         if (index !== -1) session.teams[index] = team;
