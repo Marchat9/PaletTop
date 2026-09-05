@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+    BadRequestException,
+    ConflictException,
+    Injectable,
+    NotFoundException,
+} from '@nestjs/common';
 import { CheckinParticipantDto } from '../dto/checkin-participant.dto';
 import { CreateTrainingSessionDto } from '../dto/create-training-session.dto';
 import { TrainingMemberRepository } from '../repositories/training-member.repository';
@@ -16,7 +21,6 @@ import {
 import { generateNumericCode } from 'src/common/utils/numeric-code.util';
 import { assertSessionOpen } from '../utils/session-guard.utils';
 import { TrainingParticipantStatus, TrainingSessionStatus } from 'src/enum/training.enum';
-import { TrainingSession } from 'src/entities/training-session.entity';
 import { TrainingMember } from 'src/entities/training-member.entity';
 import { TrainingAuthService } from './training-auth.service';
 import { TrainingSessionAuthService } from './training-session-auth.service';
@@ -63,7 +67,7 @@ export class TrainingSessionsService {
     }
 
     async getPublic(sessionCode: string): Promise<TrainingSessionPublicDto> {
-        const session = await this.findByCodeOrThrow(sessionCode);
+        const session = await this.trainingSessionRepo.findByCodeOrThrow(sessionCode);
         return toTrainingSessionPublicDto(session);
     }
 
@@ -94,7 +98,7 @@ export class TrainingSessionsService {
             session.status = TrainingSessionStatus.CLOSED;
             session.closedAt = new Date();
             await this.trainingSessionRepo.closeSession(session.id, session.closedAt);
-            this.emitSessionUpdated(session);
+            this.trainingRealtimeGateway.emitSessionUpdatedFrom(session);
         }
         return toTrainingSessionAdminDto(session);
     }
@@ -122,6 +126,17 @@ export class TrainingSessionsService {
             if (!member || member.training.id !== session.training.id) {
                 throw new NotFoundException('Membre introuvable pour cet entraînement.');
             }
+            // Filet applicatif à message clair contre un double check-in (double-tap admin, deux
+            // appareils) ; le vrai garde-fou contre la race est l'index unique partiel en base
+            // (UQ_training_participant_active_member), dont la violation remonte en 409 via
+            // runGuarded côté contrôleur.
+            const alreadyPresent = session.participants.some(
+                (p) =>
+                    p.member?.id === member!.id && p.status === TrainingParticipantStatus.PRESENT,
+            );
+            if (alreadyPresent) {
+                throw new ConflictException(`${member.name} est déjà inscrit(e) à cette session.`);
+            }
             name = member.name;
         }
 
@@ -137,7 +152,7 @@ export class TrainingSessionsService {
 
         session.participants = [...session.participants, saved];
         await this.touchLastActivity(session.id);
-        this.emitSessionUpdated(session);
+        this.trainingRealtimeGateway.emitSessionUpdatedFrom(session);
         return toTrainingSessionAdminDto(session);
     }
 
@@ -156,7 +171,7 @@ export class TrainingSessionsService {
             throw new NotFoundException('Participant introuvable pour cette session.');
         }
 
-        const activeMembership = await this.trainingTeamMemberRepo.findActiveByParticipant(
+        const activeMembership = await this.trainingTeamMemberRepo.findActiveFixedMembership(
             participant.id,
         );
         if (activeMembership) {
@@ -168,27 +183,12 @@ export class TrainingSessionsService {
         participant.status = TrainingParticipantStatus.LEFT;
         await this.trainingParticipantRepo.save(participant);
         await this.touchLastActivity(session.id);
-        this.emitSessionUpdated(session);
+        this.trainingRealtimeGateway.emitSessionUpdatedFrom(session);
         return toTrainingSessionAdminDto(session);
     }
 
     private async touchLastActivity(sessionId: string): Promise<void> {
         await this.trainingSessionRepo.touchLastActivity(sessionId);
-    }
-
-    private emitSessionUpdated(session: TrainingSession): void {
-        this.trainingRealtimeGateway.emitSessionUpdated(
-            session.code,
-            toTrainingSessionPublicDto(session),
-        );
-    }
-
-    private async findByCodeOrThrow(sessionCode: string): Promise<TrainingSession> {
-        const session = await this.trainingSessionRepo.findByCode(sessionCode);
-        if (!session) {
-            throw new NotFoundException('Session introuvable.');
-        }
-        return session;
     }
 
     private async generateUniqueSessionCode(): Promise<string> {

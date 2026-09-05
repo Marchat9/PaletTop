@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class SchemaUpdate1788525926870 implements MigrationInterface {
-    name = 'SchemaUpdate1788525926870';
+export class SchemaUpdate1788541025579 implements MigrationInterface {
+    name = 'SchemaUpdate1788541025579';
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(
@@ -12,6 +12,9 @@ export class SchemaUpdate1788525926870 implements MigrationInterface {
         );
         await queryRunner.query(
             `CREATE TABLE "training_participant" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "name" character varying(100) NOT NULL, "code" character varying NOT NULL, "status" "public"."training_participant_status_enum" NOT NULL DEFAULT 'PRESENT', "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "session_id" uuid NOT NULL, "member_id" uuid, CONSTRAINT "UQ_7b3b4aae57581db06e10fdc1e36" UNIQUE ("session_id", "code"), CONSTRAINT "PK_caf92026880c7ab091fbd9c2273" PRIMARY KEY ("id"))`,
+        );
+        await queryRunner.query(
+            `CREATE UNIQUE INDEX "UQ_training_participant_active_member" ON "training_participant" ("session_id", "member_id") WHERE "status" = 'PRESENT'`,
         );
         await queryRunner.query(
             `CREATE TYPE "public"."training_match_status_enum" AS ENUM('PENDING', 'ONGOING', 'ENDED', 'VALIDATED')`,
@@ -144,6 +147,7 @@ export class SchemaUpdate1788525926870 implements MigrationInterface {
         await queryRunner.query(`DROP TYPE "public"."training_round_status_enum"`);
         await queryRunner.query(`DROP TABLE "training_match"`);
         await queryRunner.query(`DROP TYPE "public"."training_match_status_enum"`);
+        await queryRunner.query(`DROP INDEX "public"."UQ_training_participant_active_member"`);
         await queryRunner.query(`DROP TABLE "training_participant"`);
         await queryRunner.query(`DROP TYPE "public"."training_participant_status_enum"`);
         await queryRunner.query(`DROP TABLE "training_member"`);
