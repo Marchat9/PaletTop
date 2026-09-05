@@ -6,6 +6,7 @@ import {
     TrainingSessionStatus,
     TrainingTeamKind,
 } from 'src/enum/training.enum';
+import { activeMembers, isActiveMember } from '../utils/team-member.utils';
 
 export interface TrainingParticipantPublicDto {
     id: string;
@@ -40,9 +41,7 @@ export interface TrainingTeamDto {
 // dissoute — sinon un match validé se retrouve affiché avec une équipe vide (score correct, mais
 // plus aucun nom), alors que le classement (qui n'agrège jamais avec ce filtre) reste, lui, exact.
 export function toTrainingTeamDto(team: TrainingTeam, activeOnly = true): TrainingTeamDto {
-    const members = activeOnly
-        ? (team.members ?? []).filter((m) => !m.leftAt)
-        : (team.members ?? []);
+    const members = activeOnly ? activeMembers(team.members) : (team.members ?? []);
     return {
         id: team.id,
         kind: team.kind,
@@ -113,7 +112,7 @@ function baseSessionFields(session: TrainingSession): TrainingSessionFieldsDto {
 // la liste des équipes de la session (elle reste en base uniquement comme ancrage historique
 // pour les matchs déjà joués, cf. décision produit sur la dissolution non destructive).
 function activeTeams(session: TrainingSession): TrainingTeam[] {
-    return (session.teams ?? []).filter((team) => team.members?.some((m) => !m.leftAt));
+    return (session.teams ?? []).filter((team) => team.members?.some(isActiveMember));
 }
 
 export function toTrainingSessionPublicDto(session: TrainingSession): TrainingSessionPublicDto {
