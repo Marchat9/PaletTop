@@ -9,6 +9,8 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { WsAuth } from '../realtime/realtime.gateway';
+import { TrainingSession } from 'src/entities/training-session.entity';
+import { toTrainingSessionPublicDto } from './responses/training-session.dto';
 
 interface JoinTrainingSessionAuth {
     sessionCode: string;
@@ -51,18 +53,38 @@ export class TrainingRealtimeGateway implements OnGatewayConnection, OnGatewayDi
     }
 
     emitSessionUpdated(sessionCode: string, session: unknown): void {
-        this.server.to(`training-session:${sessionCode}`).emit('session:updated', session);
+        this.safeEmit(sessionCode, 'session:updated', session);
+    }
+
+    // Combine le mapping DTO et la diffusion : évite que chaque service appelant réécrive
+    // `emitSessionUpdated(session.code, toTrainingSessionPublicDto(session))` de son côté.
+    emitSessionUpdatedFrom(session: TrainingSession): void {
+        this.emitSessionUpdated(session.code, toTrainingSessionPublicDto(session));
     }
 
     emitRoundGenerated(sessionCode: string, round: unknown): void {
-        this.server.to(`training-session:${sessionCode}`).emit('round:generated', round);
+        this.safeEmit(sessionCode, 'round:generated', round);
     }
 
     emitMatchUpdated(sessionCode: string, match: unknown): void {
-        this.server.to(`training-session:${sessionCode}`).emit('match:updated', match);
+        this.safeEmit(sessionCode, 'match:updated', match);
     }
 
     emitLeaderboardUpdated(sessionCode: string, leaderboard: unknown): void {
-        this.server.to(`training-session:${sessionCode}`).emit('leaderboard:updated', leaderboard);
+        this.safeEmit(sessionCode, 'leaderboard:updated', leaderboard);
+    }
+
+    // À ce stade, l'écriture correspondante est déjà commitée en base : un échec de diffusion
+    // websocket ne doit jamais remonter comme une erreur HTTP (le client se verrait renvoyer un
+    // 500 pour une action qui a pourtant réussi, et risquerait de la retenter en pure perte).
+    private safeEmit(sessionCode: string, event: string, payload: unknown): void {
+        try {
+            this.server.to(`training-session:${sessionCode}`).emit(event, payload);
+        } catch (error) {
+            this.logger.error(
+                `Échec de diffusion websocket '${event}' pour la session ${sessionCode}`,
+                error,
+            );
+        }
     }
 }
