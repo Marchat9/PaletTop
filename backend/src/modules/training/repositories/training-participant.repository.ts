@@ -17,8 +17,4 @@ export class TrainingParticipantRepository {
     save(participant: Partial<TrainingParticipant>): Promise<TrainingParticipant> {
         return this.repo.save(participant as TrainingParticipant);
     }
-
-    findById(id: string): Promise<TrainingParticipant | null> {
-        return this.repo.findOneBy({ id });
-    }
 }
