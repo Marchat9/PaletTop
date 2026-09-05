@@ -1,3 +1,4 @@
+import { shuffleFisherYates } from 'src/modules/tournaments/utils/global.utils';
 import { GenerateRoundInput, MatchmakingPort, RoundPlan } from './matchmaking.types';
 
 interface TeamRef {
@@ -48,7 +49,10 @@ export class DefaultMatchmakingStrategy implements MatchmakingPort {
             ? toPairSet(input.history.previousRoundOpponentCanonicalPairs)
             : new Set<string>();
 
-        const matches = this.pairTeamRefs(this.shuffle(teamRefs), forbiddenOpponents);
+        const matches = this.pairTeamRefs(
+            shuffleFisherYates(teamRefs, this.random),
+            forbiddenOpponents,
+        );
 
         return { ephemeralTeams, matches };
     }
@@ -62,7 +66,7 @@ export class DefaultMatchmakingStrategy implements MatchmakingPort {
         config: GenerateRoundInput['config'],
         forbiddenPartners: Set<string>,
     ): { groups: string[][]; sitOut: string[] } {
-        const solos = this.shuffle(soloParticipantIds);
+        const solos = shuffleFisherYates(soloParticipantIds, this.random);
         const target = config.playersPerTeam;
         const fallback = config.fallbackTeamSize;
         const n = solos.length;
@@ -75,10 +79,8 @@ export class DefaultMatchmakingStrategy implements MatchmakingPort {
         }
 
         if (config.allowSitOut) {
-            const groupCount = Math.floor(n / target);
-            const toGroup = solos.slice(0, groupCount * target);
-            const sitOut = solos.slice(groupCount * target);
-            return { groups: this.groupBySize(toGroup, target, forbiddenPartners), sitOut };
+            const { groups, leftover } = this.splitByGroupCount(solos, target, forbiddenPartners);
+            return { groups, sitOut: leftover };
         }
 
         // Cherche le plus petit nombre `b` de groupes de taille fallback permettant d'absorber
@@ -104,14 +106,20 @@ export class DefaultMatchmakingStrategy implements MatchmakingPort {
         // non négociable, donc le reste est mis au repos plutôt que de former un groupe de taille
         // invalide — y compris si allowSitOut=false, car une équipe hors {target, fallback} n'est
         // jamais une sortie acceptable, quelle que soit la config.
-        const groupCount = Math.floor(n / target);
-        const groups = this.groupBySize(
-            solos.slice(0, groupCount * target),
-            target,
-            forbiddenPartners,
-        );
-        const leftover = solos.slice(groupCount * target);
+        const { groups, leftover } = this.splitByGroupCount(solos, target, forbiddenPartners);
         return { groups, sitOut: leftover };
+    }
+
+    /** `Math.floor(n / size)` groupes de `size`, le reste (< size) renvoyé à part. */
+    private splitByGroupCount(
+        solos: string[],
+        size: number,
+        forbiddenPartners: Set<string>,
+    ): { groups: string[][]; leftover: string[] } {
+        const groupCount = Math.floor(solos.length / size);
+        const groups = this.groupBySize(solos.slice(0, groupCount * size), size, forbiddenPartners);
+        const leftover = solos.slice(groupCount * size);
+        return { groups, leftover };
     }
 
     /** Bin-packing glouton en groupes de `size`, évitant les paires interdites quand possible. */
@@ -164,15 +172,6 @@ export class DefaultMatchmakingStrategy implements MatchmakingPort {
         }
 
         return matches;
-    }
-
-    private shuffle<T>(items: T[]): T[] {
-        const result = [...items];
-        for (let i = result.length - 1; i > 0; i--) {
-            const j = Math.floor(this.random() * (i + 1));
-            [result[i], result[j]] = [result[j], result[i]];
-        }
-        return result;
     }
 }
 
