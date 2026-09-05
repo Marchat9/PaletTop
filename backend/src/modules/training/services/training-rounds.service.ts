@@ -21,6 +21,7 @@ import { TrainingRoundRepository } from '../repositories/training-round.reposito
 import { TrainingSessionRepository } from '../repositories/training-session.repository';
 import { TrainingRoundDto, toTrainingRoundDto } from '../responses/training-round.dto';
 import { assertSessionOpen } from '../utils/session-guard.utils';
+import { activeMembers } from '../utils/team-member.utils';
 import { TrainingSessionAuthService } from './training-session-auth.service';
 import { TrainingRealtimeGateway } from '../training-realtime.gateway';
 
@@ -61,7 +62,7 @@ export class TrainingRoundsService {
             .filter((team) => team.kind === TrainingTeamKind.FIXED)
             .map((team) => ({
                 id: team.id,
-                participantIds: team.members.filter((m) => !m.leftAt).map((m) => m.participant.id),
+                participantIds: activeMembers(team.members).map((m) => m.participant.id),
             }))
             .filter((team) => team.participantIds.length > 0);
 
@@ -73,6 +74,10 @@ export class TrainingRoundsService {
                     !fixedParticipantIds.has(p.id),
             )
             .map((p) => p.id);
+
+        if (activeFixedTeams.length === 0 && soloParticipantIds.length === 0) {
+            throw new BadRequestException('Aucun participant présent pour générer un round.');
+        }
 
         const input: GenerateRoundInput = {
             fixedTeams: activeFixedTeams,
@@ -182,10 +187,7 @@ export class TrainingRoundsService {
     }
 
     async getRound(sessionCode: string, roundNumber: number): Promise<TrainingRoundDto> {
-        const session = await this.trainingSessionRepo.findByCode(sessionCode);
-        if (!session) {
-            throw new NotFoundException('Session introuvable.');
-        }
+        const session = await this.trainingSessionRepo.findByCodeOrThrow(sessionCode);
         const round = await this.trainingRoundRepo.findBySessionAndNumber(session.id, roundNumber);
         if (!round) {
             throw new NotFoundException('Round introuvable pour cette session.');
@@ -194,10 +196,7 @@ export class TrainingRoundsService {
     }
 
     async listRounds(sessionCode: string): Promise<TrainingRoundDto[]> {
-        const session = await this.trainingSessionRepo.findByCode(sessionCode);
-        if (!session) {
-            throw new NotFoundException('Session introuvable.');
-        }
+        const session = await this.trainingSessionRepo.findByCodeOrThrow(sessionCode);
         const rounds = await this.trainingRoundRepo.findAllBySession(session.id);
         return rounds.map(toTrainingRoundDto);
     }
@@ -242,6 +241,6 @@ export class TrainingRoundsService {
     }
 
     private activeMemberIds(team: TrainingTeam): string[] {
-        return (team.members ?? []).filter((m) => !m.leftAt).map((m) => m.participant.id);
+        return activeMembers(team.members).map((m) => m.participant.id);
     }
 }
