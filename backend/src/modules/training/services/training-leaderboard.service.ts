@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { TrainingTeam } from 'src/entities/training-team.entity';
 import { TrainingMatchRepository } from '../repositories/training-match.repository';
 import { TrainingSessionRepository } from '../repositories/training-session.repository';
@@ -18,11 +18,7 @@ export class TrainingLeaderboardService {
     ) {}
 
     async getLeaderboard(sessionCode: string): Promise<TrainingLeaderboardEntryDto[]> {
-        const session = await this.trainingSessionRepo.findByCode(sessionCode);
-        if (!session) {
-            throw new NotFoundException('Session introuvable.');
-        }
-
+        const session = await this.trainingSessionRepo.findByCodeOrThrow(sessionCode);
         const matches = await this.trainingMatchRepo.findValidatedBySession(session.id);
 
         const totals = new Map<string, LeaderboardAccumulator>();

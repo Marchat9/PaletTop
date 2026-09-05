@@ -60,10 +60,7 @@ export class TrainingParticipantViewService {
         sessionCode: string,
         participantCode: string,
     ): Promise<{ session: TrainingSession; participant: TrainingParticipant }> {
-        const session = await this.trainingSessionRepo.findByCode(sessionCode);
-        if (!session) {
-            throw new NotFoundException('Session introuvable.');
-        }
+        const session = await this.trainingSessionRepo.findByCodeOrThrow(sessionCode);
         const participant = session.participants.find((p) => p.code === participantCode);
         if (!participant) {
             throw new NotFoundException('Code participant invalide pour cette session.');

@@ -4,7 +4,6 @@ import { SchedulerRegistry } from '@nestjs/schedule';
 import { registerIdleCron } from 'src/common/scheduling/register-idle-cron.util';
 import { TrainingAutoCloseConfig } from 'src/config/training-auto-close.config';
 import { TrainingSessionRepository } from '../repositories/training-session.repository';
-import { toTrainingSessionPublicDto } from '../responses/training-session.dto';
 import { TrainingRealtimeGateway } from '../training-realtime.gateway';
 
 @Injectable()
@@ -54,10 +53,7 @@ export class TrainingAutoCloseService implements OnModuleInit {
             expired.map((s) => s.id),
         );
         for (const session of reloaded) {
-            this.trainingRealtimeGateway.emitSessionUpdated(
-                session.code,
-                toTrainingSessionPublicDto(session),
-            );
+            this.trainingRealtimeGateway.emitSessionUpdatedFrom(session);
         }
     }
 }
