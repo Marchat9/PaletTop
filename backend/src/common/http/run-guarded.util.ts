@@ -7,14 +7,17 @@ import {
 import { QueryFailedError } from 'typeorm';
 
 interface RunGuardedOptions {
-    // Traduit une violation de contrainte unique Postgres (23505) en 409 lisible plutôt que de
-    // laisser remonter un 500 brut.
-    uniqueViolationMessage?: string;
+    // Traduit une violation de contrainte Postgres en 409 lisible plutôt que de laisser remonter
+    // un 500 brut. Clé = nom de contrainte/index explicitement nommé (précis, prioritaire) ou code
+    // d'erreur Postgres générique en repli (ex. '23505' unicité, '23503' clé étrangère). Extensible
+    // sans toucher runGuarded lui-même : un futur appelant qui a besoin d'un nouveau cas n'a qu'à
+    // ajouter une entrée à sa propre map.
+    pgErrorMessages?: Partial<Record<string, string>>;
 }
 
 // Wrapping d'erreurs partagé par les contrôleurs : une HttpException levée par le service passe
 // telle quelle, tout le reste est journalisé puis traduit en 500 générique (sauf violation de
-// contrainte unique explicitement prise en charge via `uniqueViolationMessage`).
+// contrainte Postgres explicitement prise en charge via `pgErrorMessages`).
 export async function runGuarded<T>(
     logger: Logger,
     errorMessage: string,
@@ -28,10 +31,14 @@ export async function runGuarded<T>(
             throw error;
         }
 
-        if (options?.uniqueViolationMessage && error instanceof QueryFailedError) {
-            const driverError = error.driverError as { code?: string } | undefined;
-            if (driverError?.code === '23505') {
-                throw new ConflictException(options.uniqueViolationMessage);
+        if (options?.pgErrorMessages && error instanceof QueryFailedError) {
+            const driverError = error.driverError as
+                { code?: string; constraint?: string } | undefined;
+            const message =
+                (driverError?.constraint && options.pgErrorMessages[driverError.constraint]) ||
+                (driverError?.code && options.pgErrorMessages[driverError.code]);
+            if (message) {
+                throw new ConflictException(message);
             }
         }
 

@@ -22,8 +22,9 @@ export class TrainingRoundController {
             {
                 // Filet contre deux générations concurrentes pour la même session : le perdant de
                 // la contrainte unique (session, numéro de round) obtient un 409 propre.
-                uniqueViolationMessage:
-                    'Un round est déjà en cours de génération pour cette session.',
+                pgErrorMessages: {
+                    '23505': 'Un round est déjà en cours de génération pour cette session.',
+                },
             },
         );
     }

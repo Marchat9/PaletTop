@@ -1,5 +1,6 @@
-import { Body, Controller, Delete, Logger, Param, ParseUUIDPipe, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Logger, Param, Post } from '@nestjs/common';
 import { runGuarded } from 'src/common/http/run-guarded.util';
+import { UuidParam } from 'src/common/http/uuid-param.decorator';
 import { CreateFixedTeamDto } from '../dto/create-fixed-team.dto';
 import { TrainingPasswordDto } from '../dto/training-password.dto';
 import { TrainingSessionAdminDto } from '../responses/training-session.dto';
@@ -24,8 +25,9 @@ export class TrainingTeamController {
                 // Filet de sécurité si deux créations concurrentes passent toutes les deux la
                 // vérification applicative : l'index unique partiel en base tranche, ceci traduit
                 // sa violation en réponse propre plutôt qu'un 500 brut.
-                uniqueViolationMessage:
-                    "Un des participants fait déjà partie d'une équipe fixe active.",
+                pgErrorMessages: {
+                    '23505': "Un des participants fait déjà partie d'une équipe fixe active.",
+                },
             },
         );
     }
@@ -33,7 +35,7 @@ export class TrainingTeamController {
     @Delete(':teamId')
     dissolve(
         @Param('sessionCode') sessionCode: string,
-        @Param('teamId', ParseUUIDPipe) teamId: string,
+        @UuidParam('teamId') teamId: string,
         @Body() dto: TrainingPasswordDto,
     ): Promise<TrainingSessionAdminDto> {
         return runGuarded(this.logger, "Erreur lors de la dissolution de l'équipe.", () =>

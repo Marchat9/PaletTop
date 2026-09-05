@@ -1,5 +1,6 @@
-import { Body, Controller, Delete, Get, Logger, Param, ParseUUIDPipe, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Logger, Param, Post } from '@nestjs/common';
 import { runGuarded } from 'src/common/http/run-guarded.util';
+import { UuidParam } from 'src/common/http/uuid-param.decorator';
 import { CheckinParticipantDto } from '../dto/checkin-participant.dto';
 import { CreateTrainingSessionDto } from '../dto/create-training-session.dto';
 import { TrainingPasswordDto } from '../dto/training-password.dto';
@@ -78,9 +79,14 @@ export class TrainingSessionController {
             'Erreur lors du check-in.',
             () => this.sessionsService.checkin(sessionCode, dto),
             {
-                // Filet contre deux check-in concurrents tirant le même code à 4 chiffres : le
-                // perdant de la contrainte unique (session, code) obtient un 409 propre, réessayable.
-                uniqueViolationMessage: 'Collision de code participant, merci de réessayer.',
+                // Deux collisions possibles ici : le code à 4 chiffres (rare, retenter suffit) et
+                // le même membre du roster check-in deux fois (cf. index nommé dédié) — message
+                // différent puisque, pour la seconde, retenter ne sert à rien.
+                pgErrorMessages: {
+                    UQ_training_participant_active_member:
+                        'Ce membre du roster est déjà inscrit à cette session.',
+                    '23505': 'Collision de code participant, merci de réessayer.',
+                },
             },
         );
     }
@@ -88,7 +94,7 @@ export class TrainingSessionController {
     @Delete('sessions/:sessionCode/participants/:participantId')
     removeParticipant(
         @Param('sessionCode') sessionCode: string,
-        @Param('participantId', ParseUUIDPipe) participantId: string,
+        @UuidParam('participantId') participantId: string,
         @Body() dto: TrainingPasswordDto,
     ): Promise<TrainingSessionAdminDto> {
         return runGuarded(this.logger, 'Erreur lors du retrait du participant.', () =>

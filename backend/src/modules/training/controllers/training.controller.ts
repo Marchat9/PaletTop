@@ -1,14 +1,6 @@
-import {
-    Body,
-    Controller,
-    Delete,
-    Logger,
-    Param,
-    ParseUUIDPipe,
-    Patch,
-    Post,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Logger, Param, Patch, Post } from '@nestjs/common';
 import { runGuarded } from 'src/common/http/run-guarded.util';
+import { UuidParam } from 'src/common/http/uuid-param.decorator';
 import { AddTrainingMemberDto } from '../dto/add-training-member.dto';
 import { CreateTrainingDto } from '../dto/create-training.dto';
 import { TrainingAdminAccessDto } from '../dto/training-admin-access.dto';
@@ -29,7 +21,7 @@ export class TrainingController {
             this.logger,
             "Erreur interne lors de la création de l'entraînement.",
             () => this.trainingsService.create(dto),
-            { uniqueViolationMessage: "Le code d'entraînement existe déjà." },
+            { pgErrorMessages: { '23505': "Le code d'entraînement existe déjà." } },
         );
     }
 
@@ -60,7 +52,7 @@ export class TrainingController {
     @Delete(':code/members/:memberId')
     removeMember(
         @Param('code') code: string,
-        @Param('memberId', ParseUUIDPipe) memberId: string,
+        @UuidParam('memberId') memberId: string,
         @Body() dto: TrainingPasswordDto,
     ): Promise<AdminTrainingDto> {
         return runGuarded(this.logger, 'Erreur lors du retrait du membre.', () =>
