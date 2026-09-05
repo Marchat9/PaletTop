@@ -67,12 +67,18 @@ export class TrainingScoreService {
         }
 
         this.validateScores(scoreA, scoreB, session.pointsPerGame);
-        const isFinished = scoreA === session.pointsPerGame || scoreB === session.pointsPerGame;
+        const isFinished = this.isMatchFinished(scoreA, scoreB, session.pointsPerGame);
 
         match.scoreA = scoreA;
         match.scoreB = scoreB;
         match.status = isFinished ? MatchStatus.ENDED : MatchStatus.ONGOING;
         match.finishedAt = isFinished ? new Date() : null;
+        // Un joueur peut renseigner un score sans être passé par startMatch au préalable (rien ne
+        // l'impose côté produit) : startedAt doit malgré tout être posé dès que le match quitte
+        // PENDING, sinon un match ONGOING/ENDED se retrouve avec une date de début à null.
+        if (!match.startedAt) {
+            match.startedAt = new Date();
+        }
 
         const [saved] = await this.trainingMatchRepo.save([match]);
         await this.trainingSessionRepo.touchLastActivity(session.id);
@@ -128,12 +134,18 @@ export class TrainingScoreService {
         this.rejectBye(match);
 
         this.validateScores(scoreA, scoreB, session.pointsPerGame);
-        const isFinished = scoreA === session.pointsPerGame || scoreB === session.pointsPerGame;
+        const isFinished = this.isMatchFinished(scoreA, scoreB, session.pointsPerGame);
 
         match.scoreA = scoreA;
         match.scoreB = scoreB;
         match.status = this.nextStatusForAdminEdit(match.status, isFinished);
         match.finishedAt = isFinished ? (match.finishedAt ?? new Date()) : null;
+        // Une correction admin peut valider directement un match encore PENDING (jamais démarré
+        // par un joueur) : startedAt doit malgré tout être posé, sinon un match VALIDATED se
+        // retrouve avec une date de début à null pour toujours.
+        if (isFinished && !match.startedAt) {
+            match.startedAt = match.finishedAt;
+        }
 
         const [saved] = await this.trainingMatchRepo.save([match]);
         await this.trainingSessionRepo.touchLastActivity(session.id);
@@ -172,6 +184,10 @@ export class TrainingScoreService {
         }
     }
 
+    private isMatchFinished(scoreA: number, scoreB: number, pointsPerGame: number): boolean {
+        return scoreA === pointsPerGame || scoreB === pointsPerGame;
+    }
+
     private validateScores(scoreA: number, scoreB: number, max: number): void {
         if (scoreA > max || scoreB > max || (scoreA === max && scoreB === max)) {
             throw new BadRequestException(
@@ -189,10 +205,7 @@ export class TrainingScoreService {
         matchId: string,
         participantCode: string,
     ): Promise<{ match: TrainingMatch; session: TrainingSession }> {
-        const session = await this.trainingSessionRepo.findByCode(sessionCode);
-        if (!session) {
-            throw new NotFoundException('Session introuvable.');
-        }
+        const session = await this.trainingSessionRepo.findByCodeOrThrow(sessionCode);
 
         const match = await this.trainingMatchRepo.findByIdInSession(matchId, session.id);
         if (!match) {
