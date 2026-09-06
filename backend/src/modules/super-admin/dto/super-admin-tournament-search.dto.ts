@@ -1,22 +1,10 @@
-import { IsIn, IsInt, IsOptional, IsString, Min } from 'class-validator';
+import { IsIn, IsOptional } from 'class-validator';
 import { TournamentStatus } from 'src/enum/status.enum';
-import { SuperAdminActionDto } from './super-admin-action.dto';
+import { SuperAdminSearchBaseDto } from './super-admin-search-base.dto';
 
 const SORTABLE_FIELDS = ['name', 'code', 'status', 'date', 'createdAt', 'teamsCount'] as const;
 
-export class SuperAdminTournamentSearchDto extends SuperAdminActionDto {
-    @IsInt()
-    @Min(1)
-    page!: number;
-
-    @IsInt()
-    @Min(1)
-    pageSize!: number;
-
-    @IsOptional()
-    @IsString()
-    search?: string;
-
+export class SuperAdminTournamentSearchDto extends SuperAdminSearchBaseDto {
     @IsOptional()
     @IsIn(Object.values(TournamentStatus))
     status?: TournamentStatus;
@@ -24,8 +12,4 @@ export class SuperAdminTournamentSearchDto extends SuperAdminActionDto {
     @IsOptional()
     @IsIn(SORTABLE_FIELDS)
     sortBy?: (typeof SORTABLE_FIELDS)[number];
-
-    @IsOptional()
-    @IsIn(['ASC', 'DESC'])
-    sortDir?: 'ASC' | 'DESC';
 }
