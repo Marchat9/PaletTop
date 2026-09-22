@@ -22,10 +22,6 @@ export class TrainingTeamRepository {
         return this.repo.save(teams as TrainingTeam[]);
     }
 
-    // Pas de filtre sur team.kind ni round_id ici (contrairement à session.teams, qui ne charge
-    // que les équipes FIXED) : sert à distinguer "équipe introuvable" (404) de "équipe éphémère,
-    // dissolution manuelle impossible" (400) pour l'appelant. members/participant chargés pour
-    // permettre au service de mettre à jour l'état en mémoire sans devoir tout re-fetcher ensuite.
     findByIdInSession(teamId: string, sessionId: string): Promise<TrainingTeam | null> {
         return this.repo.findOne({
             where: { id: teamId, session: { id: sessionId } },

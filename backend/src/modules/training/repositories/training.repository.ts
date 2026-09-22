@@ -2,8 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Training } from 'src/entities/training.entity';
-import { deleteManyByIds, updateAdminPasswordById } from 'src/common/repositories/admin-crud.util';
-import { paginateAdminSearch } from 'src/common/repositories/admin-search.util';
+import { deleteManyByIds, updateAdminPasswordById } from 'src/utils/admin-crud.util';
+import { paginateAdminSearch } from 'src/utils/admin-search.util';
 
 export interface AdminTrainingSearchOptions {
     page: number;
@@ -40,10 +40,6 @@ export class TrainingRepository {
         return this.repo.findOneBy({ code });
     }
 
-    /**
-     * Charge un entraînement après vérification du mot de passe admin.
-     * Retourne null si l'entraînement est introuvable ou si le mot de passe est incorrect.
-     */
     findWithAuth(code: string, password: string, withMembers = false): Promise<Training | null> {
         const queryBuilder = this.repo
             .createQueryBuilder('training')

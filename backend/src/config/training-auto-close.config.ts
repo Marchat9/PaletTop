@@ -23,6 +23,6 @@ function parseNumber(value: string | undefined, defaultValue: number): number {
  */
 export default registerAs('trainingAutoClose', (): TrainingAutoCloseConfig => ({
     enabled: parseBoolean(process.env.TRAINING_AUTOCLOSE_ENABLED, true),
-    cronExpression: process.env.TRAINING_AUTOCLOSE_CRON_EXPRESSION ?? '0 * * * *', // every hour
+    cronExpression: process.env.TRAINING_AUTOCLOSE_CRON_EXPRESSION ?? '0 10 * * *', // every day at 10h00
     idleHours: parseNumber(process.env.TRAINING_AUTOCLOSE_IDLE_HOURS, 24),
 }));

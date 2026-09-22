@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Logger, Param, Patch, Post } from '@nestjs/common';
-import { runGuarded } from 'src/common/http/run-guarded.util';
-import { UuidParam } from 'src/common/http/uuid-param.decorator';
+import { runGuarded } from 'src/utils/run-guarded.util';
+import { UuidParam } from 'src/decorators/uuid-param.decorator';
 import { AddTrainingMemberDto } from '../dto/add-training-member.dto';
 import { CreateTrainingDto } from '../dto/create-training.dto';
 import { TrainingAdminAccessDto } from '../dto/training-admin-access.dto';

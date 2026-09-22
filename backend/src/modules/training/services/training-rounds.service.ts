@@ -97,10 +97,7 @@ export class TrainingRoundsService {
             session.participants.map((p) => [p.id, p]),
         );
 
-        // Round, équipes/membres éphémères et matchs dans une seule transaction : un échec en
-        // cours de route (crash, coupure DB) ne doit jamais laisser un round à moitié créé (ex.
-        // round ouvert sans aucun match, que le garde-fou ci-dessus ne détecterait pas — il ne
-        // voit rien à valider sur un round vide).
+        // Round, équipes/membres éphémères et matchs dans une seule transaction
         const { savedRound, matchRows } = await this.dataSource.transaction(async (manager) => {
             const roundRepo = manager.getRepository(TrainingRound);
             const teamRepo = manager.getRepository(TrainingTeam);

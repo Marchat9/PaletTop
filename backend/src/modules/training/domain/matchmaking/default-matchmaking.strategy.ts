@@ -8,8 +8,7 @@ interface TeamRef {
     participantIds: string[];
 }
 
-// Ordre de relâchement des contraintes quand tout n'est pas simultanément satisfiable
-// (assumption documentée dans le plan de développement, à confirmer sur des cas concrets) :
+// Ordre de relâchement des contraintes quand tout n'est pas simultanément satisfiable :
 //   1. Taille d'équipe valide (playersPerTeam ou fallbackTeamSize) — non négociable.
 //   2. allowSitOut / fallbackTeamSize pour absorber les effectifs impairs.
 //   3. avoidSameOpponentConsecutive.

@@ -14,8 +14,6 @@ export interface TrainingParticipantPublicDto {
     status: TrainingParticipantStatus;
 }
 
-// Réservé aux réponses admin (mot de passe vérifié) : porte le code perso du participant, à ne
-// JAMAIS inclure dans une vue publique (il sert d'authentification joueur, cf. décision produit).
 export interface TrainingParticipantAdminDto extends TrainingParticipantPublicDto {
     code: string;
     memberId?: string;
@@ -26,8 +24,6 @@ export interface TrainingTeamMemberSummaryDto {
     name: string;
 }
 
-// Composition d'équipe (noms) : pas sensible, partagée entre vues publique et admin — seul le
-// code personnel du participant (TrainingParticipantAdminDto) est réservé à l'admin.
 export interface TrainingTeamDto {
     id: string;
     kind: TrainingTeamKind;
@@ -35,11 +31,6 @@ export interface TrainingTeamDto {
     members: TrainingTeamMemberSummaryDto[];
 }
 
-// `activeOnly` distingue deux usages : la liste "équipes de la session" doit refléter la
-// composition ACTUELLE (donc filtrer les membres partis) ; l'affichage d'un match (round detail,
-// current-match, history) doit montrer QUI A JOUÉ ce match précis, même si l'équipe a depuis été
-// dissoute — sinon un match validé se retrouve affiché avec une équipe vide (score correct, mais
-// plus aucun nom), alors que le classement (qui n'agrège jamais avec ce filtre) reste, lui, exact.
 export function toTrainingTeamDto(team: TrainingTeam, activeOnly = true): TrainingTeamDto {
     const members = activeOnly ? activeMembers(team.members) : (team.members ?? []);
     return {
@@ -110,7 +101,7 @@ function baseSessionFields(session: TrainingSession): TrainingSessionFieldsDto {
 
 // Une équipe FIXED entièrement dissoute n'a plus aucun membre actif : on ne l'affiche plus dans
 // la liste des équipes de la session (elle reste en base uniquement comme ancrage historique
-// pour les matchs déjà joués, cf. décision produit sur la dissolution non destructive).
+// pour les matchs déjà joués).
 function activeTeams(session: TrainingSession): TrainingTeam[] {
     return (session.teams ?? []).filter((team) => team.members?.some(isActiveMember));
 }
@@ -131,7 +122,6 @@ export function toTrainingSessionAdminDto(session: TrainingSession): TrainingSes
     };
 }
 
-// Vue allégée pour lister les sessions passées d'un Training (pas de participants/équipes/codes).
 export interface TrainingSessionSummaryDto {
     code: string;
     date: string;

@@ -1,10 +1,6 @@
 import { NotFoundException } from '@nestjs/common';
 import { ObjectLiteral, Repository } from 'typeorm';
 
-// Suppression par lot et réinitialisation de mot de passe admin : logique identique entre
-// TrainingRepository et TournamentRepository, extraite ici pour qu'un correctif ne se fasse
-// jamais à un seul des deux endroits par erreur.
-
 export async function deleteManyByIds<T extends ObjectLiteral>(
     repo: Repository<T>,
     ids: string[],

@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { LessThan, Repository } from 'typeorm';
-import { deleteManyByIds, updateAdminPasswordById } from 'src/common/repositories/admin-crud.util';
-import { paginateAdminSearch } from 'src/common/repositories/admin-search.util';
+import { deleteManyByIds, updateAdminPasswordById } from 'src/utils/admin-crud.util';
+import { paginateAdminSearch } from 'src/utils/admin-search.util';
 import { Team } from 'src/entities/team.entity';
 import { TournamentMatch } from 'src/entities/tounament-match.entity';
 import { TournamentPool } from 'src/entities/tournament-pool.entity';

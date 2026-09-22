@@ -13,10 +13,6 @@ import { TrainingTeamKind } from 'src/enum/training.enum';
 
 @Entity('training_team_member')
 @Unique(['team', 'participant'])
-// Contrainte "un participant n'a jamais plus d'une équipe FIXED active" au niveau base (pas
-// seulement applicatif) : ferme la race condition entre deux créations d'équipe concurrentes pour
-// le même joueur. `kind` est dénormalisé depuis `team.kind` (immuable une fois l'équipe créée)
-// pour permettre un index partiel simple, sans jointure.
 @Index('UQ_training_team_member_active_fixed_participant', ['participant'], {
     unique: true,
     where: `"leftAt" IS NULL AND "kind" = 'FIXED'`,

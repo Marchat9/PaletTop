@@ -19,11 +19,6 @@ export class TrainingTeamMemberRepository {
         return this.repo.save(members as TrainingTeamMember[]);
     }
 
-    // Nommée "FixedMembership" (pas juste "Active") : `kind` est une colonne directe (dénormalisée
-    // depuis team.kind), filtrée ici sans jointure, en filet de sécurité applicatif en complément
-    // de l'index unique partiel en base (UQ_training_team_member_active_fixed_participant) qui
-    // empêche la race condition. Un appelant voulant "n'importe quelle appartenance active"
-    // (y compris éphémère) ne doit pas utiliser cette méthode.
     findActiveFixedMembership(participantId: string): Promise<TrainingTeamMember | null> {
         return this.repo.findOne({
             where: {
@@ -48,7 +43,7 @@ export class TrainingTeamMemberRepository {
         });
     }
 
-    /** Dissolution non destructive : détache tous les membres actifs de l'équipe (cf. décision produit). */
+    // Dissolution non destructive : détache tous les membres actifs de l'équipe
     async dissolveTeam(teamId: string): Promise<void> {
         await this.repo.update({ team: { id: teamId }, leftAt: IsNull() }, { leftAt: new Date() });
     }

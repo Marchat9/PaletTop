@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { Repository } from 'typeorm';
+import { Socket } from 'socket.io';
 import { Tournament } from 'src/entities/tournament.entity';
 import { RealtimeGateway } from './realtime.gateway';
 import { TournamentAuthService } from '../tournaments/services/tournament-auth.service';
@@ -15,12 +16,12 @@ function makeGateway(tournament: Partial<Tournament> | null) {
     return { gateway, emitToRoom };
 }
 
-function makeClient() {
+function makeClient(): Socket {
     return {
         id: 'client-1',
         join: vi.fn(),
         emit: vi.fn(),
-    } as any;
+    } as unknown as Socket;
 }
 
 describe('RealtimeGateway spectator join', () => {

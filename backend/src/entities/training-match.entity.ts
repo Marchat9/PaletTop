@@ -26,7 +26,6 @@ export class TrainingMatch {
     @JoinColumn({ name: 'round_id' })
     round!: TrainingRound;
 
-    // Dénormalisé (comme TournamentMatch.tournament) pour interroger les matchs directement par session.
     @ManyToOne(() => TrainingSession, { nullable: false, onDelete: 'CASCADE' })
     @JoinColumn({ name: 'session_id' })
     session!: TrainingSession;

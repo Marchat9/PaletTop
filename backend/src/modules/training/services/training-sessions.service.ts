@@ -18,7 +18,7 @@ import {
     toTrainingSessionPublicDto,
     toTrainingSessionSummaryDto,
 } from '../responses/training-session.dto';
-import { generateNumericCode } from 'src/common/utils/numeric-code.util';
+import { generateNumericCode } from 'src/utils/numeric-code.util';
 import { assertSessionOpen } from '../utils/session-guard.utils';
 import { TrainingParticipantStatus, TrainingSessionStatus } from 'src/enum/training.enum';
 import { TrainingMember } from 'src/entities/training-member.entity';

@@ -11,7 +11,7 @@ import {
     UseGuards,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { runGuarded } from 'src/common/http/run-guarded.util';
+import { runGuarded } from 'src/utils/run-guarded.util';
 import { SuperAdminConfig } from 'src/config/super-admin.config';
 import { TrainingRepository } from 'src/modules/training/repositories/training.repository';
 import {

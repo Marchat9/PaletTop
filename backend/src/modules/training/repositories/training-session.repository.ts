@@ -4,9 +4,6 @@ import { LessThan, Repository, UpdateResult } from 'typeorm';
 import { TrainingSession } from 'src/entities/training-session.entity';
 import { TrainingSessionStatus } from 'src/enum/training.enum';
 
-// Chargée trois fois avec les mêmes jointures (session/équipes FIXED/participants) : équipes
-// FIXED uniquement (round_id NULL), les équipes éphémères d'un round passé se consultent via le
-// détail de ce round, pas ici.
 const FIXED_TEAM_JOIN_CONDITION = 'team.round_id IS NULL';
 
 @Injectable()
@@ -30,8 +27,6 @@ export class TrainingSessionRepository {
     }
 
     findByCode(code: string): Promise<TrainingSession | null> {
-        // Seules les équipes FIXED (round IS NULL) sont chargées ici : les équipes éphémères
-        // d'un round passé se consultent via le détail de ce round (Phase 6), pas ici.
         return this.repo
             .createQueryBuilder('session')
             .innerJoinAndSelect('session.training', 'training')
@@ -44,10 +39,14 @@ export class TrainingSessionRepository {
             .getOne();
     }
 
-    /**
-     * Charge une session par son code après vérification du mot de passe admin de
-     * l'entraînement PARENT (TrainingSession ne porte pas son propre mot de passe).
-     */
+    async findByCodeOrThrow(code: string): Promise<TrainingSession> {
+        const session = await this.findByCode(code);
+        if (!session) {
+            throw new NotFoundException('Session introuvable.');
+        }
+        return session;
+    }
+
     findWithTrainingAuth(sessionCode: string, password: string): Promise<TrainingSession | null> {
         return this.repo
             .createQueryBuilder('session')
@@ -60,16 +59,6 @@ export class TrainingSessionRepository {
             .where('session.code = :sessionCode', { sessionCode })
             .andWhere('training.adminPassword = :password', { password })
             .getOne();
-    }
-
-    // Recopié tel quel dans 6 services avant extraction ici (cf. revue de code) : un seul endroit
-    // désormais si le message ou le comportement du lookup doit changer.
-    async findByCodeOrThrow(code: string): Promise<TrainingSession> {
-        const session = await this.findByCode(code);
-        if (!session) {
-            throw new NotFoundException('Session introuvable.');
-        }
-        return session;
     }
 
     touchLastActivity(sessionId: string): Promise<UpdateResult> {
@@ -97,8 +86,6 @@ export class TrainingSessionRepository {
         await this.repo.update(ids, { status: TrainingSessionStatus.CLOSED, closedAt: new Date() });
     }
 
-    // Utilisée après un batch closeMany() pour reconstruire les payloads de diffusion websocket en
-    // UNE requête plutôt qu'un findByCode() par session (cf. runAutoClose).
     findAllByIdsWithRelations(ids: string[]): Promise<TrainingSession[]> {
         if (!ids.length) return Promise.resolve([]);
         return this.repo

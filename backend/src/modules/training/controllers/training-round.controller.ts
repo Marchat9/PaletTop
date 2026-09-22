@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Logger, Param, ParseIntPipe, Post } from '@nestjs/common';
-import { runGuarded } from 'src/common/http/run-guarded.util';
+import { runGuarded } from 'src/utils/run-guarded.util';
 import { TrainingPasswordDto } from '../dto/training-password.dto';
 import { TrainingRoundDto } from '../responses/training-round.dto';
 import { TrainingRoundsService } from '../services/training-rounds.service';

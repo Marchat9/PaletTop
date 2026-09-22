@@ -1,7 +1,7 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { SchedulerRegistry } from '@nestjs/schedule';
-import { registerIdleCron } from 'src/common/scheduling/register-idle-cron.util';
+import { registerIdleCron } from 'src/utils/register-idle-cron.util';
 import { TrainingAutoCloseConfig } from 'src/config/training-auto-close.config';
 import { TrainingSessionRepository } from '../repositories/training-session.repository';
 import { TrainingRealtimeGateway } from '../training-realtime.gateway';
@@ -20,8 +20,6 @@ export class TrainingAutoCloseService implements OnModuleInit {
         this.config = this.configService.getOrThrow<TrainingAutoCloseConfig>('trainingAutoClose');
     }
 
-    // Pas de ScheduleModule.forRoot() ici : il est enregistré une seule fois dans AppModule (module
-    // @Global()) — injecter SchedulerRegistry suffit, sans dépendre d'un autre module métier.
     onModuleInit(): void {
         registerIdleCron(
             this.logger,

@@ -1,5 +1,5 @@
 import { Controller, Get, Logger, Param } from '@nestjs/common';
-import { runGuarded } from 'src/common/http/run-guarded.util';
+import { runGuarded } from 'src/utils/run-guarded.util';
 import { TrainingCurrentMatchDto } from '../responses/training-current-match.dto';
 import { TrainingMatchDto } from '../responses/training-round.dto';
 import { TrainingParticipantViewService } from '../services/training-participant-view.service';

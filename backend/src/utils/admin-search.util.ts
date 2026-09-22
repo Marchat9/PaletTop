@@ -8,10 +8,6 @@ export interface AdminSearchOptions {
     sortDir?: 'ASC' | 'DESC';
 }
 
-// Termine une requête de recherche admin déjà construite par l'appelant (jointures, sous-requête
-// de comptage, filtres propres à l'entité) : prédicat de recherche insensible aux accents, tri,
-// pagination. Partagé par TrainingRepository et TournamentRepository pour que ce bloc, identique
-// entre les deux, ne diverge jamais silencieusement.
 export async function paginateAdminSearch<T extends ObjectLiteral>(
     queryBuilder: SelectQueryBuilder<T>,
     options: AdminSearchOptions,

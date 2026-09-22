@@ -1,7 +1,7 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { SchedulerRegistry } from '@nestjs/schedule';
-import { registerIdleCron } from 'src/common/scheduling/register-idle-cron.util';
+import { registerIdleCron } from 'src/utils/register-idle-cron.util';
 import { CleanupConfig } from 'src/config/cleanup.config';
 import { Tournament } from 'src/entities/tournament.entity';
 import { TournamentRepository } from 'src/modules/tournaments/repositories/tournament.repository';
