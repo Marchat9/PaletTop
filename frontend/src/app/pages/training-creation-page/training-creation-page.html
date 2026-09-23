@@ -1,1 +1,36 @@
-<p>training-creation-page works!</p>
+<div class="training-creation-page">
+  <p>[TEST] Formulaire brut - visuel à faire plus tard.</p>
+
+  <label>
+    Code
+    <input type="text" [value]="code()" (input)="onCodeChange($any($event.target).value)" />
+  </label>
+  <label>
+    Nom
+    <input type="text" [value]="name()" (input)="onNameChange($any($event.target).value)" />
+  </label>
+  <label>
+    Club
+    <input type="text" [value]="club()" (input)="onClubChange($any($event.target).value)" />
+  </label>
+  <label>
+    Mot de passe admin
+    <input
+      type="password"
+      [value]="adminPassword()"
+      (input)="onAdminPasswordChange($any($event.target).value)"
+    />
+  </label>
+
+  <button type="button" [disabled]="!canSubmit()" (click)="submit()">Créer</button>
+  <button type="button" (click)="cancel()">Annuler</button>
+
+  <pre>{{
+    {
+      canSubmit: canSubmit(),
+      isCreationLoading: isCreationLoading(),
+      creationError: creationError(),
+      userHasSubmitted: userHasSubmitted()
+    } | json
+  }}</pre>
+</div>

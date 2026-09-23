@@ -20,6 +20,8 @@ const LOCAL_STORAGE_DATA_KEY = 'app-local-storage-data';
 export const STORAGE_TOURNAMENT_CODE_KEY = 'tournament-code';
 export const STORAGE_TOURNAMENT_PASSWORD_KEY = 'tournament-pass';
 export const STORAGE_FRIENDLY_MATCH_KEY = 'friendly-match-state';
+export const STORAGE_TRAINING_CODE_KEY = 'training-code';
+export const STORAGE_TRAINING_PASSWORD_KEY = 'training-pass';
 
 @Injectable()
 export class AppConfigEffects {
