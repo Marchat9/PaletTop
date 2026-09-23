@@ -2,7 +2,7 @@
   position: relative;
   display: flex;
   gap: 1.25rem;
-  align-items: flex-end;
+  align-items: center;
   padding: 0.8rem 0 2.4rem;
   min-height: clamp(18rem, 38vw, 26rem);
   min-height: 16rem;
@@ -86,6 +86,7 @@
       object-fit: cover;
       display: block;
       filter: saturate(0.9) contrast(1.05);
+      clip-path: inset(0.5px);
     }
   }
 }

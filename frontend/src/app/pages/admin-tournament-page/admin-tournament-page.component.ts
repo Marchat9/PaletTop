@@ -159,7 +159,7 @@ export class AdminTournamentPageComponent implements OnInit {
   }
   private reconnectAsAdmin(): void {
     this.store.dispatch(disconnectTournamentAdministrator());
-    this.router.navigate(['/admin']);
+    this.router.navigate(['/admin/tournament']);
   }
 
   public updateTournamentConfiguration(tournament: TournamentConfigurationDto): void {

@@ -12,7 +12,7 @@
       <app-icon [name]="icon()!" iconClass="button-icon" />
     }
     @if (title()) {
-      <span class="text">{{ title() }}</span>
+      <span class="text" [class.can-wrap]="titleCanWrap()">{{ title() }}</span>
     }
   </div>
   @if (loading()) {

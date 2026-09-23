@@ -38,7 +38,7 @@ export class AdminConnectionPageComponent {
       .subscribe((tournamentData) => {
         if (!!tournamentData) {
           const { tournamentCode } = tournamentData as { tournamentCode: string };
-          this.router.navigate([`/admin/${tournamentCode}`]);
+          this.router.navigate([`/admin/tournament/${tournamentCode}`]);
         } else {
           this.router.navigate(['/accueil']);
         }

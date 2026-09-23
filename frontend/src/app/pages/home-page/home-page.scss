@@ -5,35 +5,22 @@
   padding: 1.5rem 1.25rem 6.2rem;
 
   display: flex;
-  flex-direction: column;
-  gap: 2rem;
+  flex-direction: row;
+  flex-wrap: wrap;
 
-  .header {
-    flex: 1 1 auto;
-  }
-  .tournament {
-    flex: 1 1 auto;
-  }
-  .friendly-match {
-    flex: 1 1 auto;
-  }
+  --gap-value: 2rem;
+  gap: var(--gap-value);
 
-  .mts {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.9rem;
 
-    app-metric-tile {
-      flex: 1 1 8.4rem;
+  .two-column {
+    flex: 1 1 calc(50% - calc(var(--gap-value) / 2));
+    @media (width < 900px) {
+      flex-basis: 100%;
     }
+  }
+
+  .one-column {
+    flex: 1 1 100%;
   }
 }
 
-@media (width < 900px) {
-  .deck {
-    .card-wide {
-      flex-direction: column;
-      align-items: flex-start;
-    }
-  }
-}

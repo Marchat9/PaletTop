@@ -27,7 +27,7 @@ export class PlayerConnectionPage {
             tournamentCode: string;
             teamCode: string;
           };
-          this.router.navigate([`/player/${tournamentCode}/${teamCode}`]);
+          this.router.navigate([`/player/tournament/${tournamentCode}/${teamCode}`]);
         } else {
           this.router.navigate(['/accueil']);
         }

@@ -150,7 +150,7 @@ export class PlayerTeamMatchPageComponent {
   constructor() {
     effect(() => {
       if (this.tournamentPathCode?.length === 0 || this.teamCode?.length !== 4) {
-        this.router.navigate(['/player']);
+        this.router.navigate(['/player/tournament']);
         return;
       }
       const isActive = this.tournamentData()?.status === TournamentStatus.ACTIVE;

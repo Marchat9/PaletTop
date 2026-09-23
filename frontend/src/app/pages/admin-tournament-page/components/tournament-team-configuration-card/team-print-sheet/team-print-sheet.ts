@@ -32,7 +32,7 @@ export class TeamPrintSheet {
         name: team.name,
         code: team.code ?? '',
         playerNames: team.players.map((player) => player.name).join(', '),
-        playerUrl: team.code ? `${this.appUrl}/player/${tournamentCode}/${team.code}` : '',
+        playerUrl: team.code ? `${this.appUrl}/player/tournament/${tournamentCode}/${team.code}` : '',
       }))
       .sort((a, b) => a.name.localeCompare(b.name));
   });

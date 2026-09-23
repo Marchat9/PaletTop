@@ -14,6 +14,7 @@ type ButtonVariant = 'primary' | 'secondary' | 'tertiary' | 'error';
 })
 export class Button {
   readonly title = input<Nullable<string>>();
+  readonly titleCanWrap = input<boolean>(false);
   readonly variant = input<ButtonVariant>('primary');
   readonly icon = input<string>();
   readonly loading = input<boolean>(false);

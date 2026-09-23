@@ -1,9 +1,13 @@
 // ###################################
 // Specific style for word 'Palet'
-span.palet,
-span.tournament {
+span.palet{
   color: var(--color-primary) !important;
   font-style: italic !important;
+  font-weight: bold !important;
+}
+// Specific style for highlighted words 
+span.highlight {
+  color: var(--color-primary) !important;
   font-weight: bold !important;
 }
 // ###################################
