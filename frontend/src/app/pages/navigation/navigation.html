@@ -2,7 +2,7 @@
   <app-top-bar
     [title]="appName"
     [links]="navItems"
-    [activeRoute]="currentRouteSplited()"
+    [activeKey]="activeNavKey()"
     [showLinks]="!isMobile()"
     [theme]="theme()"
     [notificationBadge]="notificationBadge()"
@@ -10,11 +10,17 @@
     (changeTheme)="changeTheme.emit($event)"
     (notificationClick)="onNotificationClick()"
     (burgerMenuClick)="burgerMenuClick($event)"
+    (itemSelected)="onNavItemSelected($event)"
   />
 
   <main class="nav-main" [class.nav-main--mobile]="isMobile()">
     <router-outlet />
   </main>
 
-  <app-bottom-nav [items]="navItems" [activeRoute]="currentRouteSplited()" [visible]="isMobile()" />
+  <app-bottom-nav
+    [items]="navItems"
+    [activeKey]="activeNavKey()"
+    [visible]="isMobile()"
+    (itemSelected)="onNavItemSelected($event)"
+  />
 </div>

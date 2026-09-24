@@ -1,10 +1,20 @@
 import { DialogRef } from '@angular/cdk/dialog';
-import { Component, computed, effect, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  signal,
+} from '@angular/core';
 import { Store } from '@ngrx/store';
 import { Button } from 'src/app/shared/button/button';
 import { CodeNumberInputComponent } from 'src/app/shared/code-number-input/code-number-input';
 import { Icon } from 'src/app/shared/icon/icon';
-import { joinTrainingSession, resetTraining } from 'src/app/store/training/training.actions';
+import {
+  loadTrainingParticipantCurrentMatch,
+  resetTraining,
+} from 'src/app/store/training/training.actions';
 import {
   selectTrainingParticipantCurrentMatch,
   selectTrainingParticipantCurrentMatchError,
@@ -16,6 +26,7 @@ import {
   imports: [Button, CodeNumberInputComponent, Icon],
   templateUrl: './join-training-popup.html',
   styleUrl: './join-training-popup.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class JoinTrainingPopup {
   private readonly store = inject(Store);
@@ -28,9 +39,7 @@ export class JoinTrainingPopup {
   readonly isUnknownSession = signal(false);
 
   readonly isCodeComplete = computed(() => this.participantCode().length === 4);
-  readonly canJoin = computed(
-    () => this.sessionCode().trim().length > 0 && this.isCodeComplete(),
-  );
+  readonly canJoin = computed(() => this.sessionCode().trim().length > 0 && this.isCodeComplete());
 
   // Selectors for training participant view state
   readonly currentMatch = this.store.selectSignal(selectTrainingParticipantCurrentMatch);
@@ -79,7 +88,7 @@ export class JoinTrainingPopup {
     if (this.canJoin()) {
       this.isUnknownSession.set(false);
       this.store.dispatch(
-        joinTrainingSession({
+        loadTrainingParticipantCurrentMatch({
           sessionCode: this.sessionCode().trim(),
           participantCode: this.participantCode(),
         }),

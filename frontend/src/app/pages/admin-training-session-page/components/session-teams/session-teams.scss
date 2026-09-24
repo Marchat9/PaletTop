@@ -1,0 +1,175 @@
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+
+  .header-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    ::ng-deep .icon {
+      color: var(--color-primary);
+      font-size: 1.35rem;
+    }
+
+    .title {
+      font-size: 1.05rem;
+      font-weight: 700;
+    }
+
+    .count {
+      color: var(--color-on-surface-variant);
+      font-weight: 400;
+    }
+  }
+
+  .header-description {
+    color: var(--color-on-surface-variant);
+    font-size: 0.82rem;
+  }
+}
+
+.teams-content {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1rem;
+
+  > app-button {
+    align-self: flex-start;
+  }
+
+  .empty {
+    margin: 0;
+    color: var(--color-on-surface-variant);
+    font-size: 0.9rem;
+  }
+
+  .creation-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    width: 100%;
+    padding: 0.8rem;
+    border-radius: 0.6rem;
+    border: 1px dashed var(--color-border-default);
+    background: var(--color-surface-container);
+
+    .label {
+      font-family: var(--font-label);
+      font-size: 0.66rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--color-primary);
+    }
+
+    .participant-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+    }
+
+    .participant-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.45rem 0.75rem;
+      border-radius: 10rem;
+      border: 1px solid var(--color-border-default);
+      background: var(--color-hover-surface-soft);
+      color: var(--color-on-surface);
+      font-family: var(--font-body);
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition:
+        border-color 150ms ease,
+        background 150ms ease;
+
+      &:hover {
+        border-color: var(--color-primary);
+      }
+
+      &:focus-visible {
+        outline: 2px solid var(--color-primary);
+        outline-offset: 2px;
+      }
+
+      &.is-selected {
+        border-color: var(--color-primary);
+        background: var(--color-status-draft-bg);
+      }
+
+      ::ng-deep .chip-icon {
+        color: var(--color-primary);
+        font-size: 0.95rem;
+      }
+    }
+
+    .create-row {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+
+      app-input-text {
+        flex: 1 1 12rem;
+      }
+    }
+  }
+
+  .team-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    width: 100%;
+  }
+
+  .team-card {
+    flex: 1 1 13rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    padding: 0.7rem 0.8rem;
+    border-radius: 0.6rem;
+    background: var(--color-hover-surface-soft);
+    border: 1px solid var(--color-border-subtle);
+
+    .team-name {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      font-weight: 700;
+    }
+
+    .team-members {
+      color: var(--color-on-surface-variant);
+      font-size: 0.82rem;
+    }
+
+    .dissolve-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex: 0 0 auto;
+      width: 2rem;
+      height: 2rem;
+      border: 0;
+      border-radius: 0.5rem;
+      background: transparent;
+      color: var(--color-on-surface-variant);
+      cursor: pointer;
+
+      &:hover {
+        background: var(--color-hover-surface-default);
+        color: var(--color-error);
+      }
+
+      &:focus-visible {
+        outline: 2px solid var(--color-primary);
+        outline-offset: 2px;
+      }
+    }
+  }
+}

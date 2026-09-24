@@ -74,7 +74,7 @@
 
         &.winner {
           opacity: 1;
-          color: #4caf50;
+          color: var(--color-success);
         }
       }
     }

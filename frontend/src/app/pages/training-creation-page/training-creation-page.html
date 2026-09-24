@@ -1,36 +1,110 @@
 <div class="training-creation-page">
-  <p>[TEST] Formulaire brut - visuel à faire plus tard.</p>
+  <app-card>
+    <div class="creation-form" (keydown.enter)="submit()">
+      <div class="identity">
+        <span class="eyebrow">Nouveau groupe</span>
+        <div class="title">
+          <app-icon name="group_add" iconClass="icon" [ariaHidden]="true" />
+          <h1>Créer un groupe d'entraînement</h1>
+        </div>
+        <p class="intro">
+          Un groupe (ou club) rassemble les joueurs qui s'entraînent ensemble. Ce groupe permettra
+          de configurer vos joueurs membre et de créer des sessions d'entraînements.
+        </p>
+        <p class="intro">
+          Lors des sessions d'entraînement, vous pourrez ajouter et enlever des joueurs a la volé
+          (arrivée tardive d'un membre) et même ajouter des joueurs non membre le temps d'un
+          entraînement.
+        </p>
+      </div>
 
-  <label>
-    Code
-    <input type="text" [value]="code()" (input)="onCodeChange($any($event.target).value)" />
-  </label>
-  <label>
-    Nom
-    <input type="text" [value]="name()" (input)="onNameChange($any($event.target).value)" />
-  </label>
-  <label>
-    Club
-    <input type="text" [value]="club()" (input)="onClubChange($any($event.target).value)" />
-  </label>
-  <label>
-    Mot de passe admin
-    <input
-      type="password"
-      [value]="adminPassword()"
-      (input)="onAdminPasswordChange($any($event.target).value)"
-    />
-  </label>
+      <div class="fields">
+        <div class="fields-training">
+          <span class="field-title">Informations de l'entraînement</span>
+          <div class="field">
+            <label class="field-label" for="training-name">Nom</label>
+            <app-input-text
+              id="training-name"
+              placeholder="Ex : Les Entraînements du club"
+              icon="school"
+              [value]="name()"
+              [autofocus]="true"
+              (valueChange)="onNameChange($event)"
+            />
+            <p class="field-help">
+              Nom affiché sur la page des joueurs et en tête de page d'administration.
+            </p>
+          </div>
 
-  <button type="button" [disabled]="!canSubmit()" (click)="submit()">Créer</button>
-  <button type="button" (click)="cancel()">Annuler</button>
+          <div class="field">
+            <label class="field-label" for="training-club">
+              Club <span class="optional">(facultatif)</span>
+            </label>
+            <app-input-text
+              id="training-club"
+              placeholder="Ex : Laiton Club"
+              icon="apartment"
+              [value]="club()"
+              (valueChange)="onClubChange($event)"
+            />
+            <p class="field-help">Nom du club auquel vous voulez lier ce groupe d'entraînements.</p>
+          </div>
+        </div>
 
-  <pre>{{
-    {
-      canSubmit: canSubmit(),
-      isCreationLoading: isCreationLoading(),
-      creationError: creationError(),
-      userHasSubmitted: userHasSubmitted()
-    } | json
-  }}</pre>
+        <div class="field-credential">
+          <span class="field-title">Identifiant de connexion admin</span>
+          <div class="field">
+            <label class="field-label" for="training-code">Code du groupe d'entraînement</label>
+            <app-input-text
+              id="training-code"
+              placeholder="Ex : LAITON-2026"
+              icon="label"
+              [value]="code()"
+              [uppercase]="true"
+              (valueChange)="onCodeChange($event)"
+            />
+            <p class="field-help">
+              Identifiant de connexion administrateur. Court et facile à retenir.
+            </p>
+          </div>
+          <div class="field">
+            <label class="field-label" for="training-password">Mot de passe administrateur</label>
+            <app-input-text
+              id="training-password"
+              placeholder="******"
+              icon="key"
+              [isPassword]="true"
+              [value]="adminPassword()"
+              (valueChange)="onAdminPasswordChange($event)"
+            />
+            <p class="field-help">
+              Mot de pass de connexion administrateur. Notez-le, il n'est pas récupérable.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      @if (creationError()) {
+        <div class="error-container">
+          <span class="message">
+            <app-icon name="error" [ariaHidden]="true" />
+            Création impossible
+          </span>
+          <span class="description">{{ creationError() }}</span>
+        </div>
+      }
+
+      <div class="actions">
+        <app-button title="Annuler" variant="secondary" (clicked)="cancel()" />
+        <app-button
+          title="Créer le groupe"
+          icon="check"
+          variant="primary"
+          [loading]="isCreationLoading()"
+          [disabled]="!canSubmit()"
+          (clicked)="submit()"
+        />
+      </div>
+    </div>
+  </app-card>
 </div>

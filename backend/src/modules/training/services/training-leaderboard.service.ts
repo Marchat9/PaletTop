@@ -40,6 +40,38 @@ export class TrainingLeaderboardService {
             .sort((a, b) => b.wins - a.wins || b.points - a.points);
     }
 
+    /**
+     * Niveau estimé de chaque participant de la séance : points marqués par match en moyenne.
+     * Plus stable que le pourcentage de victoires quand peu de matchs ont été joués. Un joueur
+     * qui n'a pas encore disputé de match n'y figure pas — son niveau est inconnu, pas nul.
+     */
+    async getAveragePointsBySessionId(sessionId: string): Promise<Record<string, number>> {
+        const matches = await this.trainingMatchRepo.findValidatedBySession(sessionId);
+
+        const totals = new Map<string, { points: number; played: number }>();
+        const credit = (team: TrainingTeam, score: number): void => {
+            for (const member of team.members ?? []) {
+                const entry = totals.get(member.participant.id) ?? { points: 0, played: 0 };
+                entry.points += score;
+                entry.played += 1;
+                totals.set(member.participant.id, entry);
+            }
+        };
+
+        for (const match of matches) {
+            credit(match.teamA, match.scoreA);
+            if (match.teamB) {
+                credit(match.teamB, match.scoreB);
+            }
+        }
+
+        const levels: Record<string, number> = {};
+        for (const [participantId, entry] of totals) {
+            levels[participantId] = entry.points / entry.played;
+        }
+        return levels;
+    }
+
     // Agrège sur TOUS les membres de l'équipe telle qu'elle était au moment du match (pas de
     // filtre leftAt) : une équipe fixe dissoute après ce match garde ce match dans l'historique
     // de crédit de ses anciens membres, cf. décision produit "classement par participant".

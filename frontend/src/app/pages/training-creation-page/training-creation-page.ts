@@ -1,7 +1,17 @@
-import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  signal,
+} from '@angular/core';
 import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
+import { Button } from 'src/app/shared/button/button';
+import { Card } from 'src/app/shared/card/card';
+import { Icon } from 'src/app/shared/icon/icon';
+import { InputText } from 'src/app/shared/input-text/input-text';
 import { createTraining } from 'src/app/store/training/training.actions';
 import {
   selectTrainingCreationError,
@@ -10,7 +20,7 @@ import {
 
 @Component({
   selector: 'app-training-creation-page',
-  imports: [CommonModule],
+  imports: [Card, Button, Icon, InputText],
   templateUrl: './training-creation-page.html',
   styleUrl: './training-creation-page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -50,7 +60,7 @@ export class TrainingCreationPage {
   }
 
   public onCodeChange(value: string): void {
-    this.code.set(value);
+    this.code.set(value.trimStart().toUpperCase());
   }
 
   public onNameChange(value: string): void {
@@ -66,20 +76,22 @@ export class TrainingCreationPage {
   }
 
   public submit(): void {
-    if (this.canSubmit()) {
-      this.userHasSubmitted.set(true);
-      this.store.dispatch(
-        createTraining({
-          code: this.code().trim(),
-          name: this.name().trim(),
-          club: this.club().trim() || undefined,
-          adminPassword: this.adminPassword().trim(),
-        }),
-      );
+    if (!this.canSubmit()) {
+      return;
     }
+
+    this.userHasSubmitted.set(true);
+    this.store.dispatch(
+      createTraining({
+        code: this.code().trim(),
+        name: this.name().trim(),
+        club: this.club().trim() || undefined,
+        adminPassword: this.adminPassword().trim(),
+      }),
+    );
   }
 
   public cancel(): void {
-    this.router.navigate(['/']);
+    this.router.navigate(['/accueil']);
   }
 }

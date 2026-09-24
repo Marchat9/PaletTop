@@ -1,0 +1,85 @@
+<app-card-collapsible [isExpanded]="true" can>
+  <div header class="header">
+    <div class="header-title">
+      <app-icon name="how_to_reg" iconClass="icon" [ariaHidden]="true" />
+      <span class="title">
+        Participants
+        <span class="count">
+          ({{ present().length }} {{ present().length > 1 ? 'présents' : 'présent' }}
+          @if (left().length > 0) {
+            · {{ left().length }} {{ left().length > 1 ? 'partis' : 'parti' }}
+          }
+          )
+        </span>
+      </span>
+    </div>
+    <span class="header-description">
+      Chaque joueur se connecte avec le code à quatre chiffres affiché sur sa ligne.
+    </span>
+  </div>
+
+  <div content class="participants-content">
+    @if (present().length === 0) {
+      <p class="empty">Aucun joueur inscrit pour l'instant.</p>
+    } @else {
+      <div class="people" [appStagger]="staggerKey()">
+        @for (participant of present(); track participant.id) {
+          <div class="person" [class.is-new]="participant.id === newParticipantId()">
+            <app-avatar [name]="participant.name" />
+            <span class="name">{{ participant.name }}</span>
+            <span class="origin" [class.is-guest]="!participant.memberId">
+              <app-icon
+                [name]="participant.memberId ? 'badge' : 'emoji_people'"
+                iconClass="origin-icon"
+                [ariaHidden]="true"
+              />
+              {{ participant.memberId ? 'Membre' : 'Invité' }}
+            </span>
+            <span class="spacer"></span>
+            <span class="participant-code">
+              Code participant :
+              <span class="code">{{ participant.code }}</span>
+            </span>
+            @if (isSessionOpen()) {
+              <app-button
+                title="Retirer"
+                icon="logout"
+                variant="error"
+                (clicked)="markLeft.emit(participant)"
+              ></app-button>
+            }
+          </div>
+        }
+      </div>
+    }
+
+    @if (left().length > 0) {
+      <div class="left-block">
+        <span class="left-label">Partis en cours de séance</span>
+        <div class="people">
+          @for (participant of left(); track participant.id) {
+            <div class="person is-left">
+              <app-avatar [name]="participant.name" />
+              <span class="name">{{ participant.name }}</span>
+              <span class="origin" [class.is-guest]="!participant.memberId">
+                <app-icon
+                  [name]="participant.memberId ? 'badge' : 'waving_hand'"
+                  iconClass="origin-icon"
+                  [ariaHidden]="true"
+                />
+                {{ participant.memberId ? 'Membre' : 'Invité' }}
+              </span>
+              <span class="spacer"></span>
+              <span class="code">{{ participant.code }}</span>
+            </div>
+          }
+        </div>
+        <p class="help">
+          <app-icon name="info" iconClass="help-icon" [ariaHidden]="true" />
+          Leurs résultats restent au classement. S'ils reviennent, un clic sur leur nom depuis «
+          Inscrire un joueur » les réinscrit, avec un nouveau code.
+        </p>
+      </div>
+    }
+  </div>
+</app-card-collapsible>

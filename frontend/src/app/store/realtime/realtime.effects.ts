@@ -27,7 +27,27 @@ import {
   wsRankingUpdated,
   wsSessionUpdated,
   wsTournamentUpdated,
+  wsTrainingLeaderboardUpdated,
+  wsTrainingMatchUpdated,
+  wsTrainingRoundGenerated,
+  wsTrainingSessionUpdated,
 } from './realtime.actions';
+import {
+  disconnectTrainingAdministrator,
+  loadTrainingParticipantCurrentMatchSuccess,
+} from 'src/app/store/training/training.actions';
+import {
+  connectTrainingSessionAdministratorSuccess,
+  leaveTrainingSession,
+} from 'src/app/store/training/training.session.actions';
+import { selectCurrentTrainingAdminInformations } from 'src/app/store/training/training.selectors';
+import {
+  TrainingLeaderboardEntryDto,
+  TrainingMatchDto,
+  TrainingRoundDto,
+  TrainingSessionAdminDto,
+  TrainingSessionPublicDto,
+} from 'src/app/store/training/training.models';
 import { environment } from '@environment';
 
 @Injectable()
@@ -47,7 +67,13 @@ export class RealtimeEffects {
   disconnectWebSocket$ = createEffect(
     () =>
       this.actions$.pipe(
-        ofType(resetTournament, disconnectTournamentAdministrator, leaveSpectatorPage),
+        ofType(
+          resetTournament,
+          disconnectTournamentAdministrator,
+          leaveSpectatorPage,
+          leaveTrainingSession,
+          disconnectTrainingAdministrator,
+        ),
         tap(() => this.wsService.disconnect()),
       ),
     { dispatch: false },
@@ -83,6 +109,50 @@ export class RealtimeEffects {
       }),
     ),
   );
+
+  // L'admin de séance rejoint la room admin : `session:updated` y arrive en version complète,
+  // codes participants inclus, donc directement applicable au store.
+  connectWebSocketTrainingAdmin$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(connectTrainingSessionAdministratorSuccess),
+      withLatestFrom(this.store.select(selectCurrentTrainingAdminInformations)),
+      switchMap(([{ session }, adminInfo]) => {
+        this.wsService.connectTrainingSession(session.code, adminInfo?.password);
+        return this.computeTrainingWsEvents$();
+      }),
+    ),
+  );
+
+  // Le joueur rejoint la room publique, sans mot de passe : il reçoit les mêmes rounds, scores
+  // et classements que l'admin, mais une vue de séance amputée des codes personnels.
+  connectWebSocketTrainingPlayer$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(loadTrainingParticipantCurrentMatchSuccess),
+      switchMap(({ sessionCode }) => {
+        this.wsService.connectTrainingSession(sessionCode);
+        return this.computeTrainingWsEvents$();
+      }),
+    ),
+  );
+
+  // Flux séparé de celui du tournoi : `session:updated` et `match:updated` existent des deux
+  // côtés avec des payloads différents, les mélanger ferait interpréter l'un pour l'autre.
+  private computeTrainingWsEvents$() {
+    return merge(
+      this.wsService
+        .on<TrainingSessionAdminDto | TrainingSessionPublicDto>('session:updated')
+        .pipe(map((session) => wsTrainingSessionUpdated({ session }))),
+      this.wsService
+        .on<TrainingRoundDto>('round:generated')
+        .pipe(map((round) => wsTrainingRoundGenerated({ round }))),
+      this.wsService
+        .on<TrainingMatchDto>('match:updated')
+        .pipe(map((match) => wsTrainingMatchUpdated({ match }))),
+      this.wsService
+        .on<TrainingLeaderboardEntryDto[]>('leaderboard:updated')
+        .pipe(map((leaderboard) => wsTrainingLeaderboardUpdated({ leaderboard }))),
+    );
+  }
 
   private computeWsEvents$() {
     return merge(

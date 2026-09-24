@@ -6,6 +6,8 @@ export type TrainingRoundStatus = 'OPEN' | 'CLOSED';
 export type TrainingTeamKind = 'FIXED' | 'EPHEMERAL';
 export type TrainingParticipantStatus = 'PRESENT' | 'LEFT';
 export type TrainingMatchStatus = 'PENDING' | 'ONGOING' | 'ENDED' | 'VALIDATED';
+/** Au hasard, ou chaque joueur avec un partenaire de niveau voisin. */
+export type TrainingTeamComposition = 'RANDOM' | 'LEARNING';
 
 export interface TrainingMemberDto {
   id: string;
@@ -50,8 +52,13 @@ interface TrainingSessionFieldsDto {
   date: string;
   status: TrainingSessionStatus;
   playersPerTeam: number;
-  fallbackTeamSize: number;
-  allowSitOut: boolean;
+  /** Tailles d'équipe utilisables, taille visée comprise. */
+  allowedTeamSizes: number[];
+  /** Garder la taille visée quitte à mettre des joueurs au repos, ou faire jouer tout le monde. */
+  preferTargetTeamSize: boolean;
+  /** Matchs simultanés possibles : les équipes en trop attendent le round suivant. */
+  plateCount: number;
+  teamComposition: TrainingTeamComposition;
   avoidSamePartnerConsecutive: boolean;
   avoidSameOpponentConsecutive: boolean;
   pointsPerGame: number;
@@ -65,6 +72,7 @@ export interface TrainingSessionPublicDto extends TrainingSessionFieldsDto {
 }
 
 export interface TrainingSessionAdminDto extends TrainingSessionFieldsDto {
+  trainingCode: string;
   participants: TrainingParticipantAdminDto[];
   teams: TrainingTeamDto[];
 }
@@ -74,6 +82,22 @@ export interface TrainingSessionSummaryDto {
   date: string;
   status: TrainingSessionStatus;
   participantsCount: number;
+}
+
+/**
+ * Réglages d'une séance à créer. Figés une fois la séance ouverte : le back ne les expose
+ * ensuite que dans la vue détaillée, jamais dans le résumé des séances.
+ */
+export interface TrainingSessionConfigurationDto {
+  date: Date;
+  playersPerTeam: number;
+  allowedTeamSizes: number[];
+  preferTargetTeamSize: boolean;
+  plateCount: number;
+  teamComposition: TrainingTeamComposition;
+  avoidSamePartnerConsecutive: boolean;
+  avoidSameOpponentConsecutive: boolean;
+  pointsPerGame: number;
 }
 
 export interface TrainingMatchDto {
@@ -95,8 +119,20 @@ export interface TrainingRoundDto {
   matches: TrainingMatchDto[];
 }
 
+/**
+ * Identité du participant, renvoyée uniquement à celui qui a fourni son propre code : aucun
+ * payload public ne porte les codes, c'est donc le seul moyen pour le client de savoir lequel
+ * des deux camps du match est le sien.
+ */
+export interface TrainingParticipantIdentityDto {
+  id: string;
+  name: string;
+}
+
 export interface TrainingCurrentMatchDto {
+  participant: TrainingParticipantIdentityDto;
   match: Nullable<TrainingMatchDto>;
+  roundNumber: Nullable<number>;
   sitOut: boolean;
 }
 
@@ -138,6 +174,9 @@ export interface TrainingState {
 
   sessions: ApiCall<TrainingSessionSummaryDto[]>;
   currentSession: ApiCall<Nullable<TrainingSessionAdminDto | TrainingSessionPublicDto>>;
+  // Participant tout juste inscrit : son code doit être communiqué de vive voix à l'intéressé,
+  // le reducer le déduit par différence pour que la page puisse l'afficher en grand.
+  lastCheckedInParticipant: Nullable<TrainingParticipantAdminDto>;
   rounds: ApiCall<TrainingRoundDto[]>;
   currentRound: ApiCall<Nullable<TrainingRoundDto>>;
   leaderboard: ApiCall<TrainingLeaderboardEntryDto[]>;

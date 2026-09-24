@@ -1,0 +1,10 @@
+<div class="nav-menu">
+  <span class="menu-title">{{ data.title }}</span>
+
+  @for (item of data.items; track item.route) {
+    <button type="button" class="menu-row" (click)="select(item.route)">
+      <app-icon [name]="item.icon" iconClass="row-icon" [ariaHidden]="true" />
+      <span>{{ item.label }}</span>
+    </button>
+  }
+</div>

@@ -11,15 +11,25 @@
             <h3>Rejoindre un tournoi</h3>
           </div>
           <div class="description">
-            <span>Entrez dans la mêlée et mesurez-vous aux challengers dans un tournois de
-              <span class="palet">Palet</span>.</span>
+            <span
+              >Entrez dans la mêlée et mesurez-vous aux challengers dans un tournois de
+              <span class="palet">Palet</span>.</span
+            >
           </div>
         </div>
 
         <div class="action">
-          <app-button title="En tant que joueur" icon="explore" (clicked)="eventTournamentJoin.emit()" />
-          <app-button title="En tant que spectateur" icon="visibility" variant="secondary"
-            (clicked)="eventTournamentSpectate.emit()" />
+          <app-button
+            title="En tant que joueur"
+            icon="explore"
+            (clicked)="eventTournamentJoin.emit()"
+          />
+          <app-button
+            title="En tant que spectateur"
+            icon="visibility"
+            variant="secondary"
+            (clicked)="eventTournamentSpectate.emit()"
+          />
         </div>
       </div>
       <div class="create-tournament">
@@ -28,13 +38,19 @@
             <h3>Creer un tournoi</h3>
           </div>
           <div class="description">
-            <span>Configurez vos regles, invitez vos joueurs et pilotez le <span class="highlight">tournoi</span>
-              automatiquement.</span>
+            <span
+              >Configurez vos regles, invitez vos joueurs et pilotez le
+              <span class="highlight">tournoi</span> automatiquement.</span
+            >
           </div>
         </div>
 
         <div class="action">
-          <app-button title="Organiser un tournoi" icon="add_moderator" (clicked)="eventTournamentCreation.emit()" />
+          <app-button
+            title="Organiser un tournoi"
+            icon="add_moderator"
+            (clicked)="eventTournamentCreation.emit()"
+          />
         </div>
       </div>
     </div>

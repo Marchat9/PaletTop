@@ -1,0 +1,76 @@
+<div class="match-list" [appStagger]="round().id">
+  @for (row of matchRows(); track row.match.id) {
+    <div
+      class="match-row"
+      [class.is-bye]="row.match.isBye"
+      [class.is-editing]="editingMatchId() === row.match.id"
+    >
+      @if (editingMatchId() === row.match.id) {
+        <span class="plate">Planche N°{{ row.plateNumber }}</span>
+        <span class="team">{{ teamLabel(row.match.teamA) }}</span>
+        <div class="edit-scores">
+          <app-input-number
+            [value]="draftScoreA()"
+            [min]="0"
+            [max]="pointsPerGame()"
+            (valueChange)="draftScoreA.set($event)"
+          />
+          <span class="vs">—</span>
+          <app-input-number
+            [value]="draftScoreB()"
+            [min]="0"
+            [max]="pointsPerGame()"
+            (valueChange)="draftScoreB.set($event)"
+          />
+        </div>
+        <span class="team team--b">{{ teamLabel(row.match.teamB) }}</span>
+        <div class="edit-actions">
+          <app-button
+            title="Enregistrer"
+            icon="check"
+            variant="primary"
+            [loading]="scoreLoading()"
+            (clicked)="saveEdit(row.match.id)"
+          />
+          <app-button title="Annuler" variant="secondary" (clicked)="cancelEdit()" />
+        </div>
+      } @else if (row.match.isBye) {
+        <span class="team">{{ teamLabel(row.match.teamA) }}</span>
+        <span class="spacer"></span>
+        <app-status-pill tone="draft">Au repos ce round</app-status-pill>
+      } @else {
+        <span class="plate">Planche N°{{ row.plateNumber }}</span>
+        <span class="team">{{ teamLabel(row.match.teamA) }}</span>
+        <span class="score" [appAnimateOnChange]="row.match.scoreA + '-' + row.match.scoreB">
+          <strong>{{ row.match.scoreA }}</strong>
+          <span class="vs">—</span>
+          <strong>{{ row.match.scoreB }}</strong>
+        </span>
+        <span class="team team--b">{{ teamLabel(row.match.teamB) }}</span>
+
+        <div class="match-meta">
+          <app-status-pill [tone]="statusTone(row.match.status)">
+            <app-match-status [status]="row.match.status" />
+          </app-status-pill>
+          <app-match-timer
+            [startedAt]="row.match.startedAt"
+            [finishedAt]="row.match.finishedAt"
+            [status]="row.match.status"
+          />
+          @if (editable()) {
+            <button
+              type="button"
+              class="edit-btn"
+              aria-label="Corriger le score"
+              (click)="startEdit(row.match)"
+            >
+              <app-icon name="edit" [ariaHidden]="true" />
+            </button>
+          }
+        </div>
+      }
+    </div>
+  } @empty {
+    <p class="empty">Aucun match dans ce round.</p>
+  }
+</div>

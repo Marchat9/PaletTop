@@ -2,6 +2,7 @@ import { createAction, props } from '@ngrx/store';
 import {
   TrainingLeaderboardEntryDto,
   TrainingSessionAdminDto,
+  TrainingSessionConfigurationDto,
   TrainingSessionPublicDto,
   TrainingSessionSummaryDto,
 } from './training.models';
@@ -9,16 +10,7 @@ import {
 // --------- Create Training Session ---------
 export const createTrainingSession = createAction(
   '[Training] Create Training Session',
-  props<{
-    trainingCode: string;
-    date: Date;
-    playersPerTeam: number;
-    fallbackTeamSize: number;
-    allowSitOut: boolean;
-    avoidSamePartnerConsecutive: boolean;
-    avoidSameOpponentConsecutive: boolean;
-    pointsPerGame: number;
-  }>(),
+  props<{ trainingCode: string; configuration: TrainingSessionConfigurationDto }>(),
 );
 export const createTrainingSessionSuccess = createAction(
   '[Training] Create Training Session Success',
@@ -103,6 +95,13 @@ export const checkinTrainingParticipantFailure = createAction(
   '[Training] Checkin Training Participant Failure',
   props<{ error: string }>(),
 );
+// Ferme le bandeau qui affiche le code du dernier participant inscrit.
+export const dismissTrainingCheckinHandoff = createAction(
+  '[Training] Dismiss Training Checkin Handoff',
+);
+
+// Quitte la page de pilotage : ferme le socket de la séance.
+export const leaveTrainingSession = createAction('[Training] Leave Training Session');
 // -------------------------------------------------------
 
 // --------- Remove participant ---------

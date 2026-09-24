@@ -10,14 +10,23 @@
   background: var(--color-surface);
   border-bottom: 1px solid rgb(80 69 56 / 30%);
 
+  @media (width < 1024px) {
+    gap: 0.75rem;
+    padding: 1rem;
+  }
+
+  // La marque cède la place en premier : c'est elle qui rétrécit quand la barre est serrée,
+  // jamais les liens de navigation.
   .brand {
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    flex: 0 1 auto;
     min-width: 0;
     cursor: pointer;
 
     .logo {
+      flex: 0 0 auto;
       margin: -10px 5px -10px 0;
     }
   }
@@ -29,6 +38,16 @@
     font-size: 1.2rem;
     line-height: 1;
     white-space: nowrap;
+    // Filet contre la superposition : sans bornage, le nom déborde de la marque rétrécie et
+    // se peint par-dessus les liens. Il se tronque désormais dans sa propre boîte. Sans effet
+    // visible tant que la place suffit.
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    @media (width < 1024px) {
+      font-size: 1.05rem;
+    }
 
     @media (width < 320px) {
       display: none;
@@ -38,20 +57,33 @@
   .nav {
     display: flex;
     align-items: center;
+    flex: 0 0 auto;
+    flex-wrap: nowrap;
     gap: 1.25rem;
+
+    @media (width < 1024px) {
+      gap: 0.9rem;
+    }
   }
 
   .actions {
     display: flex;
     align-items: center;
     gap: 0.5rem;
+
+    @media (width < 1024px) {
+      gap: 0.35rem;
+    }
   }
 
+  // Même apparence que l'entrée soit un lien direct ou un bouton ouvrant un sous-menu.
   .link {
     text-decoration: none;
     text-transform: uppercase;
     letter-spacing: 0.15em;
     font-size: 0.7rem;
+    // Un libellé qui se coupe en deux lignes ferait grandir toute la barre.
+    white-space: nowrap;
     color: var(--color-on-surface);
     opacity: 0.75;
 
@@ -59,9 +91,40 @@
     align-items: center;
     gap: 0.3rem;
 
+    padding: 0.4rem 0;
+    border: 0;
+    background: transparent;
+    font-family: inherit;
+    font-weight: inherit;
+    cursor: pointer;
+
+    &:hover {
+      opacity: 1;
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--color-primary);
+      outline-offset: 4px;
+      border-radius: 0.3rem;
+    }
+
     &--active {
       color: var(--color-primary);
       opacity: 1;
+    }
+
+    ::ng-deep .chevron {
+      font-size: 1rem;
+    }
+
+    @media (width < 1024px) {
+      font-size: 0.66rem;
+      letter-spacing: 0.06em;
+      gap: 0.25rem;
+
+      ::ng-deep .material-symbols-outlined {
+        font-size: 1.15rem;
+      }
     }
   }
 

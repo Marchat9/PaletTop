@@ -1,5 +1,5 @@
 import { Dialog } from '@angular/cdk/dialog';
-import { Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { JoinTrainingPopup } from 'src/app/modales/join-training-popup/join-training-popup';
 
@@ -8,6 +8,7 @@ import { JoinTrainingPopup } from 'src/app/modales/join-training-popup/join-trai
   imports: [],
   templateUrl: './training-player-connection-page.html',
   styleUrl: './training-player-connection-page.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TrainingPlayerConnectionPage {
   private readonly dialog = inject(Dialog);

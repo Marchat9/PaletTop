@@ -25,9 +25,11 @@ export class TrainingParticipantViewService {
             participantCode,
         );
 
+        const identity = { id: participant.id, name: participant.name };
+
         const latestRound = await this.trainingRoundRepo.findLatestBySession(session.id);
         if (!latestRound) {
-            return { match: null, sitOut: false };
+            return { participant: identity, match: null, roundNumber: null, sitOut: false };
         }
 
         const match = (latestRound.matches ?? []).find(
@@ -35,11 +37,24 @@ export class TrainingParticipantViewService {
                 this.hasParticipant(m.teamA, participant.id) ||
                 (m.teamB && this.hasParticipant(m.teamB, participant.id)),
         );
+        // Inscrit après la génération du round : il n'y figure pas encore et entrera au suivant.
         if (!match) {
-            return { match: null, sitOut: true };
+            return {
+                participant: identity,
+                match: null,
+                roundNumber: latestRound.roundNumber,
+                sitOut: true,
+            };
         }
 
-        return { match: toTrainingMatchDto(match), sitOut: false };
+        // Un match sans adversaire est un repos, que le participant y soit seul (surnuméraire)
+        // ou avec son équipe (nombre impair d'équipes) : `sitOut` couvre les deux cas.
+        return {
+            participant: identity,
+            match: toTrainingMatchDto(match),
+            roundNumber: latestRound.roundNumber,
+            sitOut: match.isBye,
+        };
     }
 
     async getHistory(sessionCode: string, participantCode: string): Promise<TrainingMatchDto[]> {

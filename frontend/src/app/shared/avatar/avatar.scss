@@ -1,0 +1,33 @@
+:host {
+  display: inline-flex;
+  flex: 0 0 auto;
+}
+
+// Lettres dans la couleur primaire, sur un disque simplement teinté de cette même couleur :
+// le doré est présent sans peser autant qu'un aplat plein, qui rivaliserait avec le code
+// du participant sur la même ligne.
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--color-surface-container);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 35%, transparent);
+  color: var(--color-primary);
+  font-family: var(--font-label);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  user-select: none;
+
+  &.normal {
+    inline-size: 2rem;
+    block-size: 2rem;
+    font-size: 0.85rem;
+  }
+
+  &.small {
+    inline-size: 1.6rem;
+    block-size: 1.6rem;
+    font-size: 0.65rem;
+  }
+}

@@ -18,9 +18,9 @@ import {
   createTrainingFailure,
   createTrainingSuccess,
   disconnectTrainingAdministrator,
-  joinTrainingSession,
-  joinTrainingSessionFailure,
-  joinTrainingSessionSuccess,
+  loadTrainingParticipantCurrentMatch,
+  loadTrainingParticipantCurrentMatchFailure,
+  loadTrainingParticipantCurrentMatchSuccess,
   loadTrainingParticipantHistory,
   loadTrainingParticipantHistoryFailure,
   loadTrainingParticipantHistorySuccess,
@@ -127,16 +127,22 @@ export class TrainingEffects {
     ),
   );
 
-  joinTrainingSession$ = createEffect(() =>
+  loadTrainingParticipantCurrentMatch$ = createEffect(() =>
     this.actions$.pipe(
-      ofType(joinTrainingSession),
+      ofType(loadTrainingParticipantCurrentMatch),
       switchMap(({ sessionCode, participantCode }) =>
         this.trainingService.getCurrentMatch(sessionCode, participantCode).pipe(
           switchMap((currentMatch) =>
-            of(joinTrainingSessionSuccess({ sessionCode, participantCode, currentMatch })),
+            of(
+              loadTrainingParticipantCurrentMatchSuccess({
+                sessionCode,
+                participantCode,
+                currentMatch,
+              }),
+            ),
           ),
           catchError((error) =>
-            of(joinTrainingSessionFailure({ error: convertErrorToString(error) })),
+            of(loadTrainingParticipantCurrentMatchFailure({ error: convertErrorToString(error) })),
           ),
         ),
       ),
@@ -185,9 +191,7 @@ export class TrainingEffects {
       withLatestFrom(this.store.select(selectCurrentTrainingAdminInformations)),
       switchMap(([{ code, name, club }, adminInfo]) =>
         this.trainingService.updateTraining(code, adminInfo?.password ?? '', name, club).pipe(
-          switchMap((training) =>
-            of(updateTrainingAdministratorInformationsSuccess({ training })),
-          ),
+          switchMap((training) => of(updateTrainingAdministratorInformationsSuccess({ training }))),
           catchError((error) =>
             of(
               updateTrainingAdministratorInformationsFailure({
@@ -236,9 +240,9 @@ export class TrainingEffects {
     this.actions$.pipe(
       ofType(createTrainingSession),
       withLatestFrom(this.store.select(selectCurrentTrainingAdminInformations)),
-      switchMap(([{ trainingCode, ...payload }, adminInfo]) =>
+      switchMap(([{ trainingCode, configuration }, adminInfo]) =>
         this.trainingService
-          .createSession(trainingCode, adminInfo?.password ?? '', payload)
+          .createSession(trainingCode, adminInfo?.password ?? '', configuration)
           .pipe(
             switchMap((session) => of(createTrainingSessionSuccess({ session }))),
             catchError((error) =>
@@ -427,7 +431,9 @@ export class TrainingEffects {
       switchMap(({ sessionCode, roundNumber }) =>
         this.trainingService.getRound(sessionCode, roundNumber).pipe(
           switchMap((round) => of(loadTrainingRoundSuccess({ round }))),
-          catchError((error) => of(loadTrainingRoundFailure({ error: convertErrorToString(error) }))),
+          catchError((error) =>
+            of(loadTrainingRoundFailure({ error: convertErrorToString(error) })),
+          ),
         ),
       ),
     ),
@@ -453,12 +459,14 @@ export class TrainingEffects {
     this.actions$.pipe(
       ofType(updateTrainingScore),
       switchMap(({ sessionCode, matchId, participantCode, scoreA, scoreB }) =>
-        this.trainingService.updateScore(sessionCode, matchId, participantCode, scoreA, scoreB).pipe(
-          switchMap((match) => of(updateTrainingScoreSuccess({ match }))),
-          catchError((error) =>
-            of(updateTrainingScoreFailure({ error: convertErrorToString(error) })),
+        this.trainingService
+          .updateScore(sessionCode, matchId, participantCode, scoreA, scoreB)
+          .pipe(
+            switchMap((match) => of(updateTrainingScoreSuccess({ match }))),
+            catchError((error) =>
+              of(updateTrainingScoreFailure({ error: convertErrorToString(error) })),
+            ),
           ),
-        ),
       ),
     ),
   );
@@ -487,7 +495,13 @@ export class TrainingEffects {
         this.trainingService
           .adminUpdateScore(sessionCode, matchId, adminInfo?.password ?? '', scoreA, scoreB)
           .pipe(
-            switchMap((match) => of(adminUpdateTrainingScoreSuccess({ match }))),
+            // Un score corrigé change le classement : on le recharge dans la foulée.
+            switchMap((match) =>
+              of(
+                adminUpdateTrainingScoreSuccess({ match }),
+                loadTrainingLeaderboard({ sessionCode }),
+              ),
+            ),
             catchError((error) =>
               of(adminUpdateTrainingScoreFailure({ error: convertErrorToString(error) })),
             ),
@@ -514,6 +528,11 @@ export class TrainingEffects {
   trainingActionErrors$ = createEffect(() =>
     this.actions$.pipe(
       ofType(
+        connectTrainingAdministratorFailure,
+        connectTrainingSessionAdministratorFailure,
+        loadTrainingSessionsFailure,
+        loadTrainingRoundsFailure,
+        loadTrainingLeaderboardFailure,
         updateTrainingAdministratorInformationsFailure,
         addTrainingMemberFailure,
         removeTrainingMemberFailure,

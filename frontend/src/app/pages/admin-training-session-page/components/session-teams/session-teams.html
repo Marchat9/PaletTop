@@ -1,0 +1,97 @@
+<app-card-collapsible [isExpanded]="true">
+  <div header class="header">
+    <div class="header-title">
+      <app-icon name="groups" iconClass="icon" [ariaHidden]="true" />
+      <span class="title"
+        >Équipes fixes <span class="count">({{ fixedTeams().length }})</span></span
+      >
+    </div>
+    <span class="header-description">
+      Une équipe fixe reste ensemble toute la séance. Les autres joueurs sont appariés à chaque
+      round.
+    </span>
+  </div>
+
+  <div content class="teams-content">
+    @if (isSessionOpen()) {
+      <app-button
+        [title]="isCreating() ? 'Annuler' : 'Créer une équipe'"
+        [icon]="isCreating() ? 'close' : 'add'"
+        variant="secondary"
+        [stopPropagation]="true"
+        (clicked)="toggleCreating()"
+      />
+    }
+
+    @if (isCreating()) {
+      <div class="creation-panel">
+        <span class="label">Choisissez les joueurs</span>
+        @if (availableParticipants().length === 0) {
+          <p class="empty">Tous les joueurs présents font déjà partie d'une équipe fixe.</p>
+        } @else {
+          <div class="participant-chips">
+            @for (participant of availableParticipants(); track participant.id) {
+              <button
+                type="button"
+                class="participant-chip"
+                [class.is-selected]="isSelected(participant.id)"
+                (click)="toggleParticipant(participant.id)"
+              >
+                <app-icon
+                  [name]="isSelected(participant.id) ? 'check' : 'add'"
+                  iconClass="chip-icon"
+                  [ariaHidden]="true"
+                />
+                {{ participant.name }}
+              </button>
+            }
+          </div>
+        }
+
+        <span class="label">Nom de l'équipe (facultatif)</span>
+        <div class="create-row">
+          <app-input-text
+            id="training-team-name"
+            placeholder="Ex : Les Laitons"
+            icon="label"
+            [value]="teamName()"
+            (valueChange)="onTeamNameChange($event)"
+          />
+          <app-button
+            title="Créer l'équipe"
+            icon="check"
+            variant="primary"
+            [loading]="createLoading()"
+            [disabled]="!canCreate()"
+            (clicked)="onCreate()"
+          />
+        </div>
+      </div>
+    }
+
+    @if (fixedTeams().length === 0) {
+      <p class="empty">Aucune équipe fixe — tous les joueurs sont appariés à chaque round.</p>
+    } @else {
+      <div class="team-grid">
+        @for (team of fixedTeams(); track team.id) {
+          <div class="team-card">
+            <span class="team-name">
+              {{ team.name || teamMembersLabel(team) }}
+              @if (isSessionOpen()) {
+                <button
+                  type="button"
+                  class="dissolve-btn"
+                  [attr.aria-label]="'Dissoudre ' + (team.name || teamMembersLabel(team))"
+                  (click)="dissolveTeam.emit(team)"
+                >
+                  <app-icon name="group_remove" [ariaHidden]="true" />
+                </button>
+              }
+            </span>
+            <span class="team-members">{{ teamMembersLabel(team) }}</span>
+          </div>
+        }
+      </div>
+    }
+  </div>
+</app-card-collapsible>

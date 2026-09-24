@@ -26,28 +26,66 @@
       />
 
       <section class="current-match">
-        <h3>Match en cours</h3>
+        @if (matchTitle(); as title) {
+          <h3>{{ title }}</h3>
+        }
         <app-player-match-card
-          [match]="currentMatch()"
-          [teamMatchStatus]="teamMatchStatus()"
-          [teamId]="team()!.id"
-          [teamCode]="team()!.code"
+          [match]="matchView()"
           [pointsPerGame]="pointsPerGame()"
-          [startMatchError]="startMatchError()"
-          [validateMatchError]="validateMatchError()"
-          [updateScoreError]="updateScoreError()"
-          [startMatchLoading]="startMatchLoading()"
-          [validateMatchLoading]="validateMatchLoading()"
-          [rank]="rank()"
-          (startMatch)="startMatch($event)"
-          (updateScore)="updateScore($event)"
+          [byeCopy]="byeCopy()"
+          [validationCopy]="validationCopy"
+          [startError]="startMatchError()"
+          [scoreError]="updateScoreError()"
+          [validateError]="validateMatchError()"
+          [startLoading]="startMatchLoading()"
+          [validateLoading]="validateMatchLoading()"
+          [emptyTone]="teamMatchStatus() === 'FINISH' ? 'celebration' : 'neutral'"
+          (startMatch)="startMatch()"
+          (scoreChange)="updateScore($event)"
           (validateMatch)="validateMatch($event)"
-        />
+        >
+          @switch (teamMatchStatus()) {
+            @case ('NOT_STARTED') {
+              <app-icon name="timer" iconClass="empty-icon" />
+              <p>Le tournoi n'a pas encore commencé, préparez-vous</p>
+            }
+            @case ('FINISH') {
+              <div class="finish-icon">
+                <span class="confetti" aria-hidden="true">🎉</span>
+                <app-icon name="emoji_events" iconClass="cup-icon" />
+                <span class="confetti" aria-hidden="true">🎉</span>
+              </div>
+              <div class="end-tournament-text">
+                <p class="headline">C'est fini, merci d'avoir joué avec nous !</p>
+                @if (rankLabel(); as label) {
+                  <p class="rank-line">
+                    Vous terminez <span class="rank-badge">{{ label }}</span>
+                  </p>
+                }
+              </div>
+            }
+            @case ('CANCELLED') {
+              <app-icon name="event_busy" iconClass="empty-icon" />
+              <p>
+                Ce tournoi a été annulé. Merci d'avoir participé, à bientôt pour une prochaine
+                partie !
+              </p>
+            }
+            @default {
+              <app-icon name="sports_score" iconClass="empty-icon" />
+              <p>Pas de match en cours</p>
+            }
+          }
+        </app-player-match-card>
       </section>
 
       <app-player-team-members [players]="team()!.players" />
 
-      <app-player-match-results [results]="recentResults()" [teamName]="team()!.name" />
+      <app-player-match-history
+        [results]="recentResults()"
+        [myLabel]="team()!.name"
+        title="Derniers Matchs"
+      />
     }
   </main>
 </section>

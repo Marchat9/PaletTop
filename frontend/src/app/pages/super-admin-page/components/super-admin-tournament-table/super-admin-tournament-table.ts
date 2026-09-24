@@ -16,6 +16,7 @@ import { CardCollapsible } from 'src/app/shared/card-collapsible/card-collapsibl
 import { Icon } from 'src/app/shared/icon/icon';
 import { InputSelect, InputSelectOption } from 'src/app/shared/input-select/input-select';
 import { InputText } from 'src/app/shared/input-text/input-text';
+import { StatusPill, StatusPillTone } from 'src/app/shared/status-pill/status-pill';
 import {
   SuperAdminTournamentSearchCriteria,
   SuperAdminTournamentSortBy,
@@ -29,6 +30,13 @@ import {
   selectAll,
   toggleSelection,
 } from '../super-admin-table.utils';
+
+const STATUS_TONES: Record<TournamentStatus, StatusPillTone> = {
+  [TournamentStatus.DRAFT]: 'draft',
+  [TournamentStatus.ACTIVE]: 'ongoing',
+  [TournamentStatus.FINISHED]: 'success',
+  [TournamentStatus.CANCELLED]: 'error',
+};
 
 const STATUS_LABELS: Record<TournamentStatus, string> = {
   [TournamentStatus.DRAFT]: 'Brouillon',
@@ -47,7 +55,16 @@ const STATUS_FILTER_OPTIONS: InputSelectOption[] = [
 
 @Component({
   selector: 'app-super-admin-tournament-table',
-  imports: [Button, ButtonIcon, CardCollapsible, DatePipe, Icon, InputSelect, InputText],
+  imports: [
+    Button,
+    ButtonIcon,
+    CardCollapsible,
+    DatePipe,
+    Icon,
+    InputSelect,
+    InputText,
+    StatusPill,
+  ],
   templateUrl: './super-admin-tournament-table.html',
   styleUrl: './super-admin-tournament-table.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -64,6 +81,7 @@ export class SuperAdminTournamentTableComponent {
 
   readonly statusFilterOptions = STATUS_FILTER_OPTIONS;
   readonly statusLabels = STATUS_LABELS;
+  readonly statusTones = STATUS_TONES;
 
   readonly selectedIds = signal<Set<string>>(new Set());
   readonly selectedCount = computed(() => this.selectedIds().size);

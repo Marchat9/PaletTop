@@ -34,6 +34,7 @@ export class InputText implements AfterViewInit, ControlValueAccessor {
   readonly value = input<string>('');
   readonly autofocus = input<boolean>(false);
   readonly uppercase = input<boolean>(false);
+  readonly maxLength = input<number>(100);
   readonly disabled = input<boolean>(false);
   readonly icon = input<string>('');
   readonly isPassword = input<boolean>(false);

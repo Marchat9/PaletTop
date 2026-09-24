@@ -24,6 +24,7 @@
   --color-tertiary: #e6c27d;
   --color-tertiary-container: #8b7940;
   --color-on-tertiary: #fffaf0;
+  --color-success: #5fc995;
   --color-error: #ff7070;
   --color-error-container: #b3261e;
   --color-on-error-container: #ffe9e7;
@@ -61,6 +62,12 @@
   --color-status-error-border: rgb(255 112 112 / 46%);
 
   --gradient-brass: linear-gradient(135deg, #e9c349 0%, #bb9820 100%);
+
+  // Couleurs d'équipe (palets rouges et bleus) : identité du jeu, pas du thème. Elles ne sont
+  // donc pas redéfinies en thème clair — elles portent toujours un texte clair.
+  --color-team-red: #9f0d0d;
+  --color-team-blue: #1919cb;
+  --color-on-team: #f5f5f5;
 }
 
 :root[data-theme='light'] {
@@ -86,6 +93,7 @@
   --color-tertiary-container: #ffd699;
   --color-on-tertiary: #2a1f00;
 
+  --color-success: #1a9e5e;
   --color-error: #d64033;
   --color-error-container: #d64033;
   --color-on-error-container: #fff4f2;

@@ -22,6 +22,7 @@ import { TrainingSessionRepository } from '../repositories/training-session.repo
 import { TrainingRoundDto, toTrainingRoundDto } from '../responses/training-round.dto';
 import { assertSessionOpen } from '../utils/session-guard.utils';
 import { activeMembers } from '../utils/team-member.utils';
+import { TrainingLeaderboardService } from './training-leaderboard.service';
 import { TrainingSessionAuthService } from './training-session-auth.service';
 import { TrainingRealtimeGateway } from '../training-realtime.gateway';
 
@@ -31,6 +32,7 @@ export class TrainingRoundsService {
         private readonly trainingSessionRepo: TrainingSessionRepository,
         private readonly trainingRoundRepo: TrainingRoundRepository,
         private readonly trainingSessionAuthService: TrainingSessionAuthService,
+        private readonly trainingLeaderboardService: TrainingLeaderboardService,
         private readonly trainingRealtimeGateway: TrainingRealtimeGateway,
         @Inject(MATCHMAKING_PORT) private readonly matchmaking: MatchmakingPort,
         @InjectDataSource() private readonly dataSource: DataSource,
@@ -43,7 +45,10 @@ export class TrainingRoundsService {
         );
         assertSessionOpen(session);
 
-        const previousRound = await this.trainingRoundRepo.findLatestBySession(session.id);
+        // Toute la séance, pas seulement le dernier round : la rotation du repos et celle des
+        // binômes ont besoin de ce qui s'est passé avant.
+        const rounds = await this.trainingRoundRepo.findAllBySession(session.id);
+        const previousRound = rounds.at(-1) ?? null;
         if (previousRound) {
             const hasUnfinishedMatch = previousRound.matches.some(
                 (match) => !match.isBye && match.status !== MatchStatus.VALIDATED,
@@ -84,12 +89,17 @@ export class TrainingRoundsService {
             soloParticipantIds,
             config: {
                 playersPerTeam: session.playersPerTeam,
-                fallbackTeamSize: session.fallbackTeamSize,
-                allowSitOut: session.allowSitOut,
+                allowedTeamSizes: session.allowedTeamSizes,
+                preferTargetTeamSize: session.preferTargetTeamSize,
+                plateCount: session.plateCount,
+                teamComposition: session.teamComposition,
                 avoidSamePartnerConsecutive: session.avoidSamePartnerConsecutive,
                 avoidSameOpponentConsecutive: session.avoidSameOpponentConsecutive,
             },
-            history: this.buildHistory(previousRound),
+            history: this.buildHistory(rounds),
+            levelByParticipant: await this.trainingLeaderboardService.getAveragePointsBySessionId(
+                session.id,
+            ),
         };
 
         const plan = this.matchmaking.generateRound(input);
@@ -199,27 +209,45 @@ export class TrainingRoundsService {
     }
 
     /**
-     * Un seul round de recul (N-1), cf. contrat du port. Les partenaires ne sont dérivés QUE des
-     * équipes EPHEMERAL (une équipe FIXED est censée rejouer ensemble, ce n'est pas une répétition
-     * à éviter). L'identité "adversaire" est canonique (fixedTeamId ou participantIds triés) car
-     * l'id de TrainingTeam d'une équipe éphémère ne survit jamais d'un round à l'autre.
+     * Ce que la séance a déjà produit : les binômes et oppositions de chaque round, du plus
+     * récent au plus ancien, et le nombre de fois où chacun s'est reposé.
+     *
+     * Les partenaires ne sont dérivés QUE des équipes EPHEMERAL (une équipe FIXED est censée
+     * rejouer ensemble, ce n'est pas une répétition à éviter). L'identité « adversaire » est
+     * canonique (fixedTeamId ou participantIds triés) car l'id de TrainingTeam d'une équipe
+     * éphémère ne survit jamais d'un round à l'autre.
      */
-    private buildHistory(previousRound: TrainingRound | null): GenerateRoundInput['history'] {
-        const previousRoundPartnerPairs: [string, string][] = [];
-        const previousRoundOpponentCanonicalPairs: [string, string][] = [];
+    private buildHistory(rounds: TrainingRound[]): GenerateRoundInput['history'] {
+        const sitOutCountByParticipant: Record<string, number> = {};
+        const recentRounds = [];
 
-        for (const match of previousRound?.matches ?? []) {
-            this.collectPartnerPairs(match.teamA, previousRoundPartnerPairs);
-            if (match.teamB) {
-                this.collectPartnerPairs(match.teamB, previousRoundPartnerPairs);
-                previousRoundOpponentCanonicalPairs.push([
-                    this.canonicalTeamId(match.teamA),
-                    this.canonicalTeamId(match.teamB),
-                ]);
+        for (const round of rounds) {
+            const partnerPairs: [string, string][] = [];
+            const opponentCanonicalPairs: [string, string][] = [];
+
+            for (const match of round.matches ?? []) {
+                if (match.isBye) {
+                    for (const participantId of this.activeMemberIds(match.teamA)) {
+                        sitOutCountByParticipant[participantId] =
+                            (sitOutCountByParticipant[participantId] ?? 0) + 1;
+                    }
+                    continue;
+                }
+
+                this.collectPartnerPairs(match.teamA, partnerPairs);
+                if (match.teamB) {
+                    this.collectPartnerPairs(match.teamB, partnerPairs);
+                    opponentCanonicalPairs.push([
+                        this.canonicalTeamId(match.teamA),
+                        this.canonicalTeamId(match.teamB),
+                    ]);
+                }
             }
+
+            recentRounds.unshift({ partnerPairs, opponentCanonicalPairs });
         }
 
-        return { previousRoundPartnerPairs, previousRoundOpponentCanonicalPairs };
+        return { recentRounds, sitOutCountByParticipant };
     }
 
     private canonicalTeamId(team: TrainingTeam): string {

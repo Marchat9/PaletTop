@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { TrainingTeamComposition } from 'src/enum/training.enum';
 import { DefaultMatchmakingStrategy } from './default-matchmaking.strategy';
 import { GenerateRoundInput } from './matchmaking.types';
 
@@ -7,8 +8,10 @@ function baseConfig(
 ): GenerateRoundInput['config'] {
     return {
         playersPerTeam: 2,
-        fallbackTeamSize: 3,
-        allowSitOut: false,
+        allowedTeamSizes: [],
+        preferTargetTeamSize: false,
+        plateCount: 99,
+        teamComposition: TrainingTeamComposition.RANDOM,
         avoidSamePartnerConsecutive: true,
         avoidSameOpponentConsecutive: true,
         ...overrides,
@@ -19,28 +22,41 @@ function baseHistory(
     overrides: Partial<GenerateRoundInput['history']> = {},
 ): GenerateRoundInput['history'] {
     return {
-        previousRoundPartnerPairs: [],
-        previousRoundOpponentCanonicalPairs: [],
+        recentRounds: [],
+        sitOutCountByParticipant: {},
         ...overrides,
     };
+}
+
+function round(
+    partnerPairs: [string, string][] = [],
+    opponentCanonicalPairs: [string, string][] = [],
+) {
+    return { partnerPairs, opponentCanonicalPairs };
 }
 
 function solos(count: number): string[] {
     return Array.from({ length: count }, (_, i) => `p${i + 1}`);
 }
 
+function input(overrides: Partial<GenerateRoundInput> = {}): GenerateRoundInput {
+    return {
+        fixedTeams: [],
+        soloParticipantIds: solos(8),
+        config: baseConfig(),
+        history: baseHistory(),
+        levelByParticipant: {},
+        ...overrides,
+    };
+}
+
 // Random déterministe (pas de mélange) pour des assertions reproductibles sur l'ordre.
 const NO_SHUFFLE = () => 0;
 
 describe('DefaultMatchmakingStrategy', () => {
-    it("forme des groupes complets quand l'effectif solo est un multiple de playersPerTeam", () => {
+    it("forme des groupes complets quand l'effectif est un multiple de la taille visée", () => {
         const strategy = new DefaultMatchmakingStrategy(NO_SHUFFLE);
-        const plan = strategy.generateRound({
-            fixedTeams: [],
-            soloParticipantIds: solos(4),
-            config: baseConfig({ playersPerTeam: 2 }),
-            history: baseHistory(),
-        });
+        const plan = strategy.generateRound(input({ soloParticipantIds: solos(4) }));
 
         expect(plan.ephemeralTeams).toHaveLength(2);
         for (const team of plan.ephemeralTeams) {
@@ -49,68 +65,159 @@ describe('DefaultMatchmakingStrategy', () => {
         expect(allParticipants(plan)).toEqual(new Set(solos(4)));
     });
 
-    it("effectif impair + allowSitOut=true met le reste au repos plutôt que d'utiliser fallback", () => {
+    it('met au repos ceux qui se sont le moins reposés jusqu’ici', () => {
         const strategy = new DefaultMatchmakingStrategy(NO_SHUFFLE);
-        const plan = strategy.generateRound({
-            fixedTeams: [],
-            soloParticipantIds: solos(5),
-            config: baseConfig({ playersPerTeam: 2, allowSitOut: true }),
-            history: baseHistory(),
-        });
-
-        expect(plan.ephemeralTeams).toHaveLength(2);
-        for (const team of plan.ephemeralTeams) {
-            expect(team.participantIds).toHaveLength(2);
-        }
-        // 1 participant sur 5 doit être laissé de côté : ni dans une équipe éphémère, ni dans un
-        // match (RoundPlan n'expose plus de liste dédiée, on l'observe par absence).
-        const grouped = allParticipants(plan);
-        expect(grouped.size).toBe(4);
-        expect(solos(5).filter((id) => !grouped.has(id))).toHaveLength(1);
-    });
-
-    it('effectif impair + allowSitOut=false absorbe le reste via fallbackTeamSize', () => {
-        const strategy = new DefaultMatchmakingStrategy(NO_SHUFFLE);
-        const plan = strategy.generateRound({
-            fixedTeams: [],
-            soloParticipantIds: solos(5),
-            config: baseConfig({ playersPerTeam: 2, fallbackTeamSize: 3, allowSitOut: false }),
-            history: baseHistory(),
-        });
-
-        const sizes = plan.ephemeralTeams.map((t) => t.participantIds.length).sort();
-        expect(sizes).toEqual([2, 3]); // 5 = 2 + 3
-        expect(allParticipants(plan)).toEqual(new Set(solos(5)));
-    });
-
-    it('effectif incompatible avec target et fallback + allowSitOut=false : lève une erreur plutôt que de mettre au repos silencieusement', () => {
-        const strategy = new DefaultMatchmakingStrategy(NO_SHUFFLE);
-        // playersPerTeam=4, fallbackTeamSize=5, n=7 : 7%4=3≠0, et le seul b possible (b=1,
-        // fallback=5) laisse un reste de 2 non divisible par 4 -> aucune décomposition exacte.
-        // La taille d'équipe reste non négociable (impossible de former un groupe de 3, ni target
-        // ni fallback), et allowSitOut=false interdit explicitement de mettre le reste au repos :
-        // ce conflit de configuration doit être signalé à l'admin, pas résolu silencieusement.
-        expect(() =>
-            strategy.generateRound({
-                fixedTeams: [],
-                soloParticipantIds: solos(7),
-                config: baseConfig({ playersPerTeam: 4, fallbackTeamSize: 5, allowSitOut: false }),
-                history: baseHistory(),
+        const plan = strategy.generateRound(
+            input({
+                soloParticipantIds: solos(6),
+                history: baseHistory({ sitOutCountByParticipant: { p1: 2, p2: 2, p3: 1 } }),
             }),
-        ).toThrow(/repos/);
+        );
+
+        // p4, p5 et p6 ne se sont jamais reposés : c'est leur tour, et p1/p2 rejouent.
+        const resting = restingParticipants(plan);
+        expect(resting).toHaveLength(2);
+        expect(resting).not.toContain('p1');
+        expect(resting).not.toContain('p2');
+    });
+
+    it('ne dépasse pas le nombre de plaques et met les autres en attente', () => {
+        const strategy = new DefaultMatchmakingStrategy(NO_SHUFFLE);
+        const plan = strategy.generateRound(
+            input({ soloParticipantIds: solos(12), config: baseConfig({ plateCount: 2 }) }),
+        );
+
+        const played = plan.matches.filter((m) => m.opponentRef !== null);
+        expect(played).toHaveLength(2);
+        expect(restingParticipants(plan)).toHaveLength(4);
+    });
+
+    it("n'oppose jamais deux joueurs au repos l'un à l'autre", () => {
+        const strategy = new DefaultMatchmakingStrategy(NO_SHUFFLE);
+        const plan = strategy.generateRound(
+            input({ soloParticipantIds: solos(6), config: baseConfig({ plateCount: 1 }) }),
+        );
+
+        const restingRefs = plan.ephemeralTeams
+            .filter((t) => t.tempId.startsWith('sit-out'))
+            .map((t) => t.tempId);
+        for (const ref of restingRefs) {
+            const match = plan.matches.find((m) => m.teamRef === ref);
+            expect(match?.opponentRef).toBeNull();
+        }
+    });
+
+    it('utilise une taille de repli plutôt que de laisser des joueurs au banc', () => {
+        const strategy = new DefaultMatchmakingStrategy(NO_SHUFFLE);
+        const plan = strategy.generateRound(
+            input({
+                soloParticipantIds: solos(6),
+                config: baseConfig({ allowedTeamSizes: [1] }),
+            }),
+        );
+
+        expect(plan.ephemeralTeams.map((t) => t.participantIds.length).sort()).toEqual([
+            1, 1, 2, 2,
+        ]);
+        expect(restingParticipants(plan)).toHaveLength(0);
+    });
+
+    it('garde la taille visée quand l’arbitrage le demande', () => {
+        const strategy = new DefaultMatchmakingStrategy(NO_SHUFFLE);
+        const plan = strategy.generateRound(
+            input({
+                soloParticipantIds: solos(6),
+                config: baseConfig({ allowedTeamSizes: [1], preferTargetTeamSize: true }),
+            }),
+        );
+
+        const playingSizes = plan.ephemeralTeams
+            .filter((t) => !t.tempId.startsWith('sit-out'))
+            .map((t) => t.participantIds.length);
+        expect(playingSizes).toEqual([2, 2]);
+        expect(restingParticipants(plan)).toHaveLength(2);
+    });
+
+    it('associe chaque joueur à un partenaire de niveau voisin en apprentissage', () => {
+        const strategy = new DefaultMatchmakingStrategy(NO_SHUFFLE);
+        const plan = strategy.generateRound(
+            input({
+                soloParticipantIds: solos(8),
+                config: baseConfig({ teamComposition: TrainingTeamComposition.LEARNING }),
+                levelByParticipant: {
+                    p1: 80,
+                    p2: 70,
+                    p3: 60,
+                    p4: 50,
+                    p5: 40,
+                    p6: 30,
+                    p7: 20,
+                    p8: 10,
+                },
+            }),
+        );
+
+        // Moitié haute p1-p4, moitié basse p5-p8 : le meilleur joue avec le meilleur des moins bons.
+        const teams = plan.ephemeralTeams.map((t) => t.participantIds.sort().join('+')).sort();
+        expect(teams).toEqual(['p1+p5', 'p2+p6', 'p3+p7', 'p4+p8']);
+    });
+
+    it('oppose les équipes de force voisine en apprentissage', () => {
+        const strategy = new DefaultMatchmakingStrategy(NO_SHUFFLE);
+        const plan = strategy.generateRound(
+            input({
+                soloParticipantIds: solos(8),
+                config: baseConfig({ teamComposition: TrainingTeamComposition.LEARNING }),
+                levelByParticipant: {
+                    p1: 80,
+                    p2: 70,
+                    p3: 60,
+                    p4: 50,
+                    p5: 40,
+                    p6: 30,
+                    p7: 20,
+                    p8: 10,
+                },
+            }),
+        );
+
+        const byRef = new Map(
+            plan.ephemeralTeams.map((t) => [t.tempId, t.participantIds.sort().join('+')]),
+        );
+        const oppositions = plan.matches
+            .filter((m) => m.opponentRef)
+            .map((m) => [byRef.get(m.teamRef), byRef.get(m.opponentRef!)].sort().join(' vs '))
+            .sort();
+        expect(oppositions).toEqual(['p1+p5 vs p2+p6', 'p3+p7 vs p4+p8']);
+    });
+
+    it('place le joueur sans niveau connu vers le bas du classement, sans le mettre dernier', () => {
+        const strategy = new DefaultMatchmakingStrategy(NO_SHUFFLE);
+        const plan = strategy.generateRound(
+            input({
+                soloParticipantIds: solos(8),
+                config: baseConfig({ teamComposition: TrainingTeamComposition.LEARNING }),
+                // p8 est un invité : aucun match joué, donc aucun niveau.
+                levelByParticipant: { p1: 80, p2: 70, p3: 60, p4: 50, p5: 40, p6: 30, p7: 20 },
+            }),
+        );
+
+        const guestTeam = plan.ephemeralTeams.find((t) => t.participantIds.includes('p8'));
+        expect(guestTeam?.participantIds).not.toContain('p1');
+        expect(guestTeam?.participantIds).toContain('p3');
     });
 
     it('ne forme aucune équipe éphémère quand tous les participants sont en équipe fixe', () => {
         const strategy = new DefaultMatchmakingStrategy(NO_SHUFFLE);
-        const plan = strategy.generateRound({
-            fixedTeams: [
-                { id: 'fixed-1', participantIds: ['a1', 'a2'] },
-                { id: 'fixed-2', participantIds: ['b1', 'b2'] },
-            ],
-            soloParticipantIds: [],
-            config: baseConfig(),
-            history: baseHistory(),
-        });
+        const plan = strategy.generateRound(
+            input({
+                fixedTeams: [
+                    { id: 'fixed-1', participantIds: ['a1', 'a2'] },
+                    { id: 'fixed-2', participantIds: ['b1', 'b2'] },
+                ],
+                soloParticipantIds: [],
+            }),
+        );
 
         expect(plan.ephemeralTeams).toEqual([]);
         expect(plan.matches).toHaveLength(1);
@@ -121,58 +228,96 @@ describe('DefaultMatchmakingStrategy', () => {
         ).toEqual(new Set(['fixed-1', 'fixed-2']));
     });
 
-    it("attribue un bye quand le nombre total d'équipes est impair", () => {
+    it('complète une équipe fixe esseulée plutôt que de la laisser sans adversaire', () => {
         const strategy = new DefaultMatchmakingStrategy(NO_SHUFFLE);
-        const plan = strategy.generateRound({
-            fixedTeams: [{ id: 'fixed-1', participantIds: ['a1', 'a2'] }],
-            soloParticipantIds: solos(4), // + 2 équipes éphémères de 2 => 3 équipes au total
-            config: baseConfig({ playersPerTeam: 2 }),
-            history: baseHistory(),
-        });
+        const plan = strategy.generateRound(
+            input({
+                fixedTeams: [{ id: 'fixed-1', participantIds: ['a1', 'a2'] }],
+                soloParticipantIds: solos(4),
+            }),
+        );
 
-        const byes = plan.matches.filter((m) => m.opponentRef === null);
-        expect(byes).toHaveLength(1);
-        expect(plan.matches).toHaveLength(2); // 3 équipes -> 1 match + 1 bye
+        // 1 équipe fixe + 2 éphémères feraient 3 équipes : on n'en forme qu'une, et deux joueurs
+        // se reposent, plutôt que de laisser une équipe sans adversaire.
+        expect(plan.matches.filter((m) => m.opponentRef !== null)).toHaveLength(1);
+        expect(restingParticipants(plan)).toHaveLength(2);
     });
 
-    it("relâche avoidSamePartnerConsecutive quand aucune combinaison sans conflit n'existe (2 joueurs)", () => {
+    it('met tout le monde au repos quand aucun match n’est possible', () => {
         const strategy = new DefaultMatchmakingStrategy(NO_SHUFFLE);
-        // Avec seulement 2 joueurs et playersPerTeam=2, une seule paire est possible : si c'est
-        // justement celle du round précédent, la contrainte est nécessairement relâchée.
-        const plan = strategy.generateRound({
-            fixedTeams: [],
-            soloParticipantIds: ['p1', 'p2'],
-            config: baseConfig({ playersPerTeam: 2 }),
-            history: baseHistory({ previousRoundPartnerPairs: [['p1', 'p2']] }),
-        });
+        const plan = strategy.generateRound(input({ soloParticipantIds: solos(3) }));
 
-        // Ne doit pas planter et doit tout de même produire une répartition complète.
-        expect(plan.ephemeralTeams).toHaveLength(1);
-        expect(plan.ephemeralTeams[0].participantIds.sort()).toEqual(['p1', 'p2']);
-        expect(allParticipants(plan)).toEqual(new Set(['p1', 'p2']));
+        expect(plan.matches.every((m) => m.opponentRef === null)).toBe(true);
+        expect(restingParticipants(plan).sort()).toEqual(solos(3));
+    });
+
+    // Deux joueurs ne peuvent pas former un 2v2 : une équipe seule n'a pas d'adversaire. Avec la
+    // taille 1 autorisée, ils jouent l'un contre l'autre plutôt que de rester assis.
+    it('fait jouer deux joueurs en 1v1 quand la taille 1 est autorisée', () => {
+        const strategy = new DefaultMatchmakingStrategy(NO_SHUFFLE);
+        const plan = strategy.generateRound(
+            input({
+                soloParticipantIds: ['p1', 'p2'],
+                config: baseConfig({ allowedTeamSizes: [1] }),
+            }),
+        );
+
+        expect(plan.matches.filter((m) => m.opponentRef !== null)).toHaveLength(1);
+        expect(restingParticipants(plan)).toHaveLength(0);
+    });
+
+    it('place tout le monde même quand la rotation ne peut pas être respectée', () => {
+        const strategy = new DefaultMatchmakingStrategy(NO_SHUFFLE);
+        const plan = strategy.generateRound(
+            input({
+                soloParticipantIds: solos(4),
+                history: baseHistory({
+                    recentRounds: [
+                        round([
+                            ['p1', 'p2'],
+                            ['p3', 'p4'],
+                        ]),
+                        round([
+                            ['p1', 'p3'],
+                            ['p2', 'p4'],
+                        ]),
+                    ],
+                }),
+            }),
+        );
+
+        expect(allParticipants(plan)).toEqual(new Set(solos(4)));
+        expect(plan.matches.filter((m) => m.opponentRef !== null)).toHaveLength(1);
     });
 
     it('ne duplique et ne perd jamais de participant, quelle que soit la config', () => {
         const strategy = new DefaultMatchmakingStrategy();
-        const input: GenerateRoundInput = {
+        const base = input({
             fixedTeams: [{ id: 'fixed-1', participantIds: ['a1', 'a2', 'a3'] }],
             soloParticipantIds: solos(9),
-            config: baseConfig({ playersPerTeam: 3, fallbackTeamSize: 2, allowSitOut: false }),
-            history: baseHistory(),
-        };
+            config: baseConfig({ playersPerTeam: 3, allowedTeamSizes: [2], plateCount: 3 }),
+        });
 
         for (let i = 0; i < 20; i++) {
-            const plan = strategy.generateRound(input);
+            const plan = strategy.generateRound(base);
             expect(allParticipants(plan)).toEqual(new Set(solos(9)));
 
             const refsInMatches = plan.matches.flatMap((m) =>
                 m.opponentRef ? [m.teamRef, m.opponentRef] : [m.teamRef],
             );
-            expect(new Set(refsInMatches).size).toBe(refsInMatches.length); // pas d'équipe dans 2 matchs
+            expect(new Set(refsInMatches).size).toBe(refsInMatches.length);
         }
     });
 });
 
 function allParticipants(plan: { ephemeralTeams: { participantIds: string[] }[] }): Set<string> {
     return new Set(plan.ephemeralTeams.flatMap((t) => t.participantIds));
+}
+
+function restingParticipants(plan: {
+    ephemeralTeams: { tempId: string; participantIds: string[] }[];
+}): string[] {
+    return plan.ephemeralTeams
+        .filter((t) => t.tempId.startsWith('sit-out'))
+        .flatMap((t) => t.participantIds);
 }

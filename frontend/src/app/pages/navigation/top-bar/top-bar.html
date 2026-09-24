@@ -7,15 +7,25 @@
 
   @if (showLinks()) {
     <nav class="nav" aria-label="Navigation principale">
-      @for (link of links(); track link.route) {
-        <a
-          class="link"
-          [class.link--active]="link.route === activeRoute()"
-          [routerLink]="link.route"
-        >
-          <app-icon [name]="link.icon!" />
-          <span>{{ link.label }}</span>
-        </a>
+      @for (link of links(); track link.key) {
+        @if (link.children?.length) {
+          <button
+            type="button"
+            class="link"
+            [class.link--active]="link.key === activeKey()"
+            [attr.aria-haspopup]="true"
+            (click)="itemSelected.emit({ item: link, anchor: $any($event.currentTarget) })"
+          >
+            <app-icon [name]="link.icon!" />
+            <span>{{ link.label }}</span>
+            <app-icon name="expand_more" iconClass="chevron" [ariaHidden]="true" />
+          </button>
+        } @else {
+          <a class="link" [class.link--active]="link.key === activeKey()" [routerLink]="link.route">
+            <app-icon [name]="link.icon!" />
+            <span>{{ link.label }}</span>
+          </a>
+        }
       }
     </nav>
   }

@@ -118,6 +118,10 @@ export const selectCloseTrainingSessionError = createSelector(
 );
 
 // ---------- Checkin / remove participant ----------
+export const selectLastCheckedInTrainingParticipant = createSelector(
+  selectTrainingState,
+  (state) => state.lastCheckedInParticipant,
+);
 export const selectCheckinTrainingParticipantLoading = createSelector(
   selectTrainingState,
   (state) => state.requestStatus.checkinParticipant.isLoading,
@@ -259,4 +263,18 @@ export const selectTrainingParticipantHistoryIsLoading = createSelector(
 export const selectTrainingParticipantHistoryError = createSelector(
   selectTrainingState,
   (state) => state.participantHistory.error,
+);
+
+/** Identité du participant connecté, disponible dès le chargement de son match courant. */
+export const selectTrainingParticipantIdentity = createSelector(
+  selectTrainingState,
+  (state) => state.participantCurrentMatch.data?.participant ?? null,
+);
+export const selectTrainingParticipantRoundNumber = createSelector(
+  selectTrainingState,
+  (state) => state.participantCurrentMatch.data?.roundNumber ?? null,
+);
+export const selectTrainingParticipantIsSittingOut = createSelector(
+  selectTrainingState,
+  (state) => state.participantCurrentMatch.data?.sitOut ?? false,
 );

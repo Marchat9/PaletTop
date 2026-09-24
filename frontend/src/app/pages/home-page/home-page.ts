@@ -23,7 +23,13 @@ import { JoinTrainingPopup } from 'src/app/modales/join-training-popup/join-trai
 
 @Component({
   selector: 'app-home-page',
-  imports: [TitleAndDescription, SectionTournament, SectionTraining, SectionFriendlyMatch, SectionMetrics],
+  imports: [
+    TitleAndDescription,
+    SectionTournament,
+    SectionTraining,
+    SectionFriendlyMatch,
+    SectionMetrics,
+  ],
   templateUrl: './home-page.html',
   styleUrl: './home-page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

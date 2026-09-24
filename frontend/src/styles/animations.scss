@@ -1,0 +1,100 @@
+// Animations partagées, pilotées par les directives `appStagger` et `appAnimateOnChange`.
+// Elles vivent ici parce qu'une directive n'a pas de feuille de style propre : les keyframes
+// et les classes doivent être globales pour qu'elle puisse simplement les poser sur son hôte.
+
+// ---------------------------------------------------------------------------
+// Apparition en cascade — `appStagger`
+// Les délais sont portés par nth-child plutôt que calculés en TS : la directive
+// n'a ainsi qu'une classe à poser sur le conteneur, sans toucher aux enfants.
+// ---------------------------------------------------------------------------
+@keyframes palettop-stagger-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.stagger > * {
+  animation: palettop-stagger-in 260ms ease both;
+}
+
+@for $i from 1 through 12 {
+  .stagger > *:nth-child(#{$i}) {
+    animation-delay: #{($i - 1) * 45}ms;
+  }
+}
+
+// Au-delà de douze éléments, on cesse de décaler : la cascade deviendrait une attente.
+.stagger > *:nth-child(n + 13) {
+  animation-delay: 540ms;
+}
+
+// ---------------------------------------------------------------------------
+// Rejeu sur changement de valeur — `appAnimateOnChange`
+// ---------------------------------------------------------------------------
+
+// Anneau qui s'écarte puis s'efface : lisible sur n'importe quel fond, contrairement
+// à un flash de background qui écraserait celui du composant hôte.
+@keyframes palettop-pulse {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-primary) 65%, transparent);
+    transform: scale(1);
+  }
+  35% {
+    transform: scale(1.06);
+  }
+  100% {
+    box-shadow: 0 0 0 0.5rem transparent;
+    transform: scale(1);
+  }
+}
+
+@keyframes palettop-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(0.75rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes palettop-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-pulse {
+  animation: palettop-pulse 900ms ease;
+}
+
+.animate-slide-in {
+  animation: palettop-slide-in 240ms ease both;
+}
+
+.animate-fade-in {
+  animation: palettop-fade-in 200ms ease both;
+}
+
+// ---------------------------------------------------------------------------
+// Accessibilité : on neutralise durée ET délai, sinon un élément en `both` resterait
+// invisible le temps de son délai avant d'apparaître d'un coup.
+// ---------------------------------------------------------------------------
+@media (prefers-reduced-motion: reduce) {
+  .stagger > *,
+  .animate-pulse,
+  .animate-slide-in,
+  .animate-fade-in {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
+  }
+}

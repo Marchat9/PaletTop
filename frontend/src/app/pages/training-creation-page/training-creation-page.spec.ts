@@ -43,7 +43,7 @@ describe('TrainingCreationPage', () => {
     const dispatchSpy = vi.spyOn(store, 'dispatch');
 
     fixture.componentInstance.onCodeChange('  LAITON-2026  ');
-    fixture.componentInstance.onNameChange('  Entrainement du jeudi  ');
+    fixture.componentInstance.onNameChange('  Entraînement du jeudi  ');
     fixture.componentInstance.onClubChange('  ASPTT  ');
     fixture.componentInstance.onAdminPasswordChange('  secret  ');
     fixture.componentInstance.submit();
@@ -51,7 +51,7 @@ describe('TrainingCreationPage', () => {
     expect(dispatchSpy).toHaveBeenCalledWith(
       createTraining({
         code: 'LAITON-2026',
-        name: 'Entrainement du jeudi',
+        name: 'Entraînement du jeudi',
         club: 'ASPTT',
         adminPassword: 'secret',
       }),

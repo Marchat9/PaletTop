@@ -9,19 +9,10 @@ import {
   TrainingMatchDto,
   TrainingRoundDto,
   TrainingSessionAdminDto,
+  TrainingSessionConfigurationDto,
   TrainingSessionPublicDto,
   TrainingSessionSummaryDto,
 } from 'src/app/store/training/training.models';
-
-export interface CreateTrainingSessionPayload {
-  date: Date;
-  playersPerTeam: number;
-  fallbackTeamSize: number;
-  allowSitOut: boolean;
-  avoidSamePartnerConsecutive: boolean;
-  avoidSameOpponentConsecutive: boolean;
-  pointsPerGame: number;
-}
 
 @Injectable({
   providedIn: 'root',
@@ -87,11 +78,11 @@ export class TrainingService {
   public createSession(
     trainingCode: string,
     password: string,
-    payload: CreateTrainingSessionPayload,
+    configuration: TrainingSessionConfigurationDto,
   ): Observable<TrainingSessionAdminDto> {
     return this.http.post<TrainingSessionAdminDto>(
       `${this.apiBaseUrl}/trainings/${trainingCode}/sessions`,
-      { password, ...payload },
+      { password, ...configuration },
     );
   }
 

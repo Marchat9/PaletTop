@@ -1,0 +1,50 @@
+<app-card>
+  <div class="training-header">
+    <div class="top-row">
+      <span class="eyebrow">Groupe d'entraînement</span>
+      <app-button
+        title="Se déconnecter"
+        icon="account_circle_off"
+        variant="error"
+        (clicked)="disconnect.emit()"
+      />
+    </div>
+
+    <div class="identity">
+      <div class="title">
+        <app-icon name="school" iconClass="icon" [ariaHidden]="true" />
+        <h1>{{ training()?.name }}</h1>
+      </div>
+      <span class="code-line">
+        @if (training()?.club) {
+          <span class="badge-club">
+            <app-icon name="apartment" iconClass="icon" [ariaHidden]="true" />
+            {{ training()?.club }}
+          </span>
+        }
+        <span
+          >Code : <span class="badge-code">{{ training()?.code }}</span></span
+        >
+      </span>
+    </div>
+
+    <dl class="meta">
+      <div>
+        <dt>Membres</dt>
+        <dd>{{ training()?.members?.length ?? 0 }}</dd>
+      </div>
+      <div>
+        <dt>Séances</dt>
+        <dd>{{ sessionCount() }}</dd>
+      </div>
+      <div>
+        <dt>Dernière séance</dt>
+        <dd>{{ lastSessionDate() ? (lastSessionDate() | date: 'dd/MM/yyyy') : '—' }}</dd>
+      </div>
+      <div>
+        <dt>Créé le</dt>
+        <dd>{{ training()?.createdAt | date: 'dd/MM/yyyy' }}</dd>
+      </div>
+    </dl>
+  </div>
+</app-card>

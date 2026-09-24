@@ -1,42 +1,22 @@
 <div class="admin-training-page">
-  <p>[TEST] Données brutes - visuel à faire plus tard.</p>
+  <app-training-header
+    [training]="training()"
+    [sessionCount]="sessions().length"
+    [lastSessionDate]="lastSessionDate()"
+    (disconnect)="disconnect()"
+  />
 
-  <button type="button" (click)="disconnect()">Déconnexion</button>
+  <app-training-session-list
+    [sessions]="sessions()"
+    [isLoading]="sessionsLoading()"
+    (selectSession)="openSession($event)"
+    (createSession)="createSession()"
+  />
 
-  <h3>Training (roster)</h3>
-  <pre>{{ { trainingLoading: trainingLoading(), training: training() } | json }}</pre>
-
-  <h3>Sessions</h3>
-  <pre>{{ { sessionsLoading: sessionsLoading(), sessions: sessions() } | json }}</pre>
-
-  <h3>Session sélectionnée</h3>
-  <p>Code : {{ selectedSessionCode() }}</p>
-  <pre>{{
-    { currentSessionLoading: currentSessionLoading(), currentSession: currentSession() } | json
-  }}</pre>
-
-  <h3>Rounds</h3>
-  <pre>{{ rounds() | json }}</pre>
-
-  <h3>Round courant</h3>
-  <pre>{{ currentRound() | json }}</pre>
-
-  <h3>Classement</h3>
-  <pre>{{ leaderboard() | json }}</pre>
-
-  <h3>Statuts des requêtes admin</h3>
-  <pre>{{
-    {
-      updateTrainingLoading: updateTrainingLoading(),
-      addMemberLoading: addMemberLoading(),
-      removeMemberLoading: removeMemberLoading(),
-      createSessionLoading: createSessionLoading(),
-      closeSessionLoading: closeSessionLoading(),
-      checkinLoading: checkinLoading(),
-      removeParticipantLoading: removeParticipantLoading(),
-      createTeamLoading: createTeamLoading(),
-      dissolveTeamLoading: dissolveTeamLoading(),
-      generateRoundLoading: generateRoundLoading()
-    } | json
-  }}</pre>
+  <app-training-roster-card
+    [members]="training()?.members ?? []"
+    [addLoading]="addMemberLoading()"
+    (addMember)="addMember($event)"
+    (removeMember)="removeMember($event)"
+  />
 </div>

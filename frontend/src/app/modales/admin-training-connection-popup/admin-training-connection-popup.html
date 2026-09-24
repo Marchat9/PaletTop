@@ -1,18 +1,18 @@
-<div class="join-tournament-popup-container" (keydown.enter)="onConnect()">
-  <div class="header-row">
-    <h2 class="title">
+<div class="popup-container popup-surface" (keydown.enter)="onConnect()">
+  <div class="popup-header">
+    <h2 class="popup-title">
       <app-icon name="admin_panel_settings" iconClass="icon" [ariaHidden]="true" />
-      Connexion à un entrainement
+      Connexion à un entraînement
     </h2>
-    <button class="close-button" type="button" aria-label="Fermer" (click)="onCancel()">
+    <button class="popup-close" type="button" aria-label="Fermer" (click)="onCancel()">
       <app-icon name="close" />
     </button>
   </div>
 
-  <p class="subtitle">Saisissez vos identifiants pour vous connecter à l'entrainement.</p>
+  <p class="popup-subtitle">Saisissez vos identifiants pour vous connecter à l'entraînement.</p>
 
   <div class="field-group">
-    <label class="field-label" for="training-code">Code de l'entrainement</label>
+    <label class="field-label" for="training-code">Code de l'entraînement</label>
     <app-input-text
       id="training-code"
       placeholder="Ex: LAITON-2026"
@@ -41,10 +41,10 @@
     <div class="error-container">
       <span class="message">
         <app-icon name="error" [ariaHidden]="true" />
-        Entrainement introuvable
+        Entraînement introuvable
       </span>
       <span class="description">
-        Veuillez vérifier le code saisi ou contacter l'administrateur de l'entrainement pour plus
+        Veuillez vérifier le code saisi ou contacter l'administrateur de l'entraînement pour plus
         d'informations.
       </span>
     </div>

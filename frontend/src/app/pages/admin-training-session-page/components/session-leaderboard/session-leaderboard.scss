@@ -1,0 +1,84 @@
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+
+  .header-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    ::ng-deep .icon {
+      color: var(--color-primary);
+      font-size: 1.35rem;
+    }
+
+    .title {
+      font-size: 1.05rem;
+      font-weight: 700;
+    }
+  }
+
+  .header-description {
+    color: var(--color-on-surface-variant);
+    font-size: 0.82rem;
+  }
+}
+
+.leaderboard-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+
+  .empty {
+    margin: 0;
+    color: var(--color-on-surface-variant);
+    font-size: 0.9rem;
+  }
+
+  // Le tableau défile dans son propre conteneur plutôt que d'élargir la page.
+  .table-scroll {
+    overflow-x: auto;
+  }
+
+  .rank-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+
+    th {
+      text-align: left;
+      padding: 0.4rem 0.5rem;
+      color: var(--color-secondary);
+      font-family: var(--font-label);
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      border-bottom: 1px solid var(--color-border-default);
+      white-space: nowrap;
+    }
+
+    td {
+      padding: 0.45rem 0.5rem;
+      border-bottom: 1px solid var(--color-border-subtle);
+      font-variant-numeric: tabular-nums;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .col-rank {
+      width: 3rem;
+      color: var(--color-primary);
+      font-family: var(--font-label);
+      font-weight: 700;
+    }
+
+    .col-stat {
+      width: 4rem;
+      text-align: right;
+    }
+  }
+}

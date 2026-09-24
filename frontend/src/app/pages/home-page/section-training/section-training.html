@@ -1,36 +1,53 @@
 <app-card>
   <div class="section-training">
     <div class="title">
-      <h3>Entrainements</h3>
+      <h3>Entraînements</h3>
       <app-icon name="school" iconClass="icon" />
     </div>
     <div class="training-info">
       <div class="join-training">
         <div class="header">
           <div class="sub-title">
-            <h3>Rejoindre un entrainement</h3>
+            <h3>Rejoindre un entraînement</h3>
           </div>
           <div class="description">
-            <span>Faites chauffer vos <span class="palet">Palets</span> lors de sessions d'entrainement.</span>
+            <span
+              >Faites chauffer vos <span class="palet">Palets</span> lors de sessions
+              d'entraînement.</span
+            >
           </div>
         </div>
 
         <div class="action">
-          <app-button title="En tant que joueur" icon="explore" (clicked)="eventTrainingJoin.emit()" />
+          <app-button
+            title="En tant que joueur"
+            icon="explore"
+            (clicked)="eventTrainingJoin.emit()"
+          />
         </div>
       </div>
       <div class="create-training">
         <div class="header">
           <div class="sub-title">
-            <h3>Administrez vos entrainements</h3>
+            <h3>Administrez vos entraînements</h3>
           </div>
           <div class="description">
-            <span>Créez un club ou groupe d'entrainement puis administrez vos sessions d'<span class="highlight">entrainements</span></span>
+            <span
+              >Créez un club ou groupe d'entraînement puis administrez vos sessions d'<span
+                class="highlight"
+                >entraînements</span
+              ></span
+            >
           </div>
         </div>
 
         <div class="action">
-          <app-button title="Créer un club ou groupe d'entrainement" [titleCanWrap]="true" icon="group_add" (clicked)="eventTrainingCreation.emit()" />
+          <app-button
+            title="Créer un club ou groupe d'entraînement"
+            [titleCanWrap]="true"
+            icon="group_add"
+            (clicked)="eventTrainingCreation.emit()"
+          />
         </div>
       </div>
     </div>

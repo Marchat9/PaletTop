@@ -1,0 +1,53 @@
+@if (isSessionOpen()) {
+  <div class="session-actions">
+    <div class="buttons">
+      <app-button
+        title="Inscrire un joueur"
+        icon="person_add"
+        variant="primary"
+        [large]="true"
+        (clicked)="openCheckin.emit()"
+      />
+      <app-button
+        title="Générer le round suivant"
+        icon="skip_next"
+        variant="secondary"
+        [large]="true"
+        [loading]="generateLoading()"
+        [disabled]="!canGenerateRound()"
+        (clicked)="generateRound.emit()"
+      />
+      <span class="spacer"></span>
+      <app-button
+        title="Clôturer la séance"
+        icon="lock"
+        variant="tertiary"
+        [loading]="closeLoading()"
+        (clicked)="closeSession.emit()"
+      />
+    </div>
+
+    @if (!generateBlockedReason() && nextRoundPreview(); as preview) {
+      <p class="preview" [appAnimateOnChange]="preview" animation="fade-in">
+        <app-icon name="visibility" iconClass="preview-icon" [ariaHidden]="true" />
+        {{ preview }}
+      </p>
+    }
+
+    @if (generateBlockedReason(); as reason) {
+      <p
+        class="blocked"
+        [class.blocked--alert]="generateBlockedIsAlert()"
+        [appAnimateOnChange]="reason"
+        animation="fade-in"
+      >
+        <app-icon
+          [name]="generateBlockedIsAlert() ? 'warning' : 'info'"
+          iconClass="blocked-icon"
+          [ariaHidden]="true"
+        />
+        {{ reason }}
+      </p>
+    }
+  </div>
+}

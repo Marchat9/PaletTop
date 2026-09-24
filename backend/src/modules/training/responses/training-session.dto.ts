@@ -4,6 +4,7 @@ import { TrainingTeam } from 'src/entities/training-team.entity';
 import {
     TrainingParticipantStatus,
     TrainingSessionStatus,
+    TrainingTeamComposition,
     TrainingTeamKind,
 } from 'src/enum/training.enum';
 import { activeMembers, isActiveMember } from '../utils/team-member.utils';
@@ -47,8 +48,10 @@ interface TrainingSessionFieldsDto {
     date: string;
     status: TrainingSessionStatus;
     playersPerTeam: number;
-    fallbackTeamSize: number;
-    allowSitOut: boolean;
+    allowedTeamSizes: number[];
+    preferTargetTeamSize: boolean;
+    plateCount: number;
+    teamComposition: TrainingTeamComposition;
     avoidSamePartnerConsecutive: boolean;
     avoidSameOpponentConsecutive: boolean;
     pointsPerGame: number;
@@ -62,6 +65,7 @@ export interface TrainingSessionPublicDto extends TrainingSessionFieldsDto {
 }
 
 export interface TrainingSessionAdminDto extends TrainingSessionFieldsDto {
+    trainingCode: string;
     participants: TrainingParticipantAdminDto[];
     teams: TrainingTeamDto[];
 }
@@ -89,8 +93,10 @@ function baseSessionFields(session: TrainingSession): TrainingSessionFieldsDto {
         date: session.date.toISOString(),
         status: session.status,
         playersPerTeam: session.playersPerTeam,
-        fallbackTeamSize: session.fallbackTeamSize,
-        allowSitOut: session.allowSitOut,
+        allowedTeamSizes: session.allowedTeamSizes,
+        preferTargetTeamSize: session.preferTargetTeamSize,
+        plateCount: session.plateCount,
+        teamComposition: session.teamComposition,
         avoidSamePartnerConsecutive: session.avoidSamePartnerConsecutive,
         avoidSameOpponentConsecutive: session.avoidSameOpponentConsecutive,
         pointsPerGame: session.pointsPerGame,
@@ -117,6 +123,7 @@ export function toTrainingSessionPublicDto(session: TrainingSession): TrainingSe
 export function toTrainingSessionAdminDto(session: TrainingSession): TrainingSessionAdminDto {
     return {
         ...baseSessionFields(session),
+        trainingCode: session.training.code,
         participants: (session.participants ?? []).map(toTrainingParticipantAdminDto),
         teams: activeTeams(session).map((team) => toTrainingTeamDto(team)),
     };

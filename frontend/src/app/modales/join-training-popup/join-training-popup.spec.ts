@@ -2,7 +2,7 @@ import { DialogModule, DialogRef } from '@angular/cdk/dialog';
 import { TestBed } from '@angular/core/testing';
 import { MockStore, provideMockStore } from '@ngrx/store/testing';
 import { describe, expect, it, vi } from 'vitest';
-import { joinTrainingSession } from 'src/app/store/training/training.actions';
+import { loadTrainingParticipantCurrentMatch } from 'src/app/store/training/training.actions';
 import {
   selectTrainingParticipantCurrentMatch,
   selectTrainingParticipantCurrentMatchError,
@@ -40,7 +40,7 @@ describe('JoinTrainingPopup', () => {
     expect(fixture.componentInstance).toBeTruthy();
   });
 
-  it('dispatches joinTrainingSession with the trimmed session code and participant code on join', () => {
+  it('dispatches loadTrainingParticipantCurrentMatch with the trimmed session code and participant code on join', () => {
     const { fixture, store } = setup();
     const dispatchSpy = vi.spyOn(store, 'dispatch');
 
@@ -49,7 +49,7 @@ describe('JoinTrainingPopup', () => {
     fixture.componentInstance.onJoin();
 
     expect(dispatchSpy).toHaveBeenCalledWith(
-      joinTrainingSession({ sessionCode: '1234', participantCode: '5678' }),
+      loadTrainingParticipantCurrentMatch({ sessionCode: '1234', participantCode: '5678' }),
     );
   });
 
@@ -62,7 +62,7 @@ describe('JoinTrainingPopup', () => {
     fixture.componentInstance.onJoin();
 
     expect(dispatchSpy).not.toHaveBeenCalledWith(
-      expect.objectContaining({ type: joinTrainingSession.type }),
+      expect.objectContaining({ type: loadTrainingParticipantCurrentMatch.type }),
     );
   });
 

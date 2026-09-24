@@ -15,7 +15,7 @@
       transition: color 0.2s;
 
       &.winner {
-        color: #4caf50;
+        color: var(--color-success);
       }
     }
   }
@@ -38,7 +38,7 @@
       user-select: none;
       width: 31px;
       height: 5px;
-      background: white;
+      background: var(--color-on-team);
     }
   }
 
@@ -54,7 +54,7 @@
   .winner-label {
     font-size: 2rem;
     font-weight: 600;
-    color: #4caf50;
+    color: var(--color-success);
     text-align: center;
   }
 }

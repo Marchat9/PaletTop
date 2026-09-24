@@ -11,7 +11,7 @@ import { Training } from './training.entity';
 import { TrainingParticipant } from './training-participant.entity';
 import { TrainingTeam } from './training-team.entity';
 import { TrainingRound } from './training-round.entity';
-import { TrainingSessionStatus } from 'src/enum/training.enum';
+import { TrainingSessionStatus, TrainingTeamComposition } from 'src/enum/training.enum';
 
 @Entity('training_session')
 export class TrainingSession {
@@ -41,11 +41,28 @@ export class TrainingSession {
     @Column({ type: 'int' })
     playersPerTeam!: number;
 
-    @Column({ type: 'int' })
-    fallbackTeamSize!: number;
+    /** Tailles d'équipe que le générateur peut utiliser, taille visée comprise. */
+    @Column({ type: 'int', array: true, default: () => "'{}'" })
+    allowedTeamSizes!: number[];
 
+    /**
+     * Arbitrage rendu à la création : garder la taille d'équipe demandée quitte à mettre des
+     * joueurs au repos (`true`), ou faire jouer tout le monde quitte à ajuster les tailles
+     * (`false`).
+     */
     @Column({ default: false })
-    allowSitOut!: boolean;
+    preferTargetTeamSize!: boolean;
+
+    /** Matchs simultanés possibles : les équipes en trop attendent le round suivant. */
+    @Column({ type: 'int', default: 99 })
+    plateCount!: number;
+
+    @Column({
+        type: 'enum',
+        enum: TrainingTeamComposition,
+        default: TrainingTeamComposition.RANDOM,
+    })
+    teamComposition!: TrainingTeamComposition;
 
     @Column({ default: true })
     avoidSamePartnerConsecutive!: boolean;

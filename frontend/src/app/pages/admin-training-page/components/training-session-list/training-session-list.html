@@ -1,0 +1,49 @@
+<app-card>
+  <div class="session-list-card">
+    <div class="header">
+      <div class="header-title">
+        <app-icon name="event" iconClass="icon" [ariaHidden]="true" />
+        <h2>
+          Séances <span class="count">({{ sessions().length }})</span>
+        </h2>
+      </div>
+      <app-button
+        title="Nouvelle séance"
+        icon="add"
+        variant="primary"
+        (clicked)="createSession.emit()"
+      />
+    </div>
+
+    @if (isLoading() && !hasSessions()) {
+      <app-skeleton [rows]="3" height="3.4rem" />
+    } @else if (!hasSessions()) {
+      <p class="empty">
+        Aucune séance pour l'instant. Créez-en une pour inscrire les joueurs et lancer les rounds.
+      </p>
+    } @else {
+      <div class="sessions" [appStagger]="staggerKey()">
+        @for (session of sessions(); track session.code) {
+          <button
+            type="button"
+            class="session-row"
+            [class.is-open]="session.status === 'OPEN'"
+            (click)="selectSession.emit(session.code)"
+          >
+            <span class="dot" aria-hidden="true"></span>
+            <span class="date">{{ session.date | date: 'EEEE dd/MM/yyyy' }}</span>
+            <span class="status" [class.open]="session.status === 'OPEN'">
+              {{ session.status === 'OPEN' ? 'Ouverte' : 'Clôturée' }}
+            </span>
+            <span class="spacer"></span>
+            <span class="who">
+              {{ session.participantsCount }}
+              {{ session.participantsCount > 1 ? 'participants' : 'participant' }}
+            </span>
+            <app-icon name="chevron_right" iconClass="chevron" [ariaHidden]="true" />
+          </button>
+        }
+      </div>
+    }
+  </div>
+</app-card>

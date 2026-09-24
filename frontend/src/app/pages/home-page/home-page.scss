@@ -11,7 +11,6 @@
   --gap-value: 2rem;
   gap: var(--gap-value);
 
-
   .two-column {
     flex: 1 1 calc(50% - calc(var(--gap-value) / 2));
     @media (width < 900px) {
@@ -23,4 +22,3 @@
     flex: 1 1 100%;
   }
 }
-

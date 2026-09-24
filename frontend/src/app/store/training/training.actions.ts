@@ -17,16 +17,16 @@ export const createTrainingFailure = createAction(
 // -------------------------------------------------------
 
 // ----------- Join Training Session as Participant -----------
-export const joinTrainingSession = createAction(
-  '[Training] Join Training Session',
+export const loadTrainingParticipantCurrentMatch = createAction(
+  '[Training] Load Training Participant Current Match',
   props<{ sessionCode: string; participantCode: string }>(),
 );
-export const joinTrainingSessionSuccess = createAction(
-  '[Training] Join Training Session Success',
+export const loadTrainingParticipantCurrentMatchSuccess = createAction(
+  '[Training] Load Training Participant Current Match Success',
   props<{ sessionCode: string; participantCode: string; currentMatch: TrainingCurrentMatchDto }>(),
 );
-export const joinTrainingSessionFailure = createAction(
-  '[Training] Join Training Session Failure',
+export const loadTrainingParticipantCurrentMatchFailure = createAction(
+  '[Training] Load Training Participant Current Match Failure',
   props<{ error: string }>(),
 );
 // -------------------------------------------------------

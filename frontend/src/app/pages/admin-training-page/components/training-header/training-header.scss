@@ -1,0 +1,122 @@
+.training-header {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+
+  .top-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+
+    @media (width < 768px) {
+      app-button {
+        width: 100%;
+      }
+    }
+  }
+
+  .eyebrow {
+    color: var(--color-primary);
+    font-family: var(--font-label);
+    font-size: 0.72rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+
+  .identity {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+
+    .title {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+
+      ::ng-deep .icon {
+        color: var(--color-primary);
+        font-size: 1.8rem;
+      }
+
+      h1 {
+        margin: 0;
+        font-family: var(--font-headline);
+        font-size: clamp(1.8rem, 6vw, 3rem);
+        line-height: 1;
+      }
+    }
+
+    .code-line {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+      font-size: 0.8rem;
+      letter-spacing: 0.14em;
+      color: var(--color-on-surface-variant);
+
+      .badge-club {
+        display: flex;
+        gap: 0.3rem;
+        flex-wrap: nowrap;
+
+        padding: 0.2rem 0.5rem;
+        border-radius: 10rem;
+        border: 1px solid var(--color-status-draft-border);
+        background: var(--color-status-draft-bg);
+        background: var(--color-surface-container-high);
+        color: var(--color-status-draft-text);
+        letter-spacing: 0.06em;
+
+        ::ng-deep .icon {
+          color: var(--color-primary);
+          font-size: 1rem;
+        }
+      }
+
+      .badge-code {
+        padding: 0.2rem 0.5rem;
+        border-radius: 10rem;
+        border: 1px solid var(--color-border-default);
+        background: var(--color-surface-container-high);
+        color: var(--color-on-surface);
+        font-weight: 600;
+        letter-spacing: 0.25em;
+      }
+    }
+  }
+
+  .meta {
+    margin: 0;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.85rem;
+
+    @media (width < 768px) {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    div {
+      padding: 0.85rem 0.9rem;
+      border-radius: 0.8rem;
+      background: var(--color-hover-surface-soft);
+      border: 1px solid var(--color-border-subtle);
+    }
+
+    dt {
+      color: var(--color-secondary);
+      font-size: 0.75rem;
+      margin-bottom: 0.35rem;
+    }
+
+    dd {
+      margin: 0;
+      font-family: var(--font-label);
+      font-size: 0.85rem;
+      letter-spacing: 0.08em;
+      color: var(--color-on-surface-variant);
+    }
+  }
+}

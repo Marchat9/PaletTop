@@ -45,9 +45,12 @@ export class TrainingTeamsService {
         assertSessionOpen(session);
 
         const size = dto.participantIds.length;
-        if (size !== session.playersPerTeam && size !== session.fallbackTeamSize) {
+        const allowedSizes = [
+            ...new Set([session.playersPerTeam, ...session.allowedTeamSizes]),
+        ].sort((a, b) => a - b);
+        if (!allowedSizes.includes(size)) {
             throw new BadRequestException(
-                `La taille de l'équipe doit être ${session.playersPerTeam} ou ${session.fallbackTeamSize} (reçu ${size}).`,
+                `La taille de l'équipe doit être ${allowedSizes.join(' ou ')} (reçu ${size}).`,
             );
         }
 

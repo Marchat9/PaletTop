@@ -1,0 +1,54 @@
+<app-card-collapsible [isExpanded]="true" [canCollapse]="false">
+  <div header class="header">
+    <div class="header-title">
+      <app-icon name="group" iconClass="icon" [ariaHidden]="true" />
+      <span class="title"
+        >Membre du club <span class="count">({{ members().length }})</span></span
+      >
+    </div>
+    <span class="header-description">
+      Les membres inscrits ici se retrouvent en un clic au check-in d'une séance.
+    </span>
+  </div>
+
+  <div content class="roster-content">
+    <div class="add-row" (keydown.enter)="onAdd()">
+      <app-input-text
+        id="training-new-member"
+        placeholder="Prénom et nom"
+        icon="person"
+        [value]="newMemberName()"
+        (valueChange)="onNameChange($event)"
+      />
+      <app-button
+        title="Ajouter"
+        icon="person_add"
+        variant="primary"
+        [loading]="addLoading()"
+        [disabled]="!canAdd()"
+        (clicked)="onAdd()"
+      />
+    </div>
+
+    @if (members().length === 0) {
+      <p class="empty">Aucun membre pour l'instant.</p>
+    } @else {
+      <div class="members" [appStagger]="staggerKey()">
+        @for (member of members(); track member.id) {
+          <span class="member-chip">
+            <app-icon name="person" iconClass="member-icon" [ariaHidden]="true" />
+            {{ member.name }}
+            <button
+              type="button"
+              class="remove"
+              [attr.aria-label]="'Retirer ' + member.name"
+              (click)="removeMember.emit(member)"
+            >
+              <app-icon name="close" [ariaHidden]="true" />
+            </button>
+          </span>
+        }
+      </div>
+    }
+  </div>
+</app-card-collapsible>

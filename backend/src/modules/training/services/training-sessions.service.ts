@@ -55,8 +55,12 @@ export class TrainingSessionsService {
             date: dto.date,
             status: TrainingSessionStatus.OPEN,
             playersPerTeam: dto.playersPerTeam,
-            fallbackTeamSize: dto.fallbackTeamSize,
-            allowSitOut: dto.allowSitOut,
+            allowedTeamSizes: [...new Set([dto.playersPerTeam, ...dto.allowedTeamSizes])].sort(
+                (a, b) => a - b,
+            ),
+            preferTargetTeamSize: dto.preferTargetTeamSize,
+            plateCount: dto.plateCount,
+            teamComposition: dto.teamComposition,
             avoidSamePartnerConsecutive: dto.avoidSamePartnerConsecutive,
             avoidSameOpponentConsecutive: dto.avoidSameOpponentConsecutive,
             pointsPerGame: dto.pointsPerGame,
@@ -139,6 +143,25 @@ export class TrainingSessionsService {
                 throw new ConflictException(`${member.name} est déjà inscrit(e) à cette session.`);
             }
             name = member.name;
+
+            const returning = session.participants
+                .filter(
+                    (p) =>
+                        p.member?.id === member!.id && p.status === TrainingParticipantStatus.LEFT,
+                )
+                .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())[0];
+
+            if (returning) {
+                returning.status = TrainingParticipantStatus.PRESENT;
+                returning.name = member.name;
+                const back = await this.trainingParticipantRepo.save(returning);
+
+                session.participants = session.participants.map((p) =>
+                    p.id === back.id ? back : p,
+                );
+                await this.touchLastActivity(session.id);
+                return this.emitAndReturn(session);
+            }
         }
 
         const existingCodes = session.participants.map((p) => p.code);

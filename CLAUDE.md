@@ -47,17 +47,23 @@ cd backend && docker-compose up   # Starts PostgreSQL + backend + frontend
 
 ### Frontend
 - **Angular 21** standalone components (no NgModules)
-- **NgRx** for global state with two feature slices:
+- **NgRx** for global state, one slice per feature under `src/app/store/` — notably:
   - `appConfig` — theme, notifications, localStorage cache
   - `tournament` — current tournament data and API call state
+  - `training` — training group, session, rounds, leaderboard and participant view
+  - `realtime` — websocket connection and broadcast actions (tournament and training streams are kept separate: they share event names with different payloads)
 - Store structure: `src/app/store/{feature}/{feature}.actions/reducer/effects/selectors.ts`
 - Effects call services (`src/app/services/`) which hit the backend API
-- Routes defined in `src/app/app-routes.ts`:
-  - `/accueil` — home page (create/join tournament)
-  - `/admin/tournament-creation` — tournament creation wizard
-  - `/admin` — admin config page
-  - `/player` — player join page (no data)
-  - `/player/:tournamentCode/:teamCode` — player match view
+- Routes defined in `src/app/app-routes.ts`, grouped by universe:
+  - `/accueil` — home page (create/join a tournament or a training)
+  - Tournament: `/admin/tournament-creation`, `/admin/tournament[/:tournamentCode]`,
+    `/player/tournament[/:tournamentCode/:teamCode]`, `/spectateur[/:tournamentCode]`
+  - Training: `/admin/training-creation`, `/admin/training[/:trainingCode]`,
+    `/admin/training/:trainingCode/session-creation`,
+    `/admin/training/:trainingCode/session/:sessionCode`,
+    `/player/training[/:sessionCode/:participantCode]`
+  - `/friendly-match`, `/super-admin`
+- Only page components read the store and dispatch actions; sub-components communicate through `input()`/`output()`
 - Shared UI components in `src/app/shared/`; modals in `src/app/modales/`
 - Environment config in `src/environments/environment.base.ts` (extended by dev/prod)
 - UI uses Angular Material; locale is set to `fr-FR`

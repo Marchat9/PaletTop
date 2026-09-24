@@ -1,0 +1,58 @@
+.admin-training-session-page {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 1.5rem 1.25rem 6.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+
+  @media (width < 375px) {
+    padding: 1.5rem 0.75rem 6.2rem;
+  }
+
+  .back-link {
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.6rem 0.5rem 0.6rem 0.25rem;
+    border: 0;
+    border-radius: 0.5rem;
+    background: transparent;
+    color: var(--color-on-surface-variant);
+    font-family: var(--font-label);
+    font-size: 0.72rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+
+    &:hover {
+      color: var(--color-primary);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--color-primary);
+      outline-offset: 2px;
+    }
+
+    ::ng-deep .back-icon {
+      font-size: 1rem;
+    }
+  }
+
+  .session-body {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .metrics {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.6rem;
+
+    @media (width < 768px) {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+}

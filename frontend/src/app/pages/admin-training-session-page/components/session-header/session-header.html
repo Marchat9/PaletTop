@@ -1,0 +1,47 @@
+<app-card>
+  <div class="session-header">
+    <div class="top-row">
+      <div class="identity">
+        <span class="eyebrow">Séance d'entraînement</span>
+        <div class="title">
+          <app-icon name="sports_score" iconClass="icon" [ariaHidden]="true" />
+          <h1>{{ session()?.date | date: 'EEEE d MMMM y' }}</h1>
+        </div>
+      </div>
+
+      <div class="side">
+        @if (session()?.status; as status) {
+          <span class="status" [class.open]="isOpen()">
+            <app-icon
+              [name]="isOpen() ? 'play_circle' : 'lock'"
+              iconClass="status-icon"
+              [ariaHidden]="true"
+            />
+            {{ isOpen() ? 'Ouverte' : 'Clôturée' }}
+          </span>
+        }
+
+        <div class="session-code">
+          <span class="label">Code de la session</span>
+          <span class="value">{{ session()?.code }}</span>
+        </div>
+      </div>
+    </div>
+
+    <p class="code-help">
+      <app-icon name="info" iconClass="help-icon" [ariaHidden]="true" />
+      Chaque joueur se connecte avec ce code, suivi de son code personnel à quatre chiffres.
+    </p>
+
+    @if (rules().length > 0) {
+      <div class="rules">
+        @for (rule of rules(); track rule.label) {
+          <span class="rule">
+            <app-icon [name]="rule.icon" iconClass="rule-icon" [ariaHidden]="true" />
+            {{ rule.label }}
+          </span>
+        }
+      </div>
+    }
+  </div>
+</app-card>

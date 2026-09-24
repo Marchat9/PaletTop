@@ -14,10 +14,7 @@
     (eventTrainingCreation)="goToTrainingCreation()"
   ></app-section-training>
 
-  <app-section-friendly-match
-    class="one-column"
-    (eventGoToFriendlyMatch)="goToFriendlyMatch()"
-  />
+  <app-section-friendly-match class="one-column" (eventGoToFriendlyMatch)="goToFriendlyMatch()" />
 
   @if (metrics().length > 0) {
     <app-section-metrics class="one-column" [metrics]="metrics()" />

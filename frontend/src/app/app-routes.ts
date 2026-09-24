@@ -68,8 +68,20 @@ const trainingRoutes: Routes = [
   {
     path: 'admin/training/:trainingCode',
     loadComponent: () =>
-      import('./pages/admin-training-page/admin-training-page').then(
-        (m) => m.AdminTrainingPage,
+      import('./pages/admin-training-page/admin-training-page').then((m) => m.AdminTrainingPage),
+  },
+  {
+    path: 'admin/training/:trainingCode/session-creation',
+    loadComponent: () =>
+      import('./pages/training-session-creation-page/training-session-creation-page').then(
+        (m) => m.TrainingSessionCreationPage,
+      ),
+  },
+  {
+    path: 'admin/training/:trainingCode/session/:sessionCode',
+    loadComponent: () =>
+      import('./pages/admin-training-session-page/admin-training-session-page').then(
+        (m) => m.AdminTrainingSessionPage,
       ),
   },
   {

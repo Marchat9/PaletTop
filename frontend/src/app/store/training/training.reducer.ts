@@ -4,9 +4,9 @@ import {
   createTrainingFailure,
   createTrainingSuccess,
   disconnectTrainingAdministrator,
-  joinTrainingSession,
-  joinTrainingSessionFailure,
-  joinTrainingSessionSuccess,
+  loadTrainingParticipantCurrentMatch,
+  loadTrainingParticipantCurrentMatchFailure,
+  loadTrainingParticipantCurrentMatchSuccess,
   loadTrainingParticipantHistory,
   loadTrainingParticipantHistoryFailure,
   loadTrainingParticipantHistorySuccess,
@@ -39,6 +39,7 @@ import {
   createTrainingSession,
   createTrainingSessionFailure,
   createTrainingSessionSuccess,
+  dismissTrainingCheckinHandoff,
   loadTrainingLeaderboard,
   loadTrainingLeaderboardFailure,
   loadTrainingLeaderboardSuccess,
@@ -85,7 +86,23 @@ import {
   validateTrainingMatchFailure,
   validateTrainingMatchSuccess,
 } from './training.match.actions';
-import { TrainingMatchDto, TrainingRoundDto, TrainingState } from './training.models';
+import {
+  TrainingCurrentMatchDto,
+  TrainingMatchDto,
+  TrainingParticipantAdminDto,
+  TrainingRoundDto,
+  TrainingSessionAdminDto,
+  TrainingSessionPublicDto,
+  TrainingTeamDto,
+  TrainingState,
+} from './training.models';
+import { Nullable } from 'src/app/models/nullable.model';
+import {
+  wsTrainingLeaderboardUpdated,
+  wsTrainingMatchUpdated,
+  wsTrainingRoundGenerated,
+  wsTrainingSessionUpdated,
+} from '../realtime/realtime.actions';
 import { updateLocalStorageData } from '../app-config/app-config.actions';
 import {
   STORAGE_TRAINING_CODE_KEY,
@@ -115,6 +132,7 @@ export const initialTrainingState: TrainingState = {
   lastRequestedCode: null,
   sessions: { data: [], isLoading: false, error: null },
   currentSession: { data: null, isLoading: false, error: null },
+  lastCheckedInParticipant: null,
   rounds: { data: [], isLoading: false, error: null },
   currentRound: { data: null, isLoading: false, error: null },
   leaderboard: { data: [], isLoading: false, error: null },
@@ -127,6 +145,64 @@ function replaceMatchInRound(round: TrainingRoundDto, match: TrainingMatchDto): 
     ...round,
     matches: round.matches.map((m) => (m.id === match.id ? match : m)),
   };
+}
+
+// Un round regénéré ou reçu par websocket remplace celui de même identité plutôt que de
+// s'ajouter : l'auteur de l'action reçoit la réponse HTTP *et* la diffusion websocket.
+function upsertRound(rounds: TrainingRoundDto[], round: TrainingRoundDto): TrainingRoundDto[] {
+  const isKnown = rounds.some((existing) => existing.id === round.id);
+  return isKnown
+    ? rounds.map((existing) => (existing.id === round.id ? round : existing))
+    : [...rounds, round];
+}
+
+/**
+ * Recalcule la vue « mon match » à partir d'un round diffusé : on cherche le camp qui contient
+ * le participant. Absent du round, il vient d'être inscrit et entrera au suivant.
+ */
+function withParticipantMatchFromRound(
+  current: Nullable<TrainingCurrentMatchDto>,
+  round: TrainingRoundDto,
+): Nullable<TrainingCurrentMatchDto> {
+  if (!current) {
+    return current;
+  }
+
+  const participantId = current.participant.id;
+  const isMine = (team: Nullable<TrainingTeamDto>) =>
+    (team?.members ?? []).some((member) => member.id === participantId);
+  const match = round.matches.find((m) => isMine(m.teamA) || isMine(m.teamB)) ?? null;
+
+  return {
+    ...current,
+    match,
+    roundNumber: round.roundNumber,
+    sitOut: match ? match.isBye : true,
+  };
+}
+
+/**
+ * Le back renvoie la session entière après un check-in, pas le participant inscrit : on le
+ * retrouve en comparant avec la session qu'on avait en mémoire juste avant.
+ *
+ * Deux cas donnent le même résultat à l'écran : une nouvelle ligne (première venue), ou une
+ * ligne repassée de « parti » à « présent » — un membre qui revient reprend son identité, donc
+ * son code, plutôt que d'en recevoir un nouveau.
+ */
+function findAddedParticipant(
+  previousSession: Nullable<TrainingSessionAdminDto | TrainingSessionPublicDto>,
+  nextSession: TrainingSessionAdminDto,
+): Nullable<TrainingParticipantAdminDto> {
+  const previousStatuses = new Map(
+    (previousSession?.participants ?? []).map((p) => [p.id, p.status]),
+  );
+
+  return (
+    nextSession.participants.find(
+      (participant) =>
+        participant.status === 'PRESENT' && previousStatuses.get(participant.id) !== 'PRESENT',
+    ) ?? null
+  );
 }
 
 export const trainingReducer = createReducer(
@@ -159,15 +235,15 @@ export const trainingReducer = createReducer(
   })),
 
   // Join training session as participant
-  on(joinTrainingSession, (state) => ({
+  on(loadTrainingParticipantCurrentMatch, (state) => ({
     ...state,
     participantCurrentMatch: { ...state.participantCurrentMatch, isLoading: true, error: null },
   })),
-  on(joinTrainingSessionSuccess, (state, { currentMatch }) => ({
+  on(loadTrainingParticipantCurrentMatchSuccess, (state, { currentMatch }) => ({
     ...state,
     participantCurrentMatch: { data: currentMatch, isLoading: false, error: null },
   })),
-  on(joinTrainingSessionFailure, (state, { error }) => ({
+  on(loadTrainingParticipantCurrentMatchFailure, (state, { error }) => ({
     ...state,
     participantCurrentMatch: { ...state.participantCurrentMatch, isLoading: false, error },
   })),
@@ -354,6 +430,8 @@ export const trainingReducer = createReducer(
   on(connectTrainingSessionAdministrator, (state) => ({
     ...state,
     currentSession: { ...state.currentSession, isLoading: true, error: null },
+    // On change de séance : le code affiché ne concernerait plus celle qu'on regarde.
+    lastCheckedInParticipant: null,
   })),
   on(connectTrainingSessionAdministratorSuccess, (state, { session }) => ({
     ...state,
@@ -405,10 +483,15 @@ export const trainingReducer = createReducer(
   on(checkinTrainingParticipantSuccess, (state, { session }) => ({
     ...state,
     currentSession: { ...state.currentSession, data: session },
+    lastCheckedInParticipant: findAddedParticipant(state.currentSession.data, session),
     requestStatus: {
       ...state.requestStatus,
       checkinParticipant: { isLoading: false, error: null },
     },
+  })),
+  on(dismissTrainingCheckinHandoff, (state) => ({
+    ...state,
+    lastCheckedInParticipant: null,
   })),
   on(checkinTrainingParticipantFailure, (state, { error }) => ({
     ...state,
@@ -669,10 +752,59 @@ export const trainingReducer = createReducer(
     },
   })),
 
+  // ---------------- Temps réel ----------------
+  // La room admin diffuse la vue complète de la séance : elle remplace celle en mémoire,
+  // sous réserve qu'il s'agisse bien de la séance affichée.
+  on(wsTrainingSessionUpdated, (state, { session }) =>
+    state.currentSession.data?.code === session.code
+      ? { ...state, currentSession: { ...state.currentSession, data: session } }
+      : state,
+  ),
+  on(wsTrainingRoundGenerated, (state, { round }) => ({
+    ...state,
+    rounds: { ...state.rounds, data: upsertRound(state.rounds.data, round) },
+    currentRound: { data: round, isLoading: false, error: null },
+    // Côté joueur, le round diffusé contient déjà son prochain match : on le retrouve par son
+    // identité plutôt que de relancer un appel au serveur.
+    participantCurrentMatch: {
+      ...state.participantCurrentMatch,
+      data: withParticipantMatchFromRound(state.participantCurrentMatch.data, round),
+    },
+  })),
+  on(wsTrainingMatchUpdated, (state, { match }) => ({
+    ...state,
+    rounds: { ...state.rounds, data: state.rounds.data.map((r) => replaceMatchInRound(r, match)) },
+    currentRound: {
+      ...state.currentRound,
+      data: state.currentRound.data ? replaceMatchInRound(state.currentRound.data, match) : null,
+    },
+    // Un score saisi par un coéquipier ou par l'administrateur met à jour ma propre carte.
+    participantCurrentMatch: {
+      ...state.participantCurrentMatch,
+      data:
+        state.participantCurrentMatch.data?.match?.id === match.id
+          ? { ...state.participantCurrentMatch.data, match }
+          : state.participantCurrentMatch.data,
+    },
+  })),
+  on(wsTrainingLeaderboardUpdated, (state, { leaderboard }) => ({
+    ...state,
+    leaderboard: { data: leaderboard, isLoading: false, error: null },
+  })),
+
+  // Remise à zéro complète : on change d'entraînement (déconnexion admin, création, arrivée d'un
+  // joueur). Tout ce qui reste en mémoire appartient au précédent et n'a plus rien à y faire.
   on(resetTraining, (state) => ({
     ...state,
     training: initialTrainingState.training,
     participantCurrentMatch: initialTrainingState.participantCurrentMatch,
+    participantHistory: initialTrainingState.participantHistory,
+    sessions: initialTrainingState.sessions,
+    currentSession: initialTrainingState.currentSession,
+    rounds: initialTrainingState.rounds,
+    currentRound: initialTrainingState.currentRound,
+    leaderboard: initialTrainingState.leaderboard,
+    lastCheckedInParticipant: null,
   })),
   on(disconnectTrainingAdministrator, (state) => ({
     ...state,

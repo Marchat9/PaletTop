@@ -1,11 +1,11 @@
 // ###################################
 // Specific style for word 'Palet'
-span.palet{
+span.palet {
   color: var(--color-primary) !important;
   font-style: italic !important;
   font-weight: bold !important;
 }
-// Specific style for highlighted words 
+// Specific style for highlighted words
 span.highlight {
   color: var(--color-primary) !important;
   font-weight: bold !important;
@@ -85,6 +85,56 @@ span.highlight {
     overflow-y: auto;
     border-radius: 1rem 1rem 0 0 !important;
     padding-top: 0.4rem;
+  }
+}
+// ###################################
+
+// ###################################
+// Navigation sub-menu: anchored dropdown on desktop, bottom sheet on mobile
+.nav-menu-popover-backdrop {
+  background: transparent !important;
+}
+
+.nav-menu-popover-panel,
+.nav-menu-sheet-panel {
+  display: block;
+
+  .cdk-dialog-container {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    outline: none;
+  }
+
+  .cdk-dialog-container:focus,
+  .cdk-dialog-container:focus-visible {
+    outline: none;
+  }
+}
+
+// Aucun padding ici : tout espace ajouté au panneau reste cliquable sans rien afficher et
+// avale les clics destinés au backdrop. Le dégagement vertical passe par la stratégie de
+// position, l'inset horizontal par la marge du menu lui-même.
+.nav-menu-sheet-panel {
+  width: 100%;
+  max-width: 100vw;
+
+  .nav-menu {
+    min-width: 0;
+    margin: 0 0.75rem;
+    border-radius: 1rem;
+    padding-bottom: 0.75rem;
+
+    &::before {
+      content: '';
+      display: block;
+      width: 2.5rem;
+      height: 0.3rem;
+      margin: 0.6rem auto 0.4rem;
+      border-radius: 999px;
+      background: var(--color-border-subtle);
+    }
   }
 }
 // ###################################
