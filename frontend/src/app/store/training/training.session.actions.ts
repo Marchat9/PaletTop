@@ -95,12 +95,12 @@ export const checkinTrainingParticipantFailure = createAction(
   '[Training] Checkin Training Participant Failure',
   props<{ error: string }>(),
 );
-// Ferme le bandeau qui affiche le code du dernier participant inscrit.
+// Closes the banner showing the code of the last participant checked in.
 export const dismissTrainingCheckinHandoff = createAction(
   '[Training] Dismiss Training Checkin Handoff',
 );
 
-// Quitte la page de pilotage : ferme le socket de la séance.
+// Leaves the control page: closes the socket of the session.
 export const leaveTrainingSession = createAction('[Training] Leave Training Session');
 // -------------------------------------------------------
 

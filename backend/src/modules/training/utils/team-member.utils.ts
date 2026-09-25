@@ -1,7 +1,7 @@
 import { TrainingTeamMember } from 'src/entities/training-team-member.entity';
 
-// "Actif" = pas détaché de l'équipe (dissolution non destructive, cf. décision produit). Un seul
-// endroit pour cette définition plutôt que `!m.leftAt` réécrit à chaque site d'appel.
+// "Active" = not detached from the team (non-destructive dissolution, product decision). A single
+// place for this definition rather than `!m.leftAt` rewritten at every call site.
 export function isActiveMember(member: TrainingTeamMember): boolean {
     return !member.leftAt;
 }

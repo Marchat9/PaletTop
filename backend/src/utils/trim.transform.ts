@@ -1,6 +1,6 @@
 import { TransformFnParams } from 'class-transformer';
 
-/** Retire les espaces autour d'une valeur textuelle, et laisse le reste intact. */
+/** Strips the spaces around a text value, and leaves anything else untouched. */
 export function trimmed({ value }: TransformFnParams): unknown {
     return typeof value === 'string' ? value.trim() : value;
 }

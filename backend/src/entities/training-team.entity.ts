@@ -24,7 +24,7 @@ export class TrainingTeam {
     @JoinColumn({ name: 'session_id' })
     session!: TrainingSession;
 
-    // null = équipe FIXED (spanne toute la session) ; renseigné = équipe EPHEMERAL (ce round uniquement)
+    // null = FIXED team (spans the whole session); set = EPHEMERAL team (this round only).
     @ManyToOne(() => TrainingRound, { nullable: true, onDelete: 'CASCADE' })
     @JoinColumn({ name: 'round_id' })
     round!: TrainingRound | null;

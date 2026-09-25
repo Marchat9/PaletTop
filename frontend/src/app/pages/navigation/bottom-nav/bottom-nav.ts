@@ -20,6 +20,6 @@ export class BottomNavComponent {
   readonly activeKey = input<string | null>(null);
   readonly visible = input<boolean>(true);
 
-  /** Entrée à sous-destinations : l'ouverture du menu est l'affaire du conteneur. */
+  /** Entry with sub-destinations: opening the menu is the container's business. */
   readonly itemSelected = output<NavItemSelection>();
 }

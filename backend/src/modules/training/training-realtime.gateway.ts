@@ -72,8 +72,8 @@ export class TrainingRealtimeGateway implements OnGatewayConnection, OnGatewayDi
         );
     }
 
-    // Seul événement dont le contenu diffère selon l'audience : chaque room reçoit sa propre
-    // projection de la session.
+    // The only event whose content differs by audience: each room gets its own projection of the
+    // session.
     emitSessionUpdatedFrom(session: TrainingSession): void {
         this.safeEmit('session:updated', session.code, () => {
             this.server
@@ -97,8 +97,8 @@ export class TrainingRealtimeGateway implements OnGatewayConnection, OnGatewayDi
         this.broadcast(sessionCode, 'leaderboard:updated', leaderboard);
     }
 
-    // Payload identique pour les deux audiences : une seule diffusion sur l'union des rooms,
-    // socket.io ne livrant qu'une fois à un socket présent dans plusieurs d'entre elles.
+    // Same payload for both audiences: a single broadcast over the union of the rooms, socket.io
+    // delivering only once to a socket present in several of them.
     private broadcast(sessionCode: string, event: string, payload: unknown): void {
         this.safeEmit(event, sessionCode, () => {
             this.server
@@ -108,9 +108,9 @@ export class TrainingRealtimeGateway implements OnGatewayConnection, OnGatewayDi
         });
     }
 
-    // À ce stade, l'écriture correspondante est déjà commitée en base : un échec de diffusion
-    // websocket ne doit jamais remonter comme une erreur HTTP (le client se verrait renvoyer un
-    // 500 pour une action qui a pourtant réussi, et risquerait de la retenter en pure perte).
+    // At this point the matching write is already committed: a websocket broadcast failure must
+    // never surface as an HTTP error (the client would get a 500 for an action that did succeed,
+    // and might retry it for nothing).
     private safeEmit(event: string, sessionCode: string, emit: () => void): void {
         try {
             emit();

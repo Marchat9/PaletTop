@@ -18,8 +18,8 @@ function parseNumber(value: string | undefined, defaultValue: number): number {
 }
 
 /**
- * Clôture automatique des sessions d'entraînement restées inactives : une TrainingSession OPEN
- * dont `lastActivityAt` dépasse `idleHours` est automatiquement passée CLOSED.
+ * Auto-close for idle training sessions: an OPEN TrainingSession whose `lastActivityAt` is older
+ * than `idleHours` is switched to CLOSED.
  */
 export default registerAs('trainingAutoClose', (): TrainingAutoCloseConfig => ({
     enabled: parseBoolean(process.env.TRAINING_AUTOCLOSE_ENABLED, true),

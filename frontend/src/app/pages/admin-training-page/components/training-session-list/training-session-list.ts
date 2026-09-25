@@ -22,7 +22,7 @@ export class TrainingSessionList {
   public readonly createSession = output<void>();
 
   protected readonly hasSessions = computed(() => this.sessions().length > 0);
-  // Clé de rejeu de la cascade : la liste change quand une séance est créée ou rechargée.
+  // Replay key for the cascade: the list changes when a session is created or reloaded.
   protected readonly staggerKey = computed(() =>
     this.sessions()
       .map((session) => session.code)

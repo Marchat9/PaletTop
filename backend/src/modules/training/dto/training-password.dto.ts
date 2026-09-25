@@ -1,7 +1,7 @@
 import { IsNotEmpty, IsString } from 'class-validator';
 
-// DTO réutilisé pour tous les endpoints admin qui n'ont besoin que de vérifier le mot de passe
-// (retrait de membre, dissolution d'équipe, clôture de session, etc.).
+// DTO reused by every admin endpoint that only needs to check the password (remove a member,
+// dissolve a team, close a session, and so on).
 export class TrainingPasswordDto {
     @IsString()
     @IsNotEmpty()

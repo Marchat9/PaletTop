@@ -9,9 +9,9 @@ export interface NavMenuPopupData {
 }
 
 /**
- * Sous-destinations d'une entrée de navigation. Même composant dans les deux formats :
- * feuille remontant du bas sur mobile, menu ancré sous le lien sur desktop — seule la
- * stratégie de positionnement change à l'ouverture.
+ * Sub-destinations of a navigation entry. Same component in both formats: sheet coming up from the
+ * bottom on mobile, menu anchored under the link on desktop - only the positioning strategy changes
+ * when opening.
  */
 @Component({
   selector: 'app-nav-menu-popup',

@@ -18,7 +18,7 @@ import { TrainingTeamCreation } from '../../admin-training-session-page.models';
 })
 export class SessionTeams {
   public readonly teams = input<TrainingTeamDto[]>([]);
-  /** Participants présents et libres — un joueur ne peut être que dans une seule équipe fixe. */
+  /** Participants present and free - a player can only be in a single fixed team. */
   public readonly availableParticipants = input<TrainingParticipantAdminDto[]>([]);
   public readonly isSessionOpen = input<boolean>(false);
   public readonly createLoading = input<boolean>(false);

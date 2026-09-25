@@ -37,7 +37,7 @@ export class TrainingParticipantViewService {
                 this.hasParticipant(m.teamA, participant.id) ||
                 (m.teamB && this.hasParticipant(m.teamB, participant.id)),
         );
-        // Inscrit après la génération du round : il n'y figure pas encore et entrera au suivant.
+        // Checked in after the round was generated: not in it yet, will join the next one.
         if (!match) {
             return {
                 participant: identity,
@@ -47,8 +47,8 @@ export class TrainingParticipantViewService {
             };
         }
 
-        // Un match sans adversaire est un repos, que le participant y soit seul (surnuméraire)
-        // ou avec son équipe (nombre impair d'équipes) : `sitOut` couvre les deux cas.
+        // A match without an opponent is a rest, whether the participant is alone in it (extra
+        // player) or with their team (odd number of teams): `sitOut` covers both cases.
         return {
             participant: identity,
             match: toTrainingMatchDto(match),

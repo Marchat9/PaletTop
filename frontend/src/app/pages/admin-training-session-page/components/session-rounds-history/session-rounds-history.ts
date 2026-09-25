@@ -12,7 +12,7 @@ import { RoundMatches } from '../round-matches/round-matches';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SessionRoundsHistory {
-  /** Rounds précédents, du plus récent au plus ancien. */
+  /** Previous rounds, most recent first. */
   public readonly rounds = input<TrainingRoundDto[]>([]);
   public readonly pointsPerGame = input<number>(13);
 }

@@ -54,10 +54,10 @@
 }
 
 // ###################################
-// Coque commune des popups
+// Common popup shell
 //
-// `dialog-panel*` dimensionne l'overlay ; ces classes habillent la boîte elle-même. Chaque
-// popup les portait à l'identique dans son propre style : elles vivent ici une seule fois.
+// `dialog-panel*` sizes the overlay; these classes dress the box itself. Every popup carried them
+// identically in its own style: they live here once and for all.
 .popup-surface {
   display: flex;
   flex-direction: column;
@@ -72,8 +72,8 @@
   }
 }
 
-// Champs de saisie d'une popup : même libellé, même aide, même bloc d'erreur d'une popup à
-// l'autre. Bornés à `.popup-surface` pour ne pas déborder sur le reste de l'application.
+// Popup input fields: same label, same hint, same error block from one popup to the next. Scoped
+// to `.popup-surface` so they do not leak into the rest of the application.
 .popup-surface {
   .field-group {
     display: flex;

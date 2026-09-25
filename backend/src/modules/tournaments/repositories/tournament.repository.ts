@@ -52,8 +52,9 @@ export class TournamentRepository {
     }
 
     /**
-     * Charge un tournoi après vérification du mot de passe admin.
-     * Retourne null si le tournoi est introuvable ou si le mot de passe est incorrect.
+     * Loads a tournament once the admin password has been checked.
+     *
+     * Returns null when the tournament is unknown or the password is wrong.
      */
     async findWithAuth(
         where: { code?: string; id?: string },

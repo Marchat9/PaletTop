@@ -34,15 +34,15 @@ import { TrainingScoreUpdate } from '../../admin-training-session-page.models';
 export class RoundMatches {
   public readonly round = input.required<TrainingRoundDto>();
   public readonly pointsPerGame = input<number>(13);
-  /** Seule une séance ouverte autorise la correction de score. */
+  /** Only an open session allows a score correction. */
   public readonly editable = input<boolean>(true);
   public readonly scoreLoading = input<boolean>(false);
 
   public readonly updateScore = output<TrainingScoreUpdate>();
 
   /**
-   * « En validation » attend encore une action de la part des joueurs : il porte donc le ton
-   * d'un brouillon, pas celui d'un match abouti.
+   * "Awaiting validation" is still waiting for an action from the players: it carries the tone of a
+   * draft, not that of a finished match.
    */
   protected statusTone(status: TrainingMatchStatus): StatusPillTone {
     switch (status) {
@@ -61,8 +61,8 @@ export class RoundMatches {
   protected readonly draftScoreA = signal(0);
   protected readonly draftScoreB = signal(0);
 
-  // Les exemptés n'occupent pas de planche : on numérote sans eux, sinon les numéros
-  // sauteraient dès qu'un joueur est au repos au milieu du round.
+  // Exempt teams take no board: they are left out of the numbering, otherwise the numbers would
+  // jump as soon as a player rests in the middle of the round.
   protected readonly matchRows = computed(() => {
     let plateNumber = 0;
     return this.round().matches.map((match) => ({

@@ -50,7 +50,7 @@ function input(overrides: Partial<GenerateRoundInput> = {}): GenerateRoundInput 
     };
 }
 
-// Random déterministe (pas de mélange) pour des assertions reproductibles sur l'ordre.
+// Deterministic random (no shuffle) for reproducible assertions on ordering.
 const NO_SHUFFLE = () => 0;
 
 describe('DefaultMatchmakingStrategy', () => {
@@ -74,7 +74,7 @@ describe('DefaultMatchmakingStrategy', () => {
             }),
         );
 
-        // p4, p5 et p6 ne se sont jamais reposés : c'est leur tour, et p1/p2 rejouent.
+        // p4, p5 and p6 have never rested: it is their turn, and p1/p2 play again.
         const resting = restingParticipants(plan);
         expect(resting).toHaveLength(2);
         expect(resting).not.toContain('p1');
@@ -157,7 +157,8 @@ describe('DefaultMatchmakingStrategy', () => {
             }),
         );
 
-        // Moitié haute p1-p4, moitié basse p5-p8 : le meilleur joue avec le meilleur des moins bons.
+        // Top half p1-p4, bottom half p5-p8: the best player plays with the best of the weaker
+        // ones.
         const teams = plan.ephemeralTeams.map((t) => t.participantIds.sort().join('+')).sort();
         expect(teams).toEqual(['p1+p5', 'p2+p6', 'p3+p7', 'p4+p8']);
     });
@@ -197,7 +198,7 @@ describe('DefaultMatchmakingStrategy', () => {
             input({
                 soloParticipantIds: solos(8),
                 config: baseConfig({ teamComposition: TrainingTeamComposition.LEARNING }),
-                // p8 est un invité : aucun match joué, donc aucun niveau.
+                // p8 is a guest: no match played, so no level.
                 levelByParticipant: { p1: 80, p2: 70, p3: 60, p4: 50, p5: 40, p6: 30, p7: 20 },
             }),
         );
@@ -237,8 +238,8 @@ describe('DefaultMatchmakingStrategy', () => {
             }),
         );
 
-        // 1 équipe fixe + 2 éphémères feraient 3 équipes : on n'en forme qu'une, et deux joueurs
-        // se reposent, plutôt que de laisser une équipe sans adversaire.
+        // 1 fixed team + 2 ephemeral ones would make 3 teams: only one is built and two players
+        // rest, rather than leaving a team without an opponent.
         expect(plan.matches.filter((m) => m.opponentRef !== null)).toHaveLength(1);
         expect(restingParticipants(plan)).toHaveLength(2);
     });
@@ -251,8 +252,8 @@ describe('DefaultMatchmakingStrategy', () => {
         expect(restingParticipants(plan).sort()).toEqual(solos(3));
     });
 
-    // Deux joueurs ne peuvent pas former un 2v2 : une équipe seule n'a pas d'adversaire. Avec la
-    // taille 1 autorisée, ils jouent l'un contre l'autre plutôt que de rester assis.
+    // Two players cannot make a 2v2: a lone team has no opponent. With size 1 allowed they play
+    // each other instead of sitting down.
     it('fait jouer deux joueurs en 1v1 quand la taille 1 est autorisée', () => {
         const strategy = new DefaultMatchmakingStrategy(NO_SHUFFLE);
         const plan = strategy.generateRound(

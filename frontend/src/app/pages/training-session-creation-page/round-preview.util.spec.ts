@@ -11,8 +11,8 @@ function settings(overrides: Partial<RoundPreviewSettings> = {}): RoundPreviewSe
   };
 }
 
-// Mêmes cas que `team-decomposition.spec.ts` côté serveur : les deux implémentations doivent
-// répondre la même chose, sans quoi l'aperçu mentirait sur ce qui va être généré.
+// Same cases as `team-decomposition.spec.ts` on the server: both implementations must answer the
+// same thing, otherwise the preview would lie about what is going to be generated.
 describe('previewRound', () => {
   it("forme des équipes à la taille visée quand l'effectif tombe juste", () => {
     expect(previewRound(8, settings())).toEqual({

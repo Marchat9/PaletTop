@@ -56,8 +56,8 @@
     }
   }
 
-  // Le code que l'administrateur dicte à la salle : lisible de loin, et distinct du code
-  // personnel que chaque participant garde pour lui.
+  // The code the admin reads out to the room: legible from afar, and distinct from the personal
+  // code each participant keeps to themselves.
   .session-code {
     display: inline-flex;
     align-items: center;
@@ -82,8 +82,8 @@
       font-size: 1.5rem;
       line-height: 1;
       letter-spacing: 0.18em;
-      // L'interlettrage ajoute un blanc après le dernier chiffre : on le reprend pour que
-      // le code reste optiquement centré dans sa pastille.
+      // Letter spacing adds a blank after the last digit: it is taken back so that the code stays
+      // optically centred in its pill.
       margin-right: -0.18em;
       color: var(--color-primary);
       font-variant-numeric: tabular-nums;

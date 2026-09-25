@@ -495,7 +495,7 @@ export class TrainingEffects {
         this.trainingService
           .adminUpdateScore(sessionCode, matchId, adminInfo?.password ?? '', scoreA, scoreB)
           .pipe(
-            // Un score corrigé change le classement : on le recharge dans la foulée.
+            // A corrected score changes the leaderboard: it is reloaded right after.
             switchMap((match) =>
               of(
                 adminUpdateTrainingScoreSuccess({ match }),

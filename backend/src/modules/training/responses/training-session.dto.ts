@@ -105,9 +105,9 @@ function baseSessionFields(session: TrainingSession): TrainingSessionFieldsDto {
     };
 }
 
-// Une équipe FIXED entièrement dissoute n'a plus aucun membre actif : on ne l'affiche plus dans
-// la liste des équipes de la session (elle reste en base uniquement comme ancrage historique
-// pour les matchs déjà joués).
+// A FIXED team that has been fully dissolved has no active member left: it is no longer listed
+// among the session teams (it stays in the database only as a historical anchor for the matches
+// already played).
 function activeTeams(session: TrainingSession): TrainingTeam[] {
     return (session.teams ?? []).filter((team) => team.members?.some(isActiveMember));
 }

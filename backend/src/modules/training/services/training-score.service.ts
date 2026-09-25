@@ -40,7 +40,7 @@ export class TrainingScoreService {
 
         match.status = MatchStatus.ONGOING;
         match.startedAt = new Date();
-        // Écritures indépendantes (match vs session) : pas de raison de les sérialiser.
+        // Independent writes (match vs session): no reason to serialize them.
         const [[saved]] = await Promise.all([
             this.trainingMatchRepo.save([match]),
             this.trainingSessionRepo.touchLastActivity(session.id),
@@ -76,9 +76,9 @@ export class TrainingScoreService {
         match.scoreB = scoreB;
         match.status = isFinished ? MatchStatus.ENDED : MatchStatus.ONGOING;
         match.finishedAt = isFinished ? new Date() : null;
-        // Un joueur peut renseigner un score sans être passé par startMatch au préalable (rien ne
-        // l'impose côté produit) : startedAt doit malgré tout être posé dès que le match quitte
-        // PENDING, sinon un match ONGOING/ENDED se retrouve avec une date de début à null.
+        // A player can enter a score without having gone through startMatch first (nothing forces
+        // it product-wise): startedAt must still be set as soon as the match leaves PENDING,
+        // otherwise an ONGOING/ENDED match ends up with a null start date.
         if (!match.startedAt) {
             match.startedAt = new Date();
         }
@@ -147,9 +147,9 @@ export class TrainingScoreService {
         match.scoreB = scoreB;
         match.status = this.nextStatusForAdminEdit(isFinished);
         match.finishedAt = isFinished ? (match.finishedAt ?? new Date()) : null;
-        // Une correction admin peut démarrer ou valider directement un match encore PENDING
-        // (jamais démarré par un joueur) : startedAt doit malgré tout être posé, sinon un match
-        // ONGOING/VALIDATED se retrouve avec une date de début à null pour toujours.
+        // An admin correction can start or validate a match that is still PENDING (never started by
+        // a player): startedAt must still be set, otherwise an ONGOING/VALIDATED match keeps a null
+        // start date for ever.
         if (!match.startedAt) {
             match.startedAt = isFinished ? match.finishedAt : new Date();
         }
@@ -169,8 +169,8 @@ export class TrainingScoreService {
         const dto = toTrainingMatchDto(match);
         this.trainingRealtimeGateway.emitMatchUpdated(sessionCode, dto);
         if (match.status === MatchStatus.VALIDATED) {
-            // sessionId réutilisé depuis la session déjà chargée par l'appelant : pas besoin de la
-            // re-résoudre par code rien que pour son id (cf. revue de code).
+            // sessionId reused from the session already loaded by the caller: no need to resolve it
+            // by code just for its id.
             const leaderboard =
                 await this.trainingLeaderboardService.getLeaderboardBySessionId(sessionId);
             this.trainingRealtimeGateway.emitLeaderboardUpdated(sessionCode, leaderboard);
@@ -178,11 +178,11 @@ export class TrainingScoreService {
         return dto;
     }
 
-    // Correction admin d'un score : un score qui atteint pointsPerGame valide directement le
-    // match (quel que soit son statut précédent, y compris PENDING jamais démarré par un joueur).
-    // Sinon le match est/reste ONGOING : un match PENDING passe en cours (l'admin vient de lui
-    // donner un score, un joueur ne doit plus pouvoir le "démarrer" par-dessus), et un match déjà
-    // ENDED/VALIDATED est rouvert (l'admin vient de le "dé-finir").
+    // Admin correction of a score: a score that reaches pointsPerGame validates the match directly
+    // (whatever its previous status, including PENDING never started by a player). Otherwise the
+    // match is or stays ONGOING: a PENDING match becomes ongoing (the admin has just given it a
+    // score, a player must no longer be able to "start" it on top of that), and a match already
+    // ENDED/VALIDATED is reopened.
     private nextStatusForAdminEdit(isFinished: boolean): MatchStatus {
         return isFinished ? MatchStatus.VALIDATED : MatchStatus.ONGOING;
     }
@@ -221,8 +221,8 @@ export class TrainingScoreService {
             throw new NotFoundException('Match introuvable.');
         }
 
-        // Pas de filtre sur leftAt (cf. décision produit) : un participant dissous d'une équipe
-        // fixe après avoir joué ce match précis doit pouvoir continuer à interagir avec lui.
+        // No filter on leftAt (product decision): a participant detached from a fixed team after
+        // playing this very match must still be able to interact with it.
         const isOnTeamA = this.hasParticipantCode(match.teamA, participantCode);
         const isOnTeamB = match.teamB
             ? this.hasParticipantCode(match.teamB, participantCode)

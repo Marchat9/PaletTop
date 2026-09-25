@@ -7,9 +7,9 @@ import { environment } from 'src/environments/environment';
 @Injectable({ providedIn: 'root' })
 export class WebSocketService implements OnDestroy {
   private socket: Nullable<Socket> = null;
-  // Contexte, code et rôle : tournoi et entraînement ont des codes indépendants, et le serveur
-  // ne place pas dans la même room un administrateur et un joueur. Passer de l'un à l'autre doit
-  // donc rouvrir le socket, même sur le même code.
+  // Context, code and role: tournament and training have independent codes, and the server does not
+  // put an admin and a player in the same room. Switching from one to the other must therefore
+  // reopen the socket, even on the same code.
   private currentKey: Nullable<string> = null;
 
   private readonly reconnected = new Subject<void>();
@@ -30,8 +30,8 @@ export class WebSocketService implements OnDestroy {
   }
 
   /**
-   * Rejoint la room d'une séance d'entraînement. Avec un mot de passe, le serveur place le
-   * socket dans la room admin, dont les mises à jour de séance portent les codes participants.
+   * Joins the room of a training session. With a password, the server puts the socket in the admin
+   * room, whose session updates carry the participant codes.
    */
   connectTrainingSession(sessionCode: string, password?: string): void {
     this.open(

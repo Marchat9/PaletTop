@@ -14,11 +14,11 @@ import { Icon } from 'src/app/shared/icon/icon';
 export class SessionActions {
   public readonly isSessionOpen = input<boolean>(false);
   public readonly canGenerateRound = input<boolean>(false);
-  /** Pourquoi le round suivant est indisponible — affiché sous la barre plutôt que masqué. */
+  /** Why the next round is unavailable - shown under the bar rather than hidden. */
   public readonly generateBlockedReason = input<Nullable<string>>(null);
-  /** Le blocage demande une action de l’administrateur, pas seulement d’attendre. */
+  /** The block calls for an action from the admin, not just for waiting. */
   public readonly generateBlockedIsAlert = input<boolean>(false);
-  /** Ce que donnerait le prochain round, tant qu'il n'est pas bloqué. */
+  /** What the next round would give, as long as it is not blocked. */
   public readonly nextRoundPreview = input<Nullable<string>>(null);
   public readonly generateLoading = input<boolean>(false);
   public readonly closeLoading = input<boolean>(false);

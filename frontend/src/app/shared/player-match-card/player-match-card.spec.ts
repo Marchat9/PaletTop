@@ -33,7 +33,7 @@ function element(fixture: ComponentFixture<PlayerMatchCard>): HTMLElement {
   return fixture.nativeElement as HTMLElement;
 }
 
-/** Le « + » du premier `app-score-number` de la carte, c'est-à-dire mon score. */
+/** The "+" of the first `app-score-number` of the card, that is, my score. */
 function incrementMyScore(fixture: ComponentFixture<PlayerMatchCard>): void {
   element(fixture).querySelector<HTMLElement>('#my-score .increment-button')!.click();
   fixture.detectChanges();

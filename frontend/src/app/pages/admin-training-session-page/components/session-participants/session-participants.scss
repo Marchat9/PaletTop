@@ -50,8 +50,8 @@
   .person {
     display: flex;
     align-items: center;
-    // Le nom rétrécit en premier ; si la place manque vraiment, le code et le bouton
-    // passent à la ligne plutôt que de déborder.
+    // The name shrinks first; if room really runs out, the code and the button wrap rather than
+    // overflow.
     flex-wrap: wrap;
     gap: 0.5rem 1rem;
     padding: 0.55rem 0.7rem;

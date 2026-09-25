@@ -51,8 +51,8 @@
       font-size: 1.65rem;
     }
 
-    // Contenu projeté dans la carte quand il n'y a pas de match : la boîte est à elle, ce
-    // qu'on y met reste à nous.
+    // Content projected into the card when there is no match: the box is the card's, what we put in
+    // it stays ours.
     p {
       margin: 0;
     }
@@ -62,7 +62,8 @@
       opacity: 0.5;
     }
 
-    // Fin de tournoi : la carte prend le ton festif (emptyTone), à nous de fêter le classement.
+    // End of tournament: the card takes the festive tone (emptyTone), celebrating the ranking is up
+    // to us.
     .finish-icon {
       display: flex;
       align-items: center;

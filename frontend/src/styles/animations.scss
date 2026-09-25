@@ -1,11 +1,11 @@
-// Animations partagées, pilotées par les directives `appStagger` et `appAnimateOnChange`.
-// Elles vivent ici parce qu'une directive n'a pas de feuille de style propre : les keyframes
-// et les classes doivent être globales pour qu'elle puisse simplement les poser sur son hôte.
+// Shared animations, driven by the `appStagger` and `appAnimateOnChange` directives.
+// They live here because a directive has no stylesheet of its own: the keyframes and the classes
+// have to be global so that it can simply set them on its host.
 
 // ---------------------------------------------------------------------------
-// Apparition en cascade — `appStagger`
-// Les délais sont portés par nth-child plutôt que calculés en TS : la directive
-// n'a ainsi qu'une classe à poser sur le conteneur, sans toucher aux enfants.
+// Cascading appearance - `appStagger`
+// The delays are carried by nth-child rather than computed in TS: the directive then
+// only has one class to set on the container, without touching the children.
 // ---------------------------------------------------------------------------
 @keyframes palettop-stagger-in {
   from {
@@ -28,17 +28,17 @@
   }
 }
 
-// Au-delà de douze éléments, on cesse de décaler : la cascade deviendrait une attente.
+// Past twelve items the offset stops: the cascade would turn into a wait.
 .stagger > *:nth-child(n + 13) {
   animation-delay: 540ms;
 }
 
 // ---------------------------------------------------------------------------
-// Rejeu sur changement de valeur — `appAnimateOnChange`
+// Replay on value change - `appAnimateOnChange`
 // ---------------------------------------------------------------------------
 
-// Anneau qui s'écarte puis s'efface : lisible sur n'importe quel fond, contrairement
-// à un flash de background qui écraserait celui du composant hôte.
+// Ring that expands then fades away: legible on any background, unlike a background
+// flash that would override the one of the host component.
 @keyframes palettop-pulse {
   0% {
     box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-primary) 65%, transparent);
@@ -86,8 +86,8 @@
 }
 
 // ---------------------------------------------------------------------------
-// Accessibilité : on neutralise durée ET délai, sinon un élément en `both` resterait
-// invisible le temps de son délai avant d'apparaître d'un coup.
+// Accessibility: duration AND delay are neutralized, otherwise an element in `both` would
+// stay invisible for the length of its delay before appearing all at once.
 // ---------------------------------------------------------------------------
 @media (prefers-reduced-motion: reduce) {
   .stagger > *,

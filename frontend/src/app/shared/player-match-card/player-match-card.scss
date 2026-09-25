@@ -2,9 +2,8 @@
   display: block;
 }
 
-// La carte et la boîte « pas de match » partagent la même surface : même hauteur, même
-// respiration, même liseré. Seul leur contenu diffère, donc seules leurs différences sont
-// redéclarées plus bas.
+// The card and the "no match" box share the same surface: same height, same padding, same rule.
+// Only their content differs, so only their differences are redeclared below.
 .match-card,
 .match-card-empty {
   display: flex;
@@ -38,7 +37,7 @@
     border-left-color: var(--color-tertiary);
   }
 
-  // Deux lignes de texte n'ont pas besoin de la hauteur d'un tableau de score.
+  // Two lines of text do not need the height of a score table.
   &--bye {
     --card-min-height: 180px;
 
@@ -92,7 +91,7 @@
   }
 }
 
-// Deux fins de match possibles, un seul traitement : score validé, ou repos crédité.
+// Two possible endings for a match, one single treatment: validated score, or credited rest.
 .match-card__validated,
 .bye-result {
   display: flex;
@@ -108,7 +107,7 @@
   }
 }
 
-// Surtitres : même graisse, même casse, même couleur d'un bout à l'autre de la carte.
+// Overlines: same weight, same case, same colour from one end of the card to the other.
 .team-block__you,
 .plate-label,
 .bye-subtitle {
@@ -145,7 +144,7 @@
   letter-spacing: 0.1em;
 }
 
-// Une seule mise en forme, la couleur du statut passant par une variable.
+// One single layout, the status colour coming through a variable.
 .status-badge {
   padding: 0.2rem 0.55rem;
   border-radius: 999px;
@@ -247,16 +246,16 @@
   font-style: italic;
 }
 
-// Les paragraphes de la carte sont tous des lignes d'explication : pas de marge propre,
-// couleur secondaire. `.error-hint` recolore, la marge reste annulée ici.
+// The paragraphs of the card are all explanation lines: no margin of their own, secondary colour.
+// `.error-hint` recolours, the margin stays cancelled here.
 p {
   margin: 0;
   color: var(--color-on-surface-variant);
 }
 
-// Boîte affichée sans match. Elle appartient à la carte, qui la rend et l'habille ; la page
-// n'y projette que du contenu, dont la mise en forme lui revient — la couleur et la taille de
-// texte, elles, s'héritent d'ici.
+// Box shown when there is no match. It belongs to the card, which renders and dresses it; the page
+// only projects content into it, whose layout is the page's business - colour and text size are
+// inherited from here.
 .match-card-empty {
   --card-min-height: 180px;
 
@@ -267,7 +266,7 @@ p {
   font-size: 0.9rem;
   text-align: center;
 
-  // Fin d'épreuve : on marque le coup plutôt que d'afficher une boîte vide de plus.
+  // End of event: the moment is marked rather than showing one more empty box.
   &--celebration {
     border-left-color: var(--color-primary);
     background: linear-gradient(

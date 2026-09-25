@@ -43,7 +43,7 @@ import {
 import { describeRoundPreview } from './round-preview.util';
 import { InputDate } from 'src/app/shared/input-date/input-date';
 
-/** Même borne que le serveur : au-delà, une « équipe » n'en est plus une. */
+/** Same bound as the server: beyond it, a "team" is no longer a team. */
 const MAX_PLAYERS_PER_TEAM = 6;
 
 @Component({
@@ -82,7 +82,7 @@ export class TrainingSessionCreationPage implements OnInit {
   public readonly minDate = new Date();
   public readonly date = signal(this.toInputDate(this.minDate));
   public readonly playersPerTeam = signal(2);
-  public readonly allowedTeamSizes = signal<number[]>([1,3]);
+  public readonly allowedTeamSizes = signal<number[]>([1, 3]);
   public readonly preferTargetTeamSize = signal(false);
   public readonly plateCount = signal(10);
   public readonly teamComposition = signal<TrainingTeamComposition>('RANDOM');
@@ -91,22 +91,22 @@ export class TrainingSessionCreationPage implements OnInit {
   public readonly avoidSameOpponentConsecutive = signal(true);
   public readonly settingsReused = signal(false);
   private readonly hasSubmitted = signal(false);
-  // Codes connus au moment de l'envoi : la séance créée est celle qui n'y figure pas.
+  // Codes known at the time of submitting: the created session is the one that is not in that list.
   private readonly knownSessionCodes = signal<ReadonlySet<string>>(new Set());
 
-  // Gardes de chargement : des champs simples, volontairement hors signaux, pour qu'un effect
-  // ne puisse pas se redéclencher sur la réponse de son propre appel.
+  // Loading guards: plain fields, deliberately outside signals, so that an effect cannot re-trigger
+  // itself on the response of its own call.
   private sessionsRequestedFor: string | null = null;
   private previousSessionRequestedFor: string | null = null;
 
   private readonly adminPassword = computed(() => this.adminSession()?.password ?? null);
 
-  /** La séance la plus récente : les listes arrivent de la plus ancienne à la plus récente. */
+  /** The most recent session: lists arrive from the oldest to the most recent. */
   public readonly previousSession = computed(() => this.sessions().at(-1) ?? null);
 
   /**
-   * Les réglages ne sont pas dans le résumé des séances : on charge le détail de la dernière
-   * à l'arrivée sur la page, pour que le bouton de reprise soit immédiatement utilisable.
+   * Settings are not in the session summary: the detail of the last one is loaded when arriving on
+   * the page, so that the carry-over button is usable right away.
    */
   public readonly previousSettings = computed<TrainingSessionAdminDto | null>(() => {
     const previous = this.previousSession();
@@ -125,7 +125,7 @@ export class TrainingSessionCreationPage implements OnInit {
       this.pointsPerGame() > 0,
   );
 
-  /** Six tailles possibles ; celle visée est cochée d'office et ne se décoche pas. */
+  /** Six possible sizes; the target one is checked from the start and cannot be unchecked. */
   public readonly teamSizeOptions = computed<InputChipOption[]>(() =>
     Array.from({ length: MAX_PLAYERS_PER_TEAM }, (_, index) => index + 1).map((size) => ({
       value: size,
@@ -144,7 +144,8 @@ export class TrainingSessionCreationPage implements OnInit {
     {
       value: false,
       label: 'Le plus de monde joue',
-      description: "Les tailles s'ajustent pour faire jouer tout le monde en utilisant la configuration tailles de repli.",
+      description:
+        "Les tailles s'ajustent pour faire jouer tout le monde en utilisant la configuration tailles de repli.",
     },
   ];
 
@@ -157,16 +158,17 @@ export class TrainingSessionCreationPage implements OnInit {
     {
       value: 'LEARNING',
       label: 'Apprentissage',
-      description: "Les joueurs forts sont associés a des joueurs plus faibles pour leurs donner des conseils.",
+      description:
+        'Les joueurs forts sont associés a des joueurs plus faibles pour leurs donner des conseils.',
     },
   ];
 
-  /** La composition par niveau n'a aucun sens pour des équipes d'un seul joueur. */
+  /** Composition by level makes no sense for teams of a single player. */
   public readonly showComposition = computed(() => this.playersPerTeam() > 1);
 
   /**
-   * Aucun participant n'est encore inscrit à ce stade : l'aperçu se fonde sur le roster du
-   * groupe. C'est une illustration des réglages, pas une prédiction de la séance.
+   * No participant is checked in at this stage: the preview is based on the roster of the group. It
+   * illustrates the settings, it does not predict the session.
    */
   public readonly rosterPreview = computed(() => {
     const members = this.training()?.members?.length ?? 0;
@@ -187,7 +189,8 @@ export class TrainingSessionCreationPage implements OnInit {
   });
 
   constructor() {
-    // Le mot de passe vient du store (restauré du localStorage) : sans lui, retour à la connexion.
+    // The password comes from the store (restored from localStorage): without it, back to the login
+    // page.
     effect(() => {
       const trainingCode = this.trainingCode();
       const password = this.adminPassword();
@@ -204,11 +207,11 @@ export class TrainingSessionCreationPage implements OnInit {
       }
     });
 
-    // Liste des séances, puis détail de la dernière : de quoi alimenter la reprise des réglages.
+    // Session list, then detail of the last one: enough to feed the carry-over of the settings.
     //
-    // `sessions()` est lu sans être suivi, et la garde retient le code déjà demandé : sans ça
-    // l'effect se redéclencherait sur sa propre réponse — une liste vide revient avec un nouveau
-    // tableau à chaque fois, donc la condition resterait vraie indéfiniment.
+    // `sessions()` is read untracked and the guard holds the code already requested: without that
+    // the effect would re-trigger itself on its own response - an empty list comes back as a new
+    // array every time, so the condition would stay true for ever.
     effect(() => {
       const trainingCode = this.training()?.code;
       if (!trainingCode || this.sessionsRequestedFor === trainingCode) {
@@ -233,7 +236,7 @@ export class TrainingSessionCreationPage implements OnInit {
       }
     });
 
-    // Une fois la séance créée, on enchaîne directement sur son pilotage.
+    // Once the session is created, go straight to running it.
     effect(() => {
       const created = this.loadedSession();
       const trainingCode = this.trainingCode();
@@ -257,7 +260,7 @@ export class TrainingSessionCreationPage implements OnInit {
     });
   }
 
-  // ========= Formulaire =========
+  // ========= Form =========
 
   public onDateChange(value: Date): void {
     this.date.set(this.toInputDate(value));
@@ -315,8 +318,8 @@ export class TrainingSessionCreationPage implements OnInit {
     this.router.navigate(['/admin/training']);
   }
 
-  // Construit la date en heure locale : `toISOString` bascule en UTC et afficherait
-  // la veille pour toute séance créée en soirée depuis la France.
+  // Builds the date in local time: `toISOString` switches to UTC and would show the day before for
+  // any session created in the evening from France.
   private toInputDate(date: Date): string {
     const year = date.getFullYear();
     const month = `${date.getMonth() + 1}`.padStart(2, '0');

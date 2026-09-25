@@ -10,7 +10,7 @@ interface PlayerMatchResultRow extends PlayerMatchResult {
   outcomeLabel: string;
 }
 
-/** Historique des matchs du joueur sur le tournoi ou la séance. */
+/** History of the player's matches on the tournament or on the session. */
 @Component({
   selector: 'app-player-match-history',
   imports: [MatchStatusComponent],
@@ -33,7 +33,7 @@ export class PlayerMatchHistory {
         ...result,
         isFinished,
         isOngoing: result.status === 'ONGOING',
-        // Un match validé reste « terminé » pour le joueur : la nuance ne l'intéresse pas.
+        // A validated match stays "finished" for the player: the nuance is of no interest to them.
         statusLabel: result.status === 'VALIDATED' ? 'ENDED' : result.status,
         outcomeClass,
         outcomeLabel: this.outcomeLabels[outcomeClass] ?? '',

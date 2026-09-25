@@ -61,8 +61,8 @@ describe('TrainingSessionsService.checkin', () => {
 
         const result = await service.checkin('1234', { password: 'pwd', memberId: MEMBER.id });
 
-        // Une nouvelle ligne détacherait ses résultats déjà joués : classement et historique
-        // sont rattachés à l'identifiant du participant.
+        // A new row would detach the results already played: leaderboard and history hang on the
+        // participant id.
         expect(participantRepo.create).not.toHaveBeenCalled();
         expect(result.participants).toHaveLength(1);
         expect(result.participants[0]).toMatchObject({

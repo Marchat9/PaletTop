@@ -15,8 +15,8 @@
     padding: 1rem;
   }
 
-  // La marque cède la place en premier : c'est elle qui rétrécit quand la barre est serrée,
-  // jamais les liens de navigation.
+  // The brand gives way first: it is the one that shrinks when the bar is tight, never the
+  // navigation links.
   .brand {
     display: flex;
     align-items: center;
@@ -38,9 +38,9 @@
     font-size: 1.2rem;
     line-height: 1;
     white-space: nowrap;
-    // Filet contre la superposition : sans bornage, le nom déborde de la marque rétrécie et
-    // se peint par-dessus les liens. Il se tronque désormais dans sa propre boîte. Sans effet
-    // visible tant que la place suffit.
+    // Net against overlap: without a bound the name overflows the shrunken brand and paints itself
+    // over the links. It now truncates inside its own box. No visible effect as long as there is
+    // room.
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -76,13 +76,13 @@
     }
   }
 
-  // Même apparence que l'entrée soit un lien direct ou un bouton ouvrant un sous-menu.
+  // Same look whether the entry is a direct link or a button opening a sub-menu.
   .link {
     text-decoration: none;
     text-transform: uppercase;
     letter-spacing: 0.15em;
     font-size: 0.7rem;
-    // Un libellé qui se coupe en deux lignes ferait grandir toute la barre.
+    // A label wrapping onto two lines would grow the whole bar.
     white-space: nowrap;
     color: var(--color-on-surface);
     opacity: 0.75;

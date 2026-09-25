@@ -19,8 +19,8 @@ export enum TrainingParticipantStatus {
 }
 
 export enum TrainingTeamComposition {
-    /** Équipes tirées au sort à chaque round. */
+    /** Teams drawn at random every round. */
     RANDOM = 'RANDOM',
-    /** Chaque joueur est associé à un partenaire d'un niveau voisin du sien. */
+    /** Every player gets a partner of a nearby level. */
     LEARNING = 'LEARNING',
 }

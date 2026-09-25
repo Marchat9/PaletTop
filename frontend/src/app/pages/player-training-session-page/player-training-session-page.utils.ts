@@ -2,7 +2,7 @@ import { PlayerMatchResult, PlayerMatchView } from 'src/app/models/player-match-
 import { Nullable } from 'src/app/models/nullable.model';
 import { TrainingMatchDto, TrainingTeamDto } from 'src/app/store/training/training.models';
 
-/** Une équipe éphémère n'a pas de nom : on la désigne par ses joueurs. */
+/** An ephemeral team has no name: it is designated by its players. */
 export function teamLabel(team: Nullable<TrainingTeamDto>): string {
   if (!team) {
     return '—';
@@ -14,7 +14,7 @@ export function isInTeam(team: Nullable<TrainingTeamDto>, participantId: string)
   return (team?.members ?? []).some((member) => member.id === participantId);
 }
 
-/** L'équipe du participant sur ce match, pour en lister les coéquipiers. */
+/** The team of the participant in this match, to list their team-mates. */
 export function myTeam(
   match: Nullable<TrainingMatchDto>,
   participantId: string,
@@ -29,9 +29,8 @@ export function myTeam(
 }
 
 /**
- * Projette le match d'entraînement vers la vue partagée. Le camp du participant se déduit de
- * son appartenance à l'une des deux équipes — il n'y a pas d'identifiant d'équipe stable d'un
- * round à l'autre.
+ * Projects the training match into the shared view. The side of the participant is deduced from
+ * their belonging to one of the two teams - there is no stable team id from one round to the next.
  */
 export function toPlayerMatchView(
   match: TrainingMatchDto,
@@ -56,8 +55,8 @@ export function toPlayerMatchView(
 }
 
 /**
- * L'historique arrive en matchs bruts : on le replie du point de vue du participant. Les rounds
- * passés au repos y figurent, sans score.
+ * History arrives as raw matches: it is folded back to the participant's point of view. Rounds
+ * spent resting appear in it, without a score.
  */
 export function historyToResults(
   history: TrainingMatchDto[],

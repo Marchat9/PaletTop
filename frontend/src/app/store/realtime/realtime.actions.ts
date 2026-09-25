@@ -36,12 +36,12 @@ export const wsRankingUpdated = createAction(
   props<{ ranking: GlobalRankingEntry[] }>(),
 );
 
-// --------------------------- Entraînement ---------------------------
-// Flux distinct de celui du tournoi : les deux gateways partagent des noms d'événements
-// (`session:updated`, `match:updated`) avec des payloads différents.
+// --------------------------- Training ---------------------------
+// Stream separate from the tournament one: both gateways share event names
+// (`session:updated`, `match:updated`) with different payloads.
 
-// La room admin diffuse la vue complète, codes participants inclus ; la room publique la même
-// séance sans eux. Les deux sont applicables telles quelles à leur destinataire.
+// The admin room broadcasts the full view, participant codes included; the public room the same
+// session without them. Both are applicable as they are to their own recipient.
 export const wsTrainingSessionUpdated = createAction(
   '[WS] Training Session Updated',
   props<{ session: TrainingSessionAdminDto | TrainingSessionPublicDto }>(),

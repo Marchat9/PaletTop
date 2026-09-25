@@ -2,8 +2,8 @@ import { Transform } from 'class-transformer';
 import { IsNotEmpty, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
 import { trimmed } from 'src/utils/trim.transform';
 
-// Soit memberId (réutilise le roster du Training), soit name (venue en découverte) — validé
-// dans le service, pas ici (au moins un des deux doit être fourni).
+// Either memberId (reuses the Training roster) or name (drop-in player) - checked in the service,
+// not here (at least one of the two must be given).
 export class CheckinParticipantDto {
     @IsString()
     @IsNotEmpty()
@@ -13,8 +13,8 @@ export class CheckinParticipantDto {
     @IsOptional()
     memberId?: string;
 
-    // Un nom d'espaces ne vaut pas un nom : on le ramène à une chaîne vide, que `IsNotEmpty`
-    // rejette ensuite. La borne à 100 est celle de la colonne, sans quoi l'insertion part en 500.
+    // A name made of spaces is not a name: it is reduced to an empty string, which `IsNotEmpty`
+    // then rejects. The 100 bound is the column's, without it the insert ends in a 500.
     @Transform(trimmed)
     @IsString()
     @IsNotEmpty()

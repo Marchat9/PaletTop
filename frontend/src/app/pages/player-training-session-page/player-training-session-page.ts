@@ -77,7 +77,7 @@ export class PlayerTrainingSessionPage implements OnInit, OnDestroy {
   public readonly sessionCode = signal<string | null>(null);
   public readonly participantCode = signal<string | null>(null);
 
-  // Champ simple et non réactif : une garde portée par un signal relancerait l'effect.
+  // Plain non-reactive field: a guard held by a signal would re-run the effect.
   private loadedFor: string | null = null;
 
   // Selects
@@ -97,7 +97,7 @@ export class PlayerTrainingSessionPage implements OnInit, OnDestroy {
   public readonly validateLoading = this.store.selectSignal(selectValidateTrainingMatchLoading);
   public readonly validateError = this.store.selectSignal(selectValidateTrainingMatchError);
 
-  // Identité et état du joueur
+  // Player identity and state
   public readonly me = computed(() => this.currentMatchState()?.participant ?? null);
   public readonly roundNumber = computed(() => this.currentMatchState()?.roundNumber ?? null);
   public readonly isSittingOut = computed(() => this.currentMatchState()?.sitOut ?? false);
@@ -111,7 +111,7 @@ export class PlayerTrainingSessionPage implements OnInit, OnDestroy {
     return match && me ? toPlayerMatchView(match, me.id, this.roundNumber()) : null;
   });
 
-  /** Les autres joueurs de mon équipe ce round : le binôme change à chaque génération. */
+  /** The other players of my team this round: the partner changes at every generation. */
   public readonly partners = computed(() => {
     const me = this.me();
     if (!me) {
@@ -136,9 +136,9 @@ export class PlayerTrainingSessionPage implements OnInit, OnDestroy {
   });
 
   /**
-   * Ceux à qui le joueur peut se comparer : les présents, plus ceux qui sont repartis après
-   * avoir joué. Le classement seul n'y suffit pas, il ignore les présents qui n'ont pas encore
-   * disputé de match.
+   * Those the player can compare themselves to: the ones present, plus those who left after
+   * playing. The leaderboard alone is not enough, it ignores present players who have not played a
+   * match yet.
    */
   private readonly rankedCount = computed(() => {
     const everyone = new Set(
@@ -152,7 +152,7 @@ export class PlayerTrainingSessionPage implements OnInit, OnDestroy {
     return everyone.size;
   });
 
-  /** Le titre annonce ce que la carte montre vraiment. */
+  /** The title announces what the card really shows. */
   public readonly matchTitle = computed(() => {
     if (this.isSittingOut()) {
       return 'Au repos ce round';
@@ -179,9 +179,9 @@ export class PlayerTrainingSessionPage implements OnInit, OnDestroy {
   });
 
   /**
-   * Séance close : le serveur refuse désormais de démarrer un match ou d'enregistrer un score,
-   * mais accepte encore la validation d'un score déjà saisi. Le bandeau le dit au joueur, dont
-   * le match reste affiché.
+   * Closed session: the server now refuses to start a match or to record a score, but still accepts
+   * the validation of a score already entered. The banner says so to the player, whose match stays
+   * on screen.
    */
   public readonly canStillValidate = computed(
     () => this.isSessionClosed() && this.match()?.status === 'ENDED',
@@ -220,7 +220,7 @@ export class PlayerTrainingSessionPage implements OnInit, OnDestroy {
       this.reload(sessionCode, participantCode);
     });
 
-    // Reconnexion ou retour au premier plan : on a pu manquer un round ou des scores.
+    // Reconnection or return to the foreground: a round or some scores may have been missed.
     onResyncRequested(() => {
       const sessionCode = this.sessionCode();
       const participantCode = this.participantCode();
@@ -235,7 +235,7 @@ export class PlayerTrainingSessionPage implements OnInit, OnDestroy {
       const sessionCode = params.get('sessionCode');
       const participantCode = params.get('participantCode');
 
-      // Codes à quatre chiffres : sans eux, la page n'a rien à afficher.
+      // Four-digit codes: without them, the page has nothing to show.
       if (sessionCode?.length !== 4 || participantCode?.length !== 4) {
         this.router.navigate(['/player/training']);
         return;

@@ -15,7 +15,7 @@
     display: inline-flex;
     align-items: center;
     gap: 0.35rem;
-    // Cible tactile : on gagne en hauteur sans toucher aux marges latérales.
+    // Touch target: height is gained without touching the side margins.
     padding: 0.6rem 0.5rem 0.6rem 0.25rem;
     border: 0;
     border-radius: 0.5rem;
@@ -87,7 +87,7 @@
     }
   }
 
-  // Deux encarts d'information de même nature : réglages repris, et aperçu du prochain round.
+  // Two information boxes of the same kind: settings carried over, and preview of the next round.
   .callout,
   .preview {
     display: flex;
@@ -119,8 +119,8 @@
     color: var(--color-status-draft-text);
   }
 
-  // Quatre sections, chacune introduite par son filet : le formulaire a grandi, il se lit
-  // par blocs plutôt que d'une traite.
+  // Four sections, each introduced by its own rule: the form has grown, it reads block by block
+  // rather than in one go.
   .section {
     display: flex;
     flex-direction: column;
@@ -146,7 +146,7 @@
     }
   }
 
-  // Un choix en cartes a besoin de toute la largeur, pas d'une colonne sur deux.
+  // A choice made of cards needs the full width, not one column out of two.
   .field--wide {
     grid-column: 1 / -1;
   }

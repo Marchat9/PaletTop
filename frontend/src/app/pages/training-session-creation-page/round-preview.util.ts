@@ -1,11 +1,10 @@
 /**
- * Ce que donnerait un round pour un effectif donné, avant même de le générer.
+ * What a round would give for a given headcount, before it is even generated.
  *
- * Reprend les règles de répartition du serveur (`team-decomposition.ts` côté backend) : toute
- * équipe a une taille autorisée, le nombre d'équipes est pair, on ne dépasse pas les plaques,
- * et l'arbitrage de la séance tranche entre « tout le monde joue » et « garder la taille visée ».
- * Les deux implémentations sont couvertes par les mêmes cas de test : si l'une dérive, l'autre
- * le signale.
+ * Mirrors the split rules of the server (`team-decomposition.ts` in the backend): every team has an
+ * allowed size, the number of teams is even, the plates are not exceeded, and the session trade-off
+ * decides between "everyone plays" and "keep the target size". Both implementations are covered by
+ * the same test cases: if one drifts, the other reports it.
  */
 export interface RoundPreviewSettings {
   playersPerTeam: number;
@@ -15,7 +14,7 @@ export interface RoundPreviewSettings {
 }
 
 export interface RoundPreview {
-  /** Tailles des équipes qui joueraient, de la plus grande à la plus petite. */
+  /** Sizes of the teams that would play, largest first. */
   teamSizes: number[];
   matchCount: number;
   sitOutCount: number;
@@ -71,7 +70,7 @@ export function previewRound(
   return winner;
 }
 
-/** Formule le résultat en une phrase, ou explique pourquoi aucun match n'est possible. */
+/** Puts the result into one sentence, or explains why no match is possible. */
 export function describeRoundPreview(
   headcount: number,
   settings: RoundPreviewSettings,
@@ -100,7 +99,7 @@ export function describeRoundPreview(
   return `${who}, ces réglages donneraient ${matches} (${detail}) et ${rest}.`;
 }
 
-/** « 2v2, 1v1 » : les équipes sont appariées dans l'ordre où elles sont formées. */
+/** "2v2, 1v1": teams are paired in the order in which they are built. */
 function formatMatchups(teamSizes: number[]): string {
   const matchups: string[] = [];
   for (let index = 0; index + 1 < teamSizes.length; index += 2) {

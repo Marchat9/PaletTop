@@ -30,7 +30,7 @@ export class TopBarComponent {
   public readonly changeTheme = output<ThemeMode>();
   public readonly notificationClick = output<void>();
   public readonly burgerMenuClick = output<BurgerMenuClickKey>();
-  /** Entrée à sous-destinations : l'ouverture du menu est l'affaire du conteneur. */
+  /** Entry with sub-destinations: opening the menu is the container's business. */
   public readonly itemSelected = output<NavItemSelection>();
 
   // Function

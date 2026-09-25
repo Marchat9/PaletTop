@@ -113,9 +113,9 @@ span.highlight {
   }
 }
 
-// Aucun padding ici : tout espace ajouté au panneau reste cliquable sans rien afficher et
-// avale les clics destinés au backdrop. Le dégagement vertical passe par la stratégie de
-// position, l'inset horizontal par la marge du menu lui-même.
+// No padding here: any space added to the panel stays clickable without showing anything and
+// swallows the clicks meant for the backdrop. The vertical clearance comes from the position
+// strategy, the horizontal inset from the margin of the menu itself.
 .nav-menu-sheet-panel {
   width: 100%;
   max-width: 100vw;

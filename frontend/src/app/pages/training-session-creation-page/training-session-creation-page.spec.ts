@@ -93,7 +93,7 @@ function setup(sessions: TrainingSessionSummaryDto[] = [previousSummary]) {
 
   const fixture = TestBed.createComponent(TrainingSessionCreationPage);
   const store = TestBed.inject(MockStore);
-  // Espionné avant le premier cycle : les effects de chargement partent dès ce moment-là.
+  // Spied before the first cycle: the loading effects start at that very moment.
   const dispatchSpy = vi.spyOn(store, 'dispatch');
   fixture.detectChanges();
 
@@ -108,8 +108,8 @@ function countLoadSessionsCalls(dispatchSpy: { mock: { calls: unknown[][] } }): 
 
 describe('TrainingSessionCreationPage', () => {
   it('ne recharge pas la liste des séances quand elle revient vide', () => {
-    // Régression : l'effect de chargement lisait la liste qu'il alimente. Une liste vide
-    // revenant avec un nouveau tableau, il se redéclenchait sur sa propre réponse, à l'infini.
+    // Regression: the loading effect read the list it feeds. An empty list coming back as a new
+    // array, it re-triggered itself on its own response, for ever.
     const { fixture, store, dispatchSpy } = setup([]);
 
     expect(countLoadSessionsCalls(dispatchSpy)).toBe(1);
@@ -159,7 +159,7 @@ describe('TrainingSessionCreationPage', () => {
     expect(component.showComposition()).toBe(false);
   });
 
-  // L'aperçu se fonde sur le roster : aucun participant n'est encore inscrit à ce stade.
+  // The preview is based on the roster: no participant is checked in at this stage.
   it('annonce ce que donneraient les réglages avec les membres du groupe', () => {
     const { fixture } = setup();
     const component = fixture.componentInstance;

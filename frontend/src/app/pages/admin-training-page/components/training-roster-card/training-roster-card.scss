@@ -81,7 +81,7 @@
       color: var(--color-on-surface-variant);
       cursor: pointer;
 
-      // La croix reste petite dans la liste, mais le doigt vise 8 px plus large de chaque côté.
+      // The cross stays small in the list, but the finger aims 8px wider on each side.
       position: relative;
 
       &::after {

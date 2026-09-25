@@ -110,8 +110,8 @@ export class RealtimeEffects {
     ),
   );
 
-  // L'admin de séance rejoint la room admin : `session:updated` y arrive en version complète,
-  // codes participants inclus, donc directement applicable au store.
+  // The session admin joins the admin room: `session:updated` arrives there in its full version,
+  // participant codes included, so directly applicable to the store.
   connectWebSocketTrainingAdmin$ = createEffect(() =>
     this.actions$.pipe(
       ofType(connectTrainingSessionAdministratorSuccess),
@@ -123,8 +123,8 @@ export class RealtimeEffects {
     ),
   );
 
-  // Le joueur rejoint la room publique, sans mot de passe : il reçoit les mêmes rounds, scores
-  // et classements que l'admin, mais une vue de séance amputée des codes personnels.
+  // The player joins the public room, without a password: they receive the same rounds, scores and
+  // leaderboards as the admin, but a session view stripped of the personal codes.
   connectWebSocketTrainingPlayer$ = createEffect(() =>
     this.actions$.pipe(
       ofType(loadTrainingParticipantCurrentMatchSuccess),
@@ -135,8 +135,8 @@ export class RealtimeEffects {
     ),
   );
 
-  // Flux séparé de celui du tournoi : `session:updated` et `match:updated` existent des deux
-  // côtés avec des payloads différents, les mélanger ferait interpréter l'un pour l'autre.
+  // Stream separate from the tournament one: `session:updated` and `match:updated` exist on both
+  // sides with different payloads, mixing them would read one for the other.
   private computeTrainingWsEvents$() {
     return merge(
       this.wsService

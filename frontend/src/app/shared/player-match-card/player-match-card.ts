@@ -33,14 +33,13 @@ const DEFAULT_VALIDATION_COPY: PlayerValidationCopy = {
 };
 
 /**
- * Carte du match en cours côté joueur : démarrage, saisie des deux scores, validation par le
- * code adverse.
+ * Card of the current match on the player side: start, entry of both scores, validation through the
+ * opponent code.
  *
- * Partagée entre le tournoi et l'entraînement. Elle ne connaît ni l'un ni l'autre : elle reçoit
- * une `PlayerMatchView` déjà projetée et renvoie des intentions nues, que la page traduit en
- * actions. Sans match, elle garde la boîte et n'accueille que le contenu projeté par la page —
- * les états « pas encore commencé », « terminé » ou « annulé » n'ont pas le même sens des deux
- * côtés.
+ * Shared between the tournament and the training session. It knows neither of them: it receives an
+ * already projected `PlayerMatchView` and emits bare intents, which the page turns into actions.
+ * Without a match it keeps the box and only hosts the content projected by the page - the "not
+ * started yet", "finished" and "cancelled" states do not mean the same thing on both sides.
  */
 @Component({
   selector: 'app-player-match-card',
@@ -56,14 +55,14 @@ export class PlayerMatchCard {
   public readonly byeCopy = input<PlayerByeCopy>(DEFAULT_BYE_COPY);
   public readonly validationCopy = input<PlayerValidationCopy>(DEFAULT_VALIDATION_COPY);
   /**
-   * Épreuve close : démarrer un match et saisir un score ne sont plus acceptés, mais la
-   * validation d'un score déjà enregistré reste ouverte — sinon un match terminé juste avant
-   * la clôture serait perdu.
+   * Closed event: starting a match and entering a score are no longer accepted, but the validation
+   * of a score already recorded stays open - otherwise a match finished just before the closing
+   * would be lost.
    */
   public readonly scoringLocked = input<boolean>(false);
   /**
-   * Habillage de la boîte affichée sans match : neutre par défaut, festif pour une fin
-   * d'épreuve. La page ne pose pas de classe sur une boîte qu'elle ne rend pas.
+   * Look of the box shown when there is no match: neutral by default, festive for the end of an
+   * event. The page does not put a class on a box it does not render.
    */
   public readonly emptyTone = input<PlayerMatchEmptyTone>('neutral');
 
@@ -78,7 +77,7 @@ export class PlayerMatchCard {
   public readonly validateMatch = output<string>();
   // ==============================
 
-  // Scores locaux : la saisie doit rester fluide sans attendre l'aller-retour serveur.
+  // Local scores: the entry must stay smooth without waiting for the server round trip.
   protected readonly localMyScore = signal(0);
   protected readonly localOpponentScore = signal(0);
   protected readonly opponentCode = signal('');
@@ -96,7 +95,7 @@ export class PlayerMatchCard {
     if (this.isValidated() || this.isPending()) {
       return false;
     }
-    // Le score cible atteint localement ouvre la validation sans attendre le serveur.
+    // The target score reached locally opens the validation without waiting for the server.
     const max = this.pointsPerGame();
     return this.localMyScore() >= max || this.localOpponentScore() >= max;
   });
@@ -111,7 +110,7 @@ export class PlayerMatchCard {
       this.localOpponentScore.set(match.opponentScore);
     });
 
-    // Un nouveau match repart sur un champ de code vide.
+    // A new match starts over with an empty code field.
     effect(() => {
       this.match()?.id;
       untracked(() => this.opponentCode.set(''));

@@ -13,7 +13,7 @@ import { TrainingLeaderboardEntryDto } from 'src/app/store/training/training.mod
 })
 export class PlayerSessionLeaderboard {
   public readonly leaderboard = input<TrainingLeaderboardEntryDto[]>([]);
-  /** Met en avant la ligne du joueur qui consulte la page. */
+  /** Highlights the row of the player reading the page. */
   public readonly myParticipantId = input<Nullable<string>>(null);
 
   protected readonly hasData = computed(() => this.leaderboard().length > 0);

@@ -5,8 +5,8 @@ export class ValidateTrainingMatchDto {
     @IsNotEmpty()
     participantCode!: string;
 
-    // Code de n'importe quel participant de l'équipe adverse — rôle équivalent à
-    // `opponentTeamCode` en tournoi, mais à granularité individuelle (pas de code d'équipe ici).
+    // Code of any participant of the opposing team - same role as `opponentTeamCode` in a
+    // tournament, but per player (there is no team code here).
     @IsString()
     @IsNotEmpty()
     opponentParticipantCode!: string;

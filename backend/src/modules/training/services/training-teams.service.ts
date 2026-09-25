@@ -70,10 +70,10 @@ export class TrainingTeamsService {
             return participant;
         });
 
-        // Une seule requête pour vérifier tous les participants (au lieu d'une par participant) —
-        // filet applicatif à message clair ; la vraie garantie contre une race condition entre deux
-        // créations concurrentes est l'index unique partiel en base (cf. migration), dont la
-        // violation remonte en 409 via runGuarded côté contrôleur.
+        // A single query to check every participant (instead of one per participant) - application-
+        // level net with a clear message; the real guarantee against a race between two concurrent
+        // creations is the partial unique index in the database (see migration), whose violation
+        // becomes a 409 through runGuarded in the controller.
         const activeMemberships = await this.trainingTeamMemberRepo.findActiveFixedMemberships(
             dto.participantIds,
         );
@@ -83,9 +83,9 @@ export class TrainingTeamsService {
             );
         }
 
-        // Équipe + membres + lastActivityAt dans une seule transaction : un échec sur l'une de ces
-        // écritures ne doit jamais laisser une équipe fixe orpheline, sans aucun membre, en base,
-        // ni faire échouer la requête (500) pour une création d'équipe qui a en réalité réussi.
+        // Team + members + lastActivityAt in a single transaction: a failure on one of these writes
+        // must never leave an orphan fixed team without any member in the database, nor fail the
+        // request (500) for a team creation that actually succeeded.
         const savedTeam = await this.dataSource.transaction(async (manager) => {
             const teamRepo = manager.getRepository(TrainingTeam);
             const teamMemberRepo = manager.getRepository(TrainingTeamMember);
@@ -145,8 +145,8 @@ export class TrainingTeamsService {
         return this.emitAndReturn(session);
     }
 
-    // Construit la réponse et diffuse depuis la session déjà chargée en mémoire (mise à jour par
-    // l'appelant), sans re-fetch : la donnée qu'on vient d'écrire est déjà là.
+    // Builds the response and broadcasts from the session already loaded in memory (updated by the
+    // caller), without re-fetching: the data just written is already there.
     private emitAndReturn(session: TrainingSession): TrainingSessionAdminDto {
         this.trainingRealtimeGateway.emitSessionUpdatedFrom(session);
         return toTrainingSessionAdminDto(session);

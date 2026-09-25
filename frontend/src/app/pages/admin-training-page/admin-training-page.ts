@@ -49,7 +49,7 @@ export class AdminTrainingPage implements OnInit {
 
   public readonly trainingCode = signal<string | null>(null);
 
-  // Champ simple et non réactif : une garde qui vivrait dans un signal relancerait l'effect.
+  // Plain non-reactive field: a guard living in a signal would re-run the effect.
   private sessionsRequestedFor: string | null = null;
 
   // Selects
@@ -63,11 +63,11 @@ export class AdminTrainingPage implements OnInit {
   // Compute
   public readonly trainingLoading = computed(() => !this.training() && this.trainingIsLoading());
   private readonly adminPassword = computed(() => this.adminSession()?.password ?? null);
-  // Les séances arrivent de la plus ancienne à la plus récente : la dernière ligne est la plus récente.
+  // Sessions arrive from the oldest to the most recent: the last row is the most recent one.
   public readonly lastSessionDate = computed(() => this.sessions().at(-1)?.date ?? null);
 
   constructor() {
-    // Connexion dès que le code de l'URL et le mot de passe en mémoire sont tous les deux connus.
+    // Connects as soon as the code from the URL and the stored password are both known.
     effect(() => {
       const code = this.trainingCode();
       const password = this.adminPassword();
@@ -80,16 +80,16 @@ export class AdminTrainingPage implements OnInit {
       this.store.dispatch(connectTrainingAdministrator({ code, password }));
     });
 
-    // Sans données ni chargement en cours, c'est que la session admin est perdue.
+    // With no data and no loading in flight, the admin session is lost.
     effect(() => {
       if (!this.training() && !this.trainingLoading()) {
         this.reconnectAsAdmin();
       }
     });
 
-    // Les séances ne viennent pas avec le groupe : il faut un appel dédié une fois connecté.
-    // La garde évite de relancer l'appel à chaque fois que le groupe est remplacé en mémoire,
-    // ce qui arrive après chaque ajout ou retrait de membre.
+    // Sessions do not come with the group: a dedicated call is needed once connected. The guard
+    // avoids replaying the call every time the group is replaced in memory, which happens after
+    // each member added or removed.
     effect(() => {
       const code = this.training()?.code;
       if (!code || this.sessionsRequestedFor === code) {

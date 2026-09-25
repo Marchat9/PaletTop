@@ -48,8 +48,8 @@ export class Navigation {
   readonly appName: string = environment.appName;
   readonly mobileBpPx: number = environment.limitMobileSizePx;
 
-  // Organisée par univers, comme l'accueil : le rôle se choisit ensuite. Les entrées à
-  // sous-destinations ouvrent un menu au lieu de naviguer.
+  // Organised by universe, like the home page: the role is chosen afterwards. Entries with sub-
+  // destinations open a menu instead of navigating.
   readonly navItems: NavItem[] = [
     { key: 'home', label: 'Accueil', route: '/accueil', icon: 'home', matchPrefixes: ['/accueil'] },
     {
@@ -135,8 +135,8 @@ export class Navigation {
   }
 
   /**
-   * Même menu dans les deux formats : feuille remontant du bas sur mobile, menu ancré sous
-   * l'entrée sur desktop.
+   * Same menu in both formats: sheet coming up from the bottom on mobile, menu anchored under the
+   * entry on desktop.
    */
   public onNavItemSelected({ item, anchor }: NavItemSelection): void {
     const children = item.children ?? [];
@@ -146,16 +146,16 @@ export class Navigation {
 
     const isMobile = this.isMobile();
     const positionStrategy = isMobile
-      ? // Le dégagement au-dessus de la barre de navigation est porté par la position, pas par
-        // un padding : le panneau couvrirait sinon la barre sans rien y afficher, et capterait
-        // le clic censé refermer la feuille.
+      ? // The clearance above the navigation bar comes from the position, not from a padding: the
+        // panel would otherwise cover the bar without showing anything there, and would swallow
+        // the click meant to close the sheet.
         this.overlay.position().global().bottom('4.5rem').width('100%')
       : this.overlay
           .position()
           .flexibleConnectedTo(anchor)
-          // Toujours vers le bas : un repli vers le haut viendrait recouvrir l'en-tête, qui est
-          // précisément ce qui surplombe l'ancre. Si la place manque, on repositionne plutôt que
-          // de basculer — alignement à droite d'abord, puis recadrage dans la fenêtre.
+          // Always downwards: flipping up would cover the header, which is exactly what stands
+          // above the anchor. When room runs out, reposition rather than flip - right alignment
+          // first, then nudged back inside the window.
           .withPositions([
             { originX: 'start', originY: 'bottom', overlayX: 'start', overlayY: 'top', offsetY: 8 },
             { originX: 'end', originY: 'bottom', overlayX: 'end', overlayY: 'top', offsetY: 8 },

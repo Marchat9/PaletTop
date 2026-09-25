@@ -20,8 +20,8 @@ export class TrainingRoundController {
             'Erreur lors de la génération du round.',
             () => this.roundsService.generateNextRound(sessionCode, dto.password),
             {
-                // Filet contre deux générations concurrentes pour la même session : le perdant de
-                // la contrainte unique (session, numéro de round) obtient un 409 propre.
+                // Net against two concurrent generations for the same session: the loser of the
+                // unique (session, round number) constraint gets a clean 409.
                 pgErrorMessages: {
                     '23505': 'Un round est déjà en cours de génération pour cette session.',
                 },

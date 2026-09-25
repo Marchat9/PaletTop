@@ -22,9 +22,9 @@ export class TrainingTeamController {
             "Erreur lors de la création de l'équipe.",
             () => this.trainingTeamsService.createFixedTeam(sessionCode, dto),
             {
-                // Filet de sécurité si deux créations concurrentes passent toutes les deux la
-                // vérification applicative : l'index unique partiel en base tranche, ceci traduit
-                // sa violation en réponse propre plutôt qu'un 500 brut.
+                // Net if two concurrent creations both pass the application check: the partial
+                // unique index in the database decides, and this turns its violation into a clean
+                // response instead of a raw 500.
                 pgErrorMessages: {
                     '23505': "Un des participants fait déjà partie d'une équipe fixe active.",
                 },

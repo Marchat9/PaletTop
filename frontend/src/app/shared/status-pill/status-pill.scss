@@ -14,7 +14,7 @@
   text-transform: uppercase;
   white-space: nowrap;
 
-  // Le ton ne change que les trois couleurs : la forme et la typographie restent communes.
+  // The tone only changes the three colours: shape and typography stay common.
   &.draft {
     --pill-text: var(--color-status-draft-text);
     --pill-bg: var(--color-status-draft-bg);
@@ -51,7 +51,7 @@
     letter-spacing: 0.11em;
   }
 
-  // Un en-tête de page porte la pastille plus haute et plus lisible qu'une ligne de liste.
+  // A page header carries the pill taller and more legible than a list row does.
   &.lg {
     min-height: 2.5rem;
     padding: 0.5rem 1rem;

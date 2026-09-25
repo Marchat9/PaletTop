@@ -57,8 +57,8 @@ export class TrainingsService {
         if (!member) {
             throw new NotFoundException('Membre introuvable pour cet entraînement.');
         }
-        // Filtrer AVANT remove() : TypeORM vide l'id de l'entité en mémoire une fois supprimée,
-        // donc comparer .id après coup ne fonctionne plus (toujours undefined).
+        // Filter BEFORE remove(): TypeORM clears the id of the entity in memory once it is deleted,
+        // so comparing .id afterwards no longer works (always undefined).
         training.members = training.members.filter((m) => m.id !== memberId);
         await this.trainingMemberRepo.remove(member);
         return toAdminTrainingDto(training);

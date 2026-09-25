@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 
 export type StatusPillTone = 'neutral' | 'draft' | 'pending' | 'ongoing' | 'success' | 'error';
 
-/** `lg` pour un en-tête de page, `sm` au fil d'une liste ou d'une carte. */
+/** `lg` for a page header, `sm` along a list or a card. */
 export type StatusPillSize = 'sm' | 'lg';
 
 @Component({

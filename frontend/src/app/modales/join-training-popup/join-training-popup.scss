@@ -2,8 +2,8 @@
   display: block;
 }
 
-// La coque (fond, entête, bouton de fermeture) vient de `.popup-surface`, dans
-// styles/dialog.scss : il ne reste ici que la largeur propre à cette popup.
+// The shell (background, header, close button) comes from `.popup-surface`, in styles/dialog.scss:
+// only this popup's own width is left here.
 .popup-container {
   width: min(100vw - 2rem, 29rem);
   overflow: hidden;

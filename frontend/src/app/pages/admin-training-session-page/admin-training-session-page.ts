@@ -104,7 +104,7 @@ export class AdminTrainingSessionPage implements OnInit, OnDestroy {
   public readonly trainingCode = signal<string | null>(null);
   public readonly sessionCode = signal<string | null>(null);
 
-  // Champ simple et non réactif : une garde portée par un signal relancerait l'effect.
+  // Plain non-reactive field: a guard held by a signal would re-run the effect.
   private loadedSessionCode: string | null = null;
 
   // Selects
@@ -126,10 +126,9 @@ export class AdminTrainingSessionPage implements OnInit, OnDestroy {
   private readonly sessionData = this.store.selectSignal(selectCurrentTrainingSessionData);
 
   /**
-   * La page n'affiche que la vue admin d'une séance. Le store ne porte qu'un seul emplacement de
-   * séance, où a pu atterrir la vue publique (page joueur visitée juste avant) : on la reconnaît
-   * à ses participants sans code et on attend la réponse admin plutôt que d'afficher des codes
-   * vides.
+   * The page only shows the admin view of a session. The store holds a single session slot, where
+   * the public view may have landed (player page visited just before): it is recognised by its
+   * participants having no code, and the admin response is awaited rather than showing empty codes.
    */
   public readonly session = computed<TrainingSessionAdminDto | null>(() => {
     const session = this.sessionData();
@@ -146,7 +145,7 @@ export class AdminTrainingSessionPage implements OnInit, OnDestroy {
     () => this.session()?.participants.filter((p) => p.status === 'PRESENT') ?? [],
   );
 
-  /** Un joueur ne peut appartenir qu'à une seule équipe fixe active. */
+  /** A player can only belong to one active fixed team. */
   public readonly participantsWithoutTeam = computed(() => {
     const takenIds = new Set(
       (this.session()?.teams ?? [])
@@ -171,7 +170,7 @@ export class AdminTrainingSessionPage implements OnInit, OnDestroy {
     () => this.session()?.teams.filter((team) => team.kind === 'FIXED').length ?? 0,
   );
 
-  /** Réglages de répartition de la séance, tels que les lit l'aperçu. */
+  /** Split settings of the session, as the preview reads them. */
   private readonly previewSettings = computed(() => {
     const session = this.session();
     return session
@@ -184,7 +183,7 @@ export class AdminTrainingSessionPage implements OnInit, OnDestroy {
       : null;
   });
 
-  /** Y a-t-il seulement un round à générer avec l'effectif et les réglages du moment ? */
+  /** Is there even a round to generate with the current headcount and settings? */
   private readonly hasPlayableRound = computed(() => {
     const settings = this.previewSettings();
     return !!settings && previewRound(this.presentParticipants().length, settings) !== null;
@@ -198,7 +197,7 @@ export class AdminTrainingSessionPage implements OnInit, OnDestroy {
       this.hasPlayableRound(),
   );
 
-  /** Les matchs du round en cours qui empêchent d'enchaîner. */
+  /** The matches of the current round that keep the next one from starting. */
   private readonly blockingMatches = computed(
     () =>
       this.currentRound()?.matches.filter(
@@ -207,8 +206,8 @@ export class AdminTrainingSessionPage implements OnInit, OnDestroy {
   );
 
   /**
-   * Un joueur parti en plein match ne validera jamais son score : la séance s'arrête là tant que
-   * l'administrateur ne corrige pas le score à sa place. Autant le lui dire.
+   * A player who left mid-match will never validate their score: the session stops there until the
+   * admin corrects the score for them. Worth saying so.
    */
   private readonly goneFromBlockingMatches = computed(() => {
     const gone = new Map(
@@ -232,9 +231,8 @@ export class AdminTrainingSessionPage implements OnInit, OnDestroy {
   });
 
   /**
-   * Ce que donnerait le prochain round avec l'effectif du moment. Affiché avant le clic : si la
-   * configuration ne permet aucun match, l'administrateur le sait tout de suite et sait quoi
-   * changer.
+   * What the next round would give with the current headcount. Shown before the click: if the
+   * configuration allows no match, the admin knows right away, and knows what to change.
    */
   public readonly nextRoundPreview = computed(() => {
     const settings = this.previewSettings();
@@ -244,7 +242,7 @@ export class AdminTrainingSessionPage implements OnInit, OnDestroy {
     return describeRoundPreview(this.presentParticipants().length, settings, 'present');
   });
 
-  /** Expliqué sous la barre d'actions plutôt que de laisser un bouton grisé sans raison. */
+  /** Explained under the action bar rather than leaving a greyed-out button without a reason. */
   public readonly generateBlockedReason = computed(() => {
     if (!this.isSessionOpen() || this.canGenerateRound()) {
       return null;
@@ -260,8 +258,7 @@ export class AdminTrainingSessionPage implements OnInit, OnDestroy {
       return `${who} ${verb} en cours de match. Corrigez le score de ce match (crayon sur sa ligne) pour débloquer le round suivant.`;
     }
 
-    // Aucune combinaison de tailles ne permet de former deux équipes : le dire avant le clic,
-    // avec ce qu'il faut changer.
+    // No combination of sizes can form two teams: say it before the click, with what has to change.
     const settings = this.previewSettings();
     if (settings && !this.hasPlayableRound()) {
       return describeRoundPreview(this.presentParticipants().length, settings, 'present');
@@ -270,7 +267,7 @@ export class AdminTrainingSessionPage implements OnInit, OnDestroy {
     return 'Tous les matchs du round en cours doivent être validés avant de générer le suivant.';
   });
 
-  /** Ces blocages demandent une action de l'administrateur, pas seulement de la patience. */
+  /** These blocks call for an action from the admin, not just for patience. */
   public readonly generateBlockedIsAlert = computed(
     () =>
       this.goneFromBlockingMatches().length > 0 ||
@@ -278,7 +275,8 @@ export class AdminTrainingSessionPage implements OnInit, OnDestroy {
   );
 
   constructor() {
-    // Le mot de passe vit dans le store (restauré du localStorage) : sans lui, retour à la connexion.
+    // The password lives in the store (restored from localStorage): without it, back to the login
+    // page.
     effect(() => {
       const trainingCode = this.trainingCode();
       const password = this.adminPassword();
@@ -295,11 +293,11 @@ export class AdminTrainingSessionPage implements OnInit, OnDestroy {
       }
     });
 
-    // Chargement de la séance et de ce qui l'accompagne, une fois le mot de passe connu.
+    // Loads the session and what goes with it, once the password is known.
     //
-    // La garde est un champ d'instance, pas une comparaison avec la séance en mémoire : en
-    // revenant sur une séance déjà chargée, celle-ci est encore dans le store alors que le
-    // socket vient d'être fermé — il faut donc bien tout recharger et se rebrancher.
+    // The guard is an instance field, not a comparison with the session in memory: coming back to
+    // an already loaded session, it is still in the store while the socket has just been closed -
+    // so everything does need to be reloaded and re-subscribed.
     effect(() => {
       const sessionCode = this.sessionCode();
       const password = this.adminPassword();
@@ -312,9 +310,9 @@ export class AdminTrainingSessionPage implements OnInit, OnDestroy {
       this.reloadSession(sessionCode);
     });
 
-    // La séance demandée n'a pas pu être chargée. Tant qu'il reste quelque chose de valable à
-    // l'écran (coupure réseau passagère), on laisse l'administrateur où il est — le toast suffit.
-    // Sinon la page n'a rien à montrer : retour au groupe, d'où il peut rouvrir la bonne séance.
+    // The requested session could not be loaded. As long as something valid is still on screen
+    // (brief network drop), the admin stays where they are - the toast is enough. Otherwise the
+    // page has nothing to show: back to the group, from where the right session can be reopened.
     effect(() => {
       const sessionCode = this.sessionCode();
       const hasError = !!this.sessionError();
@@ -326,8 +324,8 @@ export class AdminTrainingSessionPage implements OnInit, OnDestroy {
       untracked(() => this.backToTraining());
     });
 
-    // L'URL peut désigner une séance qui appartient à un autre groupe : les codes de séance sont
-    // uniques pour toute l'application, rien n'empêche d'en coller un qui n'est pas d'ici.
+    // The URL can name a session that belongs to another group: session codes are unique across the
+    // whole application, nothing prevents pasting one that is not from here.
     effect(() => {
       const trainingCode = this.trainingCode();
       const session = this.session();
@@ -335,8 +333,8 @@ export class AdminTrainingSessionPage implements OnInit, OnDestroy {
       if (!trainingCode || !session || session.code !== this.sessionCode()) {
         return;
       }
-      // Un serveur qui ne dit pas à quel groupe appartient la séance ne permet pas de trancher :
-      // on ne renvoie personne sur une supposition.
+      // A server that does not say which group the session belongs to leaves nothing to decide on:
+      // nobody is sent away on a guess.
       if (!session.trainingCode || session.trainingCode === trainingCode) {
         return;
       }
@@ -357,7 +355,7 @@ export class AdminTrainingSessionPage implements OnInit, OnDestroy {
       });
     });
 
-    // Reconnexion websocket ou retour au premier plan : on a pu manquer des diffusions.
+    // Websocket reconnection or return to the foreground: some broadcasts may have been missed.
     onResyncRequested(() => {
       const sessionCode = this.sessionCode();
       if (sessionCode) {
@@ -438,7 +436,7 @@ export class AdminTrainingSessionPage implements OnInit, OnDestroy {
       });
   }
 
-  // ========= Équipes =========
+  // ========= Teams =========
 
   public createTeam(creation: TrainingTeamCreation): void {
     const sessionCode = this.sessionCode();
@@ -481,7 +479,7 @@ export class AdminTrainingSessionPage implements OnInit, OnDestroy {
       });
   }
 
-  // ========= Rounds et scores =========
+  // ========= Rounds and scores =========
 
   public generateRound(): void {
     const sessionCode = this.sessionCode();

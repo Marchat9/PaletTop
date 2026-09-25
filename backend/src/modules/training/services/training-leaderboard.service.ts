@@ -22,8 +22,8 @@ export class TrainingLeaderboardService {
         return this.getLeaderboardBySessionId(session.id);
     }
 
-    // À utiliser quand l'appelant a déjà résolu/chargé la session (ex. juste après la validation
-    // d'un match) : évite de re-fetcher toute la session avec ses jointures rien que pour son id.
+    // To use when the caller has already resolved or loaded the session (right after validating a
+    // match, for instance): avoids re-fetching the whole session with its joins just for its id.
     async getLeaderboardBySessionId(sessionId: string): Promise<TrainingLeaderboardEntryDto[]> {
         const matches = await this.trainingMatchRepo.findValidatedBySession(sessionId);
 
@@ -41,9 +41,9 @@ export class TrainingLeaderboardService {
     }
 
     /**
-     * Niveau estimé de chaque participant de la séance : points marqués par match en moyenne.
-     * Plus stable que le pourcentage de victoires quand peu de matchs ont été joués. Un joueur
-     * qui n'a pas encore disputé de match n'y figure pas — son niveau est inconnu, pas nul.
+     * Estimated level of each participant of the session: points scored per match on average. More
+     * stable than a win rate when few matches have been played. A player who has not played a match
+     * yet is absent from it - their level is unknown, not zero.
      */
     async getAveragePointsBySessionId(sessionId: string): Promise<Record<string, number>> {
         const matches = await this.trainingMatchRepo.findValidatedBySession(sessionId);
@@ -72,9 +72,9 @@ export class TrainingLeaderboardService {
         return levels;
     }
 
-    // Agrège sur TOUS les membres de l'équipe telle qu'elle était au moment du match (pas de
-    // filtre leftAt) : une équipe fixe dissoute après ce match garde ce match dans l'historique
-    // de crédit de ses anciens membres, cf. décision produit "classement par participant".
+    // Aggregates over ALL members of the team as it was at match time (no leftAt filter): a fixed
+    // team dissolved after this match keeps that match in the credit history of its former members,
+    // per the "leaderboard by participant" product decision.
     private creditTeam(
         totals: Map<string, LeaderboardAccumulator>,
         team: TrainingTeam,

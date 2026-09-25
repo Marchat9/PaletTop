@@ -41,19 +41,18 @@ export class TrainingSession {
     @Column({ type: 'int' })
     playersPerTeam!: number;
 
-    /** Tailles d'équipe que le générateur peut utiliser, taille visée comprise. */
+    /** Team sizes the generator may use, target size included. */
     @Column({ type: 'int', array: true, default: () => "'{}'" })
     allowedTeamSizes!: number[];
 
     /**
-     * Arbitrage rendu à la création : garder la taille d'équipe demandée quitte à mettre des
-     * joueurs au repos (`true`), ou faire jouer tout le monde quitte à ajuster les tailles
-     * (`false`).
+     * Trade-off settled at creation: keep the requested team size even if some players rest
+     * (`true`), or let everyone play and adjust the sizes (`false`).
      */
     @Column({ default: false })
     preferTargetTeamSize!: boolean;
 
-    /** Matchs simultanés possibles : les équipes en trop attendent le round suivant. */
+    /** Simultaneous matches allowed: extra teams wait for the next round. */
     @Column({ type: 'int', default: 99 })
     plateCount!: number;
 

@@ -13,7 +13,10 @@ import {
 } from 'class-validator';
 import { TrainingTeamComposition } from 'src/enum/training.enum';
 
-/** Au-delà, une « équipe » n'en est plus une : la borne vaut pour la taille visée et les replis. */
+/**
+ * Beyond this a "team" is no longer a team: the bound applies to the target size and to the
+ * fallbacks.
+ */
 export const MAX_PLAYERS_PER_TEAM = 6;
 
 export class CreateTrainingSessionDto {
@@ -30,7 +33,7 @@ export class CreateTrainingSessionDto {
     @Max(MAX_PLAYERS_PER_TEAM)
     playersPerTeam!: number;
 
-    /** Tailles de repli autorisées ; la taille visée y est ajoutée d'office côté service. */
+    /** Allowed fallback sizes; the target size is added by the service. */
     @IsArray()
     @ArrayMaxSize(MAX_PLAYERS_PER_TEAM)
     @IsInt({ each: true })

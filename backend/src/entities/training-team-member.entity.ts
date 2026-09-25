@@ -32,8 +32,8 @@ export class TrainingTeamMember {
     @JoinColumn({ name: 'participant_id' })
     participant!: TrainingParticipant;
 
-    // null = membre actuellement actif dans l'équipe ; renseigné = détaché (dissolution non destructive,
-    // conserve le lien pour le calcul du classement et l'auth des matchs déjà joués).
+    // null = member still active in the team; set = detached (non-destructive dissolution, keeps
+    // the link for the leaderboard and for auth on matches already played).
     @Column({ type: 'timestamptz', nullable: true })
     leftAt!: Date | null;
 

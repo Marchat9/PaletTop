@@ -27,7 +27,7 @@ export function toTrainingMatchDto(match: TrainingMatch): TrainingMatchDto {
     return {
         id: match.id,
         status: match.status,
-        teamA: toTrainingTeamDto(match.teamA, false), // activeOnly=false : un match affiche qui a JOUÉ, même si l'équipe a depuis été dissoute.
+        teamA: toTrainingTeamDto(match.teamA, false), // activeOnly=false: a match shows who PLAYED, even if the team has since been dissolved.
         teamB: match.teamB ? toTrainingTeamDto(match.teamB, false) : null,
         isBye: match.isBye,
         scoreA: match.scoreA,

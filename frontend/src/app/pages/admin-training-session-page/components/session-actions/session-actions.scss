@@ -32,7 +32,7 @@
     }
   }
 
-  // Même bande d'information que le message de blocage, dans un ton neutre : ici rien ne cloche.
+  // Same information band as the blocking message, in a neutral tone: nothing is wrong here.
   .preview {
     display: flex;
     align-items: center;
@@ -60,7 +60,7 @@
       font-size: 1rem;
     }
 
-    // Une séance à débloquer n'est pas une simple attente : elle appelle un geste.
+    // A session to unblock is not plain waiting: it calls for a move.
     &--alert {
       align-items: flex-start;
       padding: 0.6rem 0.75rem;

@@ -4,19 +4,19 @@ export interface GenerateRoundInput {
     fixedTeams: { id: string; participantIds: string[] }[];
     soloParticipantIds: string[];
     config: {
-        /** Taille visée pour les équipes formées à chaque round. */
+        /** Target size for the teams built each round. */
         playersPerTeam: number;
-        /** Tailles que le générateur peut aussi utiliser, taille visée comprise. */
+        /** Sizes the generator may also use, target size included. */
         allowedTeamSizes: number[];
         /**
-         * Arbitrage rendu une fois pour toutes à la création de la séance, pour que le
-         * générateur n'ait jamais de question à poser :
-         * - `false` (« tout le monde joue ») : vider le banc prime sur la taille des équipes ;
-         * - `true` (« rester sur le nombre de joueurs ») : la taille prime, les joueurs en trop
-         *   se reposent à tour de rôle.
+         * Trade-off settled once and for all when the session is created, so that the generator
+         * never has a question to ask:
+         *
+         * - `false` ("everyone plays"): emptying the bench wins over team size;
+         * - `true` ("keep the team size"): size wins, extra players rest in turn.
          */
         preferTargetTeamSize: boolean;
-        /** Nombre de matchs simultanés possibles : les équipes en trop attendent le round suivant. */
+        /** Number of simultaneous matches allowed: extra teams wait for the next round. */
         plateCount: number;
         teamComposition: TrainingTeamComposition;
         avoidSamePartnerConsecutive: boolean;
@@ -24,35 +24,36 @@ export interface GenerateRoundInput {
     };
     history: {
         /**
-         * Rounds passés, du plus récent au plus ancien. La stratégie décide elle-même jusqu'où
-         * remonter : avec beaucoup de joueurs on peut exiger une rotation large, avec quatre
-         * joueurs la contrainte devient impossible et doit se relâcher.
+         * Past rounds, most recent first. The strategy decides how far back to look: with many
+         * players a wide rotation can be required, with four players the constraint becomes
+         * impossible and has to be relaxed.
          */
         recentRounds: {
             partnerPairs: [string, string][];
-            // Identité CANONIQUE d'une équipe, PAS l'id de TrainingTeam éphémère (qui change à
-            // chaque round et ne peut donc jamais matcher d'un round à l'autre) : fixedTeamId pour
-            // une équipe fixe, ou le set trié des participantIds joint par ',' pour une éphémère.
+            // CANONICAL identity of a team, NOT the id of the ephemeral TrainingTeam (which changes
+            // every round and could therefore never match from one round to the next): fixedTeamId
+            // for a fixed team, or the sorted set of participantIds joined by ',' for an ephemeral
+            // one.
             opponentCanonicalPairs: [string, string][];
         }[];
-        /** Nombre de rounds passés au repos, par participant. Absent = jamais reposé. */
+        /** Number of rounds spent resting, per participant. Missing = never rested. */
         sitOutCountByParticipant: Record<string, number>;
     };
     /**
-     * Niveau estimé de chaque participant, plus la valeur est haute plus le joueur est fort.
-     * Un participant absent de cette table est inconnu (invité, ou joueur qui n'a pas encore
-     * disputé de match) et sera placé dans le bas du classement, sans être dernier.
+     * Estimated level of each participant, the higher the stronger. A participant missing from this
+     * map is unknown (guest, or player who has not played a match yet) and is placed low in the
+     * ranking, without being last.
      */
     levelByParticipant: Record<string, number>;
 }
 
 export interface RoundPlan {
-    // Inclut les équipes d'un seul joueur créées pour les participants mis au repos : le repos
-    // n'est pas une absence du plan mais une équipe sans adversaire, ce qui le rend persistable
-    // et diffusable comme n'importe quel match.
+    // Includes the one-player teams built for resting participants: rest is not an absence from the
+    // plan but a team without an opponent, which makes it persistable and broadcastable like any
+    // match.
     ephemeralTeams: { tempId: string; participantIds: string[] }[];
-    // Une entrée par match : teamRef = fixedTeamId ou tempId côté A, opponentRef = idem côté B
-    // (null = bye, qu'il s'agisse d'une équipe exemptée ou d'un joueur au repos).
+    // One entry per match: teamRef = fixedTeamId or tempId on side A, opponentRef = the same on
+    // side B (null = bye, be it an exempt team or a resting player).
     matches: { teamRef: string; opponentRef: string | null }[];
 }
 

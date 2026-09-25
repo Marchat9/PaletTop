@@ -8,7 +8,7 @@
     letter-spacing: 0.14em;
     color: var(--color-on-surface-variant);
 
-    // Ce qui suit le libellé s'en détache : valeur, code, ou pastille d'état.
+    // What follows the label stands out from it: value, code, or status pill.
     span,
     app-status-pill {
       margin-left: 0.5rem;

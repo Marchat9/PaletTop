@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 
 /**
- * Blocs en attente affichés pendant un appel API, à la forme du contenu qui va les remplacer.
+ * Waiting blocks shown during an API call, shaped like the content that will replace them.
  *
  * ```html
  * @if (isLoading()) {

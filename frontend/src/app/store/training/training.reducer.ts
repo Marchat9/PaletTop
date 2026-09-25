@@ -147,8 +147,8 @@ function replaceMatchInRound(round: TrainingRoundDto, match: TrainingMatchDto): 
   };
 }
 
-// Un round regénéré ou reçu par websocket remplace celui de même identité plutôt que de
-// s'ajouter : l'auteur de l'action reçoit la réponse HTTP *et* la diffusion websocket.
+// A round regenerated or received by websocket replaces the one with the same identity instead of
+// adding itself: the author of the action receives the HTTP response *and* the websocket broadcast.
 function upsertRound(rounds: TrainingRoundDto[], round: TrainingRoundDto): TrainingRoundDto[] {
   const isKnown = rounds.some((existing) => existing.id === round.id);
   return isKnown
@@ -157,8 +157,9 @@ function upsertRound(rounds: TrainingRoundDto[], round: TrainingRoundDto): Train
 }
 
 /**
- * Recalcule la vue « mon match » à partir d'un round diffusé : on cherche le camp qui contient
- * le participant. Absent du round, il vient d'être inscrit et entrera au suivant.
+ * Recomputes the "my match" view from a broadcast round: the side containing the participant is the
+ * one being looked for. Absent from the round, they have just been checked in and will join the
+ * next one.
  */
 function withParticipantMatchFromRound(
   current: Nullable<TrainingCurrentMatchDto>,
@@ -182,12 +183,12 @@ function withParticipantMatchFromRound(
 }
 
 /**
- * Le back renvoie la session entière après un check-in, pas le participant inscrit : on le
- * retrouve en comparant avec la session qu'on avait en mémoire juste avant.
+ * The backend returns the whole session after a check-in, not the participant who checked in: they
+ * are found by comparing with the session held in memory just before.
  *
- * Deux cas donnent le même résultat à l'écran : une nouvelle ligne (première venue), ou une
- * ligne repassée de « parti » à « présent » — un membre qui revient reprend son identité, donc
- * son code, plutôt que d'en recevoir un nouveau.
+ * Two cases give the same result on screen: a new row (first arrival), or a row switched from
+ * "left" back to "present" - a returning member takes their identity back, hence their code, rather
+ * than getting a new one.
  */
 function findAddedParticipant(
   previousSession: Nullable<TrainingSessionAdminDto | TrainingSessionPublicDto>,
@@ -430,7 +431,7 @@ export const trainingReducer = createReducer(
   on(connectTrainingSessionAdministrator, (state) => ({
     ...state,
     currentSession: { ...state.currentSession, isLoading: true, error: null },
-    // On change de séance : le code affiché ne concernerait plus celle qu'on regarde.
+    // Switching session: the displayed code would no longer concern the one being looked at.
     lastCheckedInParticipant: null,
   })),
   on(connectTrainingSessionAdministratorSuccess, (state, { session }) => ({
@@ -752,9 +753,9 @@ export const trainingReducer = createReducer(
     },
   })),
 
-  // ---------------- Temps réel ----------------
-  // La room admin diffuse la vue complète de la séance : elle remplace celle en mémoire,
-  // sous réserve qu'il s'agisse bien de la séance affichée.
+  // ---------------- Realtime ----------------
+  // The admin room broadcasts the full view of the session: it replaces the one in memory,
+  // provided it really is the session on screen.
   on(wsTrainingSessionUpdated, (state, { session }) =>
     state.currentSession.data?.code === session.code
       ? { ...state, currentSession: { ...state.currentSession, data: session } }
@@ -764,8 +765,8 @@ export const trainingReducer = createReducer(
     ...state,
     rounds: { ...state.rounds, data: upsertRound(state.rounds.data, round) },
     currentRound: { data: round, isLoading: false, error: null },
-    // Côté joueur, le round diffusé contient déjà son prochain match : on le retrouve par son
-    // identité plutôt que de relancer un appel au serveur.
+    // On the player side, the broadcast round already contains their next match: it is found by its
+    // identity rather than by another call to the server.
     participantCurrentMatch: {
       ...state.participantCurrentMatch,
       data: withParticipantMatchFromRound(state.participantCurrentMatch.data, round),
@@ -778,7 +779,7 @@ export const trainingReducer = createReducer(
       ...state.currentRound,
       data: state.currentRound.data ? replaceMatchInRound(state.currentRound.data, match) : null,
     },
-    // Un score saisi par un coéquipier ou par l'administrateur met à jour ma propre carte.
+    // A score entered by a team-mate or by the admin updates my own card.
     participantCurrentMatch: {
       ...state.participantCurrentMatch,
       data:
@@ -792,8 +793,8 @@ export const trainingReducer = createReducer(
     leaderboard: { data: leaderboard, isLoading: false, error: null },
   })),
 
-  // Remise à zéro complète : on change d'entraînement (déconnexion admin, création, arrivée d'un
-  // joueur). Tout ce qui reste en mémoire appartient au précédent et n'a plus rien à y faire.
+  // Full reset: the training changes (admin logout, creation, a player arriving). Whatever stays in
+  // memory belongs to the previous one and has no business there.
   on(resetTraining, (state) => ({
     ...state,
     training: initialTrainingState.training,

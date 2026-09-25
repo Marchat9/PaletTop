@@ -18,8 +18,8 @@ export function historyToResults(history: MatchHistoryDto[]): PlayerMatchResult[
 }
 
 /**
- * Projette le match du tournoi vers la vue partagée : l'équipe du joueur devient « mon camp »,
- * et le numéro de plaque sert de sous-titre — sauf en cas d'exemption, où le round situe mieux.
+ * Projects the tournament match into the shared view: the player's team becomes "my side", and the
+ * plate number acts as the subtitle - except when exempt, where the round places it better.
  */
 export function toPlayerMatchView(match: PlayerMatchDto, teamId: string): PlayerMatchView {
   const iAmTeamA = match.teamA.id === teamId;

@@ -98,7 +98,7 @@ export class TrainingSessionsService {
             sessionCode,
             password,
         );
-        // Idempotent : reclôturer une session déjà fermée ne doit pas écraser son closedAt d'origine.
+        // Idempotent: closing an already closed session must not overwrite its original closedAt.
         if (session.status !== TrainingSessionStatus.CLOSED) {
             session.status = TrainingSessionStatus.CLOSED;
             session.closedAt = new Date();
@@ -131,10 +131,10 @@ export class TrainingSessionsService {
             if (!member || member.training.id !== session.training.id) {
                 throw new NotFoundException('Membre introuvable pour cet entraînement.');
             }
-            // Filet applicatif à message clair contre un double check-in (double-tap admin, deux
-            // appareils) ; le vrai garde-fou contre la race est l'index unique partiel en base
-            // (UQ_training_participant_active_member), dont la violation remonte en 409 via
-            // runGuarded côté contrôleur.
+            // Application-level net with a clear message against a double check-in (admin double-
+            // tap, two devices); the real guard against the race is the partial unique index in the
+            // database (UQ_training_participant_active_member), whose violation becomes a 409
+            // through runGuarded in the controller.
             const alreadyPresent = session.participants.some(
                 (p) =>
                     p.member?.id === member!.id && p.status === TrainingParticipantStatus.PRESENT,
@@ -213,7 +213,7 @@ export class TrainingSessionsService {
         await this.trainingSessionRepo.touchLastActivity(sessionId);
     }
 
-    // Construit la réponse et diffuse depuis la session déjà mise à jour en mémoire, cf.
+    // Builds the response and broadcasts from the session already updated in memory, see
     // TrainingTeamsService.emitAndReturn.
     private emitAndReturn(session: TrainingSession): TrainingSessionAdminDto {
         this.trainingRealtimeGateway.emitSessionUpdatedFrom(session);

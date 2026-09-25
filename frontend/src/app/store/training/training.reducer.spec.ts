@@ -49,8 +49,8 @@ describe('trainingReducer', () => {
       expect(state.lastCheckedInParticipant).toEqual(JEAN);
     });
 
-    // Le membre qui revient reprend sa ligne : aucun identifiant nouveau n'apparaît, c'est le
-    // passage de « parti » à « présent » qui signale l'inscription.
+    // The returning member takes their row back: no new id appears, it is the switch from "left" to
+    // "present" that signals the check-in.
     it('désigne aussi le membre qui revient en cours de séance', () => {
       const before = {
         ...initialTrainingState,
@@ -84,8 +84,8 @@ describe('trainingReducer', () => {
     });
   });
 
-  // Changer d'entraînement ne doit rien laisser du précédent : séances, rounds et classement
-  // sont propres à celui qu'on quitte.
+  // Switching training must leave nothing of the previous one: sessions, rounds and leaderboard
+  // belong to the one being left.
   it('vide les données de séance à la réinitialisation', () => {
     const before = {
       ...initialTrainingState,

@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, input, output } from '@angular/core
 import { PlayerStatTile } from 'src/app/models/player-match-view.model';
 import { MetricTileComponent } from '../metric-tile/metric-tile';
 
-/** Tuiles de statistiques du joueur, en tête de sa page (victoires, classement, points…). */
+/** Statistics tiles of the player, at the top of their page (wins, ranking, points, and so on). */
 @Component({
   selector: 'app-player-stats-tiles',
   imports: [MetricTileComponent],

@@ -1,11 +1,10 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 
 /**
- * Pastille d'initiales : deux lettres pour un prénom et un nom, une seule si le nom tient
- * en un mot ou si `maxLetters` vaut 1.
+ * Initials pill: two letters for a first name and a last name, only one when the name fits in a
+ * single word or when `maxLetters` is 1.
  *
- * Décoratif — le nom complet est toujours affiché à côté, la pastille est donc masquée aux
- * lecteurs d'écran.
+ * Decorative - the full name is always shown next to it, so the pill is hidden from screen readers.
  */
 @Component({
   selector: 'app-avatar',
@@ -31,7 +30,7 @@ export class Avatar {
       return first;
     }
 
-    // Premier et dernier mot : « Jean-Pierre Martin » donne JM, pas JP.
+    // First and last word: "Jean-Pierre Martin" gives JM, not JP.
     return first + words[words.length - 1].charAt(0).toUpperCase();
   });
 }

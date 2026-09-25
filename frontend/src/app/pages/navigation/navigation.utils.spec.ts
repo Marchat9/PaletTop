@@ -32,8 +32,8 @@ const items: NavItem[] = [
 describe('navigation.utils', () => {
   describe('isNavItemActive', () => {
     it('reconnaît une URL portant des paramètres', () => {
-      // Régression : l'ancienne comparaison réduisait l'URL à son premier segment puis la
-      // comparait par égalité stricte — aucune entrée joueur ou admin ne s'allumait jamais.
+      // Regression: the old comparison reduced the URL to its first segment then compared it for
+      // strict equality - no player or admin entry ever lit up.
       expect(isNavItemActive(items[2], '/player/training/1234/5678')).toBe(true);
       expect(isNavItemActive(items[1], '/admin/tournament/LAITON-2026')).toBe(true);
     });
@@ -44,8 +44,8 @@ describe('navigation.utils', () => {
     });
 
     it("ne déborde pas d'un préfixe sur une route voisine", () => {
-      // `/admin/training-creation` ne doit pas être capté par le préfixe `/admin/training`
-      // via une correspondance de chaîne trop permissive — il a son propre préfixe.
+      // `/admin/training-creation` must not be caught by the `/admin/training` prefix through a too
+      // permissive string match - it has its own prefix.
       expect(isNavItemActive(items[2], '/admin/training-creation')).toBe(true);
       expect(isNavItemActive(items[1], '/admin/training-creation')).toBe(false);
     });

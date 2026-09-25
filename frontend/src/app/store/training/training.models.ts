@@ -6,7 +6,7 @@ export type TrainingRoundStatus = 'OPEN' | 'CLOSED';
 export type TrainingTeamKind = 'FIXED' | 'EPHEMERAL';
 export type TrainingParticipantStatus = 'PRESENT' | 'LEFT';
 export type TrainingMatchStatus = 'PENDING' | 'ONGOING' | 'ENDED' | 'VALIDATED';
-/** Au hasard, ou chaque joueur avec un partenaire de niveau voisin. */
+/** At random, or every player with a partner of a nearby level. */
 export type TrainingTeamComposition = 'RANDOM' | 'LEARNING';
 
 export interface TrainingMemberDto {
@@ -52,11 +52,11 @@ interface TrainingSessionFieldsDto {
   date: string;
   status: TrainingSessionStatus;
   playersPerTeam: number;
-  /** Tailles d'équipe utilisables, taille visée comprise. */
+  /** Team sizes that can be used, target size included. */
   allowedTeamSizes: number[];
-  /** Garder la taille visée quitte à mettre des joueurs au repos, ou faire jouer tout le monde. */
+  /** Keep the target size even if some players rest, or let everyone play. */
   preferTargetTeamSize: boolean;
-  /** Matchs simultanés possibles : les équipes en trop attendent le round suivant. */
+  /** Simultaneous matches allowed: extra teams wait for the next round. */
   plateCount: number;
   teamComposition: TrainingTeamComposition;
   avoidSamePartnerConsecutive: boolean;
@@ -85,8 +85,8 @@ export interface TrainingSessionSummaryDto {
 }
 
 /**
- * Réglages d'une séance à créer. Figés une fois la séance ouverte : le back ne les expose
- * ensuite que dans la vue détaillée, jamais dans le résumé des séances.
+ * Settings of a session to create. Frozen once the session is open: the backend then exposes them
+ * only in the detailed view, never in the session summary.
  */
 export interface TrainingSessionConfigurationDto {
   date: Date;
@@ -120,9 +120,9 @@ export interface TrainingRoundDto {
 }
 
 /**
- * Identité du participant, renvoyée uniquement à celui qui a fourni son propre code : aucun
- * payload public ne porte les codes, c'est donc le seul moyen pour le client de savoir lequel
- * des deux camps du match est le sien.
+ * Identity of the participant, returned only to the one who gave their own code: no public payload
+ * carries the codes, so it is the only way for the client to know which of the two sides of the
+ * match is theirs.
  */
 export interface TrainingParticipantIdentityDto {
   id: string;
@@ -174,8 +174,8 @@ export interface TrainingState {
 
   sessions: ApiCall<TrainingSessionSummaryDto[]>;
   currentSession: ApiCall<Nullable<TrainingSessionAdminDto | TrainingSessionPublicDto>>;
-  // Participant tout juste inscrit : son code doit être communiqué de vive voix à l'intéressé,
-  // le reducer le déduit par différence pour que la page puisse l'afficher en grand.
+  // Participant just checked in: their code has to be given to them in person, the reducer derives
+  // it by difference so that the page can show it large.
   lastCheckedInParticipant: Nullable<TrainingParticipantAdminDto>;
   rounds: ApiCall<TrainingRoundDto[]>;
   currentRound: ApiCall<Nullable<TrainingRoundDto>>;

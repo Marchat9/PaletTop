@@ -3,7 +3,7 @@ import { Avatar } from 'src/app/shared/avatar/avatar';
 import { Icon } from 'src/app/shared/icon/icon';
 import { TrainingTeamMemberSummaryDto } from 'src/app/store/training/training.models';
 
-/** Les joueurs qui composent mon équipe ce round — elle change à chaque génération. */
+/** The players making up my team this round - it changes at every generation. */
 @Component({
   selector: 'app-player-session-partners',
   imports: [Avatar, Icon],

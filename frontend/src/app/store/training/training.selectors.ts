@@ -265,7 +265,7 @@ export const selectTrainingParticipantHistoryError = createSelector(
   (state) => state.participantHistory.error,
 );
 
-/** Identité du participant connecté, disponible dès le chargement de son match courant. */
+/** Identity of the connected participant, available as soon as their current match is loaded. */
 export const selectTrainingParticipantIdentity = createSelector(
   selectTrainingState,
   (state) => state.participantCurrentMatch.data?.participant ?? null,

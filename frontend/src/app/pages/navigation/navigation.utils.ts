@@ -2,11 +2,11 @@ import { BurgerMenuItem } from 'src/app/shared/burger-menu/burger-menu.model';
 import { NavItem } from './nav-item.entity';
 
 /**
- * Une entrée est active si l'URL courante tombe dans l'un de ses préfixes.
+ * An entry is active when the current URL falls into one of its prefixes.
  *
- * La comparaison est volontairement préfixée et non stricte : les URL réelles portent des
- * paramètres (`/player/training/1234/5678`), et l'ancienne comparaison d'égalité sur le
- * premier segment n'allumait jamais les entrées Joueur et Admin.
+ * The comparison is prefix-based and not strict on purpose: real URLs carry parameters
+ * (`/player/training/1234/5678`), and the old equality on the first segment never lit the Player
+ * and Admin entries up.
  */
 export function isNavItemActive(item: NavItem, url: string): boolean {
   const path = url.split(/[?#]/)[0];

@@ -1,4 +1,4 @@
-/** Destination finale d'une entrée de navigation. */
+/** Final destination of a navigation entry. */
 export interface NavItemChild {
   label: string;
   route: string;
@@ -6,17 +6,17 @@ export interface NavItemChild {
 }
 
 export interface NavItem {
-  /** Identité stable de l'entrée, indépendante du libellé et de la route. */
+  /** Stable identity of the entry, independent of its label and its route. */
   key: string;
   label: string;
   icon?: string;
-  /** Destination directe. Absente quand l'entrée ouvre un menu de sous-destinations. */
+  /** Direct destination. Absent when the entry opens a menu of sub-destinations. */
   route?: string;
-  /** Sous-destinations (joueur, admin, spectateur) présentées dans un menu. */
+  /** Sub-destinations (player, admin, spectator) shown in a menu. */
   children?: NavItemChild[];
   /**
-   * Préfixes d'URL qui allument l'entrée. Une même entrée couvre plusieurs sections :
-   * « Tournoi » reste actif aussi bien sur la vue joueur que sur l'admin ou le spectateur.
+   * URL prefixes that light the entry up. One entry covers several sections: "Tournoi" stays active
+   * on the player view as well as on the admin and the spectator ones.
    */
   matchPrefixes: string[];
 }

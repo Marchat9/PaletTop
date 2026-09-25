@@ -1,5 +1,5 @@
 import { Param, ParseUUIDPipe } from '@nestjs/common';
 
-// Raccourci pour un paramètre de route qui doit être un UUID : @UuidParam('matchId') équivaut à
-// @Param('matchId', ParseUUIDPipe), en un seul endroit à faire évoluer si la validation change.
+// Shortcut for a route param that must be a UUID: @UuidParam('matchId') is the same as
+// @Param('matchId', ParseUUIDPipe), in a single place to change if the validation evolves.
 export const UuidParam = (property: string) => Param(property, ParseUUIDPipe);

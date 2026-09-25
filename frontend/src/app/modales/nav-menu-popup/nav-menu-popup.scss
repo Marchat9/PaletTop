@@ -6,7 +6,7 @@
   display: flex;
   flex-direction: column;
   min-width: 15rem;
-  // Ne déborde jamais de la fenêtre, quelle que soit la largeur de l'ancre.
+  // Never overflows the window, whatever the width of the anchor.
   max-width: calc(100vw - 1rem);
   padding: 0.5rem;
   border-radius: 0.8rem;

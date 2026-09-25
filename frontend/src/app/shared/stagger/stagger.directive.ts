@@ -1,12 +1,11 @@
 import { Directive, ElementRef, effect, inject, input } from '@angular/core';
 
 /**
- * Fait apparaître les enfants directs de l'hôte en cascade (cf. `.stagger` dans
+ * Brings the direct children of the host in one after another (see `.stagger` in
  * styles/animations.scss).
  *
- * La valeur passée sert de clé de rejeu : quand elle change, la cascade repart.
- * Typiquement l'identifiant du round affiché, pour rejouer l'apparition des matchs
- * à chaque génération.
+ * The value passed acts as a replay key: when it changes, the cascade starts again. Typically the
+ * id of the displayed round, to replay the appearance of the matches at every generation.
  *
  * ```html
  * <div class="match-list" [appStagger]="round().id">…</div>
@@ -26,8 +25,8 @@ export class StaggerDirective {
     effect(() => {
       this.replayKey();
 
-      // Au premier rendu la classe posée par `host` suffit : inutile de la retirer
-      // pour la remettre, l'animation vient déjà de démarrer.
+      // On the first render the class set by `host` is enough: no need to remove it to put it back,
+      // the animation has just started.
       if (this.isFirstRun) {
         this.isFirstRun = false;
         return;
@@ -35,7 +34,8 @@ export class StaggerDirective {
 
       const element = this.elementRef.nativeElement;
       element.classList.remove('stagger');
-      // Reflow forcé : sans lui le navigateur regroupe retrait et ajout, et l'animation ne repart pas.
+      // Forced reflow: without it the browser groups the removal and the addition, and the
+      // animation does not restart.
       void element.offsetWidth;
       element.classList.add('stagger');
     });

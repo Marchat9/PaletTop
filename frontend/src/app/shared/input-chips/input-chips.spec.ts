@@ -48,7 +48,8 @@ describe('InputChips', () => {
     expect(fixture.componentInstance.value()).toEqual([1]);
   });
 
-  // La taille visée est là par construction : on la montre sans laisser croire qu'on peut l'ôter.
+  // The target size is there by construction: it is shown without suggesting that it can be
+  // removed.
   it('affiche la valeur verrouillée comme cochée et refuse de la retirer', () => {
     const { fixture, chips } = setup();
 

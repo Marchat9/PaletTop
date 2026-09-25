@@ -115,8 +115,7 @@
       }
     }
 
-    // Frère de `.team`, pas son enfant : la règle d'origine l'imbriquait, et ne
-    // s'appliquait donc jamais.
+    // Sibling of `.team`, not its child: the original rule nested it, and therefore never applied.
     .score {
       min-width: 1.8rem;
       text-align: center;

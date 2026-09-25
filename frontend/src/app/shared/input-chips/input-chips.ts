@@ -4,13 +4,13 @@ import { Icon } from '../icon/icon';
 export interface InputChipOption {
   value: number;
   label: string;
-  /** Toujours active et non décochable : elle fait partie du réglage par construction. */
+  /** Always on and cannot be unchecked: it is part of the setting by construction. */
   locked?: boolean;
 }
 
 /**
- * Choix multiple compact : quelques pastilles à cocher, là où une liste de cases à cocher
- * prendrait toute la largeur.
+ * Compact multiple choice: a few pills to tick, where a list of checkboxes would take the full
+ * width.
  */
 @Component({
   selector: 'app-input-chips',

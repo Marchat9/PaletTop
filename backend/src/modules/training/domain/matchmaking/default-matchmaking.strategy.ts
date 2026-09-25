@@ -9,14 +9,14 @@ interface TeamRef {
     participantIds: string[];
 }
 
-// Le placement est glouton : il peut se coincer sur les derniers joueurs et reformer un binôme
-// interdit faute de candidat libre. Plutôt que de céder tout de suite, on rejoue la répartition
-// avec un autre mélange. Le calcul est en mémoire et négligeable devant les écritures en base.
+// Placement is greedy: it can get stuck on the last players and rebuild a forbidden pair for lack
+// of a free candidate. Rather than giving up right away, the split is replayed with another
+// shuffle. The computation is in memory and negligible next to the database writes.
 const PLACEMENT_ATTEMPTS = 10;
 
-// Un invité, ou un joueur qui n'a pas encore disputé de match, n'a pas de niveau connu. On le
-// place vers le bas du classement sans le mettre dernier : il jouera avec un partenaire correct
-// plutôt qu'avec le meilleur ou le plus faible de la séance.
+// A guest, or a player who has not played a match yet, has no known level. They are placed low in
+// the ranking without being last: they play with a decent partner rather than with the best or
+// the weakest player of the session.
 const UNKNOWN_LEVEL_POSITION = 7 / 8;
 
 export class DefaultMatchmakingStrategy implements MatchmakingPort {
@@ -32,8 +32,8 @@ export class DefaultMatchmakingStrategy implements MatchmakingPort {
             plateCount: input.config.plateCount,
         });
 
-        // Aucun match possible : trois joueurs et des équipes de deux, par exemple. Tout le monde
-        // se repose, et l'interface explique pourquoi avant même le clic.
+        // No match is possible: three players with teams of two, for instance. Everyone rests, and
+        // the UI explains why before the click.
         if (!decomposition) {
             return this.allAtRest(input);
         }
@@ -53,15 +53,15 @@ export class DefaultMatchmakingStrategy implements MatchmakingPort {
             participantIds,
         }));
 
-        // Un joueur au repos devient une équipe d'un seul joueur, sans adversaire. C'est le
-        // vocabulaire que RoundPlan sait déjà persister, et il reste ainsi visible dans le round
-        // — côté admin comme sur sa propre page — au lieu d'en disparaître silencieusement.
+        // A resting player becomes a one-player team without an opponent. That is the vocabulary
+        // RoundPlan already knows how to persist, and it keeps the rest visible in the round -
+        // admin side as well as on the player page - instead of silently disappearing.
         const restingTeams = resting.map((participantId, index) => ({
             tempId: `sit-out-${index + 1}`,
             participantIds: [participantId],
         }));
 
-        // Les équipes fixes qui dépassent le nombre de plaques attendent le round suivant.
+        // Fixed teams beyond the plate count wait for the next round.
         const fixedPlaying = input.fixedTeams.slice(0, decomposition.fixedTeamsPlaying);
         const fixedWaiting = input.fixedTeams.slice(decomposition.fixedTeamsPlaying);
 
@@ -80,8 +80,8 @@ export class DefaultMatchmakingStrategy implements MatchmakingPort {
 
         const matches = this.pairTeams(input, teamRefs);
 
-        // Les équipes au repos sont tenues hors de l'appariement : deux joueurs mis au repos le
-        // même round s'y retrouveraient sinon opposés l'un à l'autre en 1 contre 1.
+        // Resting teams are kept out of the pairing: two players resting the same round would
+        // otherwise end up facing each other in a 1v1.
         const restingMatches = [
             ...restingTeams.map((team) => ({ teamRef: team.tempId, opponentRef: null })),
             ...fixedWaiting.map((team) => ({ teamRef: team.id, opponentRef: null })),
@@ -93,7 +93,7 @@ export class DefaultMatchmakingStrategy implements MatchmakingPort {
         };
     }
 
-    /** Personne ne peut jouer : chacun est au repos, le round existe quand même. */
+    /** Nobody can play: everyone rests, the round still exists. */
     private allAtRest(input: GenerateRoundInput): RoundPlan {
         const restingTeams = input.soloParticipantIds.map((participantId, index) => ({
             tempId: `sit-out-${index + 1}`,
@@ -110,8 +110,8 @@ export class DefaultMatchmakingStrategy implements MatchmakingPort {
     }
 
     /**
-     * Qui joue, qui se repose. Le repos revient à ceux qui se sont le moins reposés jusqu'ici :
-     * sur une séance entière, chacun attend son tour à peu près autant que les autres.
+     * Who plays, who rests. Rest goes to those who have rested the least so far: over a whole
+     * session everyone waits about as much as the others.
      */
     private splitPlayersAndRest(
         input: GenerateRoundInput,
@@ -132,7 +132,7 @@ export class DefaultMatchmakingStrategy implements MatchmakingPort {
         };
     }
 
-    /** Forme les équipes, au hasard ou par niveaux voisins selon le réglage de la séance. */
+    /** Builds the teams, at random or by nearby levels depending on the session setting. */
     private buildGroups(
         input: GenerateRoundInput,
         playing: string[],
@@ -166,9 +166,9 @@ export class DefaultMatchmakingStrategy implements MatchmakingPort {
     }
 
     /**
-     * Apprentissage : on classe les joueurs par niveau, puis on sert les équipes par tranches —
-     * le meilleur de la tranche haute avec le meilleur de la tranche basse, et ainsi de suite.
-     * Personne ne se retrouve donc avec un partenaire à l'autre bout du classement.
+     * Learning mode: players are ranked by level, then teams are served band by band - the best of
+     * the top band with the best of the bottom band, and so on. Nobody ends up with a partner from
+     * the other end of the ranking.
      */
     private buildLearningGroups(
         input: GenerateRoundInput,
@@ -190,7 +190,7 @@ export class DefaultMatchmakingStrategy implements MatchmakingPort {
         return groups;
     }
 
-    /** Du plus fort au plus faible ; niveau inconnu placé aux sept huitièmes du classement. */
+    /** Strongest to weakest; unknown level placed at seven eighths of the ranking. */
     private rankByLevel(input: GenerateRoundInput, participantIds: string[]): string[] {
         const known = participantIds.filter((id) => input.levelByParticipant[id] !== undefined);
         const unknown = shuffleFisherYates(
@@ -207,7 +207,7 @@ export class DefaultMatchmakingStrategy implements MatchmakingPort {
         return [...known.slice(0, position), ...unknown, ...known.slice(position)];
     }
 
-    /** Remplissage glouton, en évitant les binômes interdits tant qu'un candidat reste libre. */
+    /** Greedy fill, avoiding forbidden pairs as long as a candidate is free. */
     private fillGroups(
         participantIds: string[],
         groupSizes: number[],
@@ -222,7 +222,7 @@ export class DefaultMatchmakingStrategy implements MatchmakingPort {
                 let candidateIndex = remaining.findIndex(
                     (id) => !group.some((member) => forbiddenPairs.has(pairKey(member, id))),
                 );
-                if (candidateIndex === -1) candidateIndex = 0; // relâchement : aucun candidat libre
+                if (candidateIndex === -1) candidateIndex = 0; // relaxed: no free candidate
                 group.push(remaining.splice(candidateIndex, 1)[0]);
             }
             groups.push(group);
@@ -232,8 +232,8 @@ export class DefaultMatchmakingStrategy implements MatchmakingPort {
     }
 
     /**
-     * Apparie les équipes. En apprentissage, les forces voisines se rencontrent pour que les
-     * matchs restent serrés ; sinon l'ordre est tiré au sort, en évitant les oppositions récentes.
+     * Pairs the teams. In learning mode nearby strengths meet so the matches stay close; otherwise
+     * the order is drawn at random, avoiding recent opponents.
      */
     private pairTeams(
         input: GenerateRoundInput,
@@ -286,7 +286,7 @@ export class DefaultMatchmakingStrategy implements MatchmakingPort {
             : levels.reduce((sum, level) => sum + level, 0) / levels.length;
     }
 
-    /** Deux à deux dans l'ordre reçu : les voisins se rencontrent. */
+    /** Two by two in the order received: neighbours meet. */
     private pairInOrder(teamRefs: TeamRef[]): { teamRef: string; opponentRef: string | null }[] {
         const matches: { teamRef: string; opponentRef: string | null }[] = [];
         for (let index = 0; index < teamRefs.length; index += 2) {
@@ -315,7 +315,7 @@ export class DefaultMatchmakingStrategy implements MatchmakingPort {
             let opponentIndex = remaining.findIndex(
                 (team) => !forbiddenOpponents.has(pairKey(current.canonicalId, team.canonicalId)),
             );
-            if (opponentIndex === -1) opponentIndex = 0; // relâchement : aucun adversaire inédit
+            if (opponentIndex === -1) opponentIndex = 0; // relaxed: no unseen opponent
 
             const opponent = remaining.splice(opponentIndex, 1)[0];
             matches.push({ teamRef: current.ref, opponentRef: opponent.ref });
@@ -325,9 +325,9 @@ export class DefaultMatchmakingStrategy implements MatchmakingPort {
     }
 
     /**
-     * Les binômes et oppositions à éviter. La profondeur s'adapte à l'effectif : avec beaucoup de
-     * joueurs on remonte plusieurs rounds, avec quatre joueurs la contrainte deviendrait
-     * impossible à tenir, donc on se limite au round précédent.
+     * Pairs and match-ups to avoid. The depth adapts to the headcount: with many players several
+     * rounds are taken into account, with four players the constraint would be impossible to keep,
+     * so only the previous round counts.
      */
     private forbiddenPairs(input: GenerateRoundInput, kind: 'partner' | 'opponent'): Set<string> {
         const enabled =
@@ -350,8 +350,8 @@ export class DefaultMatchmakingStrategy implements MatchmakingPort {
     }
 
     /**
-     * Combien de rounds en arrière on peut exiger sans se coincer : un joueur a
-     * `effectif - 1` partenaires possibles et en consomme `taille - 1` par round.
+     * How many rounds back can be required without getting stuck: a player has `headcount - 1`
+     * possible partners and uses `size - 1` of them per round.
      */
     private rotationDepth(input: GenerateRoundInput): number {
         const players = input.soloParticipantIds.length;
@@ -362,7 +362,7 @@ export class DefaultMatchmakingStrategy implements MatchmakingPort {
     }
 }
 
-/** Nombre de binômes interdits présents dans une répartition. */
+/** Number of forbidden pairs found in a split. */
 function countForbiddenPairs(groups: string[][], forbiddenPairs: Set<string>): number {
     let count = 0;
     for (const group of groups) {

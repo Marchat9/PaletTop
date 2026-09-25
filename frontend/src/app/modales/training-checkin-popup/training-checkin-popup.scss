@@ -3,9 +3,9 @@
 }
 
 .training-checkin-popup {
-  // Le reste de la coque vient de `.popup-surface` (styles/dialog.scss). La classe de panneau
-  // `dialog-panel-large` occupe presque tout l'écran : on borne ici pour garder une colonne
-  // lisible sur grand écran.
+  // The rest of the shell comes from `.popup-surface` (styles/dialog.scss). The `dialog-panel-
+  // large` panel class takes almost the whole screen: bounded here to keep a readable column on a
+  // large screen.
   gap: 1.25rem;
   width: 100%;
   max-width: 54rem;
@@ -129,8 +129,8 @@
     gap: 0.4rem;
   }
 
-  // Trois états sur la même pastille : jamais venu, reparti, présent. Le présent reste
-  // affiché — il change d'aspect au lieu de disparaître de la liste.
+  // Three states on the same pill: never came, left, present. The present one stays on screen - it
+  // changes look instead of leaving the list.
   .entry-chip {
     display: inline-flex;
     align-items: center;
@@ -184,8 +184,8 @@
       }
     }
 
-    // Seul l'état "présent" désactive la pastille : elle n'est pas grisée pour autant,
-    // sa couleur porte déjà l'information.
+    // Only the "present" state disables the pill: it is not greyed out for all that, its colour
+    // already carries the information.
     &:disabled:not(.is-present) {
       opacity: 0.55;
       cursor: default;

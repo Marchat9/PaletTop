@@ -35,8 +35,8 @@
     }
   }
 
-  // Bandeau de clôture : le match reste affiché en dessous, mais figé — d'où le besoin de
-  // dire explicitement ce qui est encore possible.
+  // Closing banner: the match stays on screen below, but frozen - hence the need to say explicitly
+  // what is still possible.
   .session-closed {
     display: flex;
     align-items: center;
@@ -86,8 +86,8 @@
       font-family: var(--font-headline);
     }
 
-    // Contenu projeté dans la carte quand il n'y a pas de match : la boîte est à elle, ce
-    // qu'on y met reste à nous.
+    // Content projected into the card when there is no match: the box is the card's, what we put in
+    // it stays ours.
     ::ng-deep .empty-icon {
       font-size: 2.5rem;
       opacity: 0.5;

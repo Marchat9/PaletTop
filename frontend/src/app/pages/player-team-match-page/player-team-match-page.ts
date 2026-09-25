@@ -125,10 +125,11 @@ export class PlayerTeamMatchPageComponent {
   });
   public readonly recentResults = computed(() => historyToResults(this.matchHistory()));
 
-  /** Projection vers la carte partagée : elle ne connaît ni équipe ni tournoi. */
+  /** Projection towards the shared card: it knows neither team nor tournament. */
   /**
-   * Le titre annonce ce que la carte montre. Un tournoi terminé n'affiche aucun match mais un
-   * bloc de fin qui se suffit : le titre disparaît plutôt que d'annoncer un match absent.
+   * The title announces what the card shows. A finished tournament shows no match but a closing
+   * block that stands on its own: the title disappears rather than announcing a match that is not
+   * there.
    */
   public readonly matchTitle = computed(() => {
     if (this.matchView()?.isBye) {

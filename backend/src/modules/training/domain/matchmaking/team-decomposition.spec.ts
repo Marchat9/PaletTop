@@ -20,7 +20,7 @@ describe('chooseDecomposition', () => {
         expect(result).toEqual({ groupSizes: [2, 2, 2, 2], fixedTeamsPlaying: 0, sitOutCount: 0 });
     });
 
-    // Trois équipes de 2, c'est une équipe sans adversaire : deux joueurs attendraient pour rien.
+    // Three teams of 2 means one team without an opponent: two players would wait for nothing.
     it('écarte les répartitions en nombre impair d’équipes', () => {
         const result = chooseDecomposition(input({ soloCount: 6 }));
 
@@ -47,7 +47,7 @@ describe('chooseDecomposition', () => {
     it('reste au plus près de la taille visée à effectif complet', () => {
         const result = chooseDecomposition(input({ soloCount: 7, allowedTeamSizes: [1, 3] }));
 
-        // 2+2+2+1 fait jouer les sept, et s'écarte moins de 2 que 3+2+1+1.
+        // 2+2+2+1 lets all seven play, and strays less from 2 than 3+2+1+1 does.
         expect(result?.groupSizes).toEqual([2, 2, 2, 1]);
         expect(result?.sitOutCount).toBe(0);
     });

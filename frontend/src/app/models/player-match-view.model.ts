@@ -2,53 +2,58 @@ import { Nullable } from './nullable.model';
 
 export type PlayerMatchStatus = 'PENDING' | 'ONGOING' | 'ENDED' | 'VALIDATED';
 
-/** Habillage de la carte quand il n'y a pas de match : fin d'épreuve fêtée, ou simple attente. */
+/** Look of the card when there is no match: end of event to celebrate, or plain waiting. */
 export type PlayerMatchEmptyTone = 'neutral' | 'celebration';
 
 /**
- * Vue d'un match du point de vue du joueur, indépendante du tournoi comme de l'entraînement.
+ * A match seen from the player's side, independent of both tournament and training.
  *
- * Les deux contextes n'ont ni la même identité (une équipe nommée d'un côté, un individu et son
- * binôme du round de l'autre) ni le même vocabulaire : chaque page projette son propre DTO
- * vers ce modèle, et la carte n'a plus à savoir d'où elle vient.
+ * The two contexts share neither identity (a named team on one side, a player and their partner of
+ * the round on the other) nor vocabulary: each page projects its own DTO into this model, and the
+ * card no longer has to know where it comes from.
  */
 export interface PlayerMatchView {
   id: string;
   status: PlayerMatchStatus;
   isBye: boolean;
-  /** Libellé de mon camp : nom d'équipe, ou noms des joueurs quand l'équipe n'en a pas. */
+  /** Label of my side: team name, or player names when the team has none. */
   myLabel: string;
   opponentLabel: string;
   myScore: number;
   opponentScore: number;
-  /** Le camp A porte la couleur rouge des palets — l'info vient du match, pas de la page. */
+  /**
+   * Side A carries the red colour of the palets - the information comes from the match, not from
+   * the page.
+   */
   iAmTeamA: boolean;
   startedAt: Nullable<string>;
   finishedAt: Nullable<string>;
-  /** « Plaque N°3 » côté tournoi, « Round 3 » côté entraînement. */
+  /** "Plaque N°3" in a tournament, "Round 3" in a training session. */
   subtitle: Nullable<string>;
 }
 
-/** Textes du bloc affiché quand le joueur ne joue pas ce round. */
+/** Texts of the block shown when the player does not play this round. */
 export interface PlayerByeCopy {
   title: string;
   message: string;
-  /** Gain acquis une fois le bye validé. Absent quand le repos ne rapporte rien. */
+  /** Gain earned once the bye is validated. Absent when resting earns nothing. */
   awardLabel?: Nullable<string>;
-  /** Affiché tant que le gain n'est pas acquis. */
+  /** Shown as long as the gain is not earned. */
   pendingLabel?: Nullable<string>;
 }
 
-/** Textes du bloc de validation, le code demandé n'ayant pas la même nature d'un contexte à l'autre. */
+/**
+ * Texts of the validation block, the requested code not being of the same kind in both contexts.
+ */
 export interface PlayerValidationCopy {
   hint: string;
   placeholder: string;
 }
 
-/** Une ligne de l'historique des matchs du joueur. */
+/** One line of the player's match history. */
 export interface PlayerMatchResult {
   id: string;
-  /** « Match 3 » côté tournoi, « Round 3 » côté entraînement. */
+  /** "Match 3" in a tournament, "Round 3" in a training session. */
   label: string;
   status: string;
   myScore: number;
@@ -57,7 +62,7 @@ export interface PlayerMatchResult {
   isBye: boolean;
 }
 
-/** Une tuile de statistique affichée en tête de page joueur. */
+/** One statistic tile shown at the top of a player page. */
 export interface PlayerStatTile {
   key: string;
   label: string;

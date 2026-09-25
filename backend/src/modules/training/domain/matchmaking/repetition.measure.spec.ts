@@ -4,9 +4,9 @@ import { DefaultMatchmakingStrategy } from './default-matchmaking.strategy';
 import { GenerateRoundInput, RoundPlan } from './matchmaking.types';
 
 /**
- * Mesure du taux de binômes et d'adversaires répétés d'un round à l'autre, sur des séances
- * simulées. Sert de garde-fou : le placement glouton se coinçait sur les derniers joueurs et
- * reformait des binômes du round précédent.
+ * Measures how often pairs and opponents repeat from one round to the next, over simulated
+ * sessions. Acts as a guard: the greedy placement used to get stuck on the last players and rebuild
+ * pairs from the previous round.
  */
 
 function playingTeams(plan: RoundPlan) {
@@ -42,7 +42,7 @@ function restingOf(plan: RoundPlan): string[] {
 }
 
 function simulate(playerCount: number, rounds: number, seed = 1) {
-    // Random reproductible : la mesure doit donner le même chiffre d'une exécution à l'autre.
+    // Reproducible random: the measure must give the same figure on every run.
     let state = seed;
     const random = () => {
         state = (state * 1103515245 + 12345) % 2147483648;
@@ -122,7 +122,7 @@ describe('rotation des binômes et des adversaires', () => {
             );
             expect(repeatedPartners).toBe(0);
             expect(repeatedOpponents).toBe(0);
-            // Le repos tourne : personne ne doit se reposer beaucoup plus que les autres.
+            // Rest rotates: nobody should rest much more than the others.
             expect(restSpread).toBeLessThanOrEqual(1);
         });
     }

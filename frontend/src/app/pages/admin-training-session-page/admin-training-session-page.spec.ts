@@ -152,7 +152,7 @@ describe('AdminTrainingSessionPage', () => {
     expect(routerMock.navigate).toHaveBeenCalledWith(['/admin/training/LAITON-2026']);
   });
 
-  // Une coupure réseau ne doit pas éjecter l'administrateur d'une séance déjà affichée.
+  // A network drop must not throw the admin out of a session already on screen.
   it('reste en place quand la séance est à l’écran et qu’un rafraîchissement échoue', () => {
     const { fixture, store, routerMock } = setup();
 
@@ -184,7 +184,7 @@ describe('AdminTrainingSessionPage', () => {
     );
   });
 
-  // Un joueur parti en plein match ne validera jamais son score : la séance s'arrête là.
+  // A player who left mid-match will never validate their score: the session stops there.
   it('nomme le joueur parti qui bloque le round', () => {
     const { fixture, store } = setup();
 
@@ -223,7 +223,7 @@ describe('AdminTrainingSessionPage', () => {
     expect(fixture.componentInstance.generateBlockedIsAlert()).toBe(true);
   });
 
-  // Trois joueurs et des équipes de deux : aucune combinaison ne forme deux équipes.
+  // Three players with teams of two: no combination forms two teams.
   it('explique qu’aucun match n’est possible avant même le clic', () => {
     const { fixture, store } = setup();
     store.overrideSelector(selectCurrentTrainingSessionData, {

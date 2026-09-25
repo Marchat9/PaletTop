@@ -47,7 +47,7 @@ function buildSession(): TrainingSessionPublicDto {
   };
 }
 
-/** Le participant est dans l'équipe B : son score est donc `scoreB`. */
+/** The participant is in team B: their score is therefore `scoreB`. */
 function buildCurrentMatch(): TrainingCurrentMatchDto {
   return {
     participant: ME,
@@ -173,8 +173,8 @@ describe('PlayerTrainingSessionPage', () => {
     );
   });
 
-  // Le classement n'y liste que ceux qui ont joué : s'y fier ferait croire à une séance
-  // beaucoup plus petite qu'elle n'est.
+  // The leaderboard only lists those who played: relying on it would suggest a much smaller session
+  // than it really is.
   it('se compare aux présents, pas seulement à ceux qui ont déjà joué', () => {
     const session = buildSession();
     const { fixture } = setup(buildCurrentMatch(), {
@@ -189,7 +189,7 @@ describe('PlayerTrainingSessionPage', () => {
       ],
     });
 
-    // 5 présents + 0 parti classé : le classement de test ne contient que p1 et p2, tous présents.
+    // 5 present + 0 gone with a ranking: the test leaderboard only holds p1 and p2, both present.
     expect(fixture.componentInstance.statTiles().find((t) => t.key === 'rank')?.value).toBe('2/5');
   });
 
@@ -214,7 +214,7 @@ describe('PlayerTrainingSessionPage', () => {
 
     expect(fixture.componentInstance.isSessionClosed()).toBe(true);
     expect(element.querySelector('.session-closed')?.textContent).toContain('terminée');
-    // Démarrer le match n'est plus accepté par le serveur : le bouton disparaît.
+    // Starting the match is no longer accepted by the server: the button disappears.
     expect(element.querySelector('.match-card__action')).toBeNull();
   });
 

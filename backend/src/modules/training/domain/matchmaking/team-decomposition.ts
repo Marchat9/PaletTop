@@ -1,7 +1,7 @@
 export interface DecompositionInput {
-    /** Joueurs à répartir (hors équipes fixes). */
+    /** Players to split (fixed teams excluded). */
     soloCount: number;
-    /** Équipes fixes qui occuperont une plaque. */
+    /** Fixed teams that will take a plate. */
     fixedTeamCount: number;
     playersPerTeam: number;
     allowedTeamSizes: number[];
@@ -10,24 +10,23 @@ export interface DecompositionInput {
 }
 
 export interface Decomposition {
-    /** Tailles des équipes à former, de la plus grande à la plus petite. */
+    /** Sizes of the teams to build, largest first. */
     groupSizes: number[];
-    /** Équipes fixes retenues : le reste attendra, faute de plaque. */
+    /** Fixed teams kept: the others will wait, for lack of a plate. */
     fixedTeamsPlaying: number;
     /** Joueurs solos qui ne joueront pas ce round. */
     sitOutCount: number;
 }
 
 /**
- * Choisit la répartition des joueurs en équipes, en appliquant les règles dans l'ordre :
+ * Chooses how the players are split into teams, applying the rules in order:
  *
- * 1. toute équipe a une taille autorisée ;
- * 2. le nombre total d'équipes est pair, sinon la dernière n'aurait pas d'adversaire ;
- * 3. pas plus de matchs que de plaques disponibles ;
- * 4. l'arbitrage de la séance tranche entre « tout le monde joue » et « garder la taille visée ».
+ * 1. every team has an allowed size; 2. the total number of teams is even, otherwise the last one
+ * has no opponent; 3. no more matches than available plates; 4. the session trade-off decides
+ * between "everyone plays" and "keep the target size".
  *
- * Renvoie `null` quand aucun match n'est possible (trois joueurs et des équipes de deux, par
- * exemple) : c'est à l'appelant de l'expliquer, il n'y a rien à générer.
+ * Returns `null` when no match is possible (three players with teams of two, for instance): it is
+ * up to the caller to explain it, there is nothing to generate.
  */
 export function chooseDecomposition(input: DecompositionInput): Decomposition | null {
     const sizes = [...new Set([input.playersPerTeam, ...input.allowedTeamSizes])]
@@ -44,8 +43,8 @@ export function chooseDecomposition(input: DecompositionInput): Decomposition | 
     let winnerScore: [number, number] | null = null;
     let winnerFixedPlaying = -1;
 
-    // Les équipes fixes ont la priorité sur les plaques, mais il faut parfois en laisser une de
-    // côté pour que le compte total tombe pair, ou pour tenir dans les plaques disponibles.
+    // Fixed teams come first for the plates, but one sometimes has to be left out so the total
+    // count is even, or to fit in the available plates.
     for (
         let fixedPlaying = Math.min(input.fixedTeamCount, maxTeams);
         fixedPlaying >= 0;
@@ -60,8 +59,8 @@ export function chooseDecomposition(input: DecompositionInput): Decomposition | 
                 const cell = grid[count][used];
                 if (!cell) continue;
 
-                // Ordre lexicographique : le premier critère dépend de l'arbitrage de la séance,
-                // le second départage.
+                // Lexicographic order: the first criterion depends on the session trade-off, the
+                // second one breaks ties.
                 const score: [number, number] = input.preferTargetTeamSize
                     ? [cell.deviation, -used]
                     : [-used, cell.deviation];
@@ -78,8 +77,8 @@ export function chooseDecomposition(input: DecompositionInput): Decomposition | 
             }
         }
 
-        // Une équipe fixe de moins ne peut qu'empirer le résultat dès lors qu'on en a déjà trouvé
-        // une solution qui les fait toutes jouer.
+        // One fixed team less can only make things worse once a solution that makes them all play
+        // has been found.
         if (winnerFixedPlaying === fixedPlaying) break;
     }
 
@@ -96,8 +95,8 @@ interface Cell {
 }
 
 /**
- * `grid[count][used]` : la répartition de `used` joueurs en `count` équipes de tailles autorisées
- * qui s'écarte le moins de la taille visée, ou `null` si elle n'existe pas.
+ * `grid[count][used]`: the split of `used` players into `count` teams of allowed sizes that strays
+ * least from the target size, or `null` when it does not exist.
  */
 function deviationGrid(
     soloCount: number,

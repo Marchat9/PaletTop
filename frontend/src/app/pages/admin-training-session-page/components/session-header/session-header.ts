@@ -22,7 +22,7 @@ export class SessionHeader {
 
   protected readonly isOpen = computed(() => this.session()?.status === 'OPEN');
 
-  /** Les réglages de matchmaking, figés à la création, résumés en une ligne de pastilles. */
+  /** The matchmaking settings, frozen at creation, summed up in one row of pills. */
   protected readonly rules = computed<SessionRule[]>(() => {
     const session = this.session();
     if (!session) {

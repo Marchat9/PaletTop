@@ -1,9 +1,9 @@
 import { TrainingMatchDto } from './training-round.dto';
 
 /**
- * Identité du participant qui interroge l'API. Elle n'est renvoyée qu'à celui qui a fourni son
- * propre code : sans elle, le client ne peut pas savoir lequel des deux camps du match est le
- * sien, ni se retrouver dans le classement (aucun payload public ne porte les codes).
+ * Identity of the participant calling the API. Only returned to the one who gave their own code:
+ * without it the client cannot tell which of the two sides of the match is theirs, nor find itself
+ * in the leaderboard (no public payload carries the codes).
  */
 export interface TrainingParticipantIdentityDto {
     id: string;
@@ -13,7 +13,8 @@ export interface TrainingParticipantIdentityDto {
 export interface TrainingCurrentMatchDto {
     participant: TrainingParticipantIdentityDto;
     match: TrainingMatchDto | null;
-    // Numéro du round en cours, même quand le participant n'y joue pas — de quoi situer le repos.
+    // Number of the current round, even when the participant does not play in it - enough to place
+    // the rest.
     roundNumber: number | null;
-    sitOut: boolean; // true = le round courant existe mais ce participant est au repos ce round-ci (allowSitOut).
+    sitOut: boolean; // true = the current round exists but this participant rests this round.
 }

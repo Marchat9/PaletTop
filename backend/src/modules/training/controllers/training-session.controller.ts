@@ -79,9 +79,9 @@ export class TrainingSessionController {
             'Erreur lors du check-in.',
             () => this.sessionsService.checkin(sessionCode, dto),
             {
-                // Deux collisions possibles ici : le code à 4 chiffres (rare, retenter suffit) et
-                // le même membre du roster check-in deux fois (cf. index nommé dédié) — message
-                // différent puisque, pour la seconde, retenter ne sert à rien.
+                // Two collisions are possible here: the 4-digit code (rare, retrying is enough) and
+                // the same roster member checking in twice (dedicated named index) - different
+                // message, since retrying does not help for the second one.
                 pgErrorMessages: {
                     UQ_training_participant_active_member:
                         'Ce membre du roster est déjà inscrit à cette session.',

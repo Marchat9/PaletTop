@@ -18,8 +18,8 @@
   font-size: 0.9rem;
   cursor: pointer;
 
-  // La case reste dans le DOM pour le clavier et les lecteurs d'écran, mais l'habillage
-  // se fait sur la pastille elle-même.
+  // The checkbox stays in the DOM for the keyboard and for screen readers, but the styling happens
+  // on the pill itself.
   input {
     position: absolute;
     opacity: 0;
@@ -42,7 +42,7 @@
     color: var(--color-status-ongoing-text);
   }
 
-  // Taille visée : présente par construction, on le montre sans laisser croire qu'on peut la retirer.
+  // Target size: there by construction, shown without suggesting that it can be removed.
   &.locked {
     border-style: dashed;
     border-color: var(--color-primary);

@@ -22,9 +22,9 @@ export interface TrainingCheckinPopupData {
 }
 
 /**
- * - `present` : déjà sur la séance, rien à faire.
- * - `left` : est reparti, un clic le fait revenir.
- * - `absent` : pas encore venu de la séance.
+ * - `present`: already in the session, nothing to do.
+ * - `left`: has left, one click brings them back.
+ * - `absent`: has not come to the session yet.
  */
 export type CheckinEntryState = 'present' | 'left' | 'absent';
 
@@ -60,7 +60,7 @@ export class TrainingCheckinPopup {
     return session ? (session.participants as TrainingParticipantAdminDto[]) : [];
   });
 
-  /** Tout le roster reste affiché : les présents changent d'aspect au lieu de disparaître. */
+  /** The whole roster stays on screen: present members change look instead of disappearing. */
   public readonly memberEntries = computed<CheckinEntry[]>(() =>
     (this.training()?.members ?? []).map((member) => {
       const linked = this.participants().filter(
@@ -75,8 +75,8 @@ export class TrainingCheckinPopup {
   );
 
   /**
-   * Les joueurs de passage n'existent que par leur inscription : on les regroupe par nom
-   * pour qu'un aller-retour ne produise pas deux pastilles pour la même personne.
+   * Drop-in players only exist through their check-in: they are grouped by name so that a round
+   * trip does not produce two pills for the same person.
    */
   public readonly guestEntries = computed<CheckinEntry[]>(() => {
     const guestsByName = new Map<string, TrainingParticipantAdminDto[]>();
