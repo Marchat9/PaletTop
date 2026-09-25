@@ -20,6 +20,7 @@ import { TournamentDto } from 'src/app/store/tournament/tournament.models';
 import { Button } from 'src/app/shared/button/button';
 import { TeamConfig } from './team-config/team-config';
 import { TeamPrintSheet } from './team-print-sheet/team-print-sheet';
+import { newId } from 'src/app/utils/unique-id.util';
 
 // beforeprint fires as soon as the browser's print engine engages, before the
 // dialog opens — independent of how long the user takes with it afterwards.
@@ -93,7 +94,7 @@ export class TournamentTeamConfigurationCard {
 
   private emitPrintErrorNotification(): void {
     this.notification.emit({
-      id: crypto.randomUUID(),
+      id: newId(),
       message:
         "Votre navigateur ne semble pas prendre en charge l'impression. Essayez avec un autre navigateur (Chrome, Firefox, Edge).",
       typeIcon: 'warning',

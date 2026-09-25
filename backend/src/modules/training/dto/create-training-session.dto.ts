@@ -19,6 +19,10 @@ import { TrainingTeamComposition } from 'src/enum/training.enum';
  */
 export const MAX_PLAYERS_PER_TEAM = 6;
 
+/** Nothing to do with the game, only a bound so a typo cannot travel to the database. */
+export const MAX_PLATE_COUNT = 100;
+export const MAX_POINTS_PER_GAME = 100;
+
 export class CreateTrainingSessionDto {
     @IsString()
     @IsNotEmpty()
@@ -46,6 +50,7 @@ export class CreateTrainingSessionDto {
 
     @IsInt()
     @Min(1)
+    @Max(MAX_PLATE_COUNT)
     plateCount!: number;
 
     @IsEnum(TrainingTeamComposition)
@@ -59,5 +64,6 @@ export class CreateTrainingSessionDto {
 
     @IsInt()
     @Min(1)
+    @Max(MAX_POINTS_PER_GAME)
     pointsPerGame!: number;
 }

@@ -8,7 +8,9 @@ import {
   inject,
   OnInit,
   signal,
+  DestroyRef,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { environment } from '@environment';
 import { Store } from '@ngrx/store';
@@ -74,6 +76,7 @@ import { onResyncRequested } from 'src/app/utils/resync-on-reconnect.util';
 })
 export class AdminTournamentPageComponent implements OnInit {
   private readonly activatedRoute = inject(ActivatedRoute);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly router = inject(Router);
   private readonly store = inject(Store);
   private readonly dialog = inject(Dialog);
@@ -141,7 +144,7 @@ export class AdminTournamentPageComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.activatedRoute.paramMap.subscribe((params) => {
+    this.activatedRoute.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
       const code = params.get('tournamentCode');
       if (code) {
         this.tournamentCode.set(code);

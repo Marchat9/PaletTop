@@ -49,6 +49,7 @@ import {
 import { onResyncRequested } from 'src/app/utils/resync-on-reconnect.util';
 import { PlayerTeamHeaderComponent } from './player-team-header/player-team-header';
 import { PlayerTeamMembersComponent } from './player-team-members/player-team-members';
+import { newId } from 'src/app/utils/unique-id.util';
 
 export type TeamMatchStatus = 'NOT_STARTED' | 'CANCELLED' | 'FINISH';
 
@@ -269,7 +270,7 @@ export class PlayerTeamMatchPageComponent {
       this.store.dispatch(
         addNotification({
           notification: {
-            id: crypto.randomUUID(),
+            id: newId(),
             message: "Impossible d'afficher le classement.",
             typeIcon: 'error',
             type: 'classement',

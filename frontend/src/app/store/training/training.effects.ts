@@ -1,7 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { Store } from '@ngrx/store';
-import { catchError, map, of, switchMap, withLatestFrom } from 'rxjs';
+import { catchError, concatMap, map, of, switchMap, withLatestFrom } from 'rxjs';
 import { TrainingService } from 'src/app/services/training.service';
 import { convertErrorToString } from 'src/app/utils/api-call.utils';
 import {
@@ -59,6 +59,9 @@ import {
   loadTrainingSessionPublic,
   loadTrainingSessionPublicFailure,
   loadTrainingSessionPublicSuccess,
+  loadTrainingSessionSettings,
+  loadTrainingSessionSettingsFailure,
+  loadTrainingSessionSettingsSuccess,
   loadTrainingSessions,
   loadTrainingSessionsFailure,
   loadTrainingSessionsSuccess,
@@ -100,6 +103,7 @@ import {
   validateTrainingMatchSuccess,
 } from './training.match.actions';
 import { selectCurrentTrainingAdminInformations } from './training.selectors';
+import { newId } from 'src/app/utils/unique-id.util';
 
 @Injectable()
 export class TrainingEffects {
@@ -109,10 +113,15 @@ export class TrainingEffects {
 
   // ---------------- Training creation / player join ----------------
 
+  // Reads use `switchMap`: only the latest answer matters, an outdated call can be dropped.
+  // Writes use `concatMap`: each one is a separate intent (check in Marie, then Paul) and must
+  // reach the server. `switchMap` would abort the first request as soon as the second one starts.
+  // The exception is `updateTrainingScore$`: the player taps + repeatedly and only the last score
+  // counts, so cancelling the previous call is exactly what we want there.
   createTraining$ = createEffect(() =>
     this.actions$.pipe(
       ofType(createTraining),
-      switchMap(({ code, name, club, adminPassword }) =>
+      concatMap(({ code, name, club, adminPassword }) =>
         this.trainingService.createTraining(code, name, club, adminPassword).pipe(
           switchMap((training) =>
             of(
@@ -189,7 +198,7 @@ export class TrainingEffects {
     this.actions$.pipe(
       ofType(updateTrainingAdministratorInformations),
       withLatestFrom(this.store.select(selectCurrentTrainingAdminInformations)),
-      switchMap(([{ code, name, club }, adminInfo]) =>
+      concatMap(([{ code, name, club }, adminInfo]) =>
         this.trainingService.updateTraining(code, adminInfo?.password ?? '', name, club).pipe(
           switchMap((training) => of(updateTrainingAdministratorInformationsSuccess({ training }))),
           catchError((error) =>
@@ -208,7 +217,7 @@ export class TrainingEffects {
     this.actions$.pipe(
       ofType(addTrainingMember),
       withLatestFrom(this.store.select(selectCurrentTrainingAdminInformations)),
-      switchMap(([{ code, name }, adminInfo]) =>
+      concatMap(([{ code, name }, adminInfo]) =>
         this.trainingService.addMember(code, adminInfo?.password ?? '', name).pipe(
           switchMap((training) => of(addTrainingMemberSuccess({ training }))),
           catchError((error) =>
@@ -223,7 +232,7 @@ export class TrainingEffects {
     this.actions$.pipe(
       ofType(removeTrainingMember),
       withLatestFrom(this.store.select(selectCurrentTrainingAdminInformations)),
-      switchMap(([{ code, memberId }, adminInfo]) =>
+      concatMap(([{ code, memberId }, adminInfo]) =>
         this.trainingService.removeMember(code, memberId, adminInfo?.password ?? '').pipe(
           switchMap((training) => of(removeTrainingMemberSuccess({ training }))),
           catchError((error) =>
@@ -240,7 +249,7 @@ export class TrainingEffects {
     this.actions$.pipe(
       ofType(createTrainingSession),
       withLatestFrom(this.store.select(selectCurrentTrainingAdminInformations)),
-      switchMap(([{ trainingCode, configuration }, adminInfo]) =>
+      concatMap(([{ trainingCode, configuration }, adminInfo]) =>
         this.trainingService
           .createSession(trainingCode, adminInfo?.password ?? '', configuration)
           .pipe(
@@ -282,6 +291,21 @@ export class TrainingEffects {
     ),
   );
 
+  loadTrainingSessionSettings$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(loadTrainingSessionSettings),
+      withLatestFrom(this.store.select(selectCurrentTrainingAdminInformations)),
+      switchMap(([{ sessionCode }, adminInfo]) =>
+        this.trainingService.getSessionAdmin(sessionCode, adminInfo?.password ?? '').pipe(
+          switchMap((session) => of(loadTrainingSessionSettingsSuccess({ session }))),
+          catchError((error) =>
+            of(loadTrainingSessionSettingsFailure({ error: convertErrorToString(error) })),
+          ),
+        ),
+      ),
+    ),
+  );
+
   connectTrainingSessionAdministrator$ = createEffect(() =>
     this.actions$.pipe(
       ofType(connectTrainingSessionAdministrator),
@@ -301,7 +325,7 @@ export class TrainingEffects {
     this.actions$.pipe(
       ofType(closeTrainingSession),
       withLatestFrom(this.store.select(selectCurrentTrainingAdminInformations)),
-      switchMap(([{ sessionCode }, adminInfo]) =>
+      concatMap(([{ sessionCode }, adminInfo]) =>
         this.trainingService.closeSession(sessionCode, adminInfo?.password ?? '').pipe(
           switchMap((session) => of(closeTrainingSessionSuccess({ session }))),
           catchError((error) =>
@@ -316,7 +340,7 @@ export class TrainingEffects {
     this.actions$.pipe(
       ofType(checkinTrainingParticipant),
       withLatestFrom(this.store.select(selectCurrentTrainingAdminInformations)),
-      switchMap(([{ sessionCode, memberId, name }, adminInfo]) =>
+      concatMap(([{ sessionCode, memberId, name }, adminInfo]) =>
         this.trainingService
           .checkinParticipant(sessionCode, adminInfo?.password ?? '', memberId, name)
           .pipe(
@@ -333,7 +357,7 @@ export class TrainingEffects {
     this.actions$.pipe(
       ofType(removeTrainingParticipant),
       withLatestFrom(this.store.select(selectCurrentTrainingAdminInformations)),
-      switchMap(([{ sessionCode, participantId }, adminInfo]) =>
+      concatMap(([{ sessionCode, participantId }, adminInfo]) =>
         this.trainingService
           .removeParticipant(sessionCode, participantId, adminInfo?.password ?? '')
           .pipe(
@@ -366,7 +390,7 @@ export class TrainingEffects {
     this.actions$.pipe(
       ofType(createTrainingTeam),
       withLatestFrom(this.store.select(selectCurrentTrainingAdminInformations)),
-      switchMap(([{ sessionCode, participantIds, name }, adminInfo]) =>
+      concatMap(([{ sessionCode, participantIds, name }, adminInfo]) =>
         this.trainingService
           .createTeam(sessionCode, adminInfo?.password ?? '', participantIds, name)
           .pipe(
@@ -383,7 +407,7 @@ export class TrainingEffects {
     this.actions$.pipe(
       ofType(dissolveTrainingTeam),
       withLatestFrom(this.store.select(selectCurrentTrainingAdminInformations)),
-      switchMap(([{ sessionCode, teamId }, adminInfo]) =>
+      concatMap(([{ sessionCode, teamId }, adminInfo]) =>
         this.trainingService.dissolveTeam(sessionCode, teamId, adminInfo?.password ?? '').pipe(
           switchMap((session) => of(dissolveTrainingTeamSuccess({ session }))),
           catchError((error) =>
@@ -400,7 +424,7 @@ export class TrainingEffects {
     this.actions$.pipe(
       ofType(generateTrainingRound),
       withLatestFrom(this.store.select(selectCurrentTrainingAdminInformations)),
-      switchMap(([{ sessionCode }, adminInfo]) =>
+      concatMap(([{ sessionCode }, adminInfo]) =>
         this.trainingService.generateRound(sessionCode, adminInfo?.password ?? '').pipe(
           switchMap((round) => of(generateTrainingRoundSuccess({ round }))),
           catchError((error) =>
@@ -444,7 +468,7 @@ export class TrainingEffects {
   startTrainingMatch$ = createEffect(() =>
     this.actions$.pipe(
       ofType(startTrainingMatch),
-      switchMap(({ sessionCode, matchId, participantCode }) =>
+      concatMap(({ sessionCode, matchId, participantCode }) =>
         this.trainingService.startMatch(sessionCode, matchId, participantCode).pipe(
           switchMap((match) => of(startTrainingMatchSuccess({ match }))),
           catchError((error) =>
@@ -474,7 +498,7 @@ export class TrainingEffects {
   validateTrainingMatch$ = createEffect(() =>
     this.actions$.pipe(
       ofType(validateTrainingMatch),
-      switchMap(({ sessionCode, matchId, participantCode, opponentParticipantCode }) =>
+      concatMap(({ sessionCode, matchId, participantCode, opponentParticipantCode }) =>
         this.trainingService
           .validateMatch(sessionCode, matchId, participantCode, opponentParticipantCode)
           .pipe(
@@ -491,7 +515,7 @@ export class TrainingEffects {
     this.actions$.pipe(
       ofType(adminUpdateTrainingScore),
       withLatestFrom(this.store.select(selectCurrentTrainingAdminInformations)),
-      switchMap(([{ sessionCode, matchId, scoreA, scoreB }, adminInfo]) =>
+      concatMap(([{ sessionCode, matchId, scoreA, scoreB }, adminInfo]) =>
         this.trainingService
           .adminUpdateScore(sessionCode, matchId, adminInfo?.password ?? '', scoreA, scoreB)
           .pipe(
@@ -551,7 +575,7 @@ export class TrainingEffects {
       map(({ error }) =>
         addNotification({
           notification: {
-            id: crypto.randomUUID(),
+            id: newId(),
             message: error,
             typeIcon: 'error',
             type: 'error',

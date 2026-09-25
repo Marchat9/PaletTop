@@ -144,35 +144,6 @@
   letter-spacing: 0.1em;
 }
 
-// One single layout, the status colour coming through a variable.
-.status-badge {
-  padding: 0.2rem 0.55rem;
-  border-radius: 999px;
-  font-size: 0.6rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  white-space: nowrap;
-  background: color-mix(in srgb, var(--badge-color) 12%, transparent);
-  color: var(--badge-color);
-
-  &--pending {
-    --badge-color: var(--color-on-surface-variant);
-  }
-
-  &--ongoing {
-    --badge-color: var(--color-primary);
-  }
-
-  &--ended {
-    --badge-color: var(--color-secondary);
-  }
-
-  &--validated {
-    --badge-color: var(--color-tertiary);
-  }
-}
-
 .score-block {
   min-width: 6rem;
   flex: 1 1 auto;

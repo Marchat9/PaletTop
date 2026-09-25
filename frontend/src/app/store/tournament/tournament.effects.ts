@@ -54,6 +54,7 @@ import {
   startTournamentSuccess,
 } from './tournament.match.actions';
 import { selectCurrentTournamentAdminInformations } from './tournament.selectors';
+import { newId } from 'src/app/utils/unique-id.util';
 
 @Injectable()
 export class TournamentEffects {
@@ -132,7 +133,7 @@ export class TournamentEffects {
                 updateTournamentAdministratorConfigurationSuccess({ tournament }),
                 addNotification({
                   notification: {
-                    id: crypto.randomUUID(),
+                    id: newId(),
                     message: 'Modification de la configuration du tournoi réussi.',
                     typeIcon: 'success',
                     type: 'Configuration de tournoi',
@@ -299,7 +300,7 @@ export class TournamentEffects {
       map(({ error }) =>
         addNotification({
           notification: {
-            id: crypto.randomUUID(),
+            id: newId(),
             message: error,
             typeIcon: 'error',
             type: 'error',

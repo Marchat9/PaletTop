@@ -117,6 +117,12 @@ export const selectCloseTrainingSessionError = createSelector(
   (state) => state.requestStatus.closeSession.error,
 );
 
+// ---------- Previous session settings (creation page) ----------
+export const selectPreviousTrainingSessionSettings = createSelector(
+  selectTrainingState,
+  (state) => state.previousSessionSettings.data,
+);
+
 // ---------- Checkin / remove participant ----------
 export const selectLastCheckedInTrainingParticipant = createSelector(
   selectTrainingState,

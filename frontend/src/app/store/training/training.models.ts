@@ -174,6 +174,9 @@ export interface TrainingState {
 
   sessions: ApiCall<TrainingSessionSummaryDto[]>;
   currentSession: ApiCall<Nullable<TrainingSessionAdminDto | TrainingSessionPublicDto>>;
+  // Settings of the last session of the group, read to offer them again on the creation page. Kept
+  // out of `currentSession`, which always holds the session being run.
+  previousSessionSettings: ApiCall<Nullable<TrainingSessionAdminDto>>;
   // Participant just checked in: their code has to be given to them in person, the reducer derives
   // it by difference so that the page can show it large.
   lastCheckedInParticipant: Nullable<TrainingParticipantAdminDto>;

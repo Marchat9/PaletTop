@@ -28,7 +28,7 @@
     </div>
 
     @if (!generateBlockedReason() && nextRoundPreview(); as preview) {
-      <p class="preview" [appAnimateOnChange]="preview" animation="fade-in">
+      <p class="preview" role="status" [appAnimateOnChange]="preview" animation="fade-in">
         <app-icon name="visibility" iconClass="preview-icon" [ariaHidden]="true" />
         {{ preview }}
       </p>
@@ -37,6 +37,7 @@
     @if (generateBlockedReason(); as reason) {
       <p
         class="blocked"
+        role="status"
         [class.blocked--alert]="generateBlockedIsAlert()"
         [appAnimateOnChange]="reason"
         animation="fade-in"

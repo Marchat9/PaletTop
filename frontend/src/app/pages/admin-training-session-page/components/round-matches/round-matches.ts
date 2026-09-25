@@ -6,6 +6,7 @@ import { InputNumber } from 'src/app/shared/input-number/input-number';
 import { MatchStatusComponent } from 'src/app/shared/match-status/match-status';
 import { MatchTimerComponent } from 'src/app/shared/match-timer/match-timer';
 import { StaggerDirective } from 'src/app/shared/stagger/stagger.directive';
+import { matchStatusTone } from 'src/app/shared/status-pill/match-status-tone';
 import { StatusPill, StatusPillTone } from 'src/app/shared/status-pill/status-pill';
 import {
   TrainingMatchDto,
@@ -45,16 +46,7 @@ export class RoundMatches {
    * draft, not that of a finished match.
    */
   protected statusTone(status: TrainingMatchStatus): StatusPillTone {
-    switch (status) {
-      case 'ONGOING':
-        return 'ongoing';
-      case 'ENDED':
-        return 'draft';
-      case 'VALIDATED':
-        return 'success';
-      default:
-        return 'pending';
-    }
+    return matchStatusTone(status);
   }
 
   protected readonly editingMatchId = signal<string | null>(null);

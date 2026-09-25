@@ -19,6 +19,8 @@ import { Button } from '../button/button';
 import { Icon } from '../icon/icon';
 import { InputText } from '../input-text/input-text';
 import { MatchStatusComponent } from '../match-status/match-status';
+import { matchStatusTone } from '../status-pill/match-status-tone';
+import { StatusPill } from '../status-pill/status-pill';
 import { MatchTimerComponent } from '../match-timer/match-timer';
 import { ScoreNumber } from '../score-number/score-number';
 
@@ -43,7 +45,15 @@ const DEFAULT_VALIDATION_COPY: PlayerValidationCopy = {
  */
 @Component({
   selector: 'app-player-match-card',
-  imports: [Button, ScoreNumber, InputText, MatchTimerComponent, Icon, MatchStatusComponent],
+  imports: [
+    Button,
+    ScoreNumber,
+    InputText,
+    MatchTimerComponent,
+    Icon,
+    MatchStatusComponent,
+    StatusPill,
+  ],
   templateUrl: './player-match-card.html',
   styleUrl: './player-match-card.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -82,6 +92,7 @@ export class PlayerMatchCard {
   protected readonly localOpponentScore = signal(0);
   protected readonly opponentCode = signal('');
 
+  protected readonly statusTone = matchStatusTone;
   protected readonly isPending = computed(() => this.match()?.status === 'PENDING');
   protected readonly isValidated = computed(() => this.match()?.status === 'VALIDATED');
   protected readonly isEnded = computed(() => {

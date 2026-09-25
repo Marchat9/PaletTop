@@ -46,6 +46,9 @@ import {
   loadTrainingSessionPublic,
   loadTrainingSessionPublicFailure,
   loadTrainingSessionPublicSuccess,
+  loadTrainingSessionSettings,
+  loadTrainingSessionSettingsFailure,
+  loadTrainingSessionSettingsSuccess,
   loadTrainingSessions,
   loadTrainingSessionsFailure,
   loadTrainingSessionsSuccess,
@@ -132,6 +135,7 @@ export const initialTrainingState: TrainingState = {
   lastRequestedCode: null,
   sessions: { data: [], isLoading: false, error: null },
   currentSession: { data: null, isLoading: false, error: null },
+  previousSessionSettings: { data: null, isLoading: false, error: null },
   lastCheckedInParticipant: null,
   rounds: { data: [], isLoading: false, error: null },
   currentRound: { data: null, isLoading: false, error: null },
@@ -425,6 +429,20 @@ export const trainingReducer = createReducer(
   on(loadTrainingSessionPublicFailure, (state, { error }) => ({
     ...state,
     currentSession: { ...state.currentSession, isLoading: false, error },
+  })),
+
+  // Settings of a past session, read for the creation page
+  on(loadTrainingSessionSettings, (state) => ({
+    ...state,
+    previousSessionSettings: { ...state.previousSessionSettings, isLoading: true, error: null },
+  })),
+  on(loadTrainingSessionSettingsSuccess, (state, { session }) => ({
+    ...state,
+    previousSessionSettings: { data: session, isLoading: false, error: null },
+  })),
+  on(loadTrainingSessionSettingsFailure, (state, { error }) => ({
+    ...state,
+    previousSessionSettings: { ...state.previousSessionSettings, isLoading: false, error },
   })),
 
   // Connect to session as admin
@@ -802,6 +820,7 @@ export const trainingReducer = createReducer(
     participantHistory: initialTrainingState.participantHistory,
     sessions: initialTrainingState.sessions,
     currentSession: initialTrainingState.currentSession,
+    previousSessionSettings: initialTrainingState.previousSessionSettings,
     rounds: initialTrainingState.rounds,
     currentRound: initialTrainingState.currentRound,
     leaderboard: initialTrainingState.leaderboard,

@@ -4,7 +4,10 @@ import { Icon } from '../icon/icon';
 export interface InputChipOption {
   value: number;
   label: string;
-  /** Always on and cannot be unchecked: it is part of the setting by construction. */
+  /**
+   * Cannot be unchecked. The parent still owns the value: a locked option shows as checked only if
+   * it is part of `value`, so what the pills show is always what the form holds.
+   */
   locked?: boolean;
 }
 
@@ -28,7 +31,7 @@ export class InputChips {
   public readonly valueChange = output<number[]>();
 
   protected isSelected(option: InputChipOption): boolean {
-    return option.locked || this.value().includes(option.value);
+    return this.value().includes(option.value);
   }
 
   protected toggle(option: InputChipOption): void {

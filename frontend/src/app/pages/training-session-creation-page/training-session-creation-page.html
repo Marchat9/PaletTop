@@ -59,7 +59,7 @@
               id="session-players"
               [value]="playersPerTeam()"
               [min]="1"
-              [max]="6"
+              [max]="maxPlayersPerTeam"
               (valueChange)="playersPerTeam.set($event)"
             />
             <p class="field-help">Taille visée pour les équipes de chaque round.</p>
@@ -70,7 +70,7 @@
             <app-input-chips
               name="Tailles de repli autorisées"
               [options]="teamSizeOptions()"
-              [value]="allowedTeamSizes()"
+              [value]="teamSizes()"
               (valueChange)="allowedTeamSizes.set($event)"
             />
             <p class="field-help">
@@ -109,6 +109,7 @@
               id="session-points"
               [value]="pointsPerGame()"
               [min]="1"
+              [max]="maxPointsPerGame"
               (valueChange)="pointsPerGame.set($event)"
             />
             <p class="field-help">Score à atteindre pour gagner un match.</p>
@@ -120,6 +121,7 @@
               id="session-plates"
               [value]="plateCount()"
               [min]="1"
+              [max]="maxPlateCount"
               (valueChange)="plateCount.set($event)"
             />
             <p class="field-help">
@@ -158,7 +160,7 @@
       </section>
 
       @if (rosterPreview(); as preview) {
-        <p class="preview">
+        <p class="preview" role="status">
           <app-icon name="info" iconClass="preview-icon" [ariaHidden]="true" />
           {{ preview }}
         </p>

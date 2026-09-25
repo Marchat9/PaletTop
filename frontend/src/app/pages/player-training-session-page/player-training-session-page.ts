@@ -7,7 +7,9 @@ import {
   OnDestroy,
   OnInit,
   signal,
+  DestroyRef,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import {
@@ -71,6 +73,7 @@ import { historyToResults, myTeam, toPlayerMatchView } from './player-training-s
 })
 export class PlayerTrainingSessionPage implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly router = inject(Router);
   private readonly store = inject(Store);
 
@@ -231,7 +234,7 @@ export class PlayerTrainingSessionPage implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.route.paramMap.subscribe((params) => {
+    this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
       const sessionCode = params.get('sessionCode');
       const participantCode = params.get('participantCode');
 

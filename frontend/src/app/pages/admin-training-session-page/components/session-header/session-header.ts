@@ -44,8 +44,8 @@ export class SessionHeader {
     }
     rules.push(
       session.preferTargetTeamSize
-        ? { icon: 'airline_seat_recline_normal', label: 'Taille d’équipe respectée' }
-        : { icon: 'groups', label: 'Tout le monde joue' },
+        ? { icon: 'airline_seat_recline_normal', label: 'Nombre de joueurs par équipe strict' }
+        : { icon: 'groups', label: 'Le plus de monde joue' },
     );
     if (session.teamComposition === 'LEARNING') {
       rules.push({ icon: 'school', label: 'Équipes par niveau' });

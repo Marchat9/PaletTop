@@ -48,19 +48,24 @@ export class WebSocketService implements OnDestroy {
   }
 
   private open(key: string, auth: Record<string, unknown>, joinEvent: string): void {
-    if (this.currentKey === key && this.socket?.connected) return;
+    // The socket is reused as long as the room is the same, connected or not: socket.io reconnects
+    // on its own with its backoff. Testing `connected` here would tear down a socket in the middle
+    // of reconnecting - and the fresh one no longer knows it has connected before, so it would not
+    // emit `reconnected$` and nobody would resync.
+    if (this.currentKey === key && this.socket) return;
 
     this.disconnect();
     this.currentKey = key;
 
-    this.socket = io(environment.backBaseApiUrl, {
+    const socket = io(environment.backBaseApiUrl, {
       transports: ['websocket'],
       auth,
     });
+    this.socket = socket;
 
     let hasConnectedOnce = false;
-    this.socket.on('connect', () => {
-      this.socket!.emit(joinEvent);
+    socket.on('connect', () => {
+      socket.emit(joinEvent);
       if (hasConnectedOnce) {
         this.reconnected.next();
       }
@@ -70,8 +75,14 @@ export class WebSocketService implements OnDestroy {
 
   on<T>(event: string): Observable<T> {
     return new Observable<T>((observer) => {
-      this.socket?.on(event, (data: T) => observer.next(data));
-      return () => this.socket?.off(event);
+      // Both the socket and the handler are captured here: `off(event)` alone would remove every
+      // listener of that event - including another stream's - and reading `this.socket` on teardown
+      // would detach the handler from whichever socket happens to be open at that moment.
+      const socket = this.socket;
+      const handler = (data: T) => observer.next(data);
+
+      socket?.on(event, handler);
+      return () => socket?.off(event, handler);
     });
   }
 

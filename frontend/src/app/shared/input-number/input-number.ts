@@ -72,32 +72,44 @@ export class InputNumber implements ControlValueAccessor {
     this.onTouchedFn();
   }
 
+  // A typed value is bounded like a stepped one. `min`/`max` on a native number input are only
+  // advisory - the browser lets anything through - so without this a "99" typed in a field capped at
+  // 6 would travel all the way to the API and come back as a 400.
   onInput(value: string): void {
     const nextValue = Number(value);
     if (Number.isNaN(nextValue)) {
       return;
     }
-    this.emitValue(nextValue);
+    // An empty field is not a value yet: left as it is, so it can be retyped without the bounds
+    // jumping in.
+    this.emitValue(value === '' ? nextValue : this.clamp(nextValue));
   }
 
   onIncrement(): void {
     if (this.disabled()) {
       return;
     }
-
-    const nextValue = this.getCurrentValue() + this.step();
-    const max = this.max();
-    this.emitValue(max != null ? Math.min(nextValue, max) : nextValue);
+    this.emitValue(this.clamp(this.getCurrentValue() + this.step()));
   }
 
   onDecrement(): void {
     if (this.disabled()) {
       return;
     }
+    this.emitValue(this.clamp(this.getCurrentValue() - this.step()));
+  }
 
-    const nextValue = this.getCurrentValue() - this.step();
+  private clamp(value: number): number {
     const min = this.min();
-    this.emitValue(min != null ? Math.max(nextValue, min) : nextValue);
+    const max = this.max();
+
+    if (max != null && value > max) {
+      return max;
+    }
+    if (min != null && value < min) {
+      return min;
+    }
+    return value;
   }
 
   canIncrement(): boolean {

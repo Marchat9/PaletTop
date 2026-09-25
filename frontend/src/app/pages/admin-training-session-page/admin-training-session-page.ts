@@ -9,7 +9,9 @@ import {
   OnInit,
   signal,
   untracked,
+  DestroyRef,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import {
@@ -20,7 +22,6 @@ import { Icon } from 'src/app/shared/icon/icon';
 import { MetricTileComponent } from 'src/app/shared/metric-tile/metric-tile';
 import { AnimateOnChangeDirective } from 'src/app/shared/animate-on-change/animate-on-change.directive';
 import { addNotification } from 'src/app/store/app-config/app-config.actions';
-import { disconnectTrainingAdministrator } from 'src/app/store/training/training.actions';
 import { connectTrainingAdministrator } from 'src/app/store/training/training.admin.actions';
 import { adminUpdateTrainingScore } from 'src/app/store/training/training.match.actions';
 import {
@@ -64,10 +65,7 @@ import {
   selectTrainingRounds,
   selectTrainingRoundsIsLoading,
 } from 'src/app/store/training/training.selectors';
-import {
-  describeRoundPreview,
-  previewRound,
-} from '../training-session-creation-page/round-preview.util';
+import { describeRoundPreview, previewRound } from 'src/app/utils/round-preview.util';
 import { TrainingScoreUpdate, TrainingTeamCreation } from './admin-training-session-page.models';
 import { SessionActions } from './components/session-actions/session-actions';
 import { SessionHeader } from './components/session-header/session-header';
@@ -76,6 +74,7 @@ import { SessionParticipants } from './components/session-participants/session-p
 import { SessionRound } from './components/session-round/session-round';
 import { SessionRoundsHistory } from './components/session-rounds-history/session-rounds-history';
 import { SessionTeams } from './components/session-teams/session-teams';
+import { newId } from 'src/app/utils/unique-id.util';
 
 @Component({
   selector: 'app-admin-training-session-page',
@@ -97,6 +96,7 @@ import { SessionTeams } from './components/session-teams/session-teams';
 })
 export class AdminTrainingSessionPage implements OnInit, OnDestroy {
   private readonly activatedRoute = inject(ActivatedRoute);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly router = inject(Router);
   private readonly store = inject(Store);
   private readonly dialog = inject(Dialog);
@@ -129,14 +129,13 @@ export class AdminTrainingSessionPage implements OnInit, OnDestroy {
    * The page only shows the admin view of a session. The store holds a single session slot, where
    * the public view may have landed (player page visited just before): it is recognised by its
    * participants having no code, and the admin response is awaited rather than showing empty codes.
+   *
+   * Sticky on purpose: once an admin view is on screen it stays there. A reload in flight or a
+   * public payload landing in the shared slot must not empty the page - only an error, or another
+   * session, does.
    */
-  public readonly session = computed<TrainingSessionAdminDto | null>(() => {
-    const session = this.sessionData();
-    if (!session || !session.participants.every((participant) => 'code' in participant)) {
-      return null;
-    }
-    return session as TrainingSessionAdminDto;
-  });
+  private readonly adminView = signal<TrainingSessionAdminDto | null>(null);
+  public readonly session = this.adminView.asReadonly();
 
   private readonly adminPassword = computed(() => this.adminSession()?.password ?? null);
   public readonly isSessionOpen = computed(() => this.session()?.status === 'OPEN');
@@ -275,17 +274,31 @@ export class AdminTrainingSessionPage implements OnInit, OnDestroy {
   );
 
   constructor() {
-    // The password lives in the store (restored from localStorage): without it, back to the login
-    // page.
+    // What the page shows. A failed refresh keeps the last admin view on screen - the store keeps
+    // its data on failure - and so does a public payload landing in the shared slot. The view is
+    // only dropped when the store has nothing left, or holds another session.
+    effect(() => {
+      const session = this.sessionData();
+      const sessionCode = this.sessionCode();
+      const isAdminView =
+        !!session && session.participants.every((participant) => 'code' in participant);
+
+      untracked(() => {
+        if (isAdminView && session.code === sessionCode) {
+          this.adminView.set(session as TrainingSessionAdminDto);
+        } else if (!session || session.code !== sessionCode) {
+          this.adminView.set(null);
+        }
+      });
+    });
+
+    // `trainingAdminGuard` has already sent away anyone without a password: all that is left here is
+    // loading the group the URL asks for.
     effect(() => {
       const trainingCode = this.trainingCode();
       const password = this.adminPassword();
 
-      if (!trainingCode) {
-        return;
-      }
-      if (!password) {
-        this.reconnectAsAdmin();
+      if (!trainingCode || !password) {
         return;
       }
       if (this.training()?.code !== trainingCode) {
@@ -343,7 +356,7 @@ export class AdminTrainingSessionPage implements OnInit, OnDestroy {
         this.store.dispatch(
           addNotification({
             notification: {
-              id: crypto.randomUUID(),
+              id: newId(),
               message: 'Séance introuvable pour ce groupe d’entraînement.',
               typeIcon: 'error',
               type: 'error',
@@ -365,7 +378,7 @@ export class AdminTrainingSessionPage implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.activatedRoute.paramMap.subscribe((params) => {
+    this.activatedRoute.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
       this.trainingCode.set(params.get('trainingCode'));
       this.sessionCode.set(params.get('sessionCode'));
     });
@@ -385,11 +398,6 @@ export class AdminTrainingSessionPage implements OnInit, OnDestroy {
 
   public backToTraining(): void {
     this.router.navigate([`/admin/training/${this.trainingCode()}`]);
-  }
-
-  private reconnectAsAdmin(): void {
-    this.store.dispatch(disconnectTrainingAdministrator());
-    this.router.navigate(['/admin/training']);
   }
 
   // ========= Check-in =========

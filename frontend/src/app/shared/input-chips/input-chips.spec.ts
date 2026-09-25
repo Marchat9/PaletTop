@@ -17,7 +17,7 @@ class HostComponent {
     { value: 2, label: '2', locked: true },
     { value: 3, label: '3' },
   ];
-  readonly value = signal<number[]>([3]);
+  readonly value = signal<number[]>([2, 3]);
 }
 
 function setup() {
@@ -41,11 +41,11 @@ describe('InputChips', () => {
 
     chips()[0].querySelector('input')!.click();
     fixture.detectChanges();
-    expect(fixture.componentInstance.value()).toEqual([1, 3]);
+    expect(fixture.componentInstance.value()).toEqual([1, 2, 3]);
 
     chips()[2].querySelector('input')!.click();
     fixture.detectChanges();
-    expect(fixture.componentInstance.value()).toEqual([1]);
+    expect(fixture.componentInstance.value()).toEqual([1, 2]);
   });
 
   // The target size is there by construction: it is shown without suggesting that it can be
@@ -58,7 +58,17 @@ describe('InputChips', () => {
 
     chips()[1].querySelector('input')!.click();
     fixture.detectChanges();
-    expect(fixture.componentInstance.value()).toEqual([3]);
+    expect(fixture.componentInstance.value()).toEqual([2, 3]);
+  });
+
+  // The value rules the display: a locked option left out of it must not look ticked, otherwise the
+  // pills would promise something the form does not hold.
+  it('ne coche pas une valeur verrouillée absente de la valeur', () => {
+    const { fixture, chips } = setup();
+    fixture.componentInstance.value.set([3]);
+    fixture.detectChanges();
+
+    expect(chips()[1].classList).not.toContain('selected');
   });
 
   it('renvoie toujours une liste triée', () => {
@@ -67,6 +77,6 @@ describe('InputChips', () => {
     chips()[0].querySelector('input')!.click();
     fixture.detectChanges();
 
-    expect(fixture.componentInstance.value()).toEqual([1, 3]);
+    expect(fixture.componentInstance.value()).toEqual([1, 2, 3]);
   });
 });

@@ -2,12 +2,14 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  DestroyRef,
   effect,
   inject,
   OnInit,
   signal,
   untracked,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Store } from '@ngrx/store';
@@ -21,12 +23,11 @@ import {
 import { InputChipOption, InputChips } from 'src/app/shared/input-chips/input-chips';
 import { InputNumber } from 'src/app/shared/input-number/input-number';
 import { Switch } from 'src/app/shared/switch/switch';
-import { disconnectTrainingAdministrator } from 'src/app/store/training/training.actions';
 import { connectTrainingAdministrator } from 'src/app/store/training/training.admin.actions';
 import {
-  connectTrainingSessionAdministrator,
   createTrainingSession,
   loadTrainingSessions,
+  loadTrainingSessionSettings,
 } from 'src/app/store/training/training.session.actions';
 import {
   selectCreateTrainingSessionError,
@@ -34,17 +35,22 @@ import {
   selectCurrentTrainingAdminInformations,
   selectCurrentTrainingData,
   selectCurrentTrainingSessionData,
+  selectPreviousTrainingSessionSettings,
   selectTrainingSessions,
 } from 'src/app/store/training/training.selectors';
 import {
   TrainingSessionAdminDto,
   TrainingTeamComposition,
 } from 'src/app/store/training/training.models';
-import { describeRoundPreview } from './round-preview.util';
+import { describeRoundPreview } from 'src/app/utils/round-preview.util';
 import { InputDate } from 'src/app/shared/input-date/input-date';
 
 /** Same bound as the server: beyond it, a "team" is no longer a team. */
 const MAX_PLAYERS_PER_TEAM = 6;
+
+/** Nothing to do with the game, only a bound so a typo cannot travel to the database. */
+const MAX_PLATE_COUNT = 100;
+const MAX_POINTS_PER_GAME = 100;
 
 @Component({
   selector: 'app-training-session-creation-page',
@@ -67,6 +73,7 @@ export class TrainingSessionCreationPage implements OnInit {
   private readonly activatedRoute = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly store = inject(Store);
+  private readonly destroyRef = inject(DestroyRef);
 
   public readonly trainingCode = signal<string | null>(null);
 
@@ -76,9 +83,10 @@ export class TrainingSessionCreationPage implements OnInit {
   public readonly creationLoading = this.store.selectSignal(selectCreateTrainingSessionLoading);
   public readonly creationError = this.store.selectSignal(selectCreateTrainingSessionError);
   private readonly adminSession = this.store.selectSignal(selectCurrentTrainingAdminInformations);
-  private readonly loadedSession = this.store.selectSignal(selectCurrentTrainingSessionData);
+  private readonly createdSession = this.store.selectSignal(selectCurrentTrainingSessionData);
+  public readonly previousSettings = this.store.selectSignal(selectPreviousTrainingSessionSettings);
 
-  // Formulaire
+  // Form
   public readonly minDate = new Date();
   public readonly date = signal(this.toInputDate(this.minDate));
   public readonly playersPerTeam = signal(2);
@@ -91,8 +99,6 @@ export class TrainingSessionCreationPage implements OnInit {
   public readonly avoidSameOpponentConsecutive = signal(true);
   public readonly settingsReused = signal(false);
   private readonly hasSubmitted = signal(false);
-  // Codes known at the time of submitting: the created session is the one that is not in that list.
-  private readonly knownSessionCodes = signal<ReadonlySet<string>>(new Set());
 
   // Loading guards: plain fields, deliberately outside signals, so that an effect cannot re-trigger
   // itself on the response of its own call.
@@ -105,17 +111,12 @@ export class TrainingSessionCreationPage implements OnInit {
   public readonly previousSession = computed(() => this.sessions().at(-1) ?? null);
 
   /**
-   * Settings are not in the session summary: the detail of the last one is loaded when arriving on
-   * the page, so that the carry-over button is usable right away.
+   * The sizes sent to the server, and the ones the preview reads: the target size is always part of
+   * them, so the form shows exactly what will be applied.
    */
-  public readonly previousSettings = computed<TrainingSessionAdminDto | null>(() => {
-    const previous = this.previousSession();
-    const loaded = this.loadedSession();
-    if (!previous || !loaded || loaded.code !== previous.code) {
-      return null;
-    }
-    return loaded as TrainingSessionAdminDto;
-  });
+  public readonly teamSizes = computed(() =>
+    [...new Set([this.playersPerTeam(), ...this.allowedTeamSizes()])].sort((a, b) => a - b),
+  );
 
   public readonly canSubmit = computed(
     () =>
@@ -137,7 +138,7 @@ export class TrainingSessionCreationPage implements OnInit {
   public readonly arbitrationOptions: InputCardRadioOption<boolean>[] = [
     {
       value: true,
-      label: 'Nombre de joueurs par équipe stricte',
+      label: 'Nombre de joueurs par équipe strict',
       description:
         'Les équipes gardent leur taille configurée (Joueurs par équipe), les joueurs en trop se reposent à tour de rôle.',
     },
@@ -159,9 +160,13 @@ export class TrainingSessionCreationPage implements OnInit {
       value: 'LEARNING',
       label: 'Apprentissage',
       description:
-        'Les joueurs forts sont associés a des joueurs plus faibles pour leurs donner des conseils.',
+        'Les joueurs forts sont associés à des joueurs plus faibles pour leur donner des conseils.',
     },
   ];
+
+  public readonly maxPlayersPerTeam = MAX_PLAYERS_PER_TEAM;
+  public readonly maxPlateCount = MAX_PLATE_COUNT;
+  public readonly maxPointsPerGame = MAX_POINTS_PER_GAME;
 
   /** Composition by level makes no sense for teams of a single player. */
   public readonly showComposition = computed(() => this.playersPerTeam() > 1);
@@ -180,7 +185,7 @@ export class TrainingSessionCreationPage implements OnInit {
       members,
       {
         playersPerTeam: this.playersPerTeam(),
-        allowedTeamSizes: this.allowedTeamSizes(),
+        allowedTeamSizes: this.teamSizes(),
         preferTargetTeamSize: this.preferTargetTeamSize(),
         plateCount: this.plateCount(),
       },
@@ -189,17 +194,13 @@ export class TrainingSessionCreationPage implements OnInit {
   });
 
   constructor() {
-    // The password comes from the store (restored from localStorage): without it, back to the login
-    // page.
+    // `trainingAdminGuard` has already sent away anyone without a password: all that is left here is
+    // loading the group the URL asks for.
     effect(() => {
       const trainingCode = this.trainingCode();
       const password = this.adminPassword();
 
-      if (!trainingCode) {
-        return;
-      }
-      if (!password) {
-        this.reconnectAsAdmin();
+      if (!trainingCode || !password) {
         return;
       }
       if (this.training()?.code !== trainingCode) {
@@ -224,6 +225,8 @@ export class TrainingSessionCreationPage implements OnInit {
       }
     });
 
+    // Settings of the last session, to offer them again. A read of its own: connecting as admin
+    // would take over the session on screen and open a websocket on a session nobody is running.
     effect(() => {
       const previous = this.previousSession();
       if (!previous || this.previousSessionRequestedFor === previous.code) {
@@ -231,14 +234,15 @@ export class TrainingSessionCreationPage implements OnInit {
       }
 
       this.previousSessionRequestedFor = previous.code;
-      if (untracked(this.loadedSession)?.code !== previous.code) {
-        this.store.dispatch(connectTrainingSessionAdministrator({ sessionCode: previous.code }));
+      if (untracked(this.previousSettings)?.code !== previous.code) {
+        this.store.dispatch(loadTrainingSessionSettings({ sessionCode: previous.code }));
       }
     });
 
-    // Once the session is created, go straight to running it.
+    // Once the session is created, go straight to running it. `currentSession` only holds a created
+    // session here: the settings of the previous one live in their own slot.
     effect(() => {
-      const created = this.loadedSession();
+      const created = this.createdSession();
       const trainingCode = this.trainingCode();
 
       if (
@@ -246,8 +250,7 @@ export class TrainingSessionCreationPage implements OnInit {
         !this.creationLoading() &&
         !this.creationError() &&
         created &&
-        trainingCode &&
-        !this.knownSessionCodes().has(created.code)
+        trainingCode
       ) {
         this.router.navigate([`/admin/training/${trainingCode}/session/${created.code}`]);
       }
@@ -255,9 +258,9 @@ export class TrainingSessionCreationPage implements OnInit {
   }
 
   ngOnInit(): void {
-    this.activatedRoute.paramMap.subscribe((params) => {
-      this.trainingCode.set(params.get('trainingCode'));
-    });
+    this.activatedRoute.paramMap
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((params) => this.trainingCode.set(params.get('trainingCode')));
   }
 
   // ========= Form =========
@@ -289,7 +292,6 @@ export class TrainingSessionCreationPage implements OnInit {
       return;
     }
 
-    this.knownSessionCodes.set(new Set(this.sessions().map((session) => session.code)));
     this.hasSubmitted.set(true);
     this.store.dispatch(
       createTrainingSession({
@@ -297,7 +299,7 @@ export class TrainingSessionCreationPage implements OnInit {
         configuration: {
           date: new Date(this.date()),
           playersPerTeam: this.playersPerTeam(),
-          allowedTeamSizes: this.allowedTeamSizes(),
+          allowedTeamSizes: this.teamSizes(),
           preferTargetTeamSize: this.preferTargetTeamSize(),
           plateCount: this.plateCount(),
           teamComposition: this.teamComposition(),
@@ -311,11 +313,6 @@ export class TrainingSessionCreationPage implements OnInit {
 
   public cancel(): void {
     this.router.navigate([`/admin/training/${this.trainingCode()}`]);
-  }
-
-  private reconnectAsAdmin(): void {
-    this.store.dispatch(disconnectTrainingAdministrator());
-    this.router.navigate(['/admin/training']);
   }
 
   // Builds the date in local time: `toISOString` switches to UTC and would show the day before for

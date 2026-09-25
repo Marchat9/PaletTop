@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { trainingAdminGuard } from './guards/training-admin.guard';
 
 const tournamentRoutes: Routes = [
   {
@@ -67,11 +68,13 @@ const trainingRoutes: Routes = [
   },
   {
     path: 'admin/training/:trainingCode',
+    canActivate: [trainingAdminGuard],
     loadComponent: () =>
       import('./pages/admin-training-page/admin-training-page').then((m) => m.AdminTrainingPage),
   },
   {
     path: 'admin/training/:trainingCode/session-creation',
+    canActivate: [trainingAdminGuard],
     loadComponent: () =>
       import('./pages/training-session-creation-page/training-session-creation-page').then(
         (m) => m.TrainingSessionCreationPage,
@@ -79,6 +82,7 @@ const trainingRoutes: Routes = [
   },
   {
     path: 'admin/training/:trainingCode/session/:sessionCode',
+    canActivate: [trainingAdminGuard],
     loadComponent: () =>
       import('./pages/admin-training-session-page/admin-training-session-page').then(
         (m) => m.AdminTrainingSessionPage,

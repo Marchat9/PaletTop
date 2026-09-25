@@ -37,12 +37,9 @@
             @if (currentMatch.subtitle) {
               <span class="plate-label">{{ currentMatch.subtitle }}</span>
             }
-            <span
-              class="status-badge"
-              [class]="'status-badge--' + currentMatch.status.toLowerCase()"
-            >
+            <app-status-pill [tone]="statusTone(currentMatch.status)">
               <app-match-status [status]="currentMatch.status" />
-            </span>
+            </app-status-pill>
             <app-match-timer
               [startedAt]="currentMatch.startedAt"
               [finishedAt]="currentMatch.finishedAt"

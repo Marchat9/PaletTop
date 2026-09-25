@@ -5,6 +5,10 @@
  * allowed size, the number of teams is even, the plates are not exceeded, and the session trade-off
  * decides between "everyone plays" and "keep the target size". Both implementations are covered by
  * the same test cases: if one drifts, the other reports it.
+ *
+ * Single home for these rules on the front: the creation page and the session page both read them
+ * from here. The real fix for the duplication is a preview endpoint on the server - until then any
+ * change to the rules has to be made twice, and the twin test cases are what catches a miss.
  */
 export interface RoundPreviewSettings {
   playersPerTeam: number;

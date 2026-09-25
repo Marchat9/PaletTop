@@ -18,6 +18,7 @@ import {
   selectCurrentTrainingAdminInformations,
   selectCurrentTrainingData,
   selectCurrentTrainingSessionData,
+  selectPreviousTrainingSessionSettings,
   selectTrainingSessions,
 } from 'src/app/store/training/training.selectors';
 import { TrainingSessionCreationPage } from './training-session-creation-page';
@@ -83,7 +84,8 @@ function setup(sessions: TrainingSessionSummaryDto[] = [previousSummary]) {
             value: { code: 'LAITON-2026', password: 'secret' },
           },
           { selector: selectTrainingSessions, value: sessions },
-          { selector: selectCurrentTrainingSessionData, value: buildPreviousSession() },
+          { selector: selectPreviousTrainingSessionSettings, value: buildPreviousSession() },
+          { selector: selectCurrentTrainingSessionData, value: null },
           { selector: selectCreateTrainingSessionLoading, value: false },
           { selector: selectCreateTrainingSessionError, value: null },
         ],
@@ -170,6 +172,42 @@ describe('TrainingSessionCreationPage', () => {
     expect(component.rosterPreview()).toContain('2v1');
   });
 
+  // The target size travels with the fallbacks: the form shows it ticked, the payload carries it.
+  it('envoie la taille visée avec les tailles de repli', () => {
+    const { fixture, store } = setup();
+    const dispatchSpy = vi.spyOn(store, 'dispatch');
+    const component = fixture.componentInstance;
+
+    component.playersPerTeam.set(3);
+    component.allowedTeamSizes.set([1]);
+    expect(component.teamSizes()).toEqual([1, 3]);
+
+    component.submit();
+
+    expect(dispatchSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        configuration: expect.objectContaining({ allowedTeamSizes: [1, 3] }),
+      }),
+    );
+  });
+
+  // The created session is the one that lands in the store: the settings of the previous one have
+  // their own slot, so there is nothing to tell apart.
+  it('enchaîne sur la séance créée', () => {
+    const { fixture, store, routerMock } = setup();
+    const component = fixture.componentInstance;
+
+    component.submit();
+    store.overrideSelector(selectCurrentTrainingSessionData, {
+      ...buildPreviousSession(),
+      code: '2222',
+    });
+    store.refreshState();
+    fixture.detectChanges();
+
+    expect(routerMock.navigate).toHaveBeenCalledWith(['/admin/training/LAITON-2026/session/2222']);
+  });
+
   it('crée la séance avec les valeurs du formulaire', () => {
     const { fixture, store } = setup();
     const dispatchSpy = vi.spyOn(store, 'dispatch');
@@ -185,9 +223,9 @@ describe('TrainingSessionCreationPage', () => {
         configuration: {
           date: new Date('2026-03-12'),
           playersPerTeam: 2,
-          allowedTeamSizes: [],
+          allowedTeamSizes: [1, 2, 3],
           preferTargetTeamSize: false,
-          plateCount: 4,
+          plateCount: 10,
           teamComposition: 'RANDOM',
           avoidSamePartnerConsecutive: true,
           avoidSameOpponentConsecutive: true,

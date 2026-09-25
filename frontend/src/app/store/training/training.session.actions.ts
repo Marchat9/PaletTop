@@ -52,6 +52,23 @@ export const loadTrainingSessionPublicFailure = createAction(
 );
 // -------------------------------------------------------
 
+// --------- Load the settings of a past session ---------
+// Read-only, and deliberately separate from the admin connection: it must not take over the
+// session on screen, nor open a websocket on a session the admin is not running.
+export const loadTrainingSessionSettings = createAction(
+  '[Training] Load Training Session Settings',
+  props<{ sessionCode: string }>(),
+);
+export const loadTrainingSessionSettingsSuccess = createAction(
+  '[Training] Load Training Session Settings Success',
+  props<{ session: TrainingSessionAdminDto }>(),
+);
+export const loadTrainingSessionSettingsFailure = createAction(
+  '[Training] Load Training Session Settings Failure',
+  props<{ error: string }>(),
+);
+// -------------------------------------------------------
+
 // --------- Connect to a Training Session as admin ---------
 export const connectTrainingSessionAdministrator = createAction(
   '[Training] Connect Training Session Administrator',
