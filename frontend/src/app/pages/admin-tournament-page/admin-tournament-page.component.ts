@@ -168,7 +168,6 @@ export class AdminTournamentPageComponent implements OnInit {
   public updateTournamentConfiguration(tournament: TournamentConfigurationDto): void {
     const id = this.tournament()?.id;
     if (!id) {
-      console.debug('Cannot update tournament configuration: tournament is missing');
       return;
     }
     this.store.dispatch(
@@ -179,7 +178,6 @@ export class AdminTournamentPageComponent implements OnInit {
   public updateTournamentTeam(event: TeamConfigEvent): void {
     const code = this.tournament()?.code;
     if (!code) {
-      console.debug('Cannot update tournament team: tournament code is missing');
       return;
     }
     switch (event.type) {
@@ -192,7 +190,6 @@ export class AdminTournamentPageComponent implements OnInit {
       case TeamConfigEventType.UPDATE_TEAM: {
         const team = this.tournament()?.teams.find((t) => t.id === event.payload.teamId);
         if (!team?.code) {
-          console.debug('Cannot update team: team code is missing');
           return;
         }
         this.store.dispatch(
@@ -208,7 +205,6 @@ export class AdminTournamentPageComponent implements OnInit {
       case TeamConfigEventType.REMOVE_TEAM: {
         const team = this.tournament()?.teams.find((t) => t.id === event.payload.teamId);
         if (!team?.code) {
-          console.debug('Cannot remove team: team code is missing');
           return;
         }
         const data: ConfirmationData = {
@@ -237,7 +233,6 @@ export class AdminTournamentPageComponent implements OnInit {
         break;
       }
       default:
-        console.warn('Unknown team config event:', event);
         break;
     }
   }

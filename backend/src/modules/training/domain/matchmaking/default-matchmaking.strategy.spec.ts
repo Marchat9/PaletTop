@@ -163,6 +163,49 @@ describe('DefaultMatchmakingStrategy', () => {
         expect(teams).toEqual(['p1+p5', 'p2+p6', 'p3+p7', 'p4+p8']);
     });
 
+    // Learning mode must still honour avoidSamePartnerConsecutive: the natural band pairing
+    // (p1+p5, p2+p6, ...) would repeat every round, so it reshuffles within each band.
+    it('évite de reformer le même binôme au round suivant en apprentissage', () => {
+        const strategy = new DefaultMatchmakingStrategy(Math.random);
+        const levelByParticipant = {
+            p1: 80,
+            p2: 70,
+            p3: 60,
+            p4: 50,
+            p5: 40,
+            p6: 30,
+            p7: 20,
+            p8: 10,
+        };
+        const previousPartners: [string, string][] = [
+            ['p1', 'p5'],
+            ['p2', 'p6'],
+            ['p3', 'p7'],
+            ['p4', 'p8'],
+        ];
+
+        const plan = strategy.generateRound(
+            input({
+                soloParticipantIds: solos(8),
+                config: baseConfig({ teamComposition: TrainingTeamComposition.LEARNING }),
+                history: baseHistory({ recentRounds: [round(previousPartners)] }),
+                levelByParticipant,
+            }),
+        );
+
+        const forbidden = new Set(previousPartners.map(([a, b]) => [a, b].sort().join('+')));
+        const teams = plan.ephemeralTeams.map((t) => [...t.participantIds].sort().join('+'));
+        expect(teams.some((team) => forbidden.has(team))).toBe(false);
+
+        // Still learning teams: each pairs one player from the top half (p1-p4) with one from the
+        // bottom half (p5-p8), whatever the reshuffle did inside those bands.
+        const topHalf = new Set(['p1', 'p2', 'p3', 'p4']);
+        for (const team of plan.ephemeralTeams) {
+            const fromTop = team.participantIds.filter((id) => topHalf.has(id)).length;
+            expect(fromTop).toBe(1);
+        }
+    });
+
     it('oppose les équipes de force voisine en apprentissage', () => {
         const strategy = new DefaultMatchmakingStrategy(NO_SHUFFLE);
         const plan = strategy.generateRound(

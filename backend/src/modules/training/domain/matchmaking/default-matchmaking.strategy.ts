@@ -140,7 +140,7 @@ export class DefaultMatchmakingStrategy implements MatchmakingPort {
         forbiddenPartners: Set<string>,
     ): string[][] {
         if (input.config.teamComposition === TrainingTeamComposition.LEARNING) {
-            return this.buildLearningGroups(input, playing, groupSizes);
+            return this.buildLearningGroups(input, playing, groupSizes, forbiddenPartners);
         }
 
         let best: string[][] | null = null;
@@ -169,24 +169,59 @@ export class DefaultMatchmakingStrategy implements MatchmakingPort {
      * Learning mode: players are ranked by level, then teams are served band by band - the best of
      * the top band with the best of the bottom band, and so on. Nobody ends up with a partner from
      * the other end of the ranking.
+     *
+     * Each slot draws from one contiguous band of the ranking, so every team spans the same level
+     * bands whatever we do. The natural order (band member N to team N) gives the tightest balance,
+     * so it is tried first; only when it would rebuild a forbidden pair do we reshuffle *within*
+     * each band and keep the arrangement with the fewest repeats. The level mix is preserved, the
+     * exact partner is not - which is what `avoidSamePartnerConsecutive` asks for.
      */
     private buildLearningGroups(
         input: GenerateRoundInput,
         playing: string[],
         groupSizes: number[],
+        forbiddenPartners: Set<string>,
     ): string[][] {
         const ranked = this.rankByLevel(input, playing);
-        const groups: string[][] = groupSizes.map(() => []);
-        let next = 0;
 
+        const bands: string[][] = [];
         const maxSize = Math.max(0, ...groupSizes);
+        let cursor = 0;
         for (let slot = 0; slot < maxSize; slot++) {
-            for (let index = 0; index < groups.length; index++) {
-                if (groupSizes[index] <= slot) continue;
-                groups[index].push(ranked[next++]);
+            const width = groupSizes.filter((size) => size > slot).length;
+            bands.push(ranked.slice(cursor, cursor + width));
+            cursor += width;
+        }
+
+        let best: string[][] | null = null;
+        let fewest = Number.POSITIVE_INFINITY;
+        for (let attempt = 0; attempt < PLACEMENT_ATTEMPTS; attempt++) {
+            const arranged =
+                attempt === 0 ? bands : bands.map((band) => shuffleFisherYates(band, this.random));
+            const candidate = this.assembleBands(groupSizes, arranged);
+            const conflicts = countForbiddenPairs(candidate, forbiddenPartners);
+            if (conflicts === 0) {
+                return candidate;
+            }
+            if (conflicts < fewest) {
+                fewest = conflicts;
+                best = candidate;
             }
         }
 
+        return best!;
+    }
+
+    /** One member per band into each team still short of that slot, in band order. */
+    private assembleBands(groupSizes: number[], bands: string[][]): string[][] {
+        const groups: string[][] = groupSizes.map(() => []);
+        for (let slot = 0; slot < bands.length; slot++) {
+            let next = 0;
+            for (let index = 0; index < groups.length; index++) {
+                if (groupSizes[index] <= slot) continue;
+                groups[index].push(bands[slot][next++]);
+            }
+        }
         return groups;
     }
 

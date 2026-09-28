@@ -97,8 +97,10 @@ export class TrainingRoundsService {
                 avoidSameOpponentConsecutive: session.avoidSameOpponentConsecutive,
             },
             history: this.buildHistory(rounds),
-            levelByParticipant: await this.trainingLeaderboardService.getAveragePointsBySessionId(
-                session.id,
+            // Levels come from the rounds already loaded above (their matches carry teams and
+            // members): no need to re-query the validated matches just for this.
+            levelByParticipant: this.trainingLeaderboardService.averagePointsFromMatches(
+                rounds.flatMap((round) => round.matches ?? []),
             ),
         };
 

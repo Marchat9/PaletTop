@@ -15,13 +15,14 @@ import {
     toTrainingSessionPublicDto,
 } from './responses/training-session.dto';
 import { TrainingSessionAuthService } from './services/training-session-auth.service';
+import { corsOrigin } from 'src/utils/cors-origin.util';
 
 interface JoinTrainingSessionAuth {
     sessionCode: string;
     password?: string;
 }
 
-@WebSocketGateway({ cors: { origin: '*' } })
+@WebSocketGateway({ cors: { origin: corsOrigin() } })
 export class TrainingRealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @WebSocketServer()
     server!: Server;

@@ -12,6 +12,7 @@ import { Server, Socket } from 'socket.io';
 import { Tournament } from 'src/entities/tournament.entity';
 import { Repository } from 'typeorm';
 import { TournamentAuthService } from '../tournaments/services/tournament-auth.service';
+import { corsOrigin } from 'src/utils/cors-origin.util';
 
 interface JoinTournamentPayload {
     tournamentCode: string;
@@ -24,7 +25,7 @@ export const WsAuth = createParamDecorator((_data: unknown, ctx: ExecutionContex
     return client.handshake.auth;
 });
 
-@WebSocketGateway({ cors: { origin: '*' } })
+@WebSocketGateway({ cors: { origin: corsOrigin() } })
 export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @WebSocketServer()
     server!: Server;

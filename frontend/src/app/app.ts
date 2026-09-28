@@ -72,7 +72,6 @@ export class App {
           takeUntil(this.destroy$),
         )
         .subscribe(() => {
-          console.debug('[PWA] New version was available - reloading.');
           window.location.reload();
         });
     }

@@ -143,6 +143,8 @@ export class TrainingScoreService {
         this.validateScores(scoreA, scoreB, session.pointsPerGame);
         const isFinished = this.isMatchFinished(scoreA, scoreB, session.pointsPerGame);
 
+        const wasValidated = match.status === MatchStatus.VALIDATED;
+
         match.scoreA = scoreA;
         match.scoreB = scoreB;
         match.status = this.nextStatusForAdminEdit(isFinished);
@@ -158,17 +160,21 @@ export class TrainingScoreService {
             this.trainingMatchRepo.save([match]),
             this.trainingSessionRepo.touchLastActivity(session.id),
         ]);
-        return this.emitMatchUpdate(sessionCode, session.id, saved);
+        // Reopening a validated match removes its points from the leaderboard: it must be
+        // rebroadcast on the way out of VALIDATED too, not only on the way in - otherwise clients
+        // keep showing points that no longer count.
+        return this.emitMatchUpdate(sessionCode, session.id, saved, wasValidated);
     }
 
     private async emitMatchUpdate(
         sessionCode: string,
         sessionId: string,
         match: TrainingMatch,
+        wasValidated = false,
     ): Promise<TrainingMatchDto> {
         const dto = toTrainingMatchDto(match);
         this.trainingRealtimeGateway.emitMatchUpdated(sessionCode, dto);
-        if (match.status === MatchStatus.VALIDATED) {
+        if (match.status === MatchStatus.VALIDATED || wasValidated) {
             // sessionId reused from the session already loaded by the caller: no need to resolve it
             // by code just for its id.
             const leaderboard =
@@ -194,7 +200,7 @@ export class TrainingScoreService {
     }
 
     private isMatchFinished(scoreA: number, scoreB: number, pointsPerGame: number): boolean {
-        return scoreA === pointsPerGame || scoreB === pointsPerGame;
+        return scoreA >= pointsPerGame || scoreB >= pointsPerGame;
     }
 
     private validateScores(scoreA: number, scoreB: number, max: number): void {

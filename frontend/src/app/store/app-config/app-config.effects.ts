@@ -38,7 +38,6 @@ export class AppConfigEffects {
         // Load theme from localStorage
         const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
         if (savedTheme) {
-          console.debug('Found theme in localStorage:', savedTheme);
           actionList.push(setTheme({ theme: savedTheme as ThemeMode }));
         }
 
@@ -48,7 +47,6 @@ export class AppConfigEffects {
           try {
             const parsedData = JSON.parse(savedData);
             if (Object.keys(parsedData).length > 0) {
-              console.debug('Found localStorage data:', parsedData);
               actionList.push(updateLocalStorageData({ data: parsedData }));
             }
           } catch (e) {

@@ -1,5 +1,7 @@
 import { Injectable } from '@nestjs/common';
+import { TrainingMatch } from 'src/entities/training-match.entity';
 import { TrainingTeam } from 'src/entities/training-team.entity';
+import { MatchStatus } from 'src/enum/status.enum';
 import { TrainingMatchRepository } from '../repositories/training-match.repository';
 import { TrainingSessionRepository } from '../repositories/training-session.repository';
 import { TrainingLeaderboardEntryDto } from '../responses/training-leaderboard.dto';
@@ -47,6 +49,15 @@ export class TrainingLeaderboardService {
      */
     async getAveragePointsBySessionId(sessionId: string): Promise<Record<string, number>> {
         const matches = await this.trainingMatchRepo.findValidatedBySession(sessionId);
+        return this.averagePointsFromMatches(matches);
+    }
+
+    /**
+     * Same estimate, from matches already in memory (VALIDATED only). Lets a caller that has just
+     * loaded the whole session - the round generator does - skip a second trip to the database.
+     */
+    averagePointsFromMatches(matches: TrainingMatch[]): Record<string, number> {
+        const validated = matches.filter((match) => match.status === MatchStatus.VALIDATED);
 
         const totals = new Map<string, { points: number; played: number }>();
         const credit = (team: TrainingTeam, score: number): void => {
@@ -58,7 +69,7 @@ export class TrainingLeaderboardService {
             }
         };
 
-        for (const match of matches) {
+        for (const match of validated) {
             credit(match.teamA, match.scoreA);
             if (match.teamB) {
                 credit(match.teamB, match.scoreB);
