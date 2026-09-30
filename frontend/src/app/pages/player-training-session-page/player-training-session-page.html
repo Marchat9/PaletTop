@@ -43,7 +43,7 @@
       }
 
       <app-player-match-card
-        [match]="matchView()"
+        [match]="cardMatch()"
         [pointsPerGame]="pointsPerGame()"
         [scoringLocked]="isSessionClosed()"
         [byeCopy]="byeCopy"
@@ -57,7 +57,13 @@
         (scoreChange)="updateScore($event)"
         (validateMatch)="validateMatch($event)"
       >
-        @if (isSessionClosed()) {
+        @if (hasLeft()) {
+          <app-icon name="person_off" iconClass="empty-icon" />
+          <p>
+            Vous êtes considéré(e) comme parti(e) de l'entraînement. Rapprochez-vous de
+            l'administrateur pour être réintégré(e).
+          </p>
+        } @else if (isSessionClosed()) {
           <app-icon name="lock" iconClass="empty-icon" />
           <p>La séance est terminée. Merci d'avoir joué !</p>
         } @else if (isSittingOut()) {
@@ -70,7 +76,7 @@
       </app-player-match-card>
     </section>
 
-    @if (!isSittingOut() && matchView()) {
+    @if (!isSittingOut() && cardMatch()) {
       <app-player-session-partners [partners]="partners()" />
     }
 

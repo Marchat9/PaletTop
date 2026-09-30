@@ -109,6 +109,6 @@ export class RankingService {
             .filter((m) => m.status === MatchStatus.VALIDATED);
 
         const strategy = this.strategyFactory.create(tournament.configuration.competitionMode);
-        return strategy.computeGlobalRanking(tournament, validatedMatches);
+        return strategy.computeStandings(tournament, validatedMatches);
     }
 }

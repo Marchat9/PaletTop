@@ -8,23 +8,14 @@ export type RankIndexByEliminationTable = {
     } | null;
 };
 
-// --- Taille des brackets ---
+// --- Bracket sizes ---
 
 /**
- * Calcule la taille du tableau Principal : plus petite puissance de 2 >= N/2.
- * Ex : 14 → 8 | 62 → 32 | 10 → 8
+ * Size of the principal bracket: smallest power of two >= N/2.
+ * e.g. 14 -> 8 | 62 -> 32 | 10 -> 8
  */
 export function computePrincipalBracketSize(teamCount: number): number {
     return Math.pow(2, Math.max(1, Math.ceil(Math.log2(teamCount / 2))));
-}
-
-/**
- * Calcule combien d'équipes avancent au round suivant dans un bracket non-puissance-de-2.
- * Plus grande puissance de 2 <= N.
- * Ex : 6 → 4 | 14 → 8 | 30 → 16
- */
-export function computeConsolanteAdvancingCount(teamCount: number): number {
-    return Math.pow(2, Math.floor(Math.log2(teamCount)));
 }
 
 export function computeTableTeamRankIndex(
@@ -33,36 +24,41 @@ export function computeTableTeamRankIndex(
     numberOfQualifyingRounds: number,
     principalBracketSize: number,
 ): RankIndexByEliminationTable {
+    // Each table is a real single-elimination bracket over a fixed band of the qualifying ranking.
+    // The band's start never moves; only its end shrinks by half every elimination session, so the
+    // top half (the winners, who rose in the ranking) carries on and the bottom half drops out.
+    //
+    //   principale            ranks [0                       , P / 2^(e-1))
+    //   challenge principale  ranks [P/2                      , P/2 + P / 2^(e-1))       (e >= 2)
+    //   consolante            ranks [P                        , P + B / 2^(e-1))
+    //   challenge consolante  ranks [P + B/2                  , P + B/2 + B / 2^(e-1))   (e >= 2)
+    //
+    // with P the principal bracket size, B = teamsLength - P the field below it, and e the
+    // elimination session number (1 = first elimination round). The challenge tables are the
+    // repechage of each bracket's first-round losers, so they only start at the second elimination
+    // session. See computeTableTeamRankIndex specs for the 16- and 32-team walk-throughs.
     const eliminationSessionNumber: number = Math.max(
         sessionNumber - (numberOfQualifyingRounds ?? 0),
         0,
     );
     const power: number = eliminationSessionNumber - 1;
+    const shrink = (size: number): number => Math.floor(size / Math.pow(2, power));
+
+    const belowPrincipal = teamsLength - principalBracketSize;
 
     const principalMinRank = 0;
-    const principalMaxRank = principalBracketSize / Math.pow(2, power);
+    const principalMaxRank = shrink(principalBracketSize);
 
     const challengePrincipalMinRank = principalBracketSize / 2;
-    const challengePrincipalMaxRank =
-        principalBracketSize / 2 + principalBracketSize / Math.pow(2, power);
+    const challengePrincipalMaxRank = challengePrincipalMinRank + shrink(principalBracketSize);
 
     const consolanteMinRank = principalBracketSize;
-    const consolanteMaxRank = Math.min(
-        teamsLength,
-        principalBracketSize +
-            computeConsolanteAdvancingCount(
-                (teamsLength - principalBracketSize) / Math.pow(2, power - 1),
-            ),
-    );
+    const consolanteMaxRank = Math.min(teamsLength, consolanteMinRank + shrink(belowPrincipal));
 
-    const challengeConsolanteMinRank =
-        principalBracketSize + computeConsolanteAdvancingCount(teamsLength - principalBracketSize);
+    const challengeConsolanteMinRank = principalBracketSize + Math.floor(belowPrincipal / 2);
     const challengeConsolanteMaxRank = Math.min(
         teamsLength,
-        challengeConsolanteMinRank +
-            computeConsolanteAdvancingCount(
-                (teamsLength - principalBracketSize) / Math.pow(2, power - 1),
-            ),
+        challengeConsolanteMinRank + shrink(belowPrincipal),
     );
 
     const hasChallenges = eliminationSessionNumber > 1;
@@ -75,11 +71,18 @@ export function computeTableTeamRankIndex(
             rankIndexMax: principalMaxRank,
             groupKey: MatchGroupKey.PRINCIPALE,
         },
-        [EliminationTableau.CONSOLANTE]: {
-            rankIndexMin: consolanteMinRank,
-            rankIndexMax: consolanteMaxRank,
-            groupKey: MatchGroupKey.CONSOLANTE,
-        },
+        // Once a bracket is down to a single team it is over (no match left to play): the
+        // consolante can run out of rounds before the principal does - "fin des consolantes".
+        [EliminationTableau.CONSOLANTE]: couldHaveAtLeastOneMatch(
+            consolanteMaxRank,
+            consolanteMinRank,
+        )
+            ? {
+                  rankIndexMin: consolanteMinRank,
+                  rankIndexMax: consolanteMaxRank,
+                  groupKey: MatchGroupKey.CONSOLANTE,
+              }
+            : null,
         [EliminationTableau.CHALLENGE]:
             hasChallenges &&
             couldHaveAtLeastOneMatch(challengePrincipalMaxRank, challengePrincipalMinRank)

@@ -114,6 +114,33 @@ export class PlayerTrainingSessionPage implements OnInit, OnDestroy {
     return match && me ? toPlayerMatchView(match, me.id, this.roundNumber()) : null;
   });
 
+  /**
+   * The player has been marked as gone by the admin. Their code still works (so they land here),
+   * but they are out of the rotation until the admin brings them back - the page says so instead of
+   * leaving them on a stale "at rest" message.
+   */
+  public readonly hasLeft = computed(() => {
+    const me = this.me();
+    const participants = this.session()?.participants ?? [];
+    return !!me && participants.find((participant) => participant.id === me.id)?.status === 'LEFT';
+  });
+
+  /**
+   * What the match card actually shows. It falls back to its empty state - the projected message -
+   * when the player has left, and when the session is closed with nothing left to validate (a match
+   * still in progress or already validated). An ENDED match stays visible so its score can still be
+   * confirmed after closing.
+   */
+  public readonly cardMatch = computed(() => {
+    if (this.hasLeft()) {
+      return null;
+    }
+    if (this.isSessionClosed() && !this.canStillValidate()) {
+      return null;
+    }
+    return this.matchView();
+  });
+
   /** The other players of my team this round: the partner changes at every generation. */
   public readonly partners = computed(() => {
     const me = this.me();
@@ -157,11 +184,14 @@ export class PlayerTrainingSessionPage implements OnInit, OnDestroy {
 
   /** The title announces what the card really shows. */
   public readonly matchTitle = computed(() => {
+    if (this.hasLeft()) {
+      return null;
+    }
     if (this.isSittingOut()) {
       return 'Au repos ce round';
     }
     if (this.isSessionClosed()) {
-      return this.matchView() ? 'Dernier match' : null;
+      return this.cardMatch() ? 'Dernier match' : null;
     }
     return 'Match en cours';
   });

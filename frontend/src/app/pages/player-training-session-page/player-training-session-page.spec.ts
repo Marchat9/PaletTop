@@ -199,10 +199,41 @@ describe('PlayerTrainingSessionPage', () => {
     expect(fixture.componentInstance.matchTitle()).toBe('Au repos ce round');
   });
 
-  it('parle du dernier match une fois la séance close', () => {
-    const { fixture } = setup(buildCurrentMatch(), { ...buildSession(), status: 'CLOSED' });
+  // A match still to validate stays on screen after closing, titled as the last match.
+  it('parle du dernier match à valider une fois la séance close', () => {
+    const ended = buildCurrentMatch();
+    ended.match!.status = 'ENDED';
+    const { fixture } = setup(ended, { ...buildSession(), status: 'CLOSED' });
 
     expect(fixture.componentInstance.matchTitle()).toBe('Dernier match');
+  });
+
+  // A match in progress (or already validated) has nothing left to do once the session is closed:
+  // the closing message replaces the match screen.
+  it('masque le match en cours et affiche le message de clôture', () => {
+    const { fixture } = setup(buildCurrentMatch(), { ...buildSession(), status: 'CLOSED' });
+
+    expect(fixture.componentInstance.cardMatch()).toBeNull();
+    expect(fixture.componentInstance.matchTitle()).toBeNull();
+    expect(fixture.nativeElement.querySelector('.match-card-empty')?.textContent).toContain(
+      'terminée',
+    );
+  });
+
+  // Marked as gone by the admin: the player must not be left on a stale "at rest" message.
+  it('informe le joueur marqué comme parti', () => {
+    const gone = { participant: ME, roundNumber: 3, sitOut: true, match: null };
+    const { fixture } = setup(gone, {
+      ...buildSession(),
+      participants: [{ id: 'p1', name: 'Jean Dubois', status: 'LEFT' }],
+    });
+
+    expect(fixture.componentInstance.hasLeft()).toBe(true);
+    expect(fixture.componentInstance.cardMatch()).toBeNull();
+    expect(fixture.componentInstance.matchTitle()).toBeNull();
+    expect(fixture.nativeElement.querySelector('.match-card-empty')?.textContent).toContain(
+      'parti',
+    );
   });
 
   it('informe le joueur de la clôture et fige la saisie', () => {
