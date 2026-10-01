@@ -20,10 +20,10 @@ import {
 } from 'src/app/modales/confirmation-popup/confirmation-popup';
 import { addNotification } from 'src/app/store/app-config/app-config.actions';
 import { Notification } from 'src/app/store/app-config/app-config.model';
-import { Nullable } from 'src/app/models/nullable.model';
 import { ScoreUpdate } from 'src/app/models/score-update.model';
 import { TeamConfigEvent, TeamConfigEventType } from 'src/app/models/team-config.model';
 import { TournamentConfigurationDto } from 'src/app/models/tournament-configuration.model';
+import { AnimateOnChangeDirective } from 'src/app/shared/animate-on-change/animate-on-change.directive';
 import { RankingCard } from 'src/app/shared/ranking-card/ranking-card';
 import { TournamentConfigurationField } from 'src/app/shared/tournament-configuration/tournament-configuration-form.model';
 import { adminUpdateScore } from 'src/app/store/match/match.actions';
@@ -41,7 +41,6 @@ import {
   nextSession,
   startTournament,
 } from 'src/app/store/tournament/tournament.match.actions';
-import { TournamentDto } from 'src/app/store/tournament/tournament.models';
 import {
   selectCompleteTournamentLoading,
   selectCurrentTournamentAdminInformations,
@@ -69,6 +68,7 @@ import { onResyncRequested } from 'src/app/utils/resync-on-reconnect.util';
     TournamentTeamConfigurationCard,
     MatchSessionsCardComponent,
     RankingCard,
+    AnimateOnChangeDirective,
   ],
   templateUrl: './admin-tournament-page.component.html',
   styleUrl: './admin-tournament-page.component.scss',
