@@ -26,6 +26,19 @@ import { TrainingLeaderboardService } from './training-leaderboard.service';
 import { TrainingSessionAuthService } from './training-session-auth.service';
 import { TrainingRealtimeGateway } from '../training-realtime.gateway';
 
+const DEFAULT_LEVEL_HISTORY_DEPTH = 5;
+
+/**
+ * How many of the group's previous sessions feed a player's level, on top of the current one.
+ * Tunable via TRAINING_LEVEL_HISTORY_DEPTH; a missing or invalid value uses the default.
+ */
+function levelHistoryDepth(): number {
+    const configured = Number(process.env.TRAINING_LEVEL_HISTORY_DEPTH);
+    return Number.isInteger(configured) && configured >= 0
+        ? configured
+        : DEFAULT_LEVEL_HISTORY_DEPTH;
+}
+
 @Injectable()
 export class TrainingRoundsService {
     constructor(
@@ -97,10 +110,14 @@ export class TrainingRoundsService {
                 avoidSameOpponentConsecutive: session.avoidSameOpponentConsecutive,
             },
             history: this.buildHistory(rounds),
-            // Levels come from the rounds already loaded above (their matches carry teams and
-            // members): no need to re-query the validated matches just for this.
-            levelByParticipant: this.trainingLeaderboardService.averagePointsFromMatches(
+            // Levels blend this session (rounds already loaded, matches in memory) with the group's
+            // recent sessions, so the learning mode has something to go on from the very first round
+            // instead of drawing at random. Guests, with no roster member, are levelled on this
+            // session alone.
+            levelByParticipant: await this.trainingLeaderboardService.getLevelByParticipant(
+                session,
                 rounds.flatMap((round) => round.matches ?? []),
+                levelHistoryDepth(),
             ),
         };
 

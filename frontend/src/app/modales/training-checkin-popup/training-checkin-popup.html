@@ -45,10 +45,10 @@
             class="entry-chip"
             [class.is-present]="entry.state === 'present'"
             [class.is-left]="entry.state === 'left'"
-            [disabled]="entry.state === 'present' || loading()"
+            [disabled]="loading()"
             [attr.aria-label]="
               entry.state === 'present'
-                ? entry.name + ' est déjà présent'
+                ? 'Retirer ' + entry.name + ' de la séance'
                 : entry.state === 'left'
                   ? 'Faire revenir ' + entry.name
                   : 'Inscrire ' + entry.name
@@ -82,10 +82,10 @@
             class="entry-chip"
             [class.is-present]="entry.state === 'present'"
             [class.is-left]="entry.state === 'left'"
-            [disabled]="entry.state === 'present' || loading()"
+            [disabled]="loading()"
             [attr.aria-label]="
               entry.state === 'present'
-                ? entry.name + ' est déjà présent'
+                ? 'Retirer ' + entry.name + ' de la séance'
                 : 'Faire revenir ' + entry.name
             "
             (click)="onGuestClick(entry)"

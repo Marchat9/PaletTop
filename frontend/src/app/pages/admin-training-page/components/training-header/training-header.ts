@@ -19,4 +19,5 @@ export class TrainingHeader {
   public readonly lastSessionDate = input<Nullable<string>>(null);
 
   public readonly disconnect = output<void>();
+  public readonly edit = output<void>();
 }

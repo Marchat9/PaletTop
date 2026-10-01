@@ -108,4 +108,25 @@ export class TrainingSessionRepository {
             .orderBy('session.date', 'DESC')
             .getMany();
     }
+
+    /** Ids of the most recent sessions of a training (most recent first), excluding one. */
+    async findRecentIdsByTraining(
+        trainingId: string,
+        excludeSessionId: string,
+        limit: number,
+    ): Promise<string[]> {
+        if (limit <= 0) {
+            return [];
+        }
+        const rows = await this.repo
+            .createQueryBuilder('session')
+            .select('session.id', 'id')
+            .where('session.training_id = :trainingId', { trainingId })
+            .andWhere('session.id != :excludeSessionId', { excludeSessionId })
+            .orderBy('session.date', 'DESC')
+            .addOrderBy('session.createdAt', 'DESC')
+            .limit(limit)
+            .getRawMany<{ id: string }>();
+        return rows.map((row) => row.id);
+    }
 }

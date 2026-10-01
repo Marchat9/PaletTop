@@ -14,6 +14,7 @@
       <div class="title">
         <app-icon name="school" iconClass="icon" [ariaHidden]="true" />
         <h1>{{ training()?.name }}</h1>
+        <app-button title="Modifier" icon="edit" variant="tertiary" (clicked)="edit.emit()" />
       </div>
       <span class="code-line">
         @if (training()?.description) {

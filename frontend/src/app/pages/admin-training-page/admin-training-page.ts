@@ -32,6 +32,10 @@ import {
   selectTrainingSessionsIsLoading,
 } from 'src/app/store/training/training.selectors';
 import { TrainingMemberDto } from 'src/app/store/training/training.models';
+import {
+  EditTrainingPopup,
+  EditTrainingPopupData,
+} from 'src/app/modales/edit-training-popup/edit-training-popup';
 import { TrainingHeader } from './components/training-header/training-header';
 import { TrainingRosterCard } from './components/training-roster-card/training-roster-card';
 import { TrainingSessionList } from './components/training-session-list/training-session-list';
@@ -120,6 +124,19 @@ export class AdminTrainingPage implements OnInit {
   public disconnect(): void {
     this.store.dispatch(disconnectTrainingAdministrator());
     this.router.navigate(['/accueil']);
+  }
+
+  public openEdit(): void {
+    const training = this.training();
+    if (!training) {
+      return;
+    }
+    this.dialog.open<void, EditTrainingPopupData>(EditTrainingPopup, {
+      data: { code: training.code, name: training.name, description: training.description },
+      panelClass: 'dialog-panel',
+      backdropClass: 'dialog-backdrop-light',
+      disableClose: false,
+    });
   }
 
   private reconnectAsAdmin(): void {

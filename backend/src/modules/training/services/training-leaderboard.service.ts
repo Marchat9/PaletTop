@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { TrainingMatch } from 'src/entities/training-match.entity';
+import { TrainingSession } from 'src/entities/training-session.entity';
 import { TrainingTeam } from 'src/entities/training-team.entity';
 import { MatchStatus } from 'src/enum/status.enum';
 import { TrainingMatchRepository } from '../repositories/training-match.repository';
@@ -43,44 +44,82 @@ export class TrainingLeaderboardService {
     }
 
     /**
-     * Estimated level of each participant of the session: points scored per match on average. More
-     * stable than a win rate when few matches have been played. A player who has not played a match
-     * yet is absent from it - their level is unknown, not zero.
+     * Estimated level of each participant: average points scored per match. More stable than a win
+     * rate when few matches have been played, and a player who has not played is absent (level
+     * unknown, not zero).
+     *
+     * The window is the current session plus the group's `historyDepth` most recent other sessions.
+     * Only roster members carry across sessions - a participant row is per-session, so a guest
+     * (no member) is levelled on the current session alone. The current-session matches are passed
+     * in from memory (the round generator already holds them); the history is fetched here.
      */
-    async getAveragePointsBySessionId(sessionId: string): Promise<Record<string, number>> {
-        const matches = await this.trainingMatchRepo.findValidatedBySession(sessionId);
-        return this.averagePointsFromMatches(matches);
+    async getLevelByParticipant(
+        session: TrainingSession,
+        currentMatches: TrainingMatch[],
+        historyDepth: number,
+    ): Promise<Record<string, number>> {
+        const current = this.pointsPlayed(currentMatches, (member) => member.participant.id);
+
+        const historySessionIds = await this.trainingSessionRepo.findRecentIdsByTraining(
+            session.training.id,
+            session.id,
+            historyDepth,
+        );
+        const historyMatches =
+            await this.trainingMatchRepo.findValidatedBySessions(historySessionIds);
+        const history = this.pointsPlayed(
+            historyMatches,
+            (member) => member.participant.member?.id ?? null,
+        );
+
+        const levels: Record<string, number> = {};
+        for (const participant of session.participants ?? []) {
+            const total = { points: 0, played: 0 };
+            const own = current.get(participant.id);
+            if (own) {
+                total.points += own.points;
+                total.played += own.played;
+            }
+            const past = participant.member ? history.get(participant.member.id) : undefined;
+            if (past) {
+                total.points += past.points;
+                total.played += past.played;
+            }
+            if (total.played > 0) {
+                levels[participant.id] = total.points / total.played;
+            }
+        }
+        return levels;
     }
 
     /**
-     * Same estimate, from matches already in memory (VALIDATED only). Lets a caller that has just
-     * loaded the whole session - the round generator does - skip a second trip to the database.
+     * Points scored and matches played, grouped by the key each team member maps to (participant id
+     * within a session, member id across sessions). Byes and unfinished matches are ignored.
      */
-    averagePointsFromMatches(matches: TrainingMatch[]): Record<string, number> {
-        const validated = matches.filter((match) => match.status === MatchStatus.VALIDATED);
-
+    private pointsPlayed(
+        matches: TrainingMatch[],
+        keyOf: (member: TrainingTeam['members'][number]) => string | null | undefined,
+    ): Map<string, { points: number; played: number }> {
         const totals = new Map<string, { points: number; played: number }>();
         const credit = (team: TrainingTeam, score: number): void => {
             for (const member of team.members ?? []) {
-                const entry = totals.get(member.participant.id) ?? { points: 0, played: 0 };
+                const key = keyOf(member);
+                if (!key) continue;
+                const entry = totals.get(key) ?? { points: 0, played: 0 };
                 entry.points += score;
                 entry.played += 1;
-                totals.set(member.participant.id, entry);
+                totals.set(key, entry);
             }
         };
 
-        for (const match of validated) {
-            credit(match.teamA, match.scoreA);
-            if (match.teamB) {
-                credit(match.teamB, match.scoreB);
+        for (const match of matches) {
+            if (match.isBye || !match.teamB || match.status !== MatchStatus.VALIDATED) {
+                continue;
             }
+            credit(match.teamA, match.scoreA);
+            credit(match.teamB, match.scoreB);
         }
-
-        const levels: Record<string, number> = {};
-        for (const [participantId, entry] of totals) {
-            levels[participantId] = entry.points / entry.played;
-        }
-        return levels;
+        return totals;
     }
 
     // Aggregates over ALL members of the team as it was at match time (no leftAt filter): a fixed

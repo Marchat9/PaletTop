@@ -139,6 +139,10 @@ export class PlayerMatchCard {
   }
 
   protected onValidate(): void {
+    // Guarded because the Enter key reaches here directly, bypassing the button's disabled state.
+    if (this.opponentCode().length < 4 || this.validateLoading()) {
+      return;
+    }
     this.validateMatch.emit(this.opponentCode());
   }
 

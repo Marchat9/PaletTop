@@ -2,7 +2,10 @@ import { DialogModule, DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
 import { TestBed } from '@angular/core/testing';
 import { MockStore, provideMockStore } from '@ngrx/store/testing';
 import { describe, expect, it, vi } from 'vitest';
-import { checkinTrainingParticipant } from 'src/app/store/training/training.session.actions';
+import {
+  checkinTrainingParticipant,
+  removeTrainingParticipant,
+} from 'src/app/store/training/training.session.actions';
 import {
   AdminTrainingDto,
   TrainingParticipantAdminDto,
@@ -13,6 +16,7 @@ import {
   selectCurrentTrainingData,
   selectCurrentTrainingSessionData,
   selectLastCheckedInTrainingParticipant,
+  selectRemoveTrainingParticipantLoading,
 } from 'src/app/store/training/training.selectors';
 import { TrainingCheckinPopup } from './training-checkin-popup';
 
@@ -62,6 +66,7 @@ function setup(participants: TrainingParticipantAdminDto[]) {
           { selector: selectCurrentTrainingData, value: buildTraining() },
           { selector: selectCurrentTrainingSessionData, value: buildSession(participants) },
           { selector: selectCheckinTrainingParticipantLoading, value: false },
+          { selector: selectRemoveTrainingParticipantLoading, value: false },
           { selector: selectLastCheckedInTrainingParticipant, value: null },
         ],
       }),
@@ -117,7 +122,8 @@ describe('TrainingCheckinPopup', () => {
     );
   });
 
-  it('ignore le clic sur un joueur déjà présent', () => {
+  // Re-clicking a present member undoes the check-in instead of doing nothing.
+  it('retire un membre présent au re-clic', () => {
     const { fixture, store } = setup([
       { id: 'p1', name: 'Jean Dubois', status: 'PRESENT', code: '4821', memberId: 'm1' },
     ]);
@@ -125,6 +131,21 @@ describe('TrainingCheckinPopup', () => {
 
     fixture.componentInstance.onMemberClick(fixture.componentInstance.memberEntries()[0]);
 
-    expect(dispatchSpy).not.toHaveBeenCalled();
+    expect(dispatchSpy).toHaveBeenCalledWith(
+      removeTrainingParticipant({ sessionCode: '1234', participantId: 'p1' }),
+    );
+  });
+
+  it('retire un joueur de passage présent au re-clic', () => {
+    const { fixture, store } = setup([
+      { id: 'g1', name: 'Hugo Vasseur', status: 'PRESENT', code: '2260' },
+    ]);
+    const dispatchSpy = vi.spyOn(store, 'dispatch');
+
+    fixture.componentInstance.onGuestClick(fixture.componentInstance.guestEntries()[0]);
+
+    expect(dispatchSpy).toHaveBeenCalledWith(
+      removeTrainingParticipant({ sessionCode: '1234', participantId: 'g1' }),
+    );
   });
 });

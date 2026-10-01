@@ -10,6 +10,12 @@ const FULL_TEAM_RELATIONS = {
     teamB: { members: { participant: true } },
 } as const;
 
+// Cross-session level needs each player's roster member to link their matches across sessions.
+const HISTORY_TEAM_RELATIONS = {
+    teamA: { members: { participant: { member: true } } },
+    teamB: { members: { participant: { member: true } } },
+} as const;
+
 @Injectable()
 export class TrainingMatchRepository {
     constructor(
@@ -36,6 +42,17 @@ export class TrainingMatchRepository {
         return this.repo.find({
             where: { session: { id: sessionId }, status: MatchStatus.VALIDATED },
             relations: FULL_TEAM_RELATIONS,
+        });
+    }
+
+    /** Validated matches across several sessions, with the roster member of each player loaded. */
+    findValidatedBySessions(sessionIds: string[]): Promise<TrainingMatch[]> {
+        if (sessionIds.length === 0) {
+            return Promise.resolve([]);
+        }
+        return this.repo.find({
+            where: { session: { id: In(sessionIds) }, status: MatchStatus.VALIDATED },
+            relations: HISTORY_TEAM_RELATIONS,
         });
     }
 

@@ -103,6 +103,33 @@ describe('PlayerMatchCard', () => {
     expect(validated).toHaveBeenCalledWith('4821');
   });
 
+  // Enter (desktop or mobile keyboard) validates, just like pressing the button.
+  it('valide au clavier avec la touche Entrée quand le code est complet', () => {
+    const fixture = setup(buildMatch({ status: 'ENDED', myScore: 13, opponentScore: 9 }), {
+      scoringLocked: true,
+    });
+    const validated = vi.fn();
+    fixture.componentInstance.validateMatch.subscribe(validated);
+
+    const form = element(fixture).querySelector<HTMLElement>('.validate-form')!;
+    const input = form.querySelector<HTMLInputElement>('input')!;
+
+    // Incomplete code: Enter does nothing (the button would be disabled).
+    input.value = '12';
+    input.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    form.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    expect(validated).not.toHaveBeenCalled();
+
+    // Complete code: Enter validates.
+    input.value = '4821';
+    input.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    form.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+
+    expect(validated).toHaveBeenCalledWith('4821');
+  });
+
   it('annonce le repos sans proposer de score', () => {
     const fixture = setup(buildMatch({ isBye: true, status: 'PENDING' }), {
       byeCopy: { title: 'Au repos', message: 'Vous ne jouez pas ce round.' },

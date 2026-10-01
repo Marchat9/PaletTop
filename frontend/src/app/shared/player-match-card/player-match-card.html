@@ -106,7 +106,7 @@
             <app-icon name="info" />
             {{ validationCopy().hint }}
           </p>
-          <div class="validate-form">
+          <div class="validate-form" (keydown.enter)="onValidate()">
             <app-input-text
               id="opponent-code"
               [placeholder]="validationCopy().placeholder"

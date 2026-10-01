@@ -8,12 +8,14 @@ import { InputText } from 'src/app/shared/input-text/input-text';
 import {
   checkinTrainingParticipant,
   dismissTrainingCheckinHandoff,
+  removeTrainingParticipant,
 } from 'src/app/store/training/training.session.actions';
 import {
   selectCheckinTrainingParticipantLoading,
   selectCurrentTrainingData,
   selectCurrentTrainingSessionData,
   selectLastCheckedInTrainingParticipant,
+  selectRemoveTrainingParticipantLoading,
 } from 'src/app/store/training/training.selectors';
 import { TrainingParticipantAdminDto } from 'src/app/store/training/training.models';
 
@@ -22,7 +24,7 @@ export interface TrainingCheckinPopupData {
 }
 
 /**
- * - `present`: already in the session, nothing to do.
+ * - `present`: in the session; clicking again removes them (a mis-click is undone on the spot).
  * - `left`: has left, one click brings them back.
  * - `absent`: has not come to the session yet.
  */
@@ -49,7 +51,12 @@ export class TrainingCheckinPopup {
   // Selects
   private readonly training = this.store.selectSignal(selectCurrentTrainingData);
   private readonly session = this.store.selectSignal(selectCurrentTrainingSessionData);
-  public readonly loading = this.store.selectSignal(selectCheckinTrainingParticipantLoading);
+  private readonly checkinLoading = this.store.selectSignal(
+    selectCheckinTrainingParticipantLoading,
+  );
+  private readonly removeLoading = this.store.selectSignal(selectRemoveTrainingParticipantLoading);
+  /** A check-in or a removal is in flight: the pills wait rather than stacking clicks. */
+  public readonly loading = computed(() => this.checkinLoading() || this.removeLoading());
   public readonly lastCheckedIn = this.store.selectSignal(selectLastCheckedInTrainingParticipant);
 
   public readonly guestName = signal('');
@@ -111,6 +118,7 @@ export class TrainingCheckinPopup {
 
   public onMemberClick(entry: CheckinEntry): void {
     if (entry.state === 'present') {
+      this.removePresent((participant) => participant.memberId === entry.key);
       return;
     }
     this.store.dispatch(
@@ -120,10 +128,27 @@ export class TrainingCheckinPopup {
 
   public onGuestClick(entry: CheckinEntry): void {
     if (entry.state === 'present') {
+      this.removePresent((participant) => !participant.memberId && participant.name === entry.key);
       return;
     }
     this.store.dispatch(
       checkinTrainingParticipant({ sessionCode: this.data.sessionCode, name: entry.name }),
+    );
+  }
+
+  /** Undo a check-in: take the matching present participant back out of the session. */
+  private removePresent(matches: (participant: TrainingParticipantAdminDto) => boolean): void {
+    const participant = this.participants().find(
+      (candidate) => candidate.status === 'PRESENT' && matches(candidate),
+    );
+    if (!participant) {
+      return;
+    }
+    this.store.dispatch(
+      removeTrainingParticipant({
+        sessionCode: this.data.sessionCode,
+        participantId: participant.id,
+      }),
     );
   }
 

@@ -177,16 +177,14 @@
       background: var(--color-status-ongoing-bg);
       color: var(--color-status-ongoing-text);
       font-weight: 600;
-      cursor: default;
 
       ::ng-deep .chip-icon {
         color: var(--color-status-ongoing-text);
       }
     }
 
-    // Only the "present" state disables the pill: it is not greyed out for all that, its colour
-    // already carries the information.
-    &:disabled:not(.is-present) {
+    // Disabled only while a check-in or removal is in flight, to stop click stacking.
+    &:disabled {
       opacity: 0.55;
       cursor: default;
     }
