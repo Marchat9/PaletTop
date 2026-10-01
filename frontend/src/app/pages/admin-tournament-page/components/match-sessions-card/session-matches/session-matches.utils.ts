@@ -13,7 +13,6 @@ export function computeMatchGroups(matches: SessionMatchDto[]) {
   const groupMap = new Map<string, MatchPoolGroup>();
 
   for (const match of sorted) {
-
     const key: string =
       match.group?.name ??
       (Number.isInteger(match.poolNumber) ? `Poule ${match.poolNumber}` : noGroupKey);
@@ -22,8 +21,11 @@ export function computeMatchGroups(matches: SessionMatchDto[]) {
       match.group?.order ??
       (Number.isInteger(match.poolNumber) ? match.poolNumber! : groupMap.size);
 
-    const label: string | null = match.group ? 
-      MATCH_GROUP_LABELS[match.group.name] : (key !== noGroupKey ? key : null);
+    const label: string | null = match.group
+      ? MATCH_GROUP_LABELS[match.group.name]
+      : key !== noGroupKey
+        ? key
+        : null;
 
     if (!groupMap.has(key)) {
       groupMap.set(key, { label, order, matches: [] });

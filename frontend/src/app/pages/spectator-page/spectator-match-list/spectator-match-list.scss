@@ -92,7 +92,7 @@
           gap: 0.75rem;
           font-size: 0.875rem;
           min-width: min(20rem, 100%);
-          
+
           @media (width < 1025px) {
             flex-wrap: wrap;
           }
@@ -111,7 +111,7 @@
               border-radius: 0.3rem;
             }
           }
-          
+
           .teams-and-score {
             display: flex;
             flex: 1 1 auto;
@@ -170,7 +170,7 @@
             }
           }
         }
-          
+
         .match-meta {
           display: flex;
           align-items: center;
@@ -180,7 +180,6 @@
 
           min-width: 170px;
           justify-content: flex-end;
-
 
           @media (width <= 1234px) {
             width: 100%;

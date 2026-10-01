@@ -77,8 +77,6 @@
     flex: 1 1 auto;
     align-items: baseline;
 
-    
-
     @media (width < 426px) {
       flex-direction: column;
       flex: 1 1 100%;
@@ -116,7 +114,6 @@
     }
   }
 
-
   .score-display {
     display: flex;
     align-items: center;
@@ -125,7 +122,6 @@
     font-variant-numeric: tabular-nums;
     border-radius: 0.5rem;
     padding: 0 0.2rem;
-
 
     strong {
       font-size: 1rem;
@@ -137,7 +133,6 @@
       font-weight: 300;
       font-size: 1rem;
     }
-
   }
 
   .vs {
@@ -155,7 +150,6 @@
     text-align: right;
   }
 }
-
 
 .match-meta {
   display: flex;

@@ -46,21 +46,27 @@
               @case ('score') {
                 <tr>
                   <td class="col-rank">{{ entry.rank }}</td>
-                  <td class="col-team"><span class="max-two-lines">{{ entry.teamName }}</span></td>
+                  <td class="col-team">
+                    <span class="max-two-lines">{{ entry.teamName }}</span>
+                  </td>
                   <td class="col-stat">{{ entry.pointsFor }}</td>
                 </tr>
               }
               @case ('tournament_score') {
                 <tr>
                   <td class="col-rank">{{ entry.rank }}</td>
-                  <td class="col-team"><span class="max-two-lines">{{ entry.teamName }}</span></td>
+                  <td class="col-team">
+                    <span class="max-two-lines">{{ entry.teamName }}</span>
+                  </td>
                   <td class="col-stat">{{ entry.tournamentPoints }}</td>
                 </tr>
               }
               @default {
                 <tr>
                   <td class="col-rank">{{ entry.rank }}</td>
-                  <td class="col-team"><span class="max-two-lines">{{ entry.teamName }}</span></td>
+                  <td class="col-team">
+                    <span class="max-two-lines">{{ entry.teamName }}</span>
+                  </td>
                   <td class="col-stat">{{ entry.wins }}</td>
                   <td class="col-stat">{{ entry.pointsFor }}</td>
                   <td
