@@ -18,23 +18,27 @@
             @if (editingMatchId() === match.id) {
               <div class="edit-row">
                 <span class="plate">
-                  <span class="plate-label">N°{{ match.plateNumber }}</span>
+                  <span class="plate-label">Planche N°{{ match.plateNumber }}</span>
                 </span>
-                <span class="team team-a">{{ match.teamA.name }}</span>
-                <app-input-number
-                  [value]="draftScoreA()"
-                  [min]="0"
-                  [max]="pointsPerGame()"
-                  (valueChange)="draftScoreA.set($event)"
-                />
-                <span class="vs">—</span>
-                <app-input-number
-                  [value]="draftScoreB()"
-                  [min]="0"
-                  [max]="pointsPerGame()"
-                  (valueChange)="draftScoreB.set($event)"
-                />
-                <span class="team team-b">{{ match.teamB?.name }}</span>
+                <div class="teams-and-score edit-mode">
+                  <span class="team team-a">{{ match.teamA.name }}</span>
+                  <div class="score-buttons">
+                    <app-input-number
+                      [value]="draftScoreA()"
+                      [min]="0"
+                      [max]="pointsPerGame()"
+                      (valueChange)="draftScoreA.set($event)"
+                    />
+                    <span class="vs">—</span>
+                    <app-input-number
+                      [value]="draftScoreB()"
+                      [min]="0"
+                      [max]="pointsPerGame()"
+                      (valueChange)="draftScoreB.set($event)"
+                    />
+                  </div>
+                  <span class="team team-b">{{ match.teamB?.name }}</span>
+                </div>
                 <div class="edit-actions">
                   <app-button
                     title="Enregistrer"
@@ -49,23 +53,25 @@
             } @else {
               @if (!match.isBye) {
                 <span class="plate">
-                  <span class="plate-label">N°{{ match.plateNumber }}</span>
+                  <span class="plate-label">Planche N°{{ match.plateNumber }}</span>
                 </span>
               }
-              <span class="team team-a">{{ match.teamA.name }}</span>
-              @if (match.isBye) {
-                <span class="bye-badge">Exempté</span>
-              } @else {
-                <span
-                  class="score-display"
-                  [appAnimateOnChange]="match.scoreA + '-' + match.scoreB"
-                >
-                  <strong>{{ match.scoreA }}</strong>
-                  <span class="vs">—</span>
-                  <strong>{{ match.scoreB }}</strong>
-                </span>
-                <span class="team team-b">{{ match.teamB?.name }}</span>
-              }
+              <div class="teams-and-score">
+                <span class="team team-a">{{ match.teamA.name }}</span>
+                @if (match.isBye) {
+                  <span class="bye-badge">Exempté</span>
+                } @else {
+                  <span
+                    class="score-display"
+                    [appAnimateOnChange]="match.scoreA + '-' + match.scoreB"
+                  >
+                    <strong>{{ match.scoreA }}</strong>
+                    <span class="vs">—</span>
+                    <strong>{{ match.scoreB }}</strong>
+                  </span>
+                  <span class="team team-b">{{ match.teamB?.name }}</span>
+                }
+              </div>
               <div class="match-meta">
                 <span class="status-badge" [class]="'status-badge--' + match.status.toLowerCase()">
                   <app-match-status [status]="match.status" />

@@ -90,6 +90,10 @@ export class TournamentRepository {
                 .createQueryBuilder(TournamentMatch, 'match')
                 .leftJoinAndSelect('match.teamA', 'matchTeamA')
                 .leftJoinAndSelect('match.teamB', 'matchTeamB')
+                // The elimination draw tracks each table's winners/losers by `pool.name`
+                // (MatchGroupKey), and the final standings group teams by their table: both need
+                // the pool relation, which is `eager: false` and so must be joined explicitly.
+                .leftJoinAndSelect('match.pool', 'matchPool')
                 .where('match.tournament = :tournamentId', { tournamentId: tournament.id })
                 .getMany();
         }
@@ -111,6 +115,7 @@ export class TournamentRepository {
                 .leftJoinAndSelect('session.matches', 'session_match')
                 .leftJoinAndSelect('session_match.teamA', 'session_match_team_a')
                 .leftJoinAndSelect('session_match.teamB', 'session_match_team_b')
+                .leftJoinAndSelect('session_match.pool', 'session_match_pool')
                 .where('session.tournament = :tournamentId', { tournamentId: tournament.id })
                 .orderBy('session.sessionNumber', 'ASC')
                 .getMany();
@@ -135,10 +140,10 @@ export class TournamentRepository {
             relations: {
                 ...(options.withTeams && { teams: { players: true } }),
                 ...((options.withMatches || options.withMatchesInTeams) && {
-                    matches: { teamA: true, teamB: true },
+                    matches: { teamA: true, teamB: true, pool: true },
                 }),
                 ...(options.withSessions && {
-                    matchsSessions: { matches: { teamA: true, teamB: true } },
+                    matchsSessions: { matches: { teamA: true, teamB: true, pool: true } },
                 }),
             },
         });

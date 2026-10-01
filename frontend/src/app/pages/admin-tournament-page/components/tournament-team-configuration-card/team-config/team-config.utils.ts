@@ -20,6 +20,7 @@ export function toTeamEditFormValue(team: TounamentTeamDto): TeamEditFormValue {
   return {
     teamId: team.id,
     name: team.name,
+    club: team.club,
     players: team.players.map((player) => ({ name: player.name, club: player.club ?? '' })),
   };
 }

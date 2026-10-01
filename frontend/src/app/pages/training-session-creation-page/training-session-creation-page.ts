@@ -38,10 +38,7 @@ import {
   selectPreviousTrainingSessionSettings,
   selectTrainingSessions,
 } from 'src/app/store/training/training.selectors';
-import {
-  TrainingSessionAdminDto,
-  TrainingTeamComposition,
-} from 'src/app/store/training/training.models';
+import { TrainingTeamComposition } from 'src/app/store/training/training.models';
 import { describeRoundPreview } from 'src/app/utils/round-preview.util';
 import { InputDate } from 'src/app/shared/input-date/input-date';
 

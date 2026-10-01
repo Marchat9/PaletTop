@@ -1,8 +1,7 @@
-import { Dialog } from '@angular/cdk/dialog';
 import { Component, effect, inject } from '@angular/core';
 import { SwUpdate } from '@angular/service-worker';
 import { Store } from '@ngrx/store';
-import { filter, first, interval, Subject, takeUntil } from 'rxjs';
+import { filter, interval, Subject, takeUntil } from 'rxjs';
 import { ThemeMode } from 'src/app/models/theme-mode.model';
 import { setTheme } from 'src/app/store/app-config/app-config.actions';
 import { selectTheme } from 'src/app/store/app-config/app-config.selectors';

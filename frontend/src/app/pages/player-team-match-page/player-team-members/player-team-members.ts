@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { TeamPlayerDto } from 'src/app/models/team.model';
 import { MemberCardComponent } from 'src/app/shared/member-card/member-card';
 import { Icon } from 'src/app/shared/icon/icon';

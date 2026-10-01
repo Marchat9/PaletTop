@@ -13,7 +13,6 @@ import { InputText } from '../../shared/input-text/input-text';
 import { Icon } from 'src/app/shared/icon/icon';
 import { Store } from '@ngrx/store';
 import {
-  selectCurrentTournament,
   selectCurrentTournamentData,
   selectCurrentTournamentError,
   selectCurrentTournamentIsLoading,

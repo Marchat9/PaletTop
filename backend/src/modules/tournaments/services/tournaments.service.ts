@@ -283,6 +283,12 @@ export class TournamentsService {
             team.name = teamData.name;
         }
 
+        // Team-level club (championship mode): update it whenever the payload carries one. Left
+        // untouched when absent, so a non-championship edit never clobbers it.
+        if (teamData.club !== undefined) {
+            team.club = teamData.club;
+        }
+
         if (teamData.players?.length) {
             const clubNames = [
                 ...new Set(
