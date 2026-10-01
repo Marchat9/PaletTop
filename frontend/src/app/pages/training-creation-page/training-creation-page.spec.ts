@@ -44,7 +44,7 @@ describe('TrainingCreationPage', () => {
 
     fixture.componentInstance.onCodeChange('  LAITON-2026  ');
     fixture.componentInstance.onNameChange('  Entraînement du jeudi  ');
-    fixture.componentInstance.onClubChange('  ASPTT  ');
+    fixture.componentInstance.onDescriptionChange('  ASPTT  ');
     fixture.componentInstance.onAdminPasswordChange('  secret  ');
     fixture.componentInstance.submit();
 
@@ -52,7 +52,7 @@ describe('TrainingCreationPage', () => {
       createTraining({
         code: 'LAITON-2026',
         name: 'Entraînement du jeudi',
-        club: 'ASPTT',
+        description: 'ASPTT',
         adminPassword: 'secret',
       }),
     );

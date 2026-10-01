@@ -11,7 +11,7 @@ export class CreateTrainingDto {
 
     @IsString()
     @IsOptional()
-    club?: string;
+    description?: string;
 
     @IsString()
     @IsNotEmpty()

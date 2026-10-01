@@ -4,7 +4,7 @@ export interface SuperAdminTrainingSummaryDto {
     id: string;
     code: string;
     name: string;
-    club?: string;
+    description?: string;
     sessionsCount: number;
     createdAt: string;
 }
@@ -16,7 +16,7 @@ export function toSuperAdminTrainingSummaryDto(
         id: training.id,
         code: training.code,
         name: training.name,
-        club: training.club,
+        description: training.description,
         sessionsCount: training.sessionsCount,
         createdAt: training.createdAt.toISOString(),
     };

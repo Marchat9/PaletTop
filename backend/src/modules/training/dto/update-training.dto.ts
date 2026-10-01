@@ -11,5 +11,5 @@ export class UpdateTrainingDto {
 
     @IsString()
     @IsOptional()
-    club?: string;
+    description?: string;
 }

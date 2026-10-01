@@ -34,7 +34,7 @@ export class TrainingCreationPage {
 
   public readonly code = signal('');
   public readonly name = signal('');
-  public readonly club = signal('');
+  public readonly description = signal('');
   public readonly adminPassword = signal('');
   public readonly userHasSubmitted = signal(false);
 
@@ -67,8 +67,8 @@ export class TrainingCreationPage {
     this.name.set(value);
   }
 
-  public onClubChange(value: string): void {
-    this.club.set(value);
+  public onDescriptionChange(value: string): void {
+    this.description.set(value);
   }
 
   public onAdminPasswordChange(value: string): void {
@@ -85,7 +85,7 @@ export class TrainingCreationPage {
       createTraining({
         code: this.code().trim(),
         name: this.name().trim(),
-        club: this.club().trim() || undefined,
+        description: this.description().trim() || undefined,
         adminPassword: this.adminPassword().trim(),
       }),
     );

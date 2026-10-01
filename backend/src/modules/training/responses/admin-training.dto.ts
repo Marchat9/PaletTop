@@ -10,7 +10,7 @@ export interface AdminTrainingDto {
     id: string;
     code: string;
     name: string;
-    club?: string;
+    description?: string;
     createdAt: string;
     members: TrainingMemberDto[];
 }
@@ -24,7 +24,7 @@ export function toAdminTrainingDto(training: Training): AdminTrainingDto {
         id: training.id,
         code: training.code,
         name: training.name,
-        club: training.club,
+        description: training.description,
         createdAt: training.createdAt.toISOString(),
         members: (training.members ?? []).map(toTrainingMemberDto),
     };

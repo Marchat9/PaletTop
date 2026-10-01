@@ -12,7 +12,7 @@ export interface SuperAdminTrainingDetailDto {
     id: string;
     code: string;
     name: string;
-    club?: string;
+    description?: string;
     createdAt: string;
     members: TrainingMemberDto[];
     sessions: TrainingSessionSummaryDto[];
@@ -23,7 +23,7 @@ export function toSuperAdminTrainingDetailDto(training: Training): SuperAdminTra
         id: training.id,
         code: training.code,
         name: training.name,
-        club: training.club,
+        description: training.description,
         createdAt: training.createdAt.toISOString(),
         members: (training.members ?? []).map(toTrainingMemberDto),
         sessions: (training.sessions ?? []).map(toTrainingSessionSummaryDto),

@@ -121,8 +121,8 @@ export class TrainingEffects {
   createTraining$ = createEffect(() =>
     this.actions$.pipe(
       ofType(createTraining),
-      concatMap(({ code, name, club, adminPassword }) =>
-        this.trainingService.createTraining(code, name, club, adminPassword).pipe(
+      concatMap(({ code, name, description, adminPassword }) =>
+        this.trainingService.createTraining(code, name, description, adminPassword).pipe(
           switchMap((training) =>
             of(
               createTrainingSuccess({ training, password: adminPassword }),
@@ -198,17 +198,21 @@ export class TrainingEffects {
     this.actions$.pipe(
       ofType(updateTrainingAdministratorInformations),
       withLatestFrom(this.store.select(selectCurrentTrainingAdminInformations)),
-      concatMap(([{ code, name, club }, adminInfo]) =>
-        this.trainingService.updateTraining(code, adminInfo?.password ?? '', name, club).pipe(
-          switchMap((training) => of(updateTrainingAdministratorInformationsSuccess({ training }))),
-          catchError((error) =>
-            of(
-              updateTrainingAdministratorInformationsFailure({
-                error: convertErrorToString(error),
-              }),
+      concatMap(([{ code, name, description }, adminInfo]) =>
+        this.trainingService
+          .updateTraining(code, adminInfo?.password ?? '', name, description)
+          .pipe(
+            switchMap((training) =>
+              of(updateTrainingAdministratorInformationsSuccess({ training })),
+            ),
+            catchError((error) =>
+              of(
+                updateTrainingAdministratorInformationsFailure({
+                  error: convertErrorToString(error),
+                }),
+              ),
             ),
           ),
-        ),
       ),
     ),
   );

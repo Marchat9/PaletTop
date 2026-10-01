@@ -19,7 +19,7 @@ export const connectTrainingAdministratorFailure = createAction(
 // --------- Training Administrator Update informations ---------
 export const updateTrainingAdministratorInformations = createAction(
   '[Training] Update Training Administrator Informations',
-  props<{ code: string; name?: string; club?: string }>(),
+  props<{ code: string; name?: string; description?: string }>(),
 );
 export const updateTrainingAdministratorInformationsSuccess = createAction(
   '[Training] Update Training Administrator Informations Success',

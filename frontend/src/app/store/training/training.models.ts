@@ -18,7 +18,7 @@ export interface AdminTrainingDto {
   id: string;
   code: string;
   name: string;
-  club?: string;
+  description?: string;
   createdAt: string;
   members: TrainingMemberDto[];
 }

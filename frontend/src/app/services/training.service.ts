@@ -25,13 +25,13 @@ export class TrainingService {
   public createTraining(
     code: string,
     name: string,
-    club: string | undefined,
+    description: string | undefined,
     adminPassword: string,
   ): Observable<AdminTrainingDto> {
     return this.http.post<AdminTrainingDto>(`${this.apiBaseUrl}/trainings`, {
       code,
       name,
-      club,
+      description,
       adminPassword,
     });
   }
@@ -47,12 +47,12 @@ export class TrainingService {
     code: string,
     password: string,
     name?: string,
-    club?: string,
+    description?: string,
   ): Observable<AdminTrainingDto> {
     return this.http.patch<AdminTrainingDto>(`${this.apiBaseUrl}/trainings/${code}`, {
       password,
       name,
-      club,
+      description,
     });
   }
 

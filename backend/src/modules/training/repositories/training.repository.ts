@@ -16,7 +16,6 @@ export interface AdminTrainingSearchOptions {
 const ADMIN_TRAINING_SORTABLE_COLUMNS: Record<string, string> = {
     name: 'training.name',
     code: 'training.code',
-    club: 'training.club',
     createdAt: 'training.createdAt',
     sessionsCount: 'sessions_count',
 };
@@ -79,7 +78,7 @@ export class TrainingRepository {
         const { items, total } = await paginateAdminSearch(
             queryBuilder,
             options,
-            "(unaccent(training.name) ILIKE unaccent(:search) OR unaccent(training.code) ILIKE unaccent(:search) OR unaccent(COALESCE(training.club, '')::text) ILIKE unaccent(:search))",
+            '(unaccent(training.name) ILIKE unaccent(:search) OR unaccent(training.code) ILIKE unaccent(:search))',
             ADMIN_TRAINING_SORTABLE_COLUMNS,
             'training.createdAt',
         );

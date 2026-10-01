@@ -22,7 +22,7 @@
         <div class="fields-training">
           <span class="field-title">Informations de l'entraînement</span>
           <div class="field">
-            <label class="field-label" for="training-name">Nom</label>
+            <label class="field-label" for="training-name">Nom du club / personnalisé</label>
             <app-input-text
               id="training-name"
               placeholder="Ex : Les Entraînements du club"
@@ -37,17 +37,17 @@
           </div>
 
           <div class="field">
-            <label class="field-label" for="training-club">
-              Club <span class="optional">(facultatif)</span>
+            <label class="field-label" for="training-description">
+              Description <span class="optional">(facultatif)</span>
             </label>
             <app-input-text
-              id="training-club"
-              placeholder="Ex : Laiton Club"
-              icon="apartment"
-              [value]="club()"
-              (valueChange)="onClubChange($event)"
+              id="training-description"
+              placeholder="Ex : Entraînements le lundi et jeudi soir dans la salle des sports 3."
+              icon="notes"
+              [value]="description()"
+              (valueChange)="onDescriptionChange($event)"
             />
-            <p class="field-help">Nom du club auquel vous voulez lier ce groupe d'entraînements.</p>
+            <p class="field-help">Texte libre affiché en tête de la page d'administration.</p>
           </div>
         </div>
 

@@ -19,7 +19,7 @@ export class TrainingsService {
         const training = this.trainingRepo.create({
             code: dto.code,
             name: dto.name,
-            club: dto.club,
+            description: dto.description,
             adminPassword: dto.adminPassword,
         });
         const saved = await this.trainingRepo.save(training);
@@ -34,7 +34,7 @@ export class TrainingsService {
     async update(code: string, dto: UpdateTrainingDto): Promise<AdminTrainingDto> {
         const training = await this.trainingAuthService.findWithAdminAuth(code, dto.password, true);
         if (dto.name !== undefined) training.name = dto.name;
-        if (dto.club !== undefined) training.club = dto.club;
+        if (dto.description !== undefined) training.description = dto.description;
         const saved = await this.trainingRepo.save(training);
         return toAdminTrainingDto(saved);
     }

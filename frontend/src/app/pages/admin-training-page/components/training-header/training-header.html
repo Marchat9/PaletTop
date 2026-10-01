@@ -16,10 +16,10 @@
         <h1>{{ training()?.name }}</h1>
       </div>
       <span class="code-line">
-        @if (training()?.club) {
+        @if (training()?.description) {
           <span class="badge-club">
-            <app-icon name="apartment" iconClass="icon" [ariaHidden]="true" />
-            {{ training()?.club }}
+            <app-icon name="notes" iconClass="icon" [ariaHidden]="true" />
+            {{ training()?.description }}
           </span>
         }
         <span

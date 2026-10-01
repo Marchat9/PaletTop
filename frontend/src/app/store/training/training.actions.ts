@@ -4,7 +4,7 @@ import { AdminTrainingDto, TrainingCurrentMatchDto, TrainingMatchDto } from './t
 // ---------------- Training Creation -----------------
 export const createTraining = createAction(
   '[Training] Create Training',
-  props<{ code: string; name: string; club?: string; adminPassword: string }>(),
+  props<{ code: string; name: string; description?: string; adminPassword: string }>(),
 );
 export const createTrainingSuccess = createAction(
   '[Training] Create Training Success',

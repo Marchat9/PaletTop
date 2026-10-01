@@ -14,7 +14,7 @@ export class Training {
     name!: string;
 
     @Column({ nullable: true })
-    club?: string;
+    description?: string;
 
     @Column({ select: false })
     adminPassword!: string;
