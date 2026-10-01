@@ -17,6 +17,7 @@ export class PlayerTeamHeaderComponent {
   public readonly wins = input<string>('—');
   public readonly rank = input<string>('—');
   public readonly nbTeams = input<Nullable<number>>();
+  public readonly phaseName = input<Nullable<string>>();
 
   public readonly openRank = output<void>();
 
