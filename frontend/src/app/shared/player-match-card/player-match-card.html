@@ -1,0 +1,148 @@
+@if (match(); as currentMatch) {
+  <div
+    class="match-card"
+    [class.match-card--bye]="currentMatch.isBye"
+    [class.match-card--validated]="!currentMatch.isBye && isValidated()"
+  >
+    @if (currentMatch.isBye) {
+      <div class="bye-header">
+        <app-icon name="airline_seat_recline_normal" />
+        <div class="bye-header__text">
+          <span class="bye-title">{{ byeCopy().title }}</span>
+          @if (currentMatch.subtitle) {
+            <span class="bye-subtitle">{{ currentMatch.subtitle }}</span>
+          }
+        </div>
+      </div>
+      <p class="bye-message">{{ byeCopy().message }}</p>
+
+      @if (isValidated() && byeCopy().awardLabel) {
+        <div class="bye-result">
+          <app-icon name="verified" />
+          <span>{{ byeCopy().awardLabel }}</span>
+        </div>
+      } @else if (byeCopy().pendingLabel) {
+        <p class="bye-pending">{{ byeCopy().pendingLabel }}</p>
+      }
+    } @else {
+      <div class="match-card__teams">
+        <div class="team-block team-block--my">
+          <span class="team-block__name">{{ currentMatch.myLabel }}</span>
+          <span class="team-block__you">vous</span>
+        </div>
+
+        <div class="match-card__vs">
+          <span class="vs-label">VS</span>
+          <div class="match-card__meta">
+            @if (currentMatch.subtitle) {
+              <span class="plate-label">{{ currentMatch.subtitle }}</span>
+            }
+            <app-status-pill [tone]="statusTone(currentMatch.status)">
+              <app-match-status [status]="currentMatch.status" />
+            </app-status-pill>
+            <app-match-timer
+              [startedAt]="currentMatch.startedAt"
+              [finishedAt]="currentMatch.finishedAt"
+              [status]="currentMatch.status"
+            />
+          </div>
+        </div>
+
+        <div class="team-block team-block--opponent">
+          <span class="team-block__name">{{ currentMatch.opponentLabel }}</span>
+          <span class="team-block__you">adversaire</span>
+        </div>
+      </div>
+
+      @if (!isPending()) {
+        <div class="match-card__scoreboard">
+          <div class="score-block">
+            <app-score-number
+              id="my-score"
+              [value]="localMyScore()"
+              [colorRed]="currentMatch.iAmTeamA"
+              [min]="0"
+              [max]="pointsPerGame()"
+              [disabled]="isValidated() || scoringLocked()"
+              (valueChange)="onMyScoreChange($event)"
+            />
+          </div>
+          <span class="score-sep">—</span>
+          <div class="score-block">
+            <app-score-number
+              id="opponent-score"
+              [value]="localOpponentScore()"
+              [colorRed]="!currentMatch.iAmTeamA"
+              [min]="0"
+              [max]="pointsPerGame()"
+              [disabled]="isValidated() || scoringLocked()"
+              (valueChange)="onOpponentScoreChange($event)"
+            />
+          </div>
+        </div>
+
+        @if (scoreError()) {
+          <p class="error-hint">{{ scoreError() }}</p>
+        }
+      }
+
+      @if (isPending() && !scoringLocked()) {
+        <div class="match-card__action">
+          <app-button
+            title="Démarrer le match"
+            icon="play_arrow"
+            [loading]="startLoading()"
+            (clicked)="startMatch.emit()"
+          />
+          @if (startError()) {
+            <p class="error-hint">{{ startError() }}</p>
+          }
+        </div>
+      }
+
+      @if (isEnded()) {
+        <div class="match-card__validate">
+          <p class="validate-hint">
+            <app-icon name="info" />
+            {{ validationCopy().hint }}
+          </p>
+          <div class="validate-form" (keydown.enter)="onValidate()">
+            <app-input-text
+              id="opponent-code"
+              [placeholder]="validationCopy().placeholder"
+              [value]="opponentCode()"
+              [uppercase]="true"
+              (valueChange)="opponentCode.set($event)"
+            />
+            <app-button
+              title="Valider le score"
+              icon="check_circle"
+              [loading]="validateLoading()"
+              [disabled]="opponentCode().length < 4"
+              (clicked)="onValidate()"
+            />
+          </div>
+          @if (validateError()) {
+            <p class="error-hint">{{ validateError() }}</p>
+          }
+        </div>
+      }
+
+      @if (isValidated()) {
+        <div class="match-card__validated">
+          <app-icon name="verified" />
+          <span>Score validé</span>
+        </div>
+      }
+    }
+  </div>
+} @else {
+  <!-- Without a match the box still belongs to the card: only its content comes from the page,
+       the reasons for having no match differing from one context to the other. -->
+  <div
+    class="match-card-empty"
+    [class.match-card-empty--celebration]="emptyTone() === 'celebration'"
+  >
+    <ng-content />
+  </div>
+}

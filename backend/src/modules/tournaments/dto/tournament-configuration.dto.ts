@@ -1,7 +1,19 @@
 import { Type } from 'class-transformer';
-import { IsBoolean, IsDefined, IsEnum, IsInt, IsNotEmpty, IsOptional, Min } from 'class-validator';
+import {
+    IsBoolean,
+    IsDefined,
+    IsEnum,
+    IsInt,
+    IsNotEmpty,
+    IsOptional,
+    Min,
+    Validate,
+} from 'class-validator';
 import { CompetitionMode, ScoreCalculation } from 'src/enum/tounament.enum';
-import { SpecificTournamentConfig } from './tournament-comptetition-configuration.dto';
+import {
+    CompetitionConfigConstraint,
+    SpecificTournamentConfig,
+} from './tournament-comptetition-configuration.dto';
 
 export class TournamentConfigurationDto {
     @Type(() => Number)
@@ -10,11 +22,13 @@ export class TournamentConfigurationDto {
     @IsNotEmpty()
     maxTeamCapacity!: number;
 
+    @IsEnum(ScoreCalculation)
     @IsNotEmpty()
     scoreCalculation!: ScoreCalculation;
 
     @Type(() => Number)
     @IsInt()
+    @Min(1)
     @IsNotEmpty()
     pointsPerGame!: number;
 
@@ -35,5 +49,6 @@ export class TournamentConfigurationDto {
     competitionMode!: CompetitionMode;
 
     @IsDefined()
+    @Validate(CompetitionConfigConstraint)
     competitionConfiguration!: SpecificTournamentConfig;
 }

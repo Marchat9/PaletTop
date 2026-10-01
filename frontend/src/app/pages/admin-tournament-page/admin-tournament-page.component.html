@@ -1,6 +1,11 @@
 <div class="admin-tournament-page">
   <!-- Main Content -->
-  <div class="page-content">
+  <div
+    class="page-content"
+    [appAnimateOnChange]="tournament()?.code"
+    animation="slide-in"
+    [animateOnInit]="true"
+  >
     <app-tournament-header
       [tournament]="tournament()"
       [completeLoading]="completeLoading()"

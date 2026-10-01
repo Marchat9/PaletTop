@@ -73,7 +73,7 @@
     line-height: var(--line-height);
   }
 
-  .text {
+  .text:not(.can-wrap) {
     white-space: nowrap;
   }
 

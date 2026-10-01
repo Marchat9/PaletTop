@@ -1,0 +1,62 @@
+<div class="popup-container popup-surface" (keydown.enter)="onJoin()">
+  <div class="popup-header">
+    <h2 class="popup-title">
+      <app-icon name="school" iconClass="icon" [ariaHidden]="true" />
+      <span>Rejoindre un <span class="highlight">entraînement</span></span>
+    </h2>
+    <button class="popup-close" type="button" aria-label="Fermer" (click)="onCancel()">
+      <app-icon name="close" />
+    </button>
+  </div>
+
+  <p class="popup-subtitle">Saisissez vos identifiants fournis par votre référent.</p>
+
+  <div class="field-group">
+    <label class="field-label">Code de session</label>
+    <app-code-number-input
+      [digitCount]="4"
+      (codeChange)="onSessionCodeChange($event)"
+    ></app-code-number-input>
+    <p class="field-help">
+      <app-icon name="info" [ariaHidden]="true" />
+      Identifiant numérique à 4 chiffres d'identifier la session d'entraînement.
+    </p>
+  </div>
+
+  <div class="field-group">
+    <label class="field-label">Code Participant</label>
+    <app-code-number-input
+      [digitCount]="4"
+      (codeChange)="onCodeChange($event)"
+    ></app-code-number-input>
+    <p class="field-help">
+      <app-icon name="info" [ariaHidden]="true" />
+      Identifiant numérique à 4 chiffres permettant de vous identifier en tant que participant.
+    </p>
+  </div>
+
+  @if (isUnknownSession()) {
+    <div class="error-container">
+      <span class="message">
+        <app-icon name="error" [ariaHidden]="true" />
+        Session d'entraînement introuvable
+      </span>
+      <span class="description">
+        Veuillez vérifier le code saisi ou contacter le référent d'entraînement pour plus
+        d'informations.
+      </span>
+    </div>
+  }
+
+  <div class="actions">
+    <app-button title="Annuler" variant="secondary" (clicked)="onCancel()"></app-button>
+    <app-button
+      title="Rejoindre"
+      variant="primary"
+      icon="login"
+      [loading]="trainingLoading()"
+      [disabled]="!canJoin()"
+      (clicked)="onJoin()"
+    ></app-button>
+  </div>
+</div>

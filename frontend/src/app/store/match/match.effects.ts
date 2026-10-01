@@ -29,6 +29,7 @@ import {
   validateMatchSuccess,
 } from './match.actions';
 import { environment } from '@environment';
+import { newId } from 'src/app/utils/unique-id.util';
 
 @Injectable()
 export class MatchEffects {
@@ -123,7 +124,7 @@ export class MatchEffects {
       map(({ error }) =>
         addNotification({
           notification: {
-            id: crypto.randomUUID(),
+            id: newId(),
             message: error,
             typeIcon: 'error',
             type: 'error',

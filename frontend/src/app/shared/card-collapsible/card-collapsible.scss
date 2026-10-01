@@ -49,7 +49,7 @@
     display: grid;
     grid-template-rows: 0fr;
     opacity: 0;
-    padding: 0 1.2rem 1.2rem 1.2rem;
+    padding: 0 1.2rem 0.5rem 1.2rem;
     transition:
       grid-template-rows 220ms ease,
       opacity 160ms ease;

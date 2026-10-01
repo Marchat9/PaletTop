@@ -52,3 +52,134 @@
     outline: none;
   }
 }
+
+// ###################################
+// Common popup shell
+//
+// `dialog-panel*` sizes the overlay; these classes dress the box itself. Every popup carried them
+// identically in its own style: they live here once and for all.
+.popup-surface {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 2rem;
+  border-radius: 0.8rem;
+  background: var(--color-surface-container-high);
+  box-shadow: 0 1rem 2.5rem var(--color-shadow-strong);
+
+  @media (width < 375px) {
+    padding: 1.5rem 1rem;
+  }
+}
+
+// Popup input fields: same label, same hint, same error block from one popup to the next. Scoped
+// to `.popup-surface` so they do not leak into the rest of the application.
+.popup-surface {
+  .field-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .field-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-primary);
+  }
+
+  .field-help {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin: 0;
+    font-size: 0.7rem;
+    color: var(--color-on-surface-variant);
+
+    .material-symbols-outlined {
+      font-size: 0.9rem;
+    }
+  }
+
+  .error-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    padding: 0.5rem 0;
+
+    .message {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-weight: 600;
+      color: var(--color-error);
+
+      .material-symbols-outlined {
+        background: var(--color-error-container);
+        color: var(--color-on-error-container);
+        box-shadow: 0 0 2px 1px var(--color-error-container);
+        padding: 0.2rem;
+        border-radius: 6px;
+      }
+    }
+
+    .description {
+      margin: 0;
+      font-size: 0.75rem;
+      color: var(--color-on-surface-variant);
+    }
+  }
+}
+
+.popup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.popup-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.5rem;
+  color: var(--color-on-surface);
+
+  .icon {
+    color: var(--color-primary);
+    flex-shrink: 0;
+  }
+}
+
+.popup-close {
+  inline-size: 2rem;
+  block-size: 2rem;
+  border: 0;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: transparent;
+  color: var(--color-on-surface-variant);
+  cursor: pointer;
+
+  &:hover {
+    background: var(--color-hover-surface-soft);
+    color: var(--color-on-surface);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+}
+
+.popup-subtitle {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: var(--color-on-surface-variant);
+}

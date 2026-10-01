@@ -1,0 +1,217 @@
+:host {
+  display: block;
+}
+
+.training-checkin-popup {
+  // The rest of the shell comes from `.popup-surface` (styles/dialog.scss). The `dialog-panel-
+  // large` panel class takes almost the whole screen: bounded here to keep a readable column on a
+  // large screen.
+  gap: 1.25rem;
+  width: 100%;
+  max-width: 54rem;
+  margin: 0 auto;
+  max-height: 85dvh;
+  overflow-y: auto;
+
+  .handoff {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    padding: 1rem 1.1rem;
+    border-radius: 0.7rem;
+    background: var(--color-status-draft-bg);
+    border: 1px solid var(--color-status-draft-border);
+
+    .who {
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+      min-width: 0;
+
+      .label {
+        font-family: var(--font-label);
+        font-size: 0.64rem;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--color-status-draft-text);
+      }
+
+      strong {
+        font-size: 1.05rem;
+      }
+    }
+
+    .big-code {
+      font-family: var(--font-headline);
+      font-weight: 900;
+      font-size: clamp(2rem, 8vw, 2.6rem);
+      line-height: 1;
+      letter-spacing: 0.2em;
+      color: var(--color-primary);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .spacer {
+      flex: 1 1 auto;
+    }
+  }
+
+  .block {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+
+    .block-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .label {
+      font-family: var(--font-label);
+      font-size: 0.66rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--color-primary);
+    }
+
+    .legend {
+      display: flex;
+      gap: 0.75rem;
+      color: var(--color-on-surface-variant);
+      font-size: 0.72rem;
+
+      .legend-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+      }
+
+      .dot {
+        width: 0.5rem;
+        height: 0.5rem;
+        border-radius: 50%;
+
+        &--present {
+          background: var(--color-status-ongoing-text);
+        }
+
+        &--left {
+          background: var(--color-outline);
+        }
+      }
+    }
+
+    .empty {
+      margin: 0;
+      color: var(--color-on-surface-variant);
+      font-size: 0.85rem;
+    }
+
+    .guest-row {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+
+      app-input-text {
+        flex: 1 1 14rem;
+      }
+    }
+  }
+
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  // Three states on the same pill: never came, left, present. The present one stays on screen - it
+  // changes look instead of leaving the list.
+  .entry-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.45rem 0.8rem;
+    border-radius: 10rem;
+    border: 1px solid var(--color-border-default);
+    background: var(--color-hover-surface-soft);
+    color: var(--color-on-surface);
+    font-family: var(--font-body);
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition:
+      border-color 150ms ease,
+      background 150ms ease,
+      opacity 150ms ease;
+
+    &:hover:not(:disabled) {
+      border-color: var(--color-primary);
+      background: var(--color-surface-container-highest);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--color-primary);
+      outline-offset: 2px;
+    }
+
+    ::ng-deep .chip-icon {
+      color: var(--color-primary);
+      font-size: 0.95rem;
+    }
+
+    &.is-left {
+      border-style: dashed;
+      color: var(--color-on-surface-variant);
+
+      ::ng-deep .chip-icon {
+        color: var(--color-on-surface-variant);
+      }
+    }
+
+    &.is-present {
+      border-color: var(--color-status-ongoing-border);
+      background: var(--color-status-ongoing-bg);
+      color: var(--color-status-ongoing-text);
+      font-weight: 600;
+
+      ::ng-deep .chip-icon {
+        color: var(--color-status-ongoing-text);
+      }
+    }
+
+    // Disabled only while a check-in or removal is in flight, to stop click stacking.
+    &:disabled {
+      opacity: 0.55;
+      cursor: default;
+    }
+  }
+
+  .help {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin: 0;
+    color: var(--color-on-surface-variant);
+    font-size: 0.78rem;
+
+    ::ng-deep .help-icon {
+      color: var(--color-primary);
+      font-size: 0.95rem;
+    }
+  }
+
+  .actions {
+    display: flex;
+    justify-content: flex-end;
+
+    @media (width < 600px) {
+      app-button {
+        width: 100%;
+      }
+    }
+  }
+}

@@ -1,0 +1,47 @@
+<section class="results">
+  <h3>{{ title() }}</h3>
+
+  <div class="list">
+    @for (row of rows(); track row.id) {
+      <article class="match" [class]="row.outcomeClass" [class.ongoing]="row.isOngoing">
+        <div class="header">
+          <span class="match-number">{{ row.label }}</span>
+          @if (!row.isBye) {
+            <span class="match-status" [class.ongoing]="row.isOngoing">
+              <app-match-status [status]="row.statusLabel" />
+            </span>
+          }
+        </div>
+
+        @if (row.isBye) {
+          <div class="scoreline scoreline--bye">
+            <span class="team current">{{ myLabel() }} <small>(vous)</small></span>
+            <span class="bye-text">Au repos ce round</span>
+          </div>
+        } @else {
+          <div class="scoreline">
+            <span class="team current">{{ myLabel() }} <small>(vous)</small></span>
+            @if (row.isFinished) {
+              <span class="score current bold">{{ row.myScore }}</span>
+              <span class="separator">-</span>
+              <span class="score bold">{{ row.opponentScore }}</span>
+            } @else {
+              <span class="score placeholder">—</span>
+              <span class="separator"> </span>
+              <span class="score placeholder">—</span>
+            }
+            <span class="team">{{ row.opponentLabel }}</span>
+          </div>
+
+          @if (row.isFinished) {
+            <div>
+              <span class="outcome" [class]="row.outcomeClass">{{ row.outcomeLabel }}</span>
+            </div>
+          }
+        }
+      </article>
+    } @empty {
+      <p class="empty">{{ emptyMessage() }}</p>
+    }
+  </div>
+</section>

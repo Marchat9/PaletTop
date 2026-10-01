@@ -28,6 +28,8 @@
     color: var(--color-on-surface);
     opacity: 0.75;
     text-decoration: none;
+    background-color: transparent;
+    border: none;
 
     &--active {
       background: rgb(233 195 73 / 12%);

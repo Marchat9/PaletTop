@@ -1,0 +1,121 @@
+.match-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+
+  .empty {
+    margin: 0;
+    color: var(--color-on-surface-variant);
+    font-size: 0.9rem;
+  }
+}
+
+.match-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  padding: 0.65rem 0.8rem;
+  border-radius: 0.6rem;
+  background: var(--color-surface-container-low);
+  border: 1px solid var(--color-border-subtle);
+
+  &.is-bye {
+    border-style: dashed;
+  }
+
+  &.is-editing {
+    border-color: var(--color-primary);
+  }
+
+  .plate {
+    padding: 0.2rem 0.5rem;
+    border-radius: 0.4rem;
+    background: var(--color-surface-container-high);
+    color: var(--color-on-surface-variant);
+    font-family: var(--font-label);
+    font-size: 0.68rem;
+    white-space: nowrap;
+  }
+
+  .team {
+    flex: 1 1 7rem;
+    min-width: 0;
+    font-size: 0.88rem;
+
+    &--b {
+      text-align: right;
+
+      @media (width < 600px) {
+        text-align: left;
+      }
+    }
+  }
+
+  .spacer {
+    flex: 1 1 auto;
+  }
+
+  .score {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.25rem 0.6rem;
+    border-radius: 0.5rem;
+    background: var(--color-surface-container-high);
+    font-family: var(--font-label);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .vs {
+    color: var(--color-on-surface-variant);
+    font-weight: 400;
+  }
+
+  .edit-scores {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    app-input-number {
+      width: 5.5rem;
+    }
+  }
+
+  .edit-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .match-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .edit-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border: 0;
+    border-radius: 0.5rem;
+    background: transparent;
+    color: var(--color-on-surface-variant);
+    cursor: pointer;
+
+    &:hover {
+      background: var(--color-hover-surface-soft);
+      color: var(--color-on-surface);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--color-primary);
+      outline-offset: 2px;
+    }
+  }
+}

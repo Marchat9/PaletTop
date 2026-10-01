@@ -1,0 +1,19 @@
+<section class="partners">
+  <h3>
+    <app-icon name="group" iconClass="icon" [ariaHidden]="true" />
+    Mon équipe ce round
+  </h3>
+
+  @if (partners().length === 0) {
+    <p class="empty">Vous jouez seul ce round.</p>
+  } @else {
+    <div class="list">
+      @for (partner of partners(); track partner.id) {
+        <span class="partner">
+          <app-avatar [name]="partner.name" size="small" />
+          {{ partner.name }}
+        </span>
+      }
+    </div>
+  }
+</section>

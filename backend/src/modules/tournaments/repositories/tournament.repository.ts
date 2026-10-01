@@ -1,6 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { LessThan, Repository } from 'typeorm';
+import { deleteManyByIds, updateAdminPasswordById } from 'src/utils/admin-crud.util';
+import { paginateAdminSearch } from 'src/utils/admin-search.util';
 import { Team } from 'src/entities/team.entity';
 import { TournamentMatch } from 'src/entities/tounament-match.entity';
 import { TournamentPool } from 'src/entities/tournament-pool.entity';
@@ -50,8 +52,9 @@ export class TournamentRepository {
     }
 
     /**
-     * Charge un tournoi après vérification du mot de passe admin.
-     * Retourne null si le tournoi est introuvable ou si le mot de passe est incorrect.
+     * Loads a tournament once the admin password has been checked.
+     *
+     * Returns null when the tournament is unknown or the password is wrong.
      */
     async findWithAuth(
         where: { code?: string; id?: string },
@@ -87,6 +90,10 @@ export class TournamentRepository {
                 .createQueryBuilder(TournamentMatch, 'match')
                 .leftJoinAndSelect('match.teamA', 'matchTeamA')
                 .leftJoinAndSelect('match.teamB', 'matchTeamB')
+                // The elimination draw tracks each table's winners/losers by `pool.name`
+                // (MatchGroupKey), and the final standings group teams by their table: both need
+                // the pool relation, which is `eager: false` and so must be joined explicitly.
+                .leftJoinAndSelect('match.pool', 'matchPool')
                 .where('match.tournament = :tournamentId', { tournamentId: tournament.id })
                 .getMany();
         }
@@ -108,6 +115,7 @@ export class TournamentRepository {
                 .leftJoinAndSelect('session.matches', 'session_match')
                 .leftJoinAndSelect('session_match.teamA', 'session_match_team_a')
                 .leftJoinAndSelect('session_match.teamB', 'session_match_team_b')
+                .leftJoinAndSelect('session_match.pool', 'session_match_pool')
                 .where('session.tournament = :tournamentId', { tournamentId: tournament.id })
                 .orderBy('session.sessionNumber', 'ASC')
                 .getMany();
@@ -132,10 +140,10 @@ export class TournamentRepository {
             relations: {
                 ...(options.withTeams && { teams: { players: true } }),
                 ...((options.withMatches || options.withMatchesInTeams) && {
-                    matches: { teamA: true, teamB: true },
+                    matches: { teamA: true, teamB: true, pool: true },
                 }),
                 ...(options.withSessions && {
-                    matchsSessions: { matches: { teamA: true, teamB: true } },
+                    matchsSessions: { matches: { teamA: true, teamB: true, pool: true } },
                 }),
             },
         });
@@ -166,11 +174,6 @@ export class TournamentRepository {
     async searchForAdmin(
         options: AdminTournamentSearchOptions,
     ): Promise<{ items: (Tournament & { teamsCount: number })[]; total: number }> {
-        const sortColumn =
-            (options.sortBy && ADMIN_TOURNAMENT_SORTABLE_COLUMNS[options.sortBy]) ||
-            'tournament.createdAt';
-        const sortDir = options.sortDir === 'ASC' ? 'ASC' : 'DESC';
-
         const queryBuilder = this.repo
             .createQueryBuilder('tournament')
             .loadRelationCountAndMap('tournament.teamsCount', 'tournament.teams')
@@ -184,23 +187,17 @@ export class TournamentRepository {
                 'teams_count',
             );
 
-        if (options.search) {
-            queryBuilder.andWhere(
-                '(unaccent(tournament.name) ILIKE unaccent(:search) OR unaccent(tournament.code) ILIKE unaccent(:search))',
-                {
-                    search: `%${options.search}%`,
-                },
-            );
-        }
         if (options.status) {
             queryBuilder.andWhere('tournament.status = :status', { status: options.status });
         }
 
-        const [items, total] = await queryBuilder
-            .orderBy(sortColumn, sortDir)
-            .skip((options.page - 1) * options.pageSize)
-            .take(options.pageSize)
-            .getManyAndCount();
+        const { items, total } = await paginateAdminSearch(
+            queryBuilder,
+            options,
+            '(unaccent(tournament.name) ILIKE unaccent(:search) OR unaccent(tournament.code) ILIKE unaccent(:search))',
+            ADMIN_TOURNAMENT_SORTABLE_COLUMNS,
+            'tournament.createdAt',
+        );
 
         return { items: items as (Tournament & { teamsCount: number })[], total };
     }
@@ -271,9 +268,8 @@ export class TournamentRepository {
         );
     }
 
-    async deleteMany(ids: string[]): Promise<void> {
-        if (!ids.length) return;
-        await this.repo.delete(ids);
+    deleteMany(ids: string[]): Promise<void> {
+        return deleteManyByIds(this.repo, ids);
     }
 
     async updateStatusMany(ids: string[], status: TournamentStatus): Promise<void> {
@@ -289,11 +285,8 @@ export class TournamentRepository {
         await this.repo.update(ids, { status, ...this.statusTimestamps(status) });
     }
 
-    async updateAdminPassword(id: string, newPassword: string): Promise<void> {
-        const result = await this.repo.update(id, { adminPassword: newPassword });
-        if (!result.affected) {
-            throw new NotFoundException('Tournoi introuvable.');
-        }
+    updateAdminPassword(id: string, newPassword: string): Promise<void> {
+        return updateAdminPasswordById(this.repo, id, newPassword, 'Tournoi introuvable.');
     }
 
     private daysAgo(days: number): Date {

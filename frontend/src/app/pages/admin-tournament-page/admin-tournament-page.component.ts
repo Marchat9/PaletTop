@@ -8,7 +8,9 @@ import {
   inject,
   OnInit,
   signal,
+  DestroyRef,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { environment } from '@environment';
 import { Store } from '@ngrx/store';
@@ -18,10 +20,10 @@ import {
 } from 'src/app/modales/confirmation-popup/confirmation-popup';
 import { addNotification } from 'src/app/store/app-config/app-config.actions';
 import { Notification } from 'src/app/store/app-config/app-config.model';
-import { Nullable } from 'src/app/models/nullable.model';
 import { ScoreUpdate } from 'src/app/models/score-update.model';
 import { TeamConfigEvent, TeamConfigEventType } from 'src/app/models/team-config.model';
 import { TournamentConfigurationDto } from 'src/app/models/tournament-configuration.model';
+import { AnimateOnChangeDirective } from 'src/app/shared/animate-on-change/animate-on-change.directive';
 import { RankingCard } from 'src/app/shared/ranking-card/ranking-card';
 import { TournamentConfigurationField } from 'src/app/shared/tournament-configuration/tournament-configuration-form.model';
 import { adminUpdateScore } from 'src/app/store/match/match.actions';
@@ -39,7 +41,6 @@ import {
   nextSession,
   startTournament,
 } from 'src/app/store/tournament/tournament.match.actions';
-import { TournamentDto } from 'src/app/store/tournament/tournament.models';
 import {
   selectCompleteTournamentLoading,
   selectCurrentTournamentAdminInformations,
@@ -67,6 +68,7 @@ import { onResyncRequested } from 'src/app/utils/resync-on-reconnect.util';
     TournamentTeamConfigurationCard,
     MatchSessionsCardComponent,
     RankingCard,
+    AnimateOnChangeDirective,
   ],
   templateUrl: './admin-tournament-page.component.html',
   styleUrl: './admin-tournament-page.component.scss',
@@ -74,6 +76,7 @@ import { onResyncRequested } from 'src/app/utils/resync-on-reconnect.util';
 })
 export class AdminTournamentPageComponent implements OnInit {
   private readonly activatedRoute = inject(ActivatedRoute);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly router = inject(Router);
   private readonly store = inject(Store);
   private readonly dialog = inject(Dialog);
@@ -141,7 +144,7 @@ export class AdminTournamentPageComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.activatedRoute.paramMap.subscribe((params) => {
+    this.activatedRoute.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
       const code = params.get('tournamentCode');
       if (code) {
         this.tournamentCode.set(code);
@@ -159,13 +162,12 @@ export class AdminTournamentPageComponent implements OnInit {
   }
   private reconnectAsAdmin(): void {
     this.store.dispatch(disconnectTournamentAdministrator());
-    this.router.navigate(['/admin']);
+    this.router.navigate(['/admin/tournament']);
   }
 
   public updateTournamentConfiguration(tournament: TournamentConfigurationDto): void {
     const id = this.tournament()?.id;
     if (!id) {
-      console.debug('Cannot update tournament configuration: tournament is missing');
       return;
     }
     this.store.dispatch(
@@ -176,7 +178,6 @@ export class AdminTournamentPageComponent implements OnInit {
   public updateTournamentTeam(event: TeamConfigEvent): void {
     const code = this.tournament()?.code;
     if (!code) {
-      console.debug('Cannot update tournament team: tournament code is missing');
       return;
     }
     switch (event.type) {
@@ -189,7 +190,6 @@ export class AdminTournamentPageComponent implements OnInit {
       case TeamConfigEventType.UPDATE_TEAM: {
         const team = this.tournament()?.teams.find((t) => t.id === event.payload.teamId);
         if (!team?.code) {
-          console.debug('Cannot update team: team code is missing');
           return;
         }
         this.store.dispatch(
@@ -205,7 +205,6 @@ export class AdminTournamentPageComponent implements OnInit {
       case TeamConfigEventType.REMOVE_TEAM: {
         const team = this.tournament()?.teams.find((t) => t.id === event.payload.teamId);
         if (!team?.code) {
-          console.debug('Cannot remove team: team code is missing');
           return;
         }
         const data: ConfirmationData = {
@@ -234,7 +233,6 @@ export class AdminTournamentPageComponent implements OnInit {
         break;
       }
       default:
-        console.warn('Unknown team config event:', event);
         break;
     }
   }

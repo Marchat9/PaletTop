@@ -3,7 +3,6 @@ import { Player } from 'src/entities/player.entity';
 import { Team } from 'src/entities/team.entity';
 import { Tournament } from 'src/entities/tournament.entity';
 import { TournamentStatus } from 'src/enum/status.enum';
-import { RealtimeGateway } from 'src/modules/realtime/realtime.gateway';
 import { TournamentTeamDto } from 'src/modules/tournaments/dto/team-tournament.dto';
 import {
     SpectatorTournamentDto,
@@ -15,6 +14,7 @@ import {
     extractCompetitionConfiguration,
     sanitizeTournament,
 } from 'src/modules/tournaments/utils/tournament.utils';
+import { generateNumericCode } from 'src/utils/numeric-code.util';
 import { AddMultipleTeamsToTournamentDto } from '../dto/add-team-to-tournament.dto';
 import { CreateTournamentDto } from '../dto/create-tournament.dto';
 import { UpdateTournamentConfigurationDto } from '../dto/update-tournament-configuration.dto';
@@ -22,12 +22,13 @@ import { PlayerClubRepository } from '../repositories/player-club.repository';
 import { TeamRepository } from '../repositories/team.repository';
 import { TournamentRepository } from '../repositories/tournament.repository';
 import { TeamDto, toTeamDto } from '../responses/admin-tournament.dto';
-import { generateTeamCode } from '../utils/team.utils';
 import { TournamentAuthService } from './tournament-auth.service';
 
 @Injectable()
 export class TournamentsService {
     private readonly logger = new Logger(TournamentsService.name);
+
+    private readonly nbNumberInCode = 4;
 
     constructor(
         private readonly tournamentRepo: TournamentRepository,
@@ -36,7 +37,6 @@ export class TournamentsService {
         private readonly tournamentAuthService: TournamentAuthService,
         private readonly sessionService: SessionService,
         private readonly strategyFactory: TournamentStrategyFactory,
-        private readonly gateway: RealtimeGateway,
     ) {}
 
     async findAll(): Promise<Tournament[]> {
@@ -175,7 +175,7 @@ export class TournamentsService {
         const existingTeamCount = tournament.teams.length;
 
         const filledTeams: Team[] = dto.teams.map((teamDto, index) => {
-            const code = generateTeamCode(existingTeamCodes);
+            const code = generateNumericCode(existingTeamCodes, this.nbNumberInCode);
 
             const team = this.teamRepo.create({
                 name: teamDto.name || `Equipe ${existingTeamCount + index + 1}`,
@@ -281,6 +281,12 @@ export class TournamentsService {
 
         if (teamData.name) {
             team.name = teamData.name;
+        }
+
+        // Team-level club (championship mode): update it whenever the payload carries one. Left
+        // untouched when absent, so a non-championship edit never clobbers it.
+        if (teamData.club !== undefined) {
+            team.club = teamData.club;
         }
 
         if (teamData.players?.length) {

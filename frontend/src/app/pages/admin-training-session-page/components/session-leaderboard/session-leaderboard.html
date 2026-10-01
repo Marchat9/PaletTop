@@ -1,0 +1,42 @@
+<app-card-collapsible [isExpanded]="true">
+  <div header class="header">
+    <div class="header-title">
+      <app-icon name="leaderboard" iconClass="icon" [ariaHidden]="true" />
+      <span class="title">Classement de la séance</span>
+    </div>
+    <span class="header-description">
+      Classement individuel : chaque joueur d'une équipe gagnante marque la totalité des points.
+    </span>
+  </div>
+
+  <div content class="leaderboard-content">
+    @if (isLoading() && !hasData()) {
+      <app-skeleton [rows]="4" height="2.2rem" />
+    } @else if (!hasData()) {
+      <p class="empty">Aucun match validé pour l'instant.</p>
+    } @else {
+      <div class="table-scroll">
+        <table class="rank-table">
+          <thead>
+            <tr>
+              <th class="col-rank">Rang</th>
+              <th>Participant</th>
+              <th class="col-stat">V</th>
+              <th class="col-stat">Pts</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (entry of leaderboard(); track entry.participantId; let index = $index) {
+              <tr>
+                <td class="col-rank">{{ index + 1 }}</td>
+                <td>{{ entry.name }}</td>
+                <td class="col-stat">{{ entry.wins }}</td>
+                <td class="col-stat">{{ entry.points }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+</app-card-collapsible>

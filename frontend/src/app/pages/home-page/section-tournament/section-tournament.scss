@@ -1,9 +1,80 @@
 .section-tournament {
   display: flex;
-  gap: 2rem;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 1.5rem;
+  justify-content: space-between;
 
-  > * {
-    flex: 1 1 0;
+  .title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    h3 {
+      margin: 0;
+      font-family: var(--font-headline);
+      font-size: 1.8rem;
+      line-height: 1;
+    }
+
+    ::ng-deep .icon {
+      color: var(--color-primary);
+    }
+  }
+
+  .tournament-info {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+
+    .join-tournament,
+    .create-tournament {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+
+      .header {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+
+        .sub-title {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+
+          h3 {
+            margin: 0;
+            font-family: var(--font-body);
+            font-size: 1.4rem;
+            line-height: 0.8;
+            font-weight: 600;
+          }
+
+          ::ng-deep .icon {
+            color: var(--color-primary);
+          }
+        }
+
+        .description {
+          min-height: 2.67rem;
+
+          span {
+            margin: 0;
+            color: var(--color-on-surface-variant);
+          }
+        }
+      }
+
+      .action {
+        width: 100%;
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+
+        app-button {
+          flex: 1;
+        }
+      }
+    }
   }
 }

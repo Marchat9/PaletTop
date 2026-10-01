@@ -72,6 +72,37 @@
     }
   }
 
+  .teams-and-score {
+    display: flex;
+    flex: 1 1 auto;
+    align-items: baseline;
+
+    @media (width < 426px) {
+      flex-direction: column;
+      flex: 1 1 100%;
+
+      .team-b {
+        width: 100%;
+      }
+
+      .score-display {
+        align-self: center;
+      }
+
+      &.edit-mode {
+        row-gap: 0.5rem;
+      }
+    }
+
+    .score-buttons {
+      display: flex;
+      width: 100%;
+      align-items: baseline;
+      justify-content: center;
+      gap: 0.4rem;
+    }
+  }
+
   .team {
     flex: 1;
     min-width: 6rem;
@@ -80,6 +111,27 @@
 
     &.team-b {
       text-align: right;
+    }
+  }
+
+  .score-display {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-shrink: 0;
+    font-variant-numeric: tabular-nums;
+    border-radius: 0.5rem;
+    padding: 0 0.2rem;
+
+    strong {
+      font-size: 1rem;
+      min-width: 1.5rem;
+      text-align: center;
+    }
+
+    .vs {
+      font-weight: 300;
+      font-size: 1rem;
     }
   }
 
@@ -96,25 +148,6 @@
     font-style: italic;
     color: var(--color-on-surface-variant);
     text-align: right;
-  }
-}
-
-.score-display {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  flex-shrink: 0;
-  font-variant-numeric: tabular-nums;
-
-  strong {
-    font-size: 1rem;
-    min-width: 1.5rem;
-    text-align: center;
-  }
-
-  .vs {
-    font-weight: 300;
-    font-size: 1rem;
   }
 }
 
@@ -192,4 +225,10 @@
   display: flex;
   gap: 0.5rem;
   margin-left: auto;
+
+  @media (width < 376px) {
+    margin: 0.75rem 0 0 0;
+    flex-direction: column;
+    width: 100%;
+  }
 }

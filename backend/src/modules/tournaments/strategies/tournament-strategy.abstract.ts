@@ -51,6 +51,16 @@ export abstract class TournamentStrategy {
         }, []);
     }
 
+    /**
+     * The ranking shown to everyone. By default it is the aggregate ranking above; modes with an
+     * elimination phase override this to place teams by how far they got in the bracket. It is kept
+     * separate from `computeGlobalRanking` on purpose: that one still seeds the brackets and must
+     * stay a plain aggregate, whereas this one describes the final standings.
+     */
+    computeStandings(tournament: Tournament, matches: TournamentMatch[]): GlobalRankingEntry[] {
+        return this.computeGlobalRanking(tournament, matches);
+    }
+
     computeTeamHistory(matches: TournamentMatch[], teamId: string): MatchHistoryDto[] {
         const teamMatches = matches.filter(
             (m) =>

@@ -1,0 +1,131 @@
+<div class="training-checkin-popup popup-surface" (keydown.escape)="close()">
+  <div class="popup-header">
+    <h2 class="popup-title">
+      <app-icon name="person_add" iconClass="icon" [ariaHidden]="true" />
+      <span>Inscrire des joueurs</span>
+    </h2>
+    <button class="popup-close" type="button" aria-label="Fermer" (click)="close()">
+      <app-icon name="close" [ariaHidden]="true" />
+    </button>
+  </div>
+
+  <p class="popup-subtitle">
+    {{ presentCount() }} {{ presentCount() > 1 ? 'joueurs présents' : 'joueur présent' }} sur la
+    séance. Les joueurs inscrits entrent dans le prochain round généré.
+  </p>
+
+  @if (lastCheckedIn(); as participant) {
+    <div class="handoff" [appAnimateOnChange]="participant.id" [animateOnInit]="true">
+      <div class="who">
+        <span class="label">Inscrit · code à communiquer</span>
+        <strong>{{ participant.name }}</strong>
+      </div>
+      <span class="big-code">{{ participant.code }}</span>
+      <span class="spacer"></span>
+      <app-button title="Fermer" variant="secondary" icon="check" (clicked)="dismissHandoff()" />
+    </div>
+  }
+
+  <section class="block">
+    <div class="block-head">
+      <span class="label">Membres du club</span>
+      <span class="legend">
+        <span class="legend-item"><i class="dot dot--present"></i> présent</span>
+        <span class="legend-item"><i class="dot dot--left"></i> reparti</span>
+      </span>
+    </div>
+
+    @if (memberEntries().length === 0) {
+      <p class="empty">Aucun membre dans le roster du club.</p>
+    } @else {
+      <div class="chips">
+        @for (entry of memberEntries(); track entry.key) {
+          <button
+            type="button"
+            class="entry-chip"
+            [class.is-present]="entry.state === 'present'"
+            [class.is-left]="entry.state === 'left'"
+            [disabled]="loading()"
+            [attr.aria-label]="
+              entry.state === 'present'
+                ? 'Retirer ' + entry.name + ' de la séance'
+                : entry.state === 'left'
+                  ? 'Faire revenir ' + entry.name
+                  : 'Inscrire ' + entry.name
+            "
+            (click)="onMemberClick(entry)"
+          >
+            <app-icon
+              [name]="
+                entry.state === 'present' ? 'check_circle' : entry.state === 'left' ? 'undo' : 'add'
+              "
+              iconClass="chip-icon"
+              [ariaHidden]="true"
+            />
+            {{ entry.name }}
+          </button>
+        }
+      </div>
+    }
+  </section>
+
+  <section class="block">
+    <div class="block-head">
+      <span class="label">Joueurs de passage</span>
+    </div>
+
+    @if (guestEntries().length > 0) {
+      <div class="chips">
+        @for (entry of guestEntries(); track entry.key) {
+          <button
+            type="button"
+            class="entry-chip"
+            [class.is-present]="entry.state === 'present'"
+            [class.is-left]="entry.state === 'left'"
+            [disabled]="loading()"
+            [attr.aria-label]="
+              entry.state === 'present'
+                ? 'Retirer ' + entry.name + ' de la séance'
+                : 'Faire revenir ' + entry.name
+            "
+            (click)="onGuestClick(entry)"
+          >
+            <app-icon
+              [name]="entry.state === 'present' ? 'check_circle' : 'undo'"
+              iconClass="chip-icon"
+              [ariaHidden]="true"
+            />
+            {{ entry.name }}
+          </button>
+        }
+      </div>
+    }
+
+    <div class="guest-row" (keydown.enter)="onAddGuest()">
+      <app-input-text
+        id="training-checkin-guest"
+        placeholder="Nom d'un joueur qui n'est pas du club"
+        icon="person"
+        [value]="guestName()"
+        (valueChange)="onGuestNameChange($event)"
+      />
+      <app-button
+        title="Inscrire"
+        icon="person_add"
+        variant="primary"
+        [loading]="loading()"
+        [disabled]="!canAddGuest()"
+        (clicked)="onAddGuest()"
+      />
+    </div>
+  </section>
+
+  <p class="help">
+    <app-icon name="info" iconClass="help-icon" [ariaHidden]="true" />
+    Pour marquer un départ, utilisez la liste des participants de la séance.
+  </p>
+
+  <div class="actions">
+    <app-button title="Terminer" variant="primary" icon="done_all" (clicked)="close()" />
+  </div>
+</div>

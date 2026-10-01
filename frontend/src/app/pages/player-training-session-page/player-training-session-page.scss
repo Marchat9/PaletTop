@@ -1,0 +1,100 @@
+.player-training-page {
+  max-width: 56rem;
+  margin: 0 auto;
+  padding: 1.5rem 1.25rem 6.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+
+  @media (width < 375px) {
+    padding: 1.5rem 0.75rem 6.2rem;
+  }
+
+  .state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    padding: 3rem 1rem;
+    color: var(--color-on-surface-variant);
+    text-align: center;
+
+    ::ng-deep .material-symbols-outlined {
+      font-size: 2.5rem;
+      opacity: 0.5;
+    }
+
+    p {
+      margin: 0;
+    }
+
+    &--error ::ng-deep .material-symbols-outlined {
+      color: var(--color-error);
+      opacity: 1;
+    }
+  }
+
+  // Closing banner: the match stays on screen below, but frozen - hence the need to say explicitly
+  // what is still possible.
+  .session-closed {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 1rem 1.1rem;
+    border-radius: 0.8rem;
+    background: var(--color-status-draft-bg);
+    border: 1px solid var(--color-status-draft-border);
+
+    ::ng-deep .closed-icon {
+      color: var(--color-status-draft-text);
+      font-size: 1.8rem;
+      flex: 0 0 auto;
+    }
+
+    .closed-text {
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+      min-width: 0;
+
+      strong {
+        color: var(--color-status-draft-text);
+      }
+
+      span {
+        color: var(--color-on-surface-variant);
+        font-size: 0.85rem;
+      }
+
+      .rank {
+        color: var(--color-primary);
+        font-family: var(--font-label);
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+      }
+    }
+  }
+
+  .current-match {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+
+    h3 {
+      margin: 0;
+      font-family: var(--font-headline);
+    }
+
+    // Content projected into the card when there is no match: the box is the card's, what we put in
+    // it stays ours.
+    ::ng-deep .empty-icon {
+      font-size: 2.5rem;
+      opacity: 0.5;
+    }
+
+    p {
+      margin: 0;
+    }
+  }
+}

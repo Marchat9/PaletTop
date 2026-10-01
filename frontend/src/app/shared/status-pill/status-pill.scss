@@ -1,0 +1,61 @@
+.status-pill {
+  --pill-text: var(--color-on-surface);
+  --pill-bg: var(--color-surface-container-high);
+  --pill-border: var(--color-border-default);
+
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--pill-border);
+  border-radius: 10rem;
+  background: var(--pill-bg);
+  color: var(--pill-text);
+  font-family: var(--font-label);
+  font-weight: 700;
+  text-transform: uppercase;
+  white-space: nowrap;
+
+  // The tone only changes the three colours: shape and typography stay common.
+  &.draft {
+    --pill-text: var(--color-status-draft-text);
+    --pill-bg: var(--color-status-draft-bg);
+    --pill-border: var(--color-status-draft-border);
+  }
+
+  &.pending {
+    --pill-text: var(--color-status-pending-text);
+    --pill-bg: var(--color-status-pending-bg);
+    --pill-border: var(--color-status-pending-border);
+  }
+
+  &.ongoing {
+    --pill-text: var(--color-status-ongoing-text);
+    --pill-bg: var(--color-status-ongoing-bg);
+    --pill-border: var(--color-status-ongoing-border);
+  }
+
+  &.success {
+    --pill-text: var(--color-status-success-text);
+    --pill-bg: var(--color-status-success-bg);
+    --pill-border: var(--color-status-success-border);
+  }
+
+  &.error {
+    --pill-text: var(--color-status-error-text);
+    --pill-bg: var(--color-status-error-bg);
+    --pill-border: var(--color-status-error-border);
+  }
+
+  &.sm {
+    padding: 0.25rem 0.65rem;
+    font-size: 0.66rem;
+    letter-spacing: 0.11em;
+  }
+
+  // A page header carries the pill taller and more legible than a list row does.
+  &.lg {
+    min-height: 2.5rem;
+    padding: 0.5rem 1rem;
+    font-size: 0.75rem;
+    letter-spacing: 0.14em;
+  }
+}

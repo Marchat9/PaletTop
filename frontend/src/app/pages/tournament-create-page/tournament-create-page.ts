@@ -44,7 +44,7 @@ export class TournamentCreatePageComponent {
         !this.creationError() &&
         !!tournamentCode
       ) {
-        this.router.navigate([`/admin/${tournamentCode}`]);
+        this.router.navigate([`/admin/tournament/${tournamentCode}`]);
       }
     });
   }

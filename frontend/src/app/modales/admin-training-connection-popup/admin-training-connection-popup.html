@@ -1,0 +1,64 @@
+<div class="popup-container popup-surface" (keydown.enter)="onConnect()">
+  <div class="popup-header">
+    <h2 class="popup-title">
+      <app-icon name="admin_panel_settings" iconClass="icon" [ariaHidden]="true" />
+      Connexion à un entraînement
+    </h2>
+    <button class="popup-close" type="button" aria-label="Fermer" (click)="onCancel()">
+      <app-icon name="close" />
+    </button>
+  </div>
+
+  <p class="popup-subtitle">Saisissez vos identifiants pour vous connecter à l'entraînement.</p>
+
+  <div class="field-group">
+    <label class="field-label" for="training-code">Code de l'entraînement</label>
+    <app-input-text
+      id="training-code"
+      placeholder="Ex: LAITON-2026"
+      autocomplete="off"
+      icon="label"
+      [value]="trainingCode()"
+      [autofocus]="true"
+      [uppercase]="true"
+      (valueChange)="onTrainingCodeInput($event)"
+    ></app-input-text>
+  </div>
+
+  <div class="field-group">
+    <label class="field-label">Mot de passe</label>
+    <app-input-text
+      id="training-password"
+      placeholder="******"
+      icon="key"
+      [isPassword]="true"
+      [value]="password()"
+      (valueChange)="onPasswordChange($event)"
+    ></app-input-text>
+  </div>
+
+  @if (isUnknownTraining()) {
+    <div class="error-container">
+      <span class="message">
+        <app-icon name="error" [ariaHidden]="true" />
+        Entraînement introuvable
+      </span>
+      <span class="description">
+        Veuillez vérifier le code saisi ou contacter l'administrateur de l'entraînement pour plus
+        d'informations.
+      </span>
+    </div>
+  }
+
+  <div class="actions">
+    <app-button title="Annuler" variant="secondary" (clicked)="onCancel()"></app-button>
+    <app-button
+      title="Connexion"
+      variant="primary"
+      icon="login"
+      [loading]="trainingLoading()"
+      [disabled]="!canConnect()"
+      (clicked)="onConnect()"
+    ></app-button>
+  </div>
+</div>

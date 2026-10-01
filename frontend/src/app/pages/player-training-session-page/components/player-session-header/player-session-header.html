@@ -1,0 +1,44 @@
+<section class="session-header">
+  <div class="identity">
+    <span class="eyebrow">Séance d'entraînement</span>
+
+    <div class="me">
+      @if (participant(); as player) {
+        <app-avatar [name]="player.name" />
+        <h1>{{ player.name }}</h1>
+      }
+    </div>
+
+    <div class="codes">
+      @if (session(); as currentSession) {
+        <span class="date">
+          <app-icon name="event" iconClass="line-icon" [ariaHidden]="true" />
+          {{ currentSession.date | date: 'EEEE d MMMM' }}
+        </span>
+      }
+      <span class="my-code">
+        Mon code
+        <span class="code">{{ participantCode() }}</span>
+      </span>
+    </div>
+  </div>
+
+  <div class="state">
+    @if (session()?.status === 'CLOSED') {
+      <span class="badge badge--closed">
+        <app-icon name="lock" iconClass="badge-icon" [ariaHidden]="true" />
+        Séance terminée
+      </span>
+    } @else if (roundNumber(); as round) {
+      <span class="badge badge--open">
+        <app-icon name="sports_score" iconClass="badge-icon" [ariaHidden]="true" />
+        Round {{ round }}
+      </span>
+    } @else {
+      <span class="badge badge--waiting">
+        <app-icon name="hourglass_empty" iconClass="badge-icon" [ariaHidden]="true" />
+        En attente du premier round
+      </span>
+    }
+  </div>
+</section>

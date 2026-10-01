@@ -1,0 +1,121 @@
+:host {
+  display: block;
+}
+
+.session-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 1.2rem;
+  border-radius: 0.8rem;
+  background: var(--color-surface-container-low);
+
+  .identity {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    min-width: 0;
+  }
+
+  .eyebrow {
+    color: var(--color-primary);
+    font-family: var(--font-label);
+    font-size: 0.72rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+
+  .me {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    min-width: 0;
+
+    h1 {
+      margin: 0;
+      font-family: var(--font-headline);
+      font-size: clamp(1.5rem, 5vw, 2.2rem);
+      line-height: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
+
+  .codes {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.9rem;
+    color: var(--color-on-surface-variant);
+    font-size: 0.8rem;
+
+    .date {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      text-transform: capitalize;
+    }
+
+    .my-code {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-family: var(--font-label);
+      font-size: 0.68rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .code {
+      padding: 0.15rem 0.5rem;
+      border-radius: 0.4rem;
+      border: 1px solid var(--color-border-default);
+      background: var(--color-surface-container-high);
+      color: var(--color-primary);
+      font-size: 0.95rem;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      font-variant-numeric: tabular-nums;
+    }
+
+    ::ng-deep .line-icon {
+      font-size: 1rem;
+      color: var(--color-primary);
+    }
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.45rem 0.9rem;
+    border-radius: 10rem;
+    border: 1px solid var(--color-border-default);
+    background: var(--color-surface-container-high);
+    color: var(--color-on-surface);
+    font-family: var(--font-label);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+
+    &--open {
+      border-color: var(--color-status-ongoing-border);
+      background: var(--color-status-ongoing-bg);
+      color: var(--color-status-ongoing-text);
+    }
+
+    &--closed,
+    &--waiting {
+      border-color: var(--color-status-pending-border);
+      background: var(--color-status-pending-bg);
+      color: var(--color-status-pending-text);
+    }
+
+    ::ng-deep .badge-icon {
+      font-size: 1rem;
+    }
+  }
+}

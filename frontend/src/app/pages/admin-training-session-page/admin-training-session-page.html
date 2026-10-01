@@ -1,0 +1,83 @@
+<div class="admin-training-session-page">
+  <button type="button" class="back-link" (click)="backToTraining()">
+    <app-icon name="arrow_back" iconClass="back-icon" [ariaHidden]="true" />
+    {{ training()?.name || "Retour à l'entraînement" }}
+  </button>
+
+  <div
+    class="session-body"
+    [appAnimateOnChange]="session()?.code"
+    animation="slide-in"
+    [animateOnInit]="true"
+  >
+    <app-session-header [session]="session()" />
+
+    <div class="metrics">
+      <app-metric-tile
+        [value]="presentParticipants().length.toString()"
+        label="Présents"
+        size="responsive"
+      />
+      <app-metric-tile
+        [value]="(currentRound()?.roundNumber ?? 0).toString()"
+        label="Round en cours"
+        size="responsive"
+      />
+      <app-metric-tile
+        [value]="ongoingMatchCount().toString()"
+        label="Matchs à valider"
+        size="responsive"
+      />
+      <app-metric-tile
+        [value]="fixedTeamCount().toString()"
+        label="Équipes fixes"
+        size="responsive"
+      />
+    </div>
+
+    <app-session-actions
+      [isSessionOpen]="isSessionOpen()"
+      [canGenerateRound]="canGenerateRound()"
+      [generateBlockedReason]="generateBlockedReason()"
+      [generateBlockedIsAlert]="generateBlockedIsAlert()"
+      [nextRoundPreview]="nextRoundPreview()"
+      [generateLoading]="generateRoundLoading()"
+      [closeLoading]="closeSessionLoading()"
+      (openCheckin)="openCheckin()"
+      (generateRound)="generateRound()"
+      (closeSession)="closeSession()"
+    />
+
+    <app-session-round
+      [round]="currentRound()"
+      [pointsPerGame]="session()?.pointsPerGame ?? 13"
+      [isSessionOpen]="isSessionOpen()"
+      [isLoading]="roundsLoading()"
+      [scoreLoading]="scoreLoading()"
+      (updateScore)="updateScore($event)"
+    />
+
+    <app-session-participants
+      [participants]="session()?.participants ?? []"
+      [isSessionOpen]="isSessionOpen()"
+      [newParticipantId]="lastCheckedIn()?.id ?? null"
+      (markLeft)="markParticipantLeft($event)"
+    />
+
+    <app-session-teams
+      [teams]="session()?.teams ?? []"
+      [availableParticipants]="participantsWithoutTeam()"
+      [isSessionOpen]="isSessionOpen()"
+      [createLoading]="createTeamLoading()"
+      (createTeam)="createTeam($event)"
+      (dissolveTeam)="dissolveTeam($event)"
+    />
+
+    <app-session-leaderboard [leaderboard]="leaderboard()" [isLoading]="leaderboardLoading()" />
+
+    <app-session-rounds-history
+      [rounds]="previousRounds()"
+      [pointsPerGame]="session()?.pointsPerGame ?? 13"
+    />
+  </div>
+</div>

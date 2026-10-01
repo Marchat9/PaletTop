@@ -1,0 +1,95 @@
+:host {
+  display: block;
+}
+
+// Primary area of the page: the top rule and the lighter surface set it apart from the secondary
+// cards, without making it one more card.
+.session-round {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  padding: 1.1rem 1.2rem 1.2rem;
+  border-radius: 0.8rem;
+  background: var(--color-surface-container);
+  border-top: 3px solid var(--color-primary);
+
+  @media (width < 375px) {
+    padding: 1.1rem 0.6rem 1.2rem;
+  }
+
+  .head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+
+    .title {
+      display: flex;
+      align-items: baseline;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+    }
+
+    h2 {
+      margin: 0;
+      font-family: var(--font-headline);
+      font-size: 1.5rem;
+      line-height: 1;
+    }
+
+    .sub {
+      color: var(--color-on-surface-variant);
+      font-family: var(--font-label);
+      font-size: 0.72rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+  }
+
+  .round-status {
+    padding: 0.35rem 0.75rem;
+    border-radius: 10rem;
+    border: 1px solid var(--color-status-pending-border);
+    background: var(--color-status-pending-bg);
+    color: var(--color-status-pending-text);
+    font-family: var(--font-label);
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+
+    &.open {
+      border-color: var(--color-status-ongoing-border);
+      background: var(--color-status-ongoing-bg);
+      color: var(--color-status-ongoing-text);
+    }
+  }
+
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1.5rem 1rem;
+    text-align: center;
+
+    ::ng-deep .empty-icon {
+      color: var(--color-primary);
+      font-size: 2.2rem;
+    }
+
+    h2 {
+      margin: 0;
+      font-family: var(--font-headline);
+      font-size: 1.3rem;
+    }
+
+    p {
+      margin: 0;
+      max-width: 42ch;
+      color: var(--color-on-surface-variant);
+      font-size: 0.88rem;
+    }
+  }
+}

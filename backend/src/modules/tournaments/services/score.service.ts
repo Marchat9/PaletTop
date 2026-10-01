@@ -73,7 +73,7 @@ export class ScoreService {
         const max = tournament.configuration.pointsPerGame;
         this.validateScores(scoreA, scoreB, max);
 
-        const isFinished = scoreA === max || scoreB === max;
+        const isFinished = scoreA >= max || scoreB >= max;
 
         await this.matchRepo.update(matchId, {
             scoreA,
@@ -175,7 +175,7 @@ export class ScoreService {
         const max = tournament.configuration.pointsPerGame;
         this.validateScores(scoreA, scoreB, max);
 
-        const isFinished = scoreA === max || scoreB === max;
+        const isFinished = scoreA >= max || scoreB >= max;
         const finishedAt = isFinished ? (match.finishedAt ?? new Date()) : null;
         const duration =
             isFinished && match.startedAt && finishedAt

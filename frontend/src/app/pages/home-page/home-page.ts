@@ -18,10 +18,18 @@ import { selectMetrics } from 'src/app/store/metrics/metrics.selectors';
 import { SectionFriendlyMatch } from './section-friendly-match/section-friendly-match';
 import { SectionTournament } from './section-tournament/section-tournament';
 import { TitleAndDescription } from './title-and-description/title-and-description';
+import { SectionTraining } from './section-training/section-training';
+import { JoinTrainingPopup } from 'src/app/modales/join-training-popup/join-training-popup';
 
 @Component({
   selector: 'app-home-page',
-  imports: [TitleAndDescription, SectionTournament, SectionFriendlyMatch, SectionMetrics],
+  imports: [
+    TitleAndDescription,
+    SectionTournament,
+    SectionTraining,
+    SectionFriendlyMatch,
+    SectionMetrics,
+  ],
   templateUrl: './home-page.html',
   styleUrl: './home-page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -61,6 +69,10 @@ export class HomePageComponent implements OnInit {
     this.router.navigate(['/admin/tournament-creation']);
   }
 
+  public goToTrainingCreation(): void {
+    this.router.navigate(['/admin/training-creation']);
+  }
+
   public goToFriendlyMatch(): void {
     this.router.navigate(['/friendly-match']);
   }
@@ -78,7 +90,7 @@ export class HomePageComponent implements OnInit {
             tournamentCode: string;
             teamCode: string;
           };
-          this.router.navigate([`/player/${tournamentCode}/${teamCode}`]);
+          this.router.navigate([`/player/tournament/${tournamentCode}/${teamCode}`]);
         }
       });
   }
@@ -94,6 +106,24 @@ export class HomePageComponent implements OnInit {
         if (!!tournamentData) {
           const { tournamentCode } = tournamentData as { tournamentCode: string };
           this.router.navigate(['/spectateur', tournamentCode]);
+        }
+      });
+  }
+
+  public openModaleTrainingJoin(): void {
+    this.dialog
+      .open(JoinTrainingPopup, {
+        panelClass: 'dialog-panel',
+        backdropClass: 'dialog-backdrop',
+        disableClose: false,
+      })
+      .closed.subscribe((trainingData) => {
+        if (!!trainingData) {
+          const { sessionCode, participantCode } = trainingData as {
+            sessionCode: string;
+            participantCode: string;
+          };
+          this.router.navigate([`/player/training/${sessionCode}/${participantCode}`]);
         }
       });
   }

@@ -10,14 +10,17 @@ import {
 import { ActivatedRoute, Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { RankData, RankPopupComponent } from 'src/app/modales/rank-popup/rank-popup';
-import { ValidateMatch } from 'src/app/models/match-validate-score.model';
 import { SessionStatus } from 'src/app/models/matches-session.model';
 import { Nullable } from 'src/app/models/nullable.model';
 import { PlayerMatchDto } from 'src/app/models/player-match.model';
-import { TeamScoreUpdate } from 'src/app/models/score-update.model';
-import { StartMatch } from 'src/app/models/start-match.model';
 import { TournamentStatus } from 'src/app/models/tournament-status.enum';
-import { historyToResults } from 'src/app/pages/player-team-match-page/player-team-match-page.utils';
+import {
+  historyToResults,
+  toPlayerMatchView,
+} from 'src/app/pages/player-team-match-page/player-team-match-page.utils';
+import { PlayerByeCopy, PlayerValidationCopy } from 'src/app/models/player-match-view.model';
+import { PlayerMatchCard } from 'src/app/shared/player-match-card/player-match-card';
+import { PlayerMatchHistory } from 'src/app/shared/player-match-history/player-match-history';
 import { Icon } from 'src/app/shared/icon/icon';
 import { addNotification } from 'src/app/store/app-config/app-config.actions';
 import { selectMatchHistory } from 'src/app/store/match-history/match-history.selectors';
@@ -44,10 +47,9 @@ import {
   selectCurrentTournamentData,
 } from 'src/app/store/tournament/tournament.selectors';
 import { onResyncRequested } from 'src/app/utils/resync-on-reconnect.util';
-import { PlayerMatchCardComponent } from './player-match-card/player-match-card';
-import { PlayerMatchResultsComponent } from './player-match-results/player-match-results';
 import { PlayerTeamHeaderComponent } from './player-team-header/player-team-header';
 import { PlayerTeamMembersComponent } from './player-team-members/player-team-members';
+import { newId } from 'src/app/utils/unique-id.util';
 
 export type TeamMatchStatus = 'NOT_STARTED' | 'CANCELLED' | 'FINISH';
 
@@ -57,8 +59,8 @@ export type TeamMatchStatus = 'NOT_STARTED' | 'CANCELLED' | 'FINISH';
   imports: [
     PlayerTeamHeaderComponent,
     PlayerTeamMembersComponent,
-    PlayerMatchResultsComponent,
-    PlayerMatchCardComponent,
+    PlayerMatchHistory,
+    PlayerMatchCard,
     Icon,
   ],
   templateUrl: './player-team-match-page.html',
@@ -123,6 +125,45 @@ export class PlayerTeamMatchPageComponent {
     }
   });
   public readonly recentResults = computed(() => historyToResults(this.matchHistory()));
+
+  /** Projection towards the shared card: it knows neither team nor tournament. */
+  /**
+   * The title announces what the card shows. A finished tournament shows no match but a closing
+   * block that stands on its own: the title disappears rather than announcing a match that is not
+   * there.
+   */
+  public readonly matchTitle = computed(() => {
+    if (this.matchView()?.isBye) {
+      return 'Au repos ce round';
+    }
+    return this.matchView() ? 'Match en cours' : null;
+  });
+
+  public readonly matchView = computed(() => {
+    const match = this.currentMatch();
+    const teamId = this.team()?.id;
+    return match && teamId ? toPlayerMatchView(match, teamId) : null;
+  });
+
+  public readonly byeCopy = computed<PlayerByeCopy>(() => ({
+    title: 'Exempté',
+    message: 'Votre équipe est exemptée pour ce round.',
+    awardLabel: `Victoire accordée · +${this.currentMatch()?.scoreA ?? 0} pts`,
+    pendingLabel: 'En attente de confirmation',
+  }));
+
+  public readonly validationCopy: PlayerValidationCopy = {
+    hint: 'Pour valider le score, demandez le code équipe de votre adversaire.',
+    placeholder: 'Code équipe adverse',
+  };
+
+  public readonly rankLabel = computed(() => {
+    const value = Number(this.rank());
+    if (!Number.isInteger(value) || value <= 0) {
+      return null;
+    }
+    return `${value}${value === 1 ? 'er' : 'ème'}`;
+  });
   public readonly isLoading = computed(
     () =>
       !this.tournamentState().data && (this.tournamentState().isLoading || this.teamIsLoading()),
@@ -150,7 +191,7 @@ export class PlayerTeamMatchPageComponent {
   constructor() {
     effect(() => {
       if (this.tournamentPathCode?.length === 0 || this.teamCode?.length !== 4) {
-        this.router.navigate(['/player']);
+        this.router.navigate(['/player/tournament']);
         return;
       }
       const isActive = this.tournamentData()?.status === TournamentStatus.ACTIVE;
@@ -185,16 +226,40 @@ export class PlayerTeamMatchPageComponent {
     });
   }
 
-  public startMatch(matchInfo: StartMatch): void {
-    this.store.dispatch(startMatch(matchInfo));
+  public startMatch(): void {
+    const matchId = this.currentMatch()?.id;
+    const teamCode = this.team()?.code;
+    if (!matchId || !teamCode) {
+      return;
+    }
+    this.store.dispatch(startMatch({ matchId, teamCode }));
   }
 
-  public updateScore(updatedScore: TeamScoreUpdate): void {
-    this.store.dispatch(updateScore(updatedScore));
+  public updateScore(scores: { myScore: number; opponentScore: number }): void {
+    const match = this.currentMatch();
+    const teamCode = this.team()?.code;
+    if (!match || !teamCode) {
+      return;
+    }
+
+    const iAmTeamA = match.teamA.id === this.team()?.id;
+    this.store.dispatch(
+      updateScore({
+        matchId: match.id,
+        teamCode,
+        scoreA: iAmTeamA ? scores.myScore : scores.opponentScore,
+        scoreB: iAmTeamA ? scores.opponentScore : scores.myScore,
+      }),
+    );
   }
 
-  public validateMatch(validatedMatch: ValidateMatch): void {
-    this.store.dispatch(validateMatch(validatedMatch));
+  public validateMatch(opponentTeamCode: string): void {
+    const matchId = this.currentMatch()?.id;
+    const teamCode = this.team()?.code;
+    if (!matchId || !teamCode) {
+      return;
+    }
+    this.store.dispatch(validateMatch({ matchId, teamCode, opponentTeamCode }));
   }
 
   public openRankModale(): void {
@@ -205,7 +270,7 @@ export class PlayerTeamMatchPageComponent {
       this.store.dispatch(
         addNotification({
           notification: {
-            id: crypto.randomUUID(),
+            id: newId(),
             message: "Impossible d'afficher le classement.",
             typeIcon: 'error',
             type: 'classement',

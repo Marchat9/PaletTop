@@ -65,7 +65,7 @@
         display: flex;
         align-items: center;
         row-gap: 1rem;
-        column-gap: 3rem;
+        column-gap: 0.75rem;
         padding: 0.5rem 0.75rem;
         border-radius: 0.5rem;
         background: var(--color-surface-container);
@@ -93,6 +93,10 @@
           font-size: 0.875rem;
           min-width: min(20rem, 100%);
 
+          @media (width < 1025px) {
+            flex-wrap: wrap;
+          }
+
           .plate {
             display: flex;
             align-items: center;
@@ -108,36 +112,61 @@
             }
           }
 
-          .team {
-            flex: 1;
-            font-weight: 500;
-            color: var(--color-on-surface);
-            text-align: center;
-          }
-
-          .bye-badge {
-            flex: 1;
-            font-size: 0.75rem;
-            font-style: italic;
-            color: var(--color-on-surface-variant);
-            text-align: right;
-          }
-
-          .score-display {
+          .teams-and-score {
             display: flex;
+            flex: 1 1 auto;
             align-items: center;
-            gap: 0.4rem;
-            flex-shrink: 0;
-            font-variant-numeric: tabular-nums;
 
-            strong {
-              font-size: 1rem;
+            @media (width < 1025px) {
+              flex: 1 1 100%;
+            }
+            @media (width < 426px) {
+              flex-direction: column;
+              flex: 1 1 100%;
+
+              .team.team-b {
+                width: 100%;
+                text-align: end;
+              }
+
+              .score-display {
+                align-self: center;
+              }
+            }
+
+            .team {
+              flex: 1;
+              font-weight: 500;
+              color: var(--color-on-surface);
               text-align: center;
             }
 
-            .vs {
-              font-weight: 300;
-              font-size: 1rem;
+            .bye-badge {
+              flex: 1;
+              font-size: 0.75rem;
+              font-style: italic;
+              color: var(--color-on-surface-variant);
+              // text-align: right;
+            }
+
+            .score-display {
+              display: flex;
+              align-items: center;
+              gap: 0.4rem;
+              flex-shrink: 0;
+              font-variant-numeric: tabular-nums;
+              border-radius: 0.5rem;
+              padding: 0 0.2rem;
+
+              strong {
+                font-size: 1rem;
+                text-align: center;
+              }
+
+              .vs {
+                font-weight: 300;
+                font-size: 1rem;
+              }
             }
           }
         }
@@ -148,6 +177,9 @@
           gap: 0.5rem;
           margin-left: auto;
           flex-shrink: 0;
+
+          min-width: 170px;
+          justify-content: flex-end;
 
           @media (width <= 1234px) {
             width: 100%;

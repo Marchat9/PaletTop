@@ -56,6 +56,7 @@
 .subtitle {
   margin: 0;
   font-size: 0.875rem;
+  font-weight: 600;
   line-height: 1.25rem;
   color: var(--color-on-surface-variant);
 }
@@ -92,8 +93,6 @@
   flex-direction: column;
   gap: 0.2rem;
   padding: 0.5rem 0;
-  // box-shadow: inset 0 0 1px 1px var(--color-error);
-  // border-radius: 0.5rem;
 
   .message {
     display: flex;

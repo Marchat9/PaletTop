@@ -6,19 +6,20 @@ import { TournamentStatus } from 'src/app/models/tournament-status.enum';
 import { Button } from 'src/app/shared/button/button';
 import { Card } from 'src/app/shared/card/card';
 import { Icon } from 'src/app/shared/icon/icon';
+import { StatusPill, StatusPillTone } from 'src/app/shared/status-pill/status-pill';
 import { TournamentDto } from 'src/app/store/tournament/tournament.models';
 
-const STATUS_PRESENTATION: Record<string, { label: string; tone: string }> = {
+const STATUS_PRESENTATION: Record<string, { label: string; tone: StatusPillTone }> = {
   [TournamentStatus.DRAFT]: { label: 'Brouillon', tone: 'draft' },
-  [TournamentStatus.ACTIVE]: { label: 'En cours', tone: 'active' },
-  [TournamentStatus.FINISHED]: { label: 'Terminé', tone: 'finished' },
-  [TournamentStatus.CANCELLED]: { label: 'Annulé', tone: 'cancelled' },
+  [TournamentStatus.ACTIVE]: { label: 'En cours', tone: 'ongoing' },
+  [TournamentStatus.FINISHED]: { label: 'Terminé', tone: 'success' },
+  [TournamentStatus.CANCELLED]: { label: 'Annulé', tone: 'error' },
 };
 
 @Component({
   selector: 'app-tournament-header',
   standalone: true,
-  imports: [DatePipe, Card, Button, Icon],
+  imports: [DatePipe, Card, Button, Icon, StatusPill],
   templateUrl: './tournament-header.component.html',
   styleUrl: './tournament-header.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -57,6 +58,6 @@ export class TournamentHeaderComponent {
   public readonly hasDescription = computed(() => !!this.tournament()?.description?.trim());
   public readonly statusPresentation = computed(() => {
     const status = this.tournament()?.status ?? 'UNKNOWN';
-    return STATUS_PRESENTATION[status] ?? { label: status, tone: 'unknown' };
+    return STATUS_PRESENTATION[status] ?? { label: status, tone: 'neutral' as StatusPillTone };
   });
 }

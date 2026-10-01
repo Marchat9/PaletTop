@@ -1,0 +1,51 @@
+:host {
+  display: block;
+}
+
+.nav-menu {
+  display: flex;
+  flex-direction: column;
+  min-width: 15rem;
+  // Never overflows the window, whatever the width of the anchor.
+  max-width: calc(100vw - 1rem);
+  padding: 0.5rem;
+  border-radius: 0.8rem;
+  background: var(--color-surface-container-high);
+  box-shadow: 0 1rem 2.5rem var(--color-shadow-strong);
+}
+
+.menu-title {
+  padding: 0.5rem 0.75rem 0.35rem;
+  color: var(--color-primary);
+  font-family: var(--font-label);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.menu-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border: 0;
+  border-radius: 0.55rem;
+  background: transparent;
+  color: var(--color-on-surface);
+  font: inherit;
+  font-size: 0.95rem;
+  text-align: left;
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible {
+    background: var(--color-hover-surface-soft);
+    outline: none;
+  }
+
+  ::ng-deep .row-icon {
+    color: var(--color-primary);
+    font-size: 1.2rem;
+  }
+}

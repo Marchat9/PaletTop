@@ -1,0 +1,11 @@
+<div class="stats-tiles">
+  @for (tile of tiles(); track tile.key) {
+    <app-metric-tile
+      [label]="tile.label"
+      [value]="tile.value"
+      size="responsive"
+      [clickable]="!!tile.clickable"
+      (clicked)="tileClicked.emit(tile)"
+    />
+  }
+</div>

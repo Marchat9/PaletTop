@@ -1,4 +1,5 @@
 import { Dialog } from '@angular/cdk/dialog';
+import { Overlay } from '@angular/cdk/overlay';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -16,7 +17,11 @@ import { environment } from '@environment';
 import { Store } from '@ngrx/store';
 import { filter, first } from 'rxjs';
 import { ThemeMode } from 'src/app/models/theme-mode.model';
-import { generateBurgerMenuItem } from 'src/app/pages/navigation/navigation.utils';
+import {
+  findActiveNavKey,
+  generateBurgerMenuItem,
+} from 'src/app/pages/navigation/navigation.utils';
+import { NavMenuPopup, NavMenuPopupData } from 'src/app/modales/nav-menu-popup/nav-menu-popup';
 import { PwaInstallService } from 'src/app/services/pwa-install.service';
 import { BurgerMenuClickKey, BurgerMenuItem } from 'src/app/shared/burger-menu/burger-menu.model';
 import { selectNotificationCount } from 'src/app/store/app-config/app-config.selectors';
@@ -25,7 +30,7 @@ import { AboutPopupComponent } from '../../modales/about-popup/about-popup';
 import { NotificationPopupComponent } from '../../modales/notification-popup/notification-popup';
 import { SuperAdminConnectionPopupComponent } from '../../modales/super-admin-connection-popup/super-admin-connection-popup';
 import { clearSuperAdminSession } from 'src/app/store/superadmin/superadmin.actions';
-import { BottomNavComponent } from './bottom-nav/bottom-nav';
+import { BottomNavComponent, NavItemSelection } from './bottom-nav/bottom-nav';
 import { NavItem } from './nav-item.entity';
 import { TopBarComponent } from './top-bar/top-bar';
 
@@ -43,12 +48,43 @@ export class Navigation {
   readonly appName: string = environment.appName;
   readonly mobileBpPx: number = environment.limitMobileSizePx;
 
+  // Organised by universe, like the home page: the role is chosen afterwards. Entries with sub-
+  // destinations open a menu instead of navigating.
   readonly navItems: NavItem[] = [
-    { label: 'Accueil', route: '/accueil', icon: 'home' },
-    { label: 'Joueur', route: '/player', icon: 'person' },
-    { label: 'Spectateur', route: '/spectateur', icon: 'visibility' },
-    { label: 'Match Amical', route: '/friendly-match', icon: 'handshake' },
-    { label: 'Admin', route: '/admin', icon: 'admin_panel_settings' },
+    { key: 'home', label: 'Accueil', route: '/accueil', icon: 'home', matchPrefixes: ['/accueil'] },
+    {
+      key: 'tournament',
+      label: 'Tournoi',
+      icon: 'stadium',
+      matchPrefixes: [
+        '/player/tournament',
+        '/admin/tournament',
+        '/admin/tournament-creation',
+        '/spectateur',
+      ],
+      children: [
+        { label: 'Rejoindre en joueur', route: '/player/tournament', icon: 'person' },
+        { label: 'Administrer', route: '/admin/tournament', icon: 'admin_panel_settings' },
+        { label: 'Suivre en spectateur', route: '/spectateur', icon: 'visibility' },
+      ],
+    },
+    {
+      key: 'training',
+      label: 'Entraînement',
+      icon: 'school',
+      matchPrefixes: ['/player/training', '/admin/training', '/admin/training-creation'],
+      children: [
+        { label: 'Rejoindre en joueur', route: '/player/training', icon: 'person' },
+        { label: 'Administrer', route: '/admin/training', icon: 'admin_panel_settings' },
+      ],
+    },
+    {
+      key: 'friendly',
+      label: 'Amical',
+      route: '/friendly-match',
+      icon: 'handshake',
+      matchPrefixes: ['/friendly-match'],
+    },
   ];
   readonly burgerMenuItem: Signal<BurgerMenuItem[]> = computed(() =>
     generateBurgerMenuItem(
@@ -65,13 +101,14 @@ export class Navigation {
   private readonly destroyRef = inject(DestroyRef);
   private readonly store = inject(Store<AppState>);
   private readonly dialog = inject(Dialog);
+  private readonly overlay = inject(Overlay);
   private readonly pwaInstallService = inject(PwaInstallService);
 
   private readonly notificationCount = this.store.selectSignal(selectNotificationCount);
   public readonly notificationBadge = computed(() => this.notificationCount() || null);
 
-  public readonly currentRouteSplited = computed(
-    () => `/${this.currentRoute().split('/')[1] || ''}`,
+  public readonly activeNavKey = computed(() =>
+    findActiveNavKey(this.navItems, this.currentRoute()),
   );
 
   constructor() {
@@ -95,6 +132,50 @@ export class Navigation {
       window.addEventListener('resize', setMode);
       this.destroyRef.onDestroy(() => window.removeEventListener('resize', setMode));
     }
+  }
+
+  /**
+   * Same menu in both formats: sheet coming up from the bottom on mobile, menu anchored under the
+   * entry on desktop.
+   */
+  public onNavItemSelected({ item, anchor }: NavItemSelection): void {
+    const children = item.children ?? [];
+    if (children.length === 0) {
+      return;
+    }
+
+    const isMobile = this.isMobile();
+    const positionStrategy = isMobile
+      ? // The clearance above the navigation bar comes from the position, not from a padding: the
+        // panel would otherwise cover the bar without showing anything there, and would swallow
+        // the click meant to close the sheet.
+        this.overlay.position().global().bottom('4.5rem').width('100%')
+      : this.overlay
+          .position()
+          .flexibleConnectedTo(anchor)
+          // Always downwards: flipping up would cover the header, which is exactly what stands
+          // above the anchor. When room runs out, reposition rather than flip - right alignment
+          // first, then nudged back inside the window.
+          .withPositions([
+            { originX: 'start', originY: 'bottom', overlayX: 'start', overlayY: 'top', offsetY: 8 },
+            { originX: 'end', originY: 'bottom', overlayX: 'end', overlayY: 'top', offsetY: 8 },
+          ])
+          .withPush(true)
+          .withViewportMargin(8);
+
+    this.dialog
+      .open<string | undefined, NavMenuPopupData>(NavMenuPopup, {
+        data: { title: item.label, items: children },
+        positionStrategy,
+        panelClass: isMobile ? 'nav-menu-sheet-panel' : 'nav-menu-popover-panel',
+        backdropClass: isMobile ? 'dialog-backdrop-light' : 'nav-menu-popover-backdrop',
+      })
+      .closed.pipe(first())
+      .subscribe((route) => {
+        if (route) {
+          this.router.navigate([route]);
+        }
+      });
   }
 
   public onNotificationClick(): void {

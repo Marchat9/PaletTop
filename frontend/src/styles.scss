@@ -1,11 +1,12 @@
 @use '@angular/material' as mat;
+@use './styles/animations';
 @use './styles/colors';
 @use './styles/dialog';
 @use './styles/overload';
 @use './styles/responsive';
 @use 'ngx-toastr/toastr';
 
-// Initialiser Material
+// Initialize Material
 @include mat.core();
 
 * {
@@ -19,7 +20,6 @@ body {
 }
 
 body {
-  // background: linear-gradient(to bottom, var(--color-theme) 15%, var(--color-background) 25%);
   background: var(--color-background);
   color: var(--color-on-surface);
   font-family: var(--font-body);

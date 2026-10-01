@@ -1,0 +1,238 @@
+.training-session-creation-page {
+  max-width: 56rem;
+  margin: 0 auto;
+  padding: 1.5rem 1.25rem 6.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+
+  @media (width < 375px) {
+    padding: 1.5rem 0.75rem 6.2rem;
+  }
+
+  .back-link {
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    // Touch target: height is gained without touching the side margins.
+    padding: 0.6rem 0.5rem 0.6rem 0.25rem;
+    border: 0;
+    border-radius: 0.5rem;
+    background: transparent;
+    color: var(--color-on-surface-variant);
+    font-family: var(--font-label);
+    font-size: 0.72rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+
+    &:hover {
+      color: var(--color-primary);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--color-primary);
+      outline-offset: 2px;
+    }
+
+    ::ng-deep .back-icon {
+      font-size: 1rem;
+    }
+  }
+}
+
+.creation-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+
+  .top-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.9rem;
+  }
+
+  .identity {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+
+    .eyebrow {
+      color: var(--color-primary);
+      font-family: var(--font-label);
+      font-size: 0.72rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+
+    .title {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+
+      ::ng-deep .icon {
+        color: var(--color-primary);
+        font-size: 1.8rem;
+      }
+
+      h1 {
+        margin: 0;
+        font-family: var(--font-headline);
+        font-size: clamp(1.6rem, 5vw, 2.4rem);
+        line-height: 1;
+      }
+    }
+  }
+
+  // Two information boxes of the same kind: settings carried over, and preview of the next round.
+  .callout,
+  .preview {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    margin: 0;
+    padding: 0.85rem 1rem;
+    border-radius: 0.7rem;
+    background: var(--color-status-draft-bg);
+    border: 1px solid var(--color-status-draft-border);
+    font-size: 0.85rem;
+
+    ::ng-deep .material-symbols-outlined {
+      color: var(--color-status-draft-text);
+      font-size: 1.2rem;
+      flex-shrink: 0;
+    }
+
+    p {
+      margin: 0;
+    }
+
+    strong {
+      color: var(--color-status-draft-text);
+    }
+  }
+
+  .preview {
+    color: var(--color-status-draft-text);
+  }
+
+  // Four sections, each introduced by its own rule: the form has grown, it reads block by block
+  // rather than in one go.
+  .section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+  }
+
+  .section-head {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    color: var(--color-primary);
+    font-family: var(--font-label);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+
+    &::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--color-border-default);
+    }
+  }
+
+  // A choice made of cards needs the full width, not one column out of two.
+  .field--wide {
+    grid-column: 1 / -1;
+  }
+
+  .fields {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.9rem;
+
+    @media (width < 768px) {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+
+    .field-label {
+      display: flex;
+      align-items: baseline;
+      flex-direction: row;
+      flex-wrap: nowrap;
+      gap: 1rem;
+
+      font-family: var(--font-label);
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--color-primary);
+    }
+
+    .field-help {
+      margin: 0;
+      color: var(--color-on-surface-variant);
+      font-size: 0.76rem;
+    }
+  }
+
+  .rules {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.6rem;
+
+    @media (width < 768px) {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .rule {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      padding: 0.7rem 0.8rem;
+      border-radius: 0.6rem;
+      background: var(--color-hover-surface-soft);
+      border: 1px solid var(--color-border-subtle);
+    }
+
+    .rule-text {
+      display: flex;
+      flex-direction: column;
+      gap: 0.1rem;
+      min-width: 0;
+
+      strong {
+        font-size: 0.88rem;
+        font-weight: 600;
+      }
+
+      span {
+        color: var(--color-on-surface-variant);
+        font-size: 0.76rem;
+      }
+    }
+  }
+
+  .actions {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+
+    app-button {
+      flex: 1 1 10rem;
+    }
+  }
+}

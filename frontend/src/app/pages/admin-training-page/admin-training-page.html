@@ -1,0 +1,23 @@
+<div class="admin-training-page">
+  <app-training-header
+    [training]="training()"
+    [sessionCount]="sessions().length"
+    [lastSessionDate]="lastSessionDate()"
+    (disconnect)="disconnect()"
+    (edit)="openEdit()"
+  />
+
+  <app-training-session-list
+    [sessions]="sessions()"
+    [isLoading]="sessionsLoading()"
+    (selectSession)="openSession($event)"
+    (createSession)="createSession()"
+  />
+
+  <app-training-roster-card
+    [members]="training()?.members ?? []"
+    [addLoading]="addMemberLoading()"
+    (addMember)="addMember($event)"
+    (removeMember)="removeMember($event)"
+  />
+</div>

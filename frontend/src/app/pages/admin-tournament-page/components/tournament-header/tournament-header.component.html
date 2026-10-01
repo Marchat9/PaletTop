@@ -35,16 +35,16 @@
         <div class="tournament-header-status">
           <span class="text"
             >Etat du tournoi :
-            <span class="status-badge" [class]="statusPresentation().tone">
+            <app-status-pill [tone]="statusPresentation().tone" size="lg">
               {{ statusPresentation().label }}
-            </span>
+            </app-status-pill>
           </span>
           @if (!!phaseName()) {
             <span class="text"
               >Statut du tournoi :
-              <span class="status-badge">
+              <app-status-pill size="lg">
                 {{ phaseName() }}
-              </span>
+              </app-status-pill>
             </span>
           }
         </div>

@@ -64,9 +64,21 @@ export const initialTournamentState: TournamentState = {
 export const tournamentReducer = createReducer(
   initialTournamentState,
 
+  // `tournament:updated` carries the meta view (status, configuration, tournamentStatus), NOT the
+  // registered teams: merging keeps the team list the admin already has instead of blanking it. If
+  // the server ever includes teams, they take precedence.
   on(wsTournamentUpdated, (state, { tournament }) => ({
     ...state,
-    tournament: { ...state.tournament, data: tournament },
+    tournament: {
+      ...state.tournament,
+      data: state.tournament.data
+        ? {
+            ...state.tournament.data,
+            ...tournament,
+            teams: tournament.teams ?? state.tournament.data.teams,
+          }
+        : tournament,
+    },
   })),
 
   // Tournament creation

@@ -11,12 +11,22 @@ import { InputNumber } from 'src/app/shared/input-number/input-number';
 import { MatchStatusComponent } from 'src/app/shared/match-status/match-status';
 import { MatchTimerComponent } from 'src/app/shared/match-timer/match-timer';
 import { Icon } from 'src/app/shared/icon/icon';
+import { AnimateOnChangeDirective } from 'src/app/shared/animate-on-change/animate-on-change.directive';
+import { StaggerDirective } from 'src/app/shared/stagger/stagger.directive';
 import { computeMatchGroups } from './session-matches.utils';
 
 @Component({
   selector: 'app-session-matches',
   standalone: true,
-  imports: [Button, InputNumber, MatchStatusComponent, MatchTimerComponent, Icon],
+  imports: [
+    Button,
+    InputNumber,
+    MatchStatusComponent,
+    MatchTimerComponent,
+    Icon,
+    StaggerDirective,
+    AnimateOnChangeDirective,
+  ],
   templateUrl: './session-matches.html',
   styleUrl: './session-matches.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -36,6 +46,9 @@ export class SessionMatchesComponent {
   public readonly matchGroups = computed<MatchPoolGroup[]>(() =>
     computeMatchGroups(this.session()?.matches ?? []),
   );
+
+  // Replay the cascade when the session's matches change (a new session), not on every score.
+  public readonly staggerKey = computed(() => this.session()?.sessionNumber ?? 0);
 
   public startEdit(match: SessionMatchDto): void {
     this.draftScoreA.set(match.scoreA);

@@ -16,26 +16,31 @@
           </div>
         }
 
-        <div class="match-list">
+        <div class="match-list" [appStagger]="staggerKey()">
           @for (match of group.matches; track match.id) {
             <div class="match-row" [class.is-bye]="match.isBye">
               <div class="match-info">
                 @if (!match.isBye) {
                   <span class="plate">
-                    <span class="plate-label">N°{{ match.plateNumber }}</span>
+                    <span class="plate-label">Plaque N°{{ match.plateNumber }}</span>
                   </span>
                 }
-                <span class="team team-a">{{ match.teamA.name }}</span>
-                @if (match.isBye) {
-                  <span class="bye-badge">Exempté</span>
-                } @else {
-                  <span class="score-display">
-                    <strong>{{ match.scoreA }}</strong>
-                    <span class="vs">—</span>
-                    <strong>{{ match.scoreB }}</strong>
-                  </span>
-                  <span class="team team-b">{{ match.teamB?.name }}</span>
-                }
+                <div class="teams-and-score">
+                  <span class="team team-a max-two-lines">{{ match.teamA.name }}</span>
+                  @if (match.isBye) {
+                    <span class="bye-badge">Exempté</span>
+                  } @else {
+                    <span
+                      class="score-display"
+                      [appAnimateOnChange]="match.scoreA + '-' + match.scoreB"
+                    >
+                      <strong>{{ match.scoreA }}</strong>
+                      <span class="vs">—</span>
+                      <strong>{{ match.scoreB }}</strong>
+                    </span>
+                    <span class="team team-b max-two-lines">{{ match.teamB?.name }}</span>
+                  }
+                </div>
               </div>
               <div class="match-meta">
                 <span class="status-badge" [class]="'status-badge--' + match.status.toLowerCase()">

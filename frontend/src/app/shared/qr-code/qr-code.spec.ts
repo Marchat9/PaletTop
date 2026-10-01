@@ -5,7 +5,7 @@ import { QrCode } from './qr-code';
 describe('QrCode', () => {
   it('renders an inline <svg> synchronously, in the same render pass', () => {
     const fixture = TestBed.createComponent(QrCode);
-    fixture.componentRef.setInput('url', 'https://palettop.example/player/ABCD/1234');
+    fixture.componentRef.setInput('url', 'https://palettop.example/player/tournament/ABCD/1234');
     fixture.detectChanges();
 
     const svg = fixture.nativeElement.querySelector('.qr-code svg');

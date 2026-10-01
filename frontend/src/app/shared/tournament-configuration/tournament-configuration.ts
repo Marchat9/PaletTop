@@ -111,7 +111,7 @@ export class TournamentConfiguration implements OnInit {
         ),
         pointsPerGame: new FormControl(tournament?.configuration?.pointsPerGame ?? 13, {
           nonNullable: true,
-          validators: [Validators.required, Validators.min(0)],
+          validators: [Validators.required, Validators.min(1)],
         }),
         rematch: new FormControl(tournament?.configuration?.rematch ?? false, {
           nonNullable: true,

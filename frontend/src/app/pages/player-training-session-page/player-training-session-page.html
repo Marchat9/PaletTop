@@ -1,0 +1,95 @@
+<section class="player-training-page">
+  @if (isLoading() && !me()) {
+    <section class="state">
+      <app-icon name="progress_activity" />
+      <p>Chargement de votre séance…</p>
+    </section>
+  } @else if (error()) {
+    <section class="state state--error">
+      <app-icon name="error" />
+      <p>{{ error() }}</p>
+    </section>
+  } @else {
+    <app-player-session-header
+      [participant]="me()"
+      [participantCode]="participantCode()"
+      [session]="session()"
+      [roundNumber]="roundNumber()"
+    />
+
+    @if (isSessionClosed()) {
+      <div class="session-closed" [appAnimateOnChange]="isSessionClosed()" [animateOnInit]="true">
+        <app-icon name="sports_score" iconClass="closed-icon" [ariaHidden]="true" />
+        <div class="closed-text">
+          <strong>La séance est terminée.</strong>
+          @if (canStillValidate()) {
+            <span>Vous pouvez encore valider le score de votre dernier match.</span>
+          } @else if (finalRankLabel(); as rank) {
+            <span>
+              Vous terminez <span class="rank">{{ rank }}</span> au classement. Merci d'avoir joué !
+            </span>
+          } @else {
+            <span>Merci d'avoir joué !</span>
+          }
+        </div>
+      </div>
+    }
+
+    <app-player-stats-tiles [tiles]="statTiles()" />
+
+    <section class="current-match">
+      @if (matchTitle(); as title) {
+        <h3>{{ title }}</h3>
+      }
+
+      <app-player-match-card
+        [match]="cardMatch()"
+        [pointsPerGame]="pointsPerGame()"
+        [scoringLocked]="isSessionClosed()"
+        [byeCopy]="byeCopy"
+        [validationCopy]="validationCopy"
+        [startError]="startError()"
+        [scoreError]="scoreError()"
+        [validateError]="validateError()"
+        [startLoading]="startLoading()"
+        [validateLoading]="validateLoading()"
+        (startMatch)="startMatch()"
+        (scoreChange)="updateScore($event)"
+        (validateMatch)="validateMatch($event)"
+      >
+        @if (hasLeft()) {
+          <app-icon name="person_off" iconClass="empty-icon" />
+          <p>
+            Vous êtes considéré(e) comme parti(e) de l'entraînement. Rapprochez-vous de
+            l'administrateur pour être réintégré(e).
+          </p>
+        } @else if (isSessionClosed()) {
+          <app-icon name="lock" iconClass="empty-icon" />
+          <p>La séance est terminée. Merci d'avoir joué !</p>
+        } @else if (isSittingOut()) {
+          <app-icon name="airline_seat_recline_normal" iconClass="empty-icon" />
+          <p>Vous êtes au repos ce round. Le prochain vous remettra en jeu.</p>
+        } @else {
+          <app-icon name="hourglass_empty" iconClass="empty-icon" />
+          <p>Aucun match pour l'instant, attendez le prochain round.</p>
+        }
+      </app-player-match-card>
+    </section>
+
+    @if (!isSittingOut() && cardMatch()) {
+      <app-player-session-partners [partners]="partners()" />
+    }
+
+    <app-player-session-leaderboard
+      [leaderboard]="leaderboard()"
+      [myParticipantId]="me()?.id ?? null"
+    />
+
+    <app-player-match-history
+      [results]="results()"
+      [myLabel]="me()?.name ?? ''"
+      title="Mes matchs"
+      emptyMessage="Vous n'avez pas encore joué de match sur cette séance."
+    />
+  }
+</section>

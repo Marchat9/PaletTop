@@ -1,6 +1,7 @@
-import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { NavItem } from '../nav-item.entity';
+import { NavItemSelection } from '../bottom-nav/bottom-nav';
 import { ThemeMode } from 'src/app/models/theme-mode.model';
 import { ButtonIcon } from 'src/app/shared/button-icon/button-icon';
 import { Icon } from 'src/app/shared/icon/icon';
@@ -19,7 +20,7 @@ export class TopBarComponent {
   // Input
   readonly title = input.required<string>();
   readonly links = input<NavItem[]>([]);
-  readonly activeRoute = input<string>('');
+  readonly activeKey = input<string | null>(null);
   readonly showLinks = input<boolean>(true);
   readonly theme = input.required<ThemeMode>();
   readonly notificationBadge = input<number | null>(null);
@@ -29,6 +30,8 @@ export class TopBarComponent {
   public readonly changeTheme = output<ThemeMode>();
   public readonly notificationClick = output<void>();
   public readonly burgerMenuClick = output<BurgerMenuClickKey>();
+  /** Entry with sub-destinations: opening the menu is the container's business. */
+  public readonly itemSelected = output<NavItemSelection>();
 
   // Function
   public toggleTheme(): void {

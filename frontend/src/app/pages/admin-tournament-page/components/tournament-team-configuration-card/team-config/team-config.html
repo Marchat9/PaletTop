@@ -49,7 +49,7 @@
           <span class="cell cell-actions" role="columnheader"></span>
         </div>
 
-        <div class="team-table-scroll" role="rowgroup">
+        <div class="team-table-scroll" role="rowgroup" [appStagger]="teamStaggerKey()">
           @for (row of teamRows(); track row.team.id) {
             @if (editingTeam()?.teamId === row.team.id) {
               <div class="team-row team-row-editing" role="row">

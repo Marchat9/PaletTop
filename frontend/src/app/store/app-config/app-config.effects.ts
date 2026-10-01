@@ -20,6 +20,8 @@ const LOCAL_STORAGE_DATA_KEY = 'app-local-storage-data';
 export const STORAGE_TOURNAMENT_CODE_KEY = 'tournament-code';
 export const STORAGE_TOURNAMENT_PASSWORD_KEY = 'tournament-pass';
 export const STORAGE_FRIENDLY_MATCH_KEY = 'friendly-match-state';
+export const STORAGE_TRAINING_CODE_KEY = 'training-code';
+export const STORAGE_TRAINING_PASSWORD_KEY = 'training-pass';
 
 @Injectable()
 export class AppConfigEffects {
@@ -36,7 +38,6 @@ export class AppConfigEffects {
         // Load theme from localStorage
         const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
         if (savedTheme) {
-          console.debug('Found theme in localStorage:', savedTheme);
           actionList.push(setTheme({ theme: savedTheme as ThemeMode }));
         }
 
@@ -46,7 +47,6 @@ export class AppConfigEffects {
           try {
             const parsedData = JSON.parse(savedData);
             if (Object.keys(parsedData).length > 0) {
-              console.debug('Found localStorage data:', parsedData);
               actionList.push(updateLocalStorageData({ data: parsedData }));
             }
           } catch (e) {

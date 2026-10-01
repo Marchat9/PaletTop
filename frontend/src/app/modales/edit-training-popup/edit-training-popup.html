@@ -1,0 +1,59 @@
+<div class="popup-container popup-surface" (keydown.enter)="onSubmit()">
+  <div class="popup-header">
+    <h2 class="popup-title">
+      <app-icon name="edit" iconClass="icon" [ariaHidden]="true" />
+      Modifier l'entraînement
+    </h2>
+    <button class="popup-close" type="button" aria-label="Fermer" (click)="onCancel()">
+      <app-icon name="close" />
+    </button>
+  </div>
+
+  <p class="popup-subtitle">Le code de l'entraînement ne change pas.</p>
+
+  <div class="field-group">
+    <label class="field-label" for="edit-training-name">Nom du club / personnalisé</label>
+    <app-input-text
+      id="edit-training-name"
+      placeholder="Ex : Les Entraînements du club"
+      icon="school"
+      [value]="name()"
+      [autofocus]="true"
+      (valueChange)="onNameChange($event)"
+    ></app-input-text>
+  </div>
+
+  <div class="field-group">
+    <label class="field-label" for="edit-training-description">
+      Description <span class="optional">(facultatif)</span>
+    </label>
+    <app-input-text
+      id="edit-training-description"
+      placeholder="Ex : Entraînements du jeudi soir"
+      icon="notes"
+      [value]="description()"
+      (valueChange)="onDescriptionChange($event)"
+    ></app-input-text>
+  </div>
+
+  @if (error()) {
+    <div class="error-container">
+      <span class="message">
+        <app-icon name="error" [ariaHidden]="true" />
+        {{ error() }}
+      </span>
+    </div>
+  }
+
+  <div class="actions">
+    <app-button title="Annuler" variant="secondary" (clicked)="onCancel()"></app-button>
+    <app-button
+      title="Enregistrer"
+      variant="primary"
+      icon="check"
+      [loading]="loading()"
+      [disabled]="!canSubmit()"
+      (clicked)="onSubmit()"
+    ></app-button>
+  </div>
+</div>

@@ -5,7 +5,6 @@ import { TournamentConfigurationDto } from 'src/app/models/tournament-configurat
 import { TournamentDto } from 'src/app/store/tournament/tournament.models';
 import { environment } from 'src/environments/environment';
 import { TeamConfigCreateTeamPayload } from '../models/team-config.model';
-import { TournamentConfigurationDetailsDto } from '../models/tournament-configuration-detail.model';
 
 @Injectable({
   providedIn: 'root',

@@ -1,0 +1,182 @@
+<div class="training-session-creation-page">
+  <button type="button" class="back-link" (click)="cancel()">
+    <app-icon name="arrow_back" iconClass="back-icon" [ariaHidden]="true" />
+    {{ training()?.name || "Retour à l'entraînement" }}
+  </button>
+
+  <app-card>
+    <div class="creation-form">
+      <div class="top-row">
+        <div class="identity">
+          <span class="eyebrow">Nouvelle séance</span>
+          <div class="title">
+            <app-icon name="event_available" iconClass="icon" [ariaHidden]="true" />
+            <h1>Créer une séance</h1>
+          </div>
+        </div>
+
+        @if (previousSettings(); as previous) {
+          <app-button
+            [title]="'Reprendre les réglages du ' + (previous.date | date: 'dd/MM')"
+            icon="history"
+            variant="tertiary"
+            [titleCanWrap]="true"
+            (clicked)="reusePreviousSettings()"
+          />
+        }
+      </div>
+
+      @if (settingsReused()) {
+        <div class="callout">
+          <app-icon name="info" iconClass="callout-icon" [ariaHidden]="true" />
+          <p>
+            <strong>Réglages repris de la séance précédente.</strong> Tout reste modifiable — ils
+            seront figés une fois la séance créée.
+          </p>
+        </div>
+      }
+
+      <section class="section">
+        <div class="section-head">La séance</div>
+        <div class="fields">
+          <div class="field">
+            <label class="field-label" for="session-date">Date de la séance</label>
+            <app-input-date
+              [minDate]="minDate"
+              [value]="minDate"
+              (valueChange)="onDateChange($event)"
+            ></app-input-date>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">Les équipes</div>
+        <div class="fields">
+          <div class="field">
+            <label class="field-label" for="session-players">Joueurs par équipe</label>
+            <app-input-number
+              id="session-players"
+              [value]="playersPerTeam()"
+              [min]="1"
+              [max]="maxPlayersPerTeam"
+              (valueChange)="playersPerTeam.set($event)"
+            />
+            <p class="field-help">Taille visée pour les équipes de chaque round.</p>
+          </div>
+
+          <div class="field">
+            <label class="field-label">Tailles de repli autorisées</label>
+            <app-input-chips
+              name="Tailles de repli autorisées"
+              [options]="teamSizeOptions()"
+              [value]="teamSizes()"
+              (valueChange)="allowedTeamSizes.set($event)"
+            />
+            <p class="field-help">
+              Tailles que le générateur peut aussi utiliser quand l'effectif ne tombe pas juste.
+            </p>
+          </div>
+        </div>
+
+        <div class="field field--wide">
+          <label class="field-label">Si l'effectif ne tombe pas juste</label>
+          <app-input-card-radio
+            [options]="arbitrationOptions"
+            [value]="preferTargetTeamSize()"
+            (valueChange)="preferTargetTeamSize.set($event)"
+          />
+        </div>
+
+        @if (showComposition()) {
+          <div class="field field--wide">
+            <label class="field-label">Composition des équipes</label>
+            <app-input-card-radio
+              [options]="compositionOptions"
+              [value]="teamComposition()"
+              (valueChange)="teamComposition.set($event)"
+            />
+          </div>
+        }
+      </section>
+
+      <section class="section">
+        <div class="section-head">Les matchs</div>
+        <div class="fields">
+          <div class="field">
+            <label class="field-label" for="session-points">Points par partie</label>
+            <app-input-number
+              id="session-points"
+              [value]="pointsPerGame()"
+              [min]="1"
+              [max]="maxPointsPerGame"
+              (valueChange)="pointsPerGame.set($event)"
+            />
+            <p class="field-help">Score à atteindre pour gagner un match.</p>
+          </div>
+
+          <div class="field">
+            <label class="field-label" for="session-plates">Plaques disponibles</label>
+            <app-input-number
+              id="session-plates"
+              [value]="plateCount()"
+              [min]="1"
+              [max]="maxPlateCount"
+              (valueChange)="plateCount.set($event)"
+            />
+            <p class="field-help">
+              Jamais plus de matchs en même temps que de plaques. Les équipes en trop attendent le
+              round suivant.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">La rotation</div>
+        <div class="rules">
+          <div class="rule">
+            <div class="rule-text">
+              <strong>Éviter le même partenaire</strong>
+              <span>Mélange les binômes d'un round à l'autre.</span>
+            </div>
+            <app-switch
+              [checked]="avoidSamePartnerConsecutive()"
+              (checkedChange)="avoidSamePartnerConsecutive.set($event)"
+            />
+          </div>
+
+          <div class="rule">
+            <div class="rule-text">
+              <strong>Éviter le même adversaire</strong>
+              <span>Évite de rejouer contre la même équipe au round suivant.</span>
+            </div>
+            <app-switch
+              [checked]="avoidSameOpponentConsecutive()"
+              (checkedChange)="avoidSameOpponentConsecutive.set($event)"
+            />
+          </div>
+        </div>
+      </section>
+
+      @if (rosterPreview(); as preview) {
+        <p class="preview" role="status">
+          <app-icon name="info" iconClass="preview-icon" [ariaHidden]="true" />
+          {{ preview }}
+        </p>
+      }
+
+      <div class="actions">
+        <app-button title="Annuler" variant="secondary" (clicked)="cancel()" />
+        <app-button
+          title="Créer la séance"
+          icon="check"
+          variant="primary"
+          [loading]="creationLoading()"
+          [disabled]="!canSubmit()"
+          (clicked)="submit()"
+        />
+      </div>
+    </div>
+  </app-card>
+</div>

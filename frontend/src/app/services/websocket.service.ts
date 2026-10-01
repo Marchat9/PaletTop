@@ -7,26 +7,65 @@ import { environment } from 'src/environments/environment';
 @Injectable({ providedIn: 'root' })
 export class WebSocketService implements OnDestroy {
   private socket: Nullable<Socket> = null;
-  private currentCode: Nullable<string> = null;
+  // Context, code and role: tournament and training have independent codes, and the server does not
+  // put an admin and a player in the same room. Switching from one to the other must therefore
+  // reopen the socket, even on the same code.
+  private currentKey: Nullable<string> = null;
 
   private readonly reconnected = new Subject<void>();
   /** Emits when the socket re-establishes a connection after the initial one (e.g. after a mobile lock/network drop). */
   readonly reconnected$ = this.reconnected.asObservable();
 
   connect(tournamentCode: string, context: { teamCode?: string; password?: string }): void {
-    if (this.currentCode === tournamentCode && this.socket?.connected) return;
+    const role = context.password
+      ? 'admin'
+      : context.teamCode
+        ? `team:${context.teamCode}`
+        : 'public';
+    this.open(
+      `tournament:${tournamentCode}:${role}`,
+      { tournamentCode, ...context },
+      'join-tournament',
+    );
+  }
+
+  /**
+   * Joins the room of a training session. With a password, the server puts the socket in the admin
+   * room, whose session updates carry the participant codes.
+   */
+  connectTrainingSession(sessionCode: string, password?: string): void {
+    this.open(
+      `training-session:${sessionCode}:${password ? 'admin' : 'public'}`,
+      { sessionCode, password },
+      'join-training-session',
+    );
+  }
+
+  disconnect(): void {
+    this.socket?.disconnect();
+    this.socket = null;
+    this.currentKey = null;
+  }
+
+  private open(key: string, auth: Record<string, unknown>, joinEvent: string): void {
+    // The socket is reused as long as the room is the same, connected or not: socket.io reconnects
+    // on its own with its backoff. Testing `connected` here would tear down a socket in the middle
+    // of reconnecting - and the fresh one no longer knows it has connected before, so it would not
+    // emit `reconnected$` and nobody would resync.
+    if (this.currentKey === key && this.socket) return;
 
     this.disconnect();
-    this.currentCode = tournamentCode;
+    this.currentKey = key;
 
-    this.socket = io(environment.backBaseApiUrl, {
+    const socket = io(environment.backBaseApiUrl, {
       transports: ['websocket'],
-      auth: { tournamentCode, ...context },
+      auth,
     });
+    this.socket = socket;
 
     let hasConnectedOnce = false;
-    this.socket.on('connect', () => {
-      this.socket!.emit('join-tournament');
+    socket.on('connect', () => {
+      socket.emit(joinEvent);
       if (hasConnectedOnce) {
         this.reconnected.next();
       }
@@ -34,16 +73,16 @@ export class WebSocketService implements OnDestroy {
     });
   }
 
-  disconnect(): void {
-    this.socket?.disconnect();
-    this.socket = null;
-    this.currentCode = null;
-  }
-
   on<T>(event: string): Observable<T> {
     return new Observable<T>((observer) => {
-      this.socket?.on(event, (data: T) => observer.next(data));
-      return () => this.socket?.off(event);
+      // Both the socket and the handler are captured here: `off(event)` alone would remove every
+      // listener of that event - including another stream's - and reading `this.socket` on teardown
+      // would detach the handler from whichever socket happens to be open at that moment.
+      const socket = this.socket;
+      const handler = (data: T) => observer.next(data);
+
+      socket?.on(event, handler);
+      return () => socket?.off(event, handler);
     });
   }
 

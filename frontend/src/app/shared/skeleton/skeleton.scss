@@ -1,0 +1,39 @@
+:host {
+  display: block;
+}
+
+.skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+
+  .skeleton-row {
+    display: block;
+    border-radius: 0.5rem;
+    background-color: var(--color-surface-container);
+    background-image: linear-gradient(
+      90deg,
+      transparent 0%,
+      var(--color-hover-surface-default) 45%,
+      transparent 90%
+    );
+    background-size: 18rem 100%;
+    background-repeat: no-repeat;
+    animation: skeleton-shimmer 1.15s linear infinite;
+  }
+}
+
+@keyframes skeleton-shimmer {
+  from {
+    background-position: -18rem 0;
+  }
+  to {
+    background-position: 18rem 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton .skeleton-row {
+    animation: none;
+  }
+}

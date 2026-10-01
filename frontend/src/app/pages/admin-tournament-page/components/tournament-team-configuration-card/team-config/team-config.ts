@@ -15,6 +15,7 @@ import { map } from 'rxjs';
 import { Nullable } from 'src/app/models/nullable.model';
 import { TeamConfigEvent, TeamConfigEventType } from 'src/app/models/team-config.model';
 import { ButtonIcon } from 'src/app/shared/button-icon/button-icon';
+import { StaggerDirective } from 'src/app/shared/stagger/stagger.directive';
 import { InputText } from 'src/app/shared/input-text/input-text';
 import { Icon } from 'src/app/shared/icon/icon';
 import { TounamentTeamDto, TournamentDto } from 'src/app/store/tournament/tournament.models';
@@ -36,7 +37,7 @@ const MOBILE_BREAKPOINT = '(max-width: ' + environment.limitMobileSizePx + 'px)'
 
 @Component({
   selector: 'app-team-config',
-  imports: [ButtonIcon, InputText, Icon, TeamCreationPanel, TeamForm],
+  imports: [ButtonIcon, InputText, Icon, TeamCreationPanel, TeamForm, StaggerDirective],
   templateUrl: './team-config.html',
   styleUrl: './team-config.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -67,6 +68,8 @@ export class TeamConfig {
   // Player rosters are collapsed by default and expand on demand — keeps the table
   // scannable for tournaments with many teams instead of always showing every roster.
   public readonly expandedTeamIds = signal<ReadonlySet<string>>(new Set());
+  public readonly teamStaggerKey = computed(() => this.filteredTeams().length);
+
   public readonly teamRows = computed(() => {
     const expanded = this.expandedTeamIds();
     return this.filteredTeams().map((team) => ({

@@ -74,8 +74,7 @@ export class TeamForm {
   public readonly canSubmit = computed(
     () =>
       this.teamPlayers().every((player) => !!player.name.trim()) &&
-      this.isChampionship() &&
-      !!this.teamClub(),
+      (!this.isChampionship() || (this.isChampionship() && !!this.teamClub())),
   );
 
   // ======= Actions =======

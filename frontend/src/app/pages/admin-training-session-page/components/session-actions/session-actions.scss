@@ -1,0 +1,77 @@
+:host {
+  display: block;
+}
+
+.session-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 0.8rem 1rem;
+  border-radius: 0.8rem;
+  background: var(--color-surface-container-low);
+  border: 1px solid var(--color-border-subtle);
+
+  .buttons {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+
+    .spacer {
+      flex: 1 1 auto;
+    }
+
+    @media (width < 768px) {
+      .spacer {
+        display: none;
+      }
+
+      app-button {
+        flex: 1 1 10rem;
+      }
+    }
+  }
+
+  // Same information band as the blocking message, in a neutral tone: nothing is wrong here.
+  .preview {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin: 0;
+    color: var(--color-on-surface-variant);
+    font-size: 0.8rem;
+
+    ::ng-deep .preview-icon {
+      color: var(--color-primary);
+      font-size: 1rem;
+    }
+  }
+
+  .blocked {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin: 0;
+    color: var(--color-on-surface-variant);
+    font-size: 0.8rem;
+
+    ::ng-deep .blocked-icon {
+      color: var(--color-primary);
+      font-size: 1rem;
+    }
+
+    // A session to unblock is not plain waiting: it calls for a move.
+    &--alert {
+      align-items: flex-start;
+      padding: 0.6rem 0.75rem;
+      border-radius: 0.6rem;
+      background: var(--color-status-draft-bg);
+      border: 1px solid var(--color-status-draft-border);
+      color: var(--color-status-draft-text);
+
+      ::ng-deep .blocked-icon {
+        color: var(--color-status-draft-text);
+      }
+    }
+  }
+}

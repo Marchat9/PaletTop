@@ -106,9 +106,9 @@
                 <div class="code">{{ tournament.code }}</div>
               </td>
               <td>
-                <span class="badge" [class]="'badge-' + tournament.status.toLowerCase()">
+                <app-status-pill [tone]="statusTones[tournament.status]">
                   {{ statusLabels[tournament.status] }}
-                </span>
+                </app-status-pill>
               </td>
               <td>{{ tournament.date | date: 'dd/MM/yyyy' }}</td>
               <td>{{ tournament.teamsCount }}</td>
