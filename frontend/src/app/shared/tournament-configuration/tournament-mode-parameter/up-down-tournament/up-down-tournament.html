@@ -12,4 +12,14 @@
       [step]="1"
     ></app-input-number>
   </div>
+
+  @if (isLastRoundByRankingAllowed(group().controls.numberOfRound.value)) {
+    <div class="form-group">
+      <app-input-checkbox
+        label="Dernière partie au classement"
+        description="La dernière partie n'est pas tirée au sort : chaque équipe affronte son voisin de classement (1er contre 2e, 3e contre 4e...). Si le nombre d'équipes est impair, le dernier du classement est exempté, sans point."
+        [formControl]="group().controls.lastRoundByRanking"
+      ></app-input-checkbox>
+    </div>
+  }
 </div>

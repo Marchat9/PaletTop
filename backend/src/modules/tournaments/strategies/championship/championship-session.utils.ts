@@ -10,7 +10,7 @@ export function computePhaseName(
         default:
             return '';
         case tournamentStatus === TournamentStatus.COMPLETED:
-            return `Championat terminé`;
+            return `Championnat terminé`;
         case tournamentStatus === TournamentStatus.ACTIVE:
             return `Phase ${currentSessionNumber}`;
     }

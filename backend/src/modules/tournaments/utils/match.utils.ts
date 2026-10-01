@@ -19,6 +19,7 @@ import { MatchStatus } from 'src/enum/status.enum';
 import { ConstraintConfig } from 'src/model/constraint.model';
 import { buildByeMatchData, selectByeTeam } from 'src/modules/tournaments/utils/bye.utils';
 import { generatePairsWithContraints } from 'src/modules/tournaments/utils/draw.utils';
+import { GlobalRankingEntry } from 'src/modules/tournaments/responses/ranking.dto';
 import {
     toSessionRef,
     toTeamRef,
@@ -80,6 +81,62 @@ export function generateMatchesInPool(
             isBye: false,
             status: MatchStatus.PENDING,
         });
+    }
+    return allMatches;
+}
+
+/**
+ * Orders teams by their ranking; teams tied on rank are ordered by id so the result
+ * never depends on the order the teams were loaded in. Teams missing from the ranking are dropped.
+ */
+export function orderTeamsByRanking(teams: Team[], ranking: GlobalRankingEntry[]): Team[] {
+    const teamsById = new Map(teams.map((team) => [team.id, team]));
+    return [...ranking]
+        .sort((a, b) => a.rank - b.rank || a.teamId.localeCompare(b.teamId))
+        .map((entry) => teamsById.get(entry.teamId))
+        .filter((team): team is Team => !!team);
+}
+
+/**
+ * Pairs each team with its ranking neighbour (1st vs 2nd, 3rd vs 4th, ...), ignoring the draw
+ * constraints. With an odd number of teams, the last-ranked one gets a bye worth nothing (0-0).
+ * Matches keep the ranking order so plate numbers follow it (plate 1 = 1st vs 2nd).
+ */
+export function generateMatchesByRanking(
+    pool: TournamentPool,
+    rankedTeams: Team[],
+    tournament: Tournament,
+    session: MatchesSession,
+): DeepPartial<TournamentMatch>[] {
+    const allMatches: DeepPartial<TournamentMatch>[] = [];
+
+    const tournamentRef: Tournament = toTournamentRef(tournament);
+    const sessionRef: MatchesSession = toSessionRef(session);
+
+    for (let i = 0; i + 1 < rankedTeams.length; i += 2) {
+        allMatches.push({
+            tournament: tournamentRef,
+            session: sessionRef,
+            sessionNumber: session.sessionNumber,
+            pool: pool,
+            teamA: toTeamRef(rankedTeams[i]),
+            teamB: toTeamRef(rankedTeams[i + 1]),
+            isBye: false,
+            status: MatchStatus.PENDING,
+        });
+    }
+
+    if (rankedTeams.length % 2 !== 0) {
+        allMatches.push(
+            buildByeMatchData(
+                toTeamRef(rankedTeams[rankedTeams.length - 1]),
+                tournamentRef,
+                pool,
+                sessionRef,
+                0,
+                session.sessionNumber,
+            ),
+        );
     }
     return allMatches;
 }

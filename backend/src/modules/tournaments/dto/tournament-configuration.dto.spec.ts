@@ -83,4 +83,37 @@ describe('TournamentConfigurationDto', () => {
         };
         expect(validate(withOddBracket)).toEqual([]);
     });
+
+    describe('montée / descente — dernière partie au classement', () => {
+        function upDown(competitionConfiguration: Record<string, unknown>) {
+            return {
+                ...structuredConfig,
+                competitionMode: CompetitionMode.UP_DOWN,
+                competitionConfiguration,
+            };
+        }
+
+        it('accepte l’option avec au moins 2 parties', () => {
+            expect(validate(upDown({ numberOfRound: 2, lastRoundByRanking: true }))).toEqual([]);
+        });
+
+        it('accepte l’option décochée sans nombre de parties', () => {
+            expect(validate(upDown({ lastRoundByRanking: false }))).toEqual([]);
+        });
+
+        it('rejette l’option sans nombre de parties ou avec une seule partie', () => {
+            expect(validate(upDown({ lastRoundByRanking: true }))).toContain(
+                'competitionConfiguration',
+            );
+            expect(validate(upDown({ numberOfRound: 1, lastRoundByRanking: true }))).toContain(
+                'competitionConfiguration',
+            );
+        });
+
+        it('rejette une valeur non booléenne', () => {
+            expect(validate(upDown({ numberOfRound: 5, lastRoundByRanking: 'oui' }))).toContain(
+                'competitionConfiguration',
+            );
+        });
+    });
 });

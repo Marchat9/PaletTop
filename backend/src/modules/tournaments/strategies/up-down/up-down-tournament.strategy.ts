@@ -15,7 +15,12 @@ import {
 import { DeepPartial } from 'typeorm';
 import { TournamentStatusInfo } from '../../../tournaments/responses/tournament-status.dto';
 import { TournamentStrategy } from '../tournament-strategy.abstract';
-import { generateMatchesInPool } from 'src/modules/tournaments/utils/match.utils';
+import {
+    generateMatchesByRanking,
+    generateMatchesInPool,
+    orderTeamsByRanking,
+} from 'src/modules/tournaments/utils/match.utils';
+import { computePhaseName, isRankingRound } from './up-down-session.utils';
 
 export class UpDownTournamentStrategy extends TournamentStrategy {
     private readonly logger = new Logger(UpDownTournamentStrategy.name);
@@ -43,14 +48,28 @@ export class UpDownTournamentStrategy extends TournamentStrategy {
             );
         }
 
-        const partialMatches: DeepPartial<TournamentMatch>[] = generateMatchesInPool(
-            { id: pool.id } as TournamentPool,
-            pool.teams,
-            tournament,
-            session,
-            constraintConfig,
-            pastMatches,
-        );
+        const poolRef = { id: pool.id } as TournamentPool;
+        const partialMatches: DeepPartial<TournamentMatch>[] = isRankingRound(
+            this.getConfig(tournament),
+            session.sessionNumber,
+        )
+            ? generateMatchesByRanking(
+                  poolRef,
+                  orderTeamsByRanking(
+                      pool.teams,
+                      this.computeGlobalRanking(tournament, pastMatches),
+                  ),
+                  tournament,
+                  session,
+              )
+            : generateMatchesInPool(
+                  poolRef,
+                  pool.teams,
+                  tournament,
+                  session,
+                  constraintConfig,
+                  pastMatches,
+              );
 
         const matches = partialMatches.map((match) => this.matchRepo.create(match));
 
@@ -88,7 +107,7 @@ export class UpDownTournamentStrategy extends TournamentStrategy {
 
         return {
             currentSession: currentSessionNumber,
-            phaseName: 'Montée / Descente',
+            phaseName: computePhaseName(tournament.status, currentSessionNumber, config),
             canFinishTournament:
                 tournament.status === TournamentStatus.ACTIVE && allValidated && canFinish,
             canGenerateNewSession:

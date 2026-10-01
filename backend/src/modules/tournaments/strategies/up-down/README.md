@@ -2,45 +2,37 @@
 
 ## Principe
 
-Le tournoi montant-descendant (aussi appelé progressif) ne repose pas sur des poules fixes. Toutes les équipes sont dans un seul groupe et s'affrontent selon leur niveau courant, qui se précise au fil des sessions.
+Le tournoi montant-descendant ne repose pas sur des poules fixes : toutes les équipes sont dans une seule poule technique et jouent une série de parties.
 
-- **Session 1** : tirage aléatoire (pas de classement disponible)
-- **Sessions suivantes** : appariement par niveau — l'équipe classée 1re joue contre la 2e, la 3e contre la 4e, etc.
+- **Parties tirées au sort** : chaque partie est un tirage aléatoire sous contraintes (même club, revanche), via `generateMatchesInPool` — le même algorithme que les phases de poule du mode STANDARD.
+- **Dernière partie au classement** (option `lastRoundByRanking`) : si l'option est cochée et que `numberOfRound` vaut au moins 2, la partie `numberOfRound` n'est pas tirée au sort.
 
-Ce système permet d'affiner progressivement le classement réel des équipes : les meilleures équipes se retrouvent face à des adversaires de niveau similaire au fil du tournoi.
+## Dernière partie au classement
 
-## Différences avec le mode STANDARD
+Quand `isRankingRound(config, sessionNumber)` est vrai :
 
-| Aspect | STANDARD | UP_DOWN |
-|--------|----------|---------|
-| Poules | Oui, fixes | Non — toutes les équipes dans un seul groupe |
-| `assignTeamsToPools` | Distribution aléatoire | No-op (pas de poules) |
-| Appariement | Round-robin aléatoire dans la poule | Par rang de classement courant |
-| Bye | Possible (poule impaire) | Possible (nombre total d'équipes impair) |
-| Classement | Par poule puis global | Global uniquement |
+1. Le classement global est calculé après la partie précédente (`computeGlobalRanking`, selon la méthode de calcul du tournoi).
+2. Les équipes sont triées par rang ; une égalité stricte est départagée par l'identifiant de l'équipe (`orderTeamsByRanking`), pour un résultat reproductible.
+3. Chaque équipe affronte son voisin de classement : 1re contre 2e, 3e contre 4e… (`generateMatchesByRanking`). Les contraintes de tirage sont ignorées.
+4. Avec un nombre impair d'équipes, la dernière du classement est exemptée avec un **bye sans point** (0-0) : ni victoire, ni point, aussi bien dans le classement global que dans le classement de poule.
+5. Les plaques suivent l'ordre du classement (plaque 1 = 1re contre 2e).
 
-## État d'implémentation
+## Configuration
 
-`generateSessionMatches` n'est pas encore implémentée — elle lève `NotImplementedException`.
+| Champ                | Description                                                               |
+| -------------------- | ------------------------------------------------------------------------- |
+| `numberOfRound`      | Nombre de parties. Vide : illimité, l'admin clôture quand il le souhaite. |
+| `lastRoundByRanking` | Dernière partie au classement. Requiert `numberOfRound >= 2`.             |
 
-### Ce qui reste à faire
+## Phase affichée (`phaseName`)
 
-1. **Session 1** : tirage purement aléatoire entre toutes les équipes
-2. **Sessions suivantes** :
-   - Calculer le classement courant à partir de `pastMatches`
-   - Apparier les équipes par rang (1 vs 2, 3 vs 4, …)
-   - Gérer le bye si le nombre d'équipes est impair
-   - Attribuer les numéros de plaque
-   - Créer et persister les `TournamentMatch[]`
-
-Les matchs créés n'ont **pas de pool** (`pool = null`).
-
-### Dépendances à injecter (lors de l'implémentation)
-
-- `MatchRepository` — pour créer et persister les matchs
-- `DrawService` ou une logique équivalente — pour le tirage de la session 1
-- Potentiellement `ByeUtils` pour la sélection de l'équipe exemptée
+| Statut du tournoi                       | Libellé                                               |
+| --------------------------------------- | ----------------------------------------------------- |
+| Brouillon / annulé                      | _(vide)_                                              |
+| En cours                                | `Partie x/N` (ou `Partie x` sans limite)              |
+| En cours, dernière partie au classement | `Montée / Descente — Dernière partie (au classement)` |
+| Terminé                                 | `Montée / Descente terminée`                          |
 
 ## Classement
 
-`computeGlobalRanking` n'est plus surchargée ici : la classe de base gère déjà le tri selon `scoreCalculation` du tournoi (y compris les points par paliers pour `tournament_score`), ce qui couvre ce mode sans logique spécifique.
+`computeGlobalRanking` n'est pas surchargée ici : la classe de base trie selon `scoreCalculation` du tournoi, ce qui couvre ce mode sans logique spécifique.

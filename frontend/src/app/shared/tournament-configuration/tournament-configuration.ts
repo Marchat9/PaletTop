@@ -25,6 +25,7 @@ import {
 import {
   applyCompetitionModeSideEffects,
   getInvalidFieldNames,
+  resetLastRoundByRankingIfNotAllowed,
 } from './tournament-configuration.utils';
 import { TournamentModeParameter } from './tournament-mode-parameter/tournament-mode-parameter';
 import { TournamentParameters } from './tournament-parameters/tournament-parameters';
@@ -166,6 +167,9 @@ export class TournamentConfiguration implements OnInit {
           numberOfRound: new FormControl(upDownConfig.numberOfRound ?? undefined, {
             nonNullable: true,
           }),
+          lastRoundByRanking: new FormControl(upDownConfig.lastRoundByRanking ?? false, {
+            nonNullable: true,
+          }),
         }),
         championshipMode: new FormGroup({
           // Required only while championship is the active mode — otherwise these two
@@ -196,6 +200,15 @@ export class TournamentConfiguration implements OnInit {
         formValues();
         const fields = getInvalidFieldNames(this.form);
         this.invalidFields.emit(fields.length ? fields : null);
+      },
+      { injector: this.injector },
+    );
+
+    // effect to uncheck the ranking-based last round once fewer than 2 rounds are configured
+    effect(
+      () => {
+        formValues();
+        resetLastRoundByRankingIfNotAllowed(this.form);
       },
       { injector: this.injector },
     );

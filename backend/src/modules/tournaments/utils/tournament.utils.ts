@@ -61,6 +61,7 @@ export function extractCompetitionConfiguration(
             const upDownConfig = config.competitionConfiguration as UpDownCompetitionConfiguration;
             return {
                 numberOfRound: upDownConfig.numberOfRound,
+                lastRoundByRanking: upDownConfig.lastRoundByRanking ?? false,
             };
         }
         case CompetitionMode.CHAMPIONSHIP: {
