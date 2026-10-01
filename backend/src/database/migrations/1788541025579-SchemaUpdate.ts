@@ -47,7 +47,10 @@ export class SchemaUpdate1788541025579 implements MigrationInterface {
             `CREATE TYPE "public"."training_session_status_enum" AS ENUM('OPEN', 'CLOSED')`,
         );
         await queryRunner.query(
-            `CREATE TABLE "training_session" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "code" character varying NOT NULL, "date" TIMESTAMP WITH TIME ZONE NOT NULL, "status" "public"."training_session_status_enum" NOT NULL DEFAULT 'OPEN', "playersPerTeam" integer NOT NULL, "fallbackTeamSize" integer NOT NULL, "allowSitOut" boolean NOT NULL DEFAULT false, "avoidSamePartnerConsecutive" boolean NOT NULL DEFAULT true, "avoidSameOpponentConsecutive" boolean NOT NULL DEFAULT true, "pointsPerGame" integer NOT NULL, "lastActivityAt" TIMESTAMP WITH TIME ZONE NOT NULL, "closedAt" TIMESTAMP WITH TIME ZONE, "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "training_id" uuid NOT NULL, CONSTRAINT "UQ_6fecc1190baf586bf61310aa88c" UNIQUE ("code"), CONSTRAINT "PK_a17a9657ff5a6e048bfd82c4651" PRIMARY KEY ("id"))`,
+            `CREATE TYPE "public"."training_session_teamcomposition_enum" AS ENUM('RANDOM', 'LEARNING')`,
+        );
+        await queryRunner.query(
+            `CREATE TABLE "training_session" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "code" character varying NOT NULL, "date" TIMESTAMP WITH TIME ZONE NOT NULL, "status" "public"."training_session_status_enum" NOT NULL DEFAULT 'OPEN', "playersPerTeam" integer NOT NULL, "allowedTeamSizes" integer array NOT NULL DEFAULT '{}', "preferTargetTeamSize" boolean NOT NULL DEFAULT false, "plateCount" integer NOT NULL DEFAULT 99, "teamComposition" "public"."training_session_teamcomposition_enum" NOT NULL DEFAULT 'RANDOM', "avoidSamePartnerConsecutive" boolean NOT NULL DEFAULT true, "avoidSameOpponentConsecutive" boolean NOT NULL DEFAULT true, "pointsPerGame" integer NOT NULL, "lastActivityAt" TIMESTAMP WITH TIME ZONE NOT NULL, "closedAt" TIMESTAMP WITH TIME ZONE, "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "training_id" uuid NOT NULL, CONSTRAINT "UQ_6fecc1190baf586bf61310aa88c" UNIQUE ("code"), CONSTRAINT "PK_a17a9657ff5a6e048bfd82c4651" PRIMARY KEY ("id"))`,
         );
         await queryRunner.query(
             `CREATE TABLE "training" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "code" character varying NOT NULL, "name" character varying NOT NULL, "club" character varying, "adminPassword" character varying NOT NULL, "createdAt" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "UQ_603d5cfbfa4973da0a2e4d76873" UNIQUE ("code"), CONSTRAINT "PK_c436c96be3adf1aa439ef471427" PRIMARY KEY ("id"))`,
@@ -135,6 +138,7 @@ export class SchemaUpdate1788541025579 implements MigrationInterface {
         );
         await queryRunner.query(`DROP TABLE "training"`);
         await queryRunner.query(`DROP TABLE "training_session"`);
+        await queryRunner.query(`DROP TYPE "public"."training_session_teamcomposition_enum"`);
         await queryRunner.query(`DROP TYPE "public"."training_session_status_enum"`);
         await queryRunner.query(`DROP TABLE "training_team"`);
         await queryRunner.query(`DROP TYPE "public"."training_team_kind_enum"`);
