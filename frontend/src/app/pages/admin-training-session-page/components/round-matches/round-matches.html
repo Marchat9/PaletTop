@@ -6,7 +6,7 @@
       [class.is-editing]="editingMatchId() === row.match.id"
     >
       @if (editingMatchId() === row.match.id) {
-        <span class="plate">Planche N°{{ row.plateNumber }}</span>
+        <span class="plate">Plaque N°{{ row.plateNumber }}</span>
         <span class="team">{{ teamLabel(row.match.teamA) }}</span>
         <div class="edit-scores">
           <app-input-number
@@ -37,9 +37,9 @@
       } @else if (row.match.isBye) {
         <span class="team">{{ teamLabel(row.match.teamA) }}</span>
         <span class="spacer"></span>
-        <app-status-pill tone="draft">Au repos ce round</app-status-pill>
+        <app-status-pill tone="draft">Au repos pour cette partie</app-status-pill>
       } @else {
-        <span class="plate">Planche N°{{ row.plateNumber }}</span>
+        <span class="plate">Plaque N°{{ row.plateNumber }}</span>
         <span class="team">{{ teamLabel(row.match.teamA) }}</span>
         <span class="score" [appAnimateOnChange]="row.match.scoreA + '-' + row.match.scoreB">
           <strong>{{ row.match.scoreA }}</strong>
@@ -71,6 +71,6 @@
       }
     </div>
   } @empty {
-    <p class="empty">Aucun match dans ce round.</p>
+    <p class="empty">Aucun match dans cette partie.</p>
   }
 </div>

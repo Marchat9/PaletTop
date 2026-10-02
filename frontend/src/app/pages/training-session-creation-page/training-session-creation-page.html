@@ -62,7 +62,7 @@
               [max]="maxPlayersPerTeam"
               (valueChange)="playersPerTeam.set($event)"
             />
-            <p class="field-help">Taille visée pour les équipes de chaque round.</p>
+            <p class="field-help">Taille visée pour les équipes de chaque partie.</p>
           </div>
 
           <div class="field">
@@ -125,8 +125,8 @@
               (valueChange)="plateCount.set($event)"
             />
             <p class="field-help">
-              Jamais plus de matchs en même temps que de plaques. Les équipes en trop attendent le
-              round suivant.
+              Jamais plus de matchs en même temps que de plaques. Les équipes en trop attendent la
+              partie suivante.
             </p>
           </div>
         </div>
@@ -138,7 +138,7 @@
           <div class="rule">
             <div class="rule-text">
               <strong>Éviter le même partenaire</strong>
-              <span>Mélange les binômes d'un round à l'autre.</span>
+              <span>Mélange les binômes d'une partie à l'autre.</span>
             </div>
             <app-switch
               [checked]="avoidSamePartnerConsecutive()"
@@ -149,7 +149,7 @@
           <div class="rule">
             <div class="rule-text">
               <strong>Éviter le même adversaire</strong>
-              <span>Évite de rejouer contre la même équipe au round suivant.</span>
+              <span>Évite de rejouer contre la même équipe à la partie suivante.</span>
             </div>
             <app-switch
               [checked]="avoidSameOpponentConsecutive()"

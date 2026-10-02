@@ -22,7 +22,7 @@
         }
       }
       @if (currentSession() && !isTournamentEnded()) {
-        <span class="badge">Round : {{ currentSession()!.sessionNumber || '-' }}</span>
+        <span class="badge">Partie : {{ currentSession()!.sessionNumber || '-' }}</span>
       }
     </div>
     @if (!isMobile()) {

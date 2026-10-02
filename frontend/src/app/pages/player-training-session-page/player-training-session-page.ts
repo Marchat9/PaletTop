@@ -188,7 +188,7 @@ export class PlayerTrainingSessionPage implements OnInit, OnDestroy {
       return null;
     }
     if (this.isSittingOut()) {
-      return 'Au repos ce round';
+      return 'Au repos pour cette partie';
     }
     if (this.isSessionClosed()) {
       return this.cardMatch() ? 'Dernier match' : null;
@@ -227,7 +227,7 @@ export class PlayerTrainingSessionPage implements OnInit, OnDestroy {
 
   public readonly byeCopy: PlayerByeCopy = {
     title: 'Au repos',
-    message: 'Vous ne jouez pas ce round. Le prochain vous remettra en jeu.',
+    message: 'Vous ne jouez pas cette partie. La prochaine vous remettra en jeu.',
   };
 
   public readonly validationCopy: PlayerValidationCopy = {

@@ -1,22 +1,22 @@
 <section class="session-round">
   @if (isLoading() && !round()) {
     <div class="head">
-      <h2>Round en cours</h2>
+      <h2>Partie en cours</h2>
     </div>
     <app-skeleton [rows]="3" height="3.2rem" />
   } @else if (!round()) {
     <div class="empty-state">
       <app-icon name="sports_score" iconClass="empty-icon" [ariaHidden]="true" />
-      <h2>Aucun round généré</h2>
+      <h2>Aucune partie générée</h2>
       <p>
-        Inscrivez les joueurs présents, puis générez le premier round : les équipes seront formées
+        Inscrivez les joueurs présents, puis générez la première partie : les équipes seront formées
         automatiquement selon les réglages de la séance.
       </p>
     </div>
   } @else {
     <div class="head">
       <div class="title">
-        <h2>Round {{ round()!.roundNumber }}</h2>
+        <h2>Partie {{ round()!.roundNumber }}</h2>
         <span class="sub">
           {{ matchCount() }} {{ matchCount() > 1 ? 'matchs' : 'match' }}
           @if (byeCount() > 0) {

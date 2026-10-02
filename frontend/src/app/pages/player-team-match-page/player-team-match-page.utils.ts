@@ -36,7 +36,7 @@ export function toPlayerMatchView(match: PlayerMatchDto, teamId: string): Player
     startedAt: match.startedAt,
     finishedAt: match.finishedAt,
     subtitle: match.isBye
-      ? `Round ${match.session.sessionNumber}`
+      ? `Partie ${match.session.sessionNumber}`
       : `Plaque N°${match.plateNumber ?? '—'}`,
   };
 }

@@ -32,12 +32,12 @@
     } @else if (roundNumber(); as round) {
       <span class="badge badge--open">
         <app-icon name="sports_score" iconClass="badge-icon" [ariaHidden]="true" />
-        Round {{ round }}
+        Partie {{ round }}
       </span>
     } @else {
       <span class="badge badge--waiting">
         <app-icon name="hourglass_empty" iconClass="badge-icon" [ariaHidden]="true" />
-        En attente du premier round
+        En attente de la première partie
       </span>
     }
   </div>

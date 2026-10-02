@@ -15,7 +15,7 @@ function buildMatch(overrides: Partial<PlayerMatchView> = {}): PlayerMatchView {
     iAmTeamA: true,
     startedAt: null,
     finishedAt: null,
-    subtitle: 'Round 3',
+    subtitle: 'Partie 3',
     ...overrides,
   };
 }
@@ -132,7 +132,7 @@ describe('PlayerMatchCard', () => {
 
   it('annonce le repos sans proposer de score', () => {
     const fixture = setup(buildMatch({ isBye: true, status: 'PENDING' }), {
-      byeCopy: { title: 'Au repos', message: 'Vous ne jouez pas ce round.' },
+      byeCopy: { title: 'Au repos', message: 'Vous ne jouez pas cette partie.' },
     });
 
     expect(element(fixture).textContent).toContain('Au repos');

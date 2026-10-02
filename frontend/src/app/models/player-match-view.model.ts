@@ -28,7 +28,7 @@ export interface PlayerMatchView {
   iAmTeamA: boolean;
   startedAt: Nullable<string>;
   finishedAt: Nullable<string>;
-  /** "Plaque N°3" in a tournament, "Round 3" in a training session. */
+  /** "Plaque N°3" in a tournament, "Partie 3" in a training session. */
   subtitle: Nullable<string>;
 }
 
@@ -53,7 +53,7 @@ export interface PlayerValidationCopy {
 /** One line of the player's match history. */
 export interface PlayerMatchResult {
   id: string;
-  /** "Match 3" in a tournament, "Round 3" in a training session. */
+  /** "Match 3" in a tournament, "Partie 3" in a training session. */
   label: string;
   status: string;
   myScore: number;

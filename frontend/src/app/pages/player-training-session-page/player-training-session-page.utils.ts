@@ -50,7 +50,7 @@ export function toPlayerMatchView(
     iAmTeamA,
     startedAt: match.startedAt ?? null,
     finishedAt: match.finishedAt ?? null,
-    subtitle: roundNumber ? `Round ${roundNumber}` : null,
+    subtitle: roundNumber ? `Partie ${roundNumber}` : null,
   };
 }
 

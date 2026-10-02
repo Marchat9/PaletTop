@@ -68,7 +68,7 @@ export class TrainingRoundsService {
             );
             if (hasUnfinishedMatch) {
                 throw new BadRequestException(
-                    'Tous les matchs du round précédent doivent être validés avant de générer le suivant.',
+                    'Tous les matchs de la partie précédente doivent être validés avant de générer la suivante.',
                 );
             }
         }
@@ -94,7 +94,7 @@ export class TrainingRoundsService {
             .map((p) => p.id);
 
         if (activeFixedTeams.length === 0 && soloParticipantIds.length === 0) {
-            throw new BadRequestException('Aucun participant présent pour générer un round.');
+            throw new BadRequestException('Aucun participant présent pour générer une partie.');
         }
 
         const input: GenerateRoundInput = {
@@ -215,7 +215,7 @@ export class TrainingRoundsService {
         const session = await this.trainingSessionRepo.findByCodeOrThrow(sessionCode);
         const round = await this.trainingRoundRepo.findBySessionAndNumber(session.id, roundNumber);
         if (!round) {
-            throw new NotFoundException('Round introuvable pour cette session.');
+            throw new NotFoundException('Partie introuvable pour cette session.');
         }
         return toTrainingRoundDto(round);
     }

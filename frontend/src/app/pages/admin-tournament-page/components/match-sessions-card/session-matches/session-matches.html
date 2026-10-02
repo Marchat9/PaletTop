@@ -18,7 +18,7 @@
             @if (editingMatchId() === match.id) {
               <div class="edit-row">
                 <span class="plate">
-                  <span class="plate-label">Planche N°{{ match.plateNumber }}</span>
+                  <span class="plate-label">Plaque N°{{ match.plateNumber }}</span>
                 </span>
                 <div class="teams-and-score edit-mode">
                   <span class="team team-a">{{ match.teamA.name }}</span>
@@ -53,7 +53,7 @@
             } @else {
               @if (!match.isBye) {
                 <span class="plate">
-                  <span class="plate-label">Planche N°{{ match.plateNumber }}</span>
+                  <span class="plate-label">Plaque N°{{ match.plateNumber }}</span>
                 </span>
               }
               <div class="teams-and-score">

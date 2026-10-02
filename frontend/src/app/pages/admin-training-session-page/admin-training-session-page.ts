@@ -247,14 +247,14 @@ export class AdminTrainingSessionPage implements OnInit, OnDestroy {
       return null;
     }
     if (this.presentParticipants().length === 0) {
-      return 'Inscrivez au moins un joueur pour générer un round.';
+      return 'Inscrivez au moins un joueur pour générer une partie.';
     }
 
     const gone = this.goneFromBlockingMatches();
     if (gone.length > 0) {
       const who = gone.join(' et ');
       const verb = gone.length > 1 ? 'sont parti(e)s' : 'est parti(e)';
-      return `${who} ${verb} en cours de match. Corrigez le score de ce match (crayon sur sa ligne) pour débloquer le round suivant.`;
+      return `${who} ${verb} en cours de match. Corrigez le score de ce match (crayon sur sa ligne) pour débloquer la partie suivante.`;
     }
 
     // No combination of sizes can form two teams: say it before the click, with what has to change.
@@ -263,7 +263,7 @@ export class AdminTrainingSessionPage implements OnInit, OnDestroy {
       return describeRoundPreview(this.presentParticipants().length, settings, 'present');
     }
 
-    return 'Tous les matchs du round en cours doivent être validés avant de générer le suivant.';
+    return 'Tous les matchs de la partie en cours doivent être validés avant de générer le suivant.';
   });
 
   /** These blocks call for an action from the admin, not just for patience. */
@@ -424,7 +424,7 @@ export class AdminTrainingSessionPage implements OnInit, OnDestroy {
 
     const data: ConfirmationData = {
       title: 'Marquer comme parti',
-      message: `${participant.name} ne sera plus apparié(e) aux prochains rounds. Ses résultats restent au classement de la séance.`,
+      message: `${participant.name} ne sera plus apparié(e) aux prochaines parties. Ses résultats restent au classement de la séance.`,
       confirmLabel: 'Marquer comme parti',
     };
 
@@ -469,7 +469,7 @@ export class AdminTrainingSessionPage implements OnInit, OnDestroy {
     const teamLabel = team.name || team.members.map((member) => member.name).join(' · ');
     const data: ConfirmationData = {
       title: "Dissoudre l'équipe",
-      message: `${teamLabel} ne jouera plus ensemble. Les joueurs seront appariés individuellement aux prochains rounds.`,
+      message: `${teamLabel} ne jouera plus ensemble. Les joueurs seront appariés individuellement aux prochaines parties.`,
       confirmLabel: 'Dissoudre',
     };
 
@@ -521,7 +521,7 @@ export class AdminTrainingSessionPage implements OnInit, OnDestroy {
     const data: ConfirmationData = {
       title: 'Clôturer la séance',
       message:
-        'Cette action est irréversible. Aucun nouveau round ni check-in ne sera possible, et le classement sera figé.',
+        'Cette action est irréversible. Aucune nouvelle partie ni check-in ne sera possible, et le classement sera figé.',
       confirmLabel: 'Clôturer',
     };
 
