@@ -11,7 +11,7 @@ export class SpectatorService {
 
   public getTournament(code: string): Observable<SpectatorTournamentDto> {
     return this.http.get<SpectatorTournamentDto>(
-      `${this.apiBaseUrl}/tournaments/spectator/${code}`,
+      `${this.apiBaseUrl}/tournaments/spectator/${encodeURIComponent(code)}`,
     );
   }
 }

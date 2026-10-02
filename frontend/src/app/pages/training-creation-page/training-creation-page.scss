@@ -105,6 +105,10 @@
       margin: 0;
       color: var(--color-on-surface-variant);
       font-size: 0.76rem;
+
+      &.invalid {
+        color: var(--color-error);
+      }
     }
   }
 

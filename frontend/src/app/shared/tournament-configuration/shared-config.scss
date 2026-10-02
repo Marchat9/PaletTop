@@ -36,6 +36,16 @@
       line-height: 1;
     }
 
+    .form-help {
+      margin: 0;
+      font-size: 0.76rem;
+      color: var(--color-on-surface-variant);
+
+      &.invalid {
+        color: var(--color-error);
+      }
+    }
+
     .form-label {
       font-size: 0.9rem;
       font-weight: 600;

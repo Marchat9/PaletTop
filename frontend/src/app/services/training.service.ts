@@ -49,18 +49,24 @@ export class TrainingService {
     name?: string,
     description?: string,
   ): Observable<AdminTrainingDto> {
-    return this.http.patch<AdminTrainingDto>(`${this.apiBaseUrl}/trainings/${code}`, {
-      password,
-      name,
-      description,
-    });
+    return this.http.patch<AdminTrainingDto>(
+      `${this.apiBaseUrl}/trainings/${encodeURIComponent(code)}`,
+      {
+        password,
+        name,
+        description,
+      },
+    );
   }
 
   public addMember(code: string, password: string, name: string): Observable<AdminTrainingDto> {
-    return this.http.post<AdminTrainingDto>(`${this.apiBaseUrl}/trainings/${code}/members`, {
-      password,
-      name,
-    });
+    return this.http.post<AdminTrainingDto>(
+      `${this.apiBaseUrl}/trainings/${encodeURIComponent(code)}/members`,
+      {
+        password,
+        name,
+      },
+    );
   }
 
   public removeMember(
@@ -69,7 +75,7 @@ export class TrainingService {
     password: string,
   ): Observable<AdminTrainingDto> {
     return this.http.delete<AdminTrainingDto>(
-      `${this.apiBaseUrl}/trainings/${code}/members/${memberId}`,
+      `${this.apiBaseUrl}/trainings/${encodeURIComponent(code)}/members/${memberId}`,
       { body: { password } },
     );
   }
@@ -81,7 +87,7 @@ export class TrainingService {
     configuration: TrainingSessionConfigurationDto,
   ): Observable<TrainingSessionAdminDto> {
     return this.http.post<TrainingSessionAdminDto>(
-      `${this.apiBaseUrl}/trainings/${trainingCode}/sessions`,
+      `${this.apiBaseUrl}/trainings/${encodeURIComponent(trainingCode)}/sessions`,
       { password, ...configuration },
     );
   }
@@ -91,7 +97,7 @@ export class TrainingService {
     password: string,
   ): Observable<TrainingSessionSummaryDto[]> {
     return this.http.post<TrainingSessionSummaryDto[]>(
-      `${this.apiBaseUrl}/trainings/${trainingCode}/sessions/list`,
+      `${this.apiBaseUrl}/trainings/${encodeURIComponent(trainingCode)}/sessions/list`,
       { password },
     );
   }

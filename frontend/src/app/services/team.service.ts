@@ -11,7 +11,7 @@ export class TeamService {
 
   public getTeam(tournamentCode: string, teamCode: string): Observable<TeamDto> {
     return this.http.get<TeamDto>(
-      `${this.apiBaseUrl}/tournaments/${tournamentCode}/teams/${teamCode}`,
+      `${this.apiBaseUrl}/tournaments/${encodeURIComponent(tournamentCode)}/teams/${teamCode}`,
     );
   }
 
@@ -21,7 +21,7 @@ export class TeamService {
     request: UpdateTeamRequest,
   ): Observable<TeamDto> {
     return this.http.patch<TeamDto>(
-      `${this.apiBaseUrl}/tournaments/${tournamentCode}/teams/${teamCode}`,
+      `${this.apiBaseUrl}/tournaments/${encodeURIComponent(tournamentCode)}/teams/${teamCode}`,
       request,
     );
   }
@@ -32,7 +32,7 @@ export class TeamService {
     request: DeleteTeamRequest,
   ): Observable<void> {
     return this.http.delete<void>(
-      `${this.apiBaseUrl}/tournaments/${tournamentCode}/teams/${teamCode}`,
+      `${this.apiBaseUrl}/tournaments/${encodeURIComponent(tournamentCode)}/teams/${teamCode}`,
       { body: request },
     );
   }
