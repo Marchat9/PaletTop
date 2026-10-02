@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, Signal } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
 import { environment } from '@environment';
 import { InputCheckbox } from 'src/app/shared/input-checkbox/input-checkbox';
@@ -33,5 +33,7 @@ export class UpDownTournament {
     environment.tournamentConfiguration.numberOfQualifyingRounds;
   public readonly numberOfPoolsConfig = environment.tournamentConfiguration.numberOfPools;
 
-  public readonly isLastRoundByRankingAllowed = isLastRoundByRankingAllowed;
+  public readonly isLastRoundByRankingAllowed: Signal<boolean> = computed(() =>
+    isLastRoundByRankingAllowed(this.group().controls.numberOfRound.value),
+  );
 }

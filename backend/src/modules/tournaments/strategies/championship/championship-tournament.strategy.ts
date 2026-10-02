@@ -36,7 +36,7 @@ export class ChampionshipTournamentStrategy extends TournamentStrategy {
 
     override async prepareTournamentStart(tournament: Tournament): Promise<Tournament> {
         if (tournament.teams.length !== this.nbTotalTeam) {
-            throw new Error(`Il faut exactement ${this.nbTotalTeam} équipes pour un championats`);
+            throw new Error(`Il faut exactement ${this.nbTotalTeam} équipes pour un championnats`);
         }
 
         const config = this.getConfig(tournament);

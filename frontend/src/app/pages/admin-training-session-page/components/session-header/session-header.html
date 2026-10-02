@@ -33,15 +33,6 @@
       Chaque joueur se connecte avec ce code, suivi de son code personnel à quatre chiffres.
     </p>
 
-    @if (rules().length > 0) {
-      <div class="rules">
-        @for (rule of rules(); track rule.label) {
-          <span class="rule">
-            <app-icon [name]="rule.icon" iconClass="rule-icon" [ariaHidden]="true" />
-            {{ rule.label }}
-          </span>
-        }
-      </div>
-    }
+    <app-rule-pills [rules]="rules()" />
   </div>
 </app-card>

@@ -13,7 +13,7 @@
     ></app-input-number>
   </div>
 
-  @if (isLastRoundByRankingAllowed(group().controls.numberOfRound.value)) {
+  @if (isLastRoundByRankingAllowed()) {
     <div class="form-group">
       <app-input-checkbox
         label="Dernière partie au classement"
