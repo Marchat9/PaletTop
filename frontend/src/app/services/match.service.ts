@@ -15,14 +15,17 @@ export class MatchService {
     teamCode: string,
   ): Observable<Nullable<PlayerMatchDto>> {
     return this.http.get<Nullable<PlayerMatchDto>>(
-      `${this.apiBaseUrl}/tournaments/${tournamentCode}/teams/${teamCode}/match`,
+      `${this.apiBaseUrl}/tournaments/${encodeURIComponent(tournamentCode)}/teams/${teamCode}/match`,
     );
   }
 
   public startMatch(code: string, matchId: string, teamCode: string): Observable<void> {
-    return this.http.post<void>(`${this.apiBaseUrl}/tournaments/${code}/matches/${matchId}/start`, {
-      teamCode,
-    });
+    return this.http.post<void>(
+      `${this.apiBaseUrl}/tournaments/${encodeURIComponent(code)}/matches/${matchId}/start`,
+      {
+        teamCode,
+      },
+    );
   }
 
   public updateScore(
@@ -33,7 +36,7 @@ export class MatchService {
     scoreB: number,
   ): Observable<void> {
     return this.http.patch<void>(
-      `${this.apiBaseUrl}/tournaments/${code}/matches/${matchId}/score`,
+      `${this.apiBaseUrl}/tournaments/${encodeURIComponent(code)}/matches/${matchId}/score`,
       { teamCode, scoreA, scoreB },
     );
   }
@@ -45,7 +48,7 @@ export class MatchService {
     opponentTeamCode: string,
   ): Observable<void> {
     return this.http.post<void>(
-      `${this.apiBaseUrl}/tournaments/${code}/matches/${matchId}/validate`,
+      `${this.apiBaseUrl}/tournaments/${encodeURIComponent(code)}/matches/${matchId}/validate`,
       { teamCode, opponentTeamCode },
     );
   }
@@ -58,7 +61,7 @@ export class MatchService {
     scoreB: number,
   ): Observable<void> {
     return this.http.patch<void>(
-      `${this.apiBaseUrl}/tournaments/${code}/matches/${matchId}/score/admin`,
+      `${this.apiBaseUrl}/tournaments/${encodeURIComponent(code)}/matches/${matchId}/score/admin`,
       { password, scoreA, scoreB },
     );
   }

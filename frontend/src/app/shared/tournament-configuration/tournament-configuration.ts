@@ -18,6 +18,7 @@ import {
   UpDownTournamentConfig,
 } from 'src/app/models/tournament-configuration-detail.model';
 import { TournamentDto } from 'src/app/store/tournament/tournament.models';
+import { CODE_PATTERN } from 'src/app/utils/code-format.util';
 import {
   TournamentConfigurationField,
   TournamentConfigurationForm,
@@ -85,7 +86,7 @@ export class TournamentConfiguration implements OnInit {
         }),
         code: new FormControl(tournament?.code ?? '', {
           nonNullable: true,
-          validators: [Validators.required],
+          validators: [Validators.required, Validators.pattern(CODE_PATTERN)],
         }),
         adminPassword: new FormControl('', {
           nonNullable: true,

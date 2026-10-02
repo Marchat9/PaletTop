@@ -1,7 +1,13 @@
 import { IsIn, IsOptional } from 'class-validator';
 import { SuperAdminSearchBaseDto } from './super-admin-search-base.dto';
 
-const SORTABLE_FIELDS = ['name', 'code', 'createdAt', 'sessionsCount'] as const;
+const SORTABLE_FIELDS = [
+    'name',
+    'code',
+    'createdAt',
+    'sessionsCount',
+    'openSessionsCount',
+] as const;
 
 export class SuperAdminTrainingSearchDto extends SuperAdminSearchBaseDto {
     @IsOptional()

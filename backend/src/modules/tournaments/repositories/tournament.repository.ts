@@ -224,6 +224,40 @@ export class TournamentRepository {
         };
     }
 
+    /**
+     * Undoes a failed start: removes the matches, sessions and pools it created and puts the
+     * tournament back in DRAFT with its original configuration, in one transaction.
+     */
+    async revertStart(tournament: Tournament): Promise<void> {
+        const where = { tournament: { id: tournament.id } };
+        await this.repo.manager.transaction(async (manager) => {
+            const matches = await manager.find(TournamentMatch, { where, select: { id: true } });
+            if (matches.length)
+                await manager.delete(
+                    TournamentMatch,
+                    matches.map((m) => m.id),
+                );
+            const sessions = await manager.find(MatchesSession, { where, select: { id: true } });
+            if (sessions.length)
+                await manager.delete(
+                    MatchesSession,
+                    sessions.map((s) => s.id),
+                );
+            // Teams lose their pool through the foreign key (ON DELETE SET NULL).
+            const pools = await manager.find(TournamentPool, { where, select: { id: true } });
+            if (pools.length)
+                await manager.delete(
+                    TournamentPool,
+                    pools.map((p) => p.id),
+                );
+            await manager.update(Tournament, tournament.id, {
+                status: TournamentStatus.DRAFT,
+                activatedAt: null,
+                configuration: tournament.configuration,
+            });
+        });
+    }
+
     save(tournament: Partial<Tournament>): Promise<Tournament> {
         return this.repo.save(tournament as Tournament);
     }

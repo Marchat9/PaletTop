@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Training } from 'src/entities/training.entity';
+import { TrainingSessionStatus } from 'src/enum/training.enum';
 import { deleteManyByIds, updateAdminPasswordById } from 'src/utils/admin-crud.util';
 import { paginateAdminSearch } from 'src/utils/admin-search.util';
 
@@ -18,6 +19,12 @@ const ADMIN_TRAINING_SORTABLE_COLUMNS: Record<string, string> = {
     code: 'training.code',
     createdAt: 'training.createdAt',
     sessionsCount: 'sessions_count',
+    openSessionsCount: 'open_sessions_count',
+};
+
+export type AdminTrainingSearchItem = Training & {
+    sessionsCount: number;
+    openSessionsCount: number;
 };
 
 @Injectable()
@@ -26,6 +33,10 @@ export class TrainingRepository {
         @InjectRepository(Training)
         private readonly repo: Repository<Training>,
     ) {}
+
+    count(): Promise<number> {
+        return this.repo.count();
+    }
 
     create(data: Partial<Training>): Training {
         return this.repo.create(data);
@@ -61,10 +72,19 @@ export class TrainingRepository {
 
     async searchForAdmin(
         options: AdminTrainingSearchOptions,
-    ): Promise<{ items: (Training & { sessionsCount: number })[]; total: number }> {
+    ): Promise<{ items: AdminTrainingSearchItem[]; total: number }> {
         const queryBuilder = this.repo
             .createQueryBuilder('training')
             .loadRelationCountAndMap('training.sessionsCount', 'training.sessions')
+            .loadRelationCountAndMap(
+                'training.openSessionsCount',
+                'training.sessions',
+                'openSession',
+                (qb) =>
+                    qb.where('openSession.status = :openStatus', {
+                        openStatus: TrainingSessionStatus.OPEN,
+                    }),
+            )
             .addSelect(
                 (qb) =>
                     qb
@@ -73,6 +93,18 @@ export class TrainingRepository {
                         .from('training_session', 's')
                         .where('s.training_id = training.id'),
                 'sessions_count',
+            )
+            .addSelect(
+                (qb) =>
+                    qb
+                        .subQuery()
+                        .select('COUNT(*)')
+                        .from('training_session', 'os')
+                        .where('os.training_id = training.id')
+                        .andWhere('os.status = :openStatus', {
+                            openStatus: TrainingSessionStatus.OPEN,
+                        }),
+                'open_sessions_count',
             );
 
         const { items, total } = await paginateAdminSearch(
@@ -83,7 +115,7 @@ export class TrainingRepository {
             'training.createdAt',
         );
 
-        return { items: items as (Training & { sessionsCount: number })[], total };
+        return { items: items as AdminTrainingSearchItem[], total };
     }
 
     deleteMany(ids: string[]): Promise<void> {

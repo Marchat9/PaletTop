@@ -14,6 +14,10 @@ export interface MetricsDto {
   clubs: {
     total: number;
   };
+  trainings: {
+    total: number;
+    openSessions: number;
+  };
 }
 
 @Injectable({ providedIn: 'root' })

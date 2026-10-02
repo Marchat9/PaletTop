@@ -11,11 +11,17 @@ export interface MetricsDto {
     clubs: {
         total: number;
     };
+    trainings: {
+        total: number;
+        openSessions: number;
+    };
 }
 
 export function toMetricsDto(
     tournamentsByStatus: Record<TournamentStatus, number>,
     clubCount: number,
+    trainingCount: number,
+    openTrainingSessionCount: number,
 ): MetricsDto {
     const draft = tournamentsByStatus[TournamentStatus.DRAFT];
     const active = tournamentsByStatus[TournamentStatus.ACTIVE];
@@ -31,5 +37,6 @@ export function toMetricsDto(
             cancelled,
         },
         clubs: { total: clubCount },
+        trainings: { total: trainingCount, openSessions: openTrainingSessionCount },
     };
 }

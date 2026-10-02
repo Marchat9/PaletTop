@@ -5,14 +5,14 @@
       <span class="title">Sessions de matchs</span>
       @if (isActive() && sessionNumber() > 0) {
         <span class="header-session-info"> - </span>
-        <span class="header-session-info"> Round {{ sessionNumber() }} </span>
+        <span class="header-session-info"> Partie {{ sessionNumber() }} </span>
       }
     </div>
 
     @if (isActive()) {
       <div class="header-actions">
         <app-button
-          title="Round Suivant"
+          title="Partie suivante"
           icon="skip_next"
           variant="primary"
           [loading]="nextLoading()"

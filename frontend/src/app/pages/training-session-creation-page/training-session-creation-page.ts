@@ -151,7 +151,7 @@ export class TrainingSessionCreationPage implements OnInit {
     {
       value: 'RANDOM',
       label: 'Au hasard',
-      description: 'Les équipes sont tirées au sort à chaque round.',
+      description: 'Les équipes sont tirées au sort à chaque partie.',
     },
     {
       value: 'LEARNING',

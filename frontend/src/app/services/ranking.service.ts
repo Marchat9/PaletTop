@@ -10,6 +10,8 @@ export class RankingService {
   private readonly apiBaseUrl = environment.backBaseApiUrl;
 
   public getRanking(code: string): Observable<GlobalRankingEntry[]> {
-    return this.http.get<GlobalRankingEntry[]>(`${this.apiBaseUrl}/tournaments/${code}/ranking`);
+    return this.http.get<GlobalRankingEntry[]>(
+      `${this.apiBaseUrl}/tournaments/${encodeURIComponent(code)}/ranking`,
+    );
   }
 }

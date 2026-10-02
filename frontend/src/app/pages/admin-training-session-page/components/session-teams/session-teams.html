@@ -8,7 +8,7 @@
     </div>
     <span class="header-description">
       Une équipe fixe reste ensemble toute la séance. Les autres joueurs sont appariés à chaque
-      round.
+      partie.
     </span>
   </div>
 
@@ -70,7 +70,7 @@
     }
 
     @if (fixedTeams().length === 0) {
-      <p class="empty">Aucune équipe fixe — tous les joueurs sont appariés à chaque round.</p>
+      <p class="empty">Aucune équipe fixe — tous les joueurs sont appariés à chaque partie.</p>
     } @else {
       <div class="team-grid">
         @for (team of fixedTeams(); track team.id) {

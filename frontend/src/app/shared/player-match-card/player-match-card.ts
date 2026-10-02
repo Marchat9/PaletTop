@@ -26,7 +26,7 @@ import { ScoreNumber } from '../score-number/score-number';
 
 const DEFAULT_BYE_COPY: PlayerByeCopy = {
   title: 'Exempté',
-  message: 'Vous ne jouez pas ce round.',
+  message: 'Vous ne jouez pas cette partie.',
 };
 
 const DEFAULT_VALIDATION_COPY: PlayerValidationCopy = {

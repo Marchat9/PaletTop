@@ -12,6 +12,8 @@ describe('toMetricsDto', () => {
                 [TournamentStatus.CANCELLED]: 1,
             },
             14,
+            5,
+            2,
         );
 
         expect(dto.tournaments).toEqual({
@@ -22,6 +24,7 @@ describe('toMetricsDto', () => {
             cancelled: 1,
         });
         expect(dto.clubs).toEqual({ total: 14 });
+        expect(dto.trainings).toEqual({ total: 5, openSessions: 2 });
     });
 
     it('handles all-zero counts', () => {
@@ -33,9 +36,12 @@ describe('toMetricsDto', () => {
                 [TournamentStatus.CANCELLED]: 0,
             },
             0,
+            0,
+            0,
         );
 
         expect(dto.tournaments.total).toBe(0);
         expect(dto.clubs.total).toBe(0);
+        expect(dto.trainings).toEqual({ total: 0, openSessions: 0 });
     });
 });

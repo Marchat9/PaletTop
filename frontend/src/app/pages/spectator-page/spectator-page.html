@@ -8,21 +8,21 @@
       @if (tournament()) {
         @switch (tournamentStatus()) {
           @case ('DRAFT') {
-            <span class="badge draft">Tounoi non démarré</span>
+            <span class="badge draft">Tournoi non démarré</span>
           }
           @case ('ACTIVE') {
             <span class="badge active">Phase : {{ tournament()!.phaseName || '' }}</span>
           }
           @case ('COMPLETED') {
-            <span class="badge completed">🎉 Tounoi terminé ! 🎉</span>
+            <span class="badge completed">🎉 Tournoi terminé ! 🎉</span>
           }
           @case ('CANCELLED') {
-            <span class="badge cancelled">Tounoi Annulé</span>
+            <span class="badge cancelled">Tournoi annulé</span>
           }
         }
       }
       @if (currentSession() && !isTournamentEnded()) {
-        <span class="badge">Round : {{ currentSession()!.sessionNumber || '-' }}</span>
+        <span class="badge">Partie : {{ currentSession()!.sessionNumber || '-' }}</span>
       }
     </div>
     @if (!isMobile()) {

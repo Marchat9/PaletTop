@@ -1,4 +1,4 @@
-import { Training } from 'src/entities/training.entity';
+import { AdminTrainingSearchItem } from 'src/modules/training/repositories/training.repository';
 
 export interface SuperAdminTrainingSummaryDto {
     id: string;
@@ -6,11 +6,12 @@ export interface SuperAdminTrainingSummaryDto {
     name: string;
     description?: string;
     sessionsCount: number;
+    openSessionsCount: number;
     createdAt: string;
 }
 
 export function toSuperAdminTrainingSummaryDto(
-    training: Training & { sessionsCount: number },
+    training: AdminTrainingSearchItem,
 ): SuperAdminTrainingSummaryDto {
     return {
         id: training.id,
@@ -18,6 +19,7 @@ export function toSuperAdminTrainingSummaryDto(
         name: training.name,
         description: training.description,
         sessionsCount: training.sessionsCount,
+        openSessionsCount: training.openSessionsCount,
         createdAt: training.createdAt.toISOString(),
     };
 }

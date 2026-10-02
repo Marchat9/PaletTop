@@ -4,8 +4,14 @@ import { Team } from 'src/entities/team.entity';
 import { TournamentPool } from 'src/entities/tournament-pool.entity';
 import { Tournament } from 'src/entities/tournament.entity';
 import { MatchStatus } from 'src/enum/status.enum';
+import { TournamentMatch } from 'src/entities/tounament-match.entity';
+import { ConstraintConfig } from 'src/model/constraint.model';
 import { GlobalRankingEntry } from '../responses/ranking.dto';
-import { generateMatchesByRanking, orderTeamsByRanking } from './match.utils';
+import {
+    generateMatchesByRanking,
+    generateMatchesInPool,
+    orderTeamsByRanking,
+} from './match.utils';
 
 const pool = { id: 'P1' } as TournamentPool;
 const tournament = { id: 'TR' } as Tournament;
@@ -91,5 +97,34 @@ describe('generateMatchesByRanking', () => {
         });
         // The bye comes last so plates follow the ranking order.
         expect(matches[matches.length - 1]).toBe(bye);
+    });
+});
+
+describe('generateMatchesInPool', () => {
+    const constraintConfig: ConstraintConfig = {
+        allowMatchAgainstFullSameClub: true,
+        allowMatchAgainstPartialSameClub: true,
+        allowRematch: true,
+    };
+    const tournamentWithConfig = { id: 'TR', configuration: { pointsPerGame: 11 } } as Tournament;
+
+    function pastBye(teamId: string): TournamentMatch {
+        return { isBye: true, teamA: { id: teamId }, teamB: null } as unknown as TournamentMatch;
+    }
+
+    it("donne le bye à l'équipe qui en a eu le moins", () => {
+        const pastMatches = [pastBye('A'), pastBye('B')];
+
+        for (let i = 0; i < 20; i++) {
+            const matches = generateMatchesInPool(
+                pool,
+                teams(['A', 'B', 'C']).map((team) => Object.assign(team, { players: [] })),
+                tournamentWithConfig,
+                session,
+                constraintConfig,
+                pastMatches,
+            );
+            expect(matches.find((m) => m.isBye)?.teamA?.id).toBe('C');
+        }
     });
 });

@@ -137,7 +137,7 @@ describe('PlayerTrainingSessionPage', () => {
     expect(view?.opponentScore).toBe(4);
     expect(view?.myLabel).toBe('Jean Dubois · Marie Lefèvre');
     expect(view?.opponentLabel).toBe('Luc Béguin · Claire Ozanne');
-    expect(view?.subtitle).toBe('Round 3');
+    expect(view?.subtitle).toBe('Partie 3');
   });
 
   it('liste les coéquipiers du round sans le joueur lui-même', () => {
@@ -196,7 +196,7 @@ describe('PlayerTrainingSessionPage', () => {
   it('annonce le repos dans le titre plutôt que « match en cours »', () => {
     const { fixture } = setup({ participant: ME, roundNumber: 3, sitOut: true, match: null });
 
-    expect(fixture.componentInstance.matchTitle()).toBe('Au repos ce round');
+    expect(fixture.componentInstance.matchTitle()).toBe('Au repos pour cette partie');
   });
 
   // A match still to validate stays on screen after closing, titled as the last match.

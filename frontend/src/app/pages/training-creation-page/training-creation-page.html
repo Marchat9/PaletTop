@@ -63,8 +63,9 @@
               [uppercase]="true"
               (valueChange)="onCodeChange($event)"
             />
-            <p class="field-help">
+            <p class="field-help" [class.invalid]="!!code().trim() && !codeIsValid()">
               Identifiant de connexion administrateur. Court et facile à retenir.
+              {{ codeFormatHint }}
             </p>
           </div>
           <div class="field">

@@ -5,7 +5,8 @@
         <span class="eyebrow">PaletTop · Espace protégé</span>
         <h1 class="page-title">Super Admin</h1>
         <p class="page-sub">
-          Monitoring des tournois et des clubs enregistrés sur toute la plateforme.
+          Monitoring des tournois, des entraînements et des clubs enregistrés sur toute la
+          plateforme.
         </p>
       </div>
       <app-button
@@ -36,6 +37,11 @@
       [clickable]="true"
       (clicked)="onStatTileClick(TournamentStatus.FINISHED)"
     />
+    <app-metric-tile [value]="(metrics()?.trainings?.total ?? '—') + ''" label="Entraînements" />
+    <app-metric-tile
+      [value]="(metrics()?.trainings?.openSessions ?? '—') + ''"
+      label="Sessions ouvertes"
+    />
     <app-metric-tile [value]="(metrics()?.clubs?.total ?? '—') + ''" label="Clubs enregistrés" />
   </section>
 
@@ -47,6 +53,15 @@
     (deleteOneRequested)="onTournamentDeleteOneRequested($event)"
     (deleteSelectionRequested)="onTournamentDeleteSelectionRequested($event)"
     (statusChangeRequested)="onTournamentStatusChangeRequested($event)"
+  />
+
+  <app-super-admin-training-table
+    [list]="trainings()"
+    (searchRequested)="onTrainingSearch($event)"
+    (detailRequested)="onTrainingDetailRequested($event)"
+    (passwordResetRequested)="onTrainingPasswordResetRequested($event)"
+    (deleteOneRequested)="onTrainingDeleteOneRequested($event)"
+    (deleteSelectionRequested)="onTrainingDeleteSelectionRequested($event)"
   />
 
   <app-super-admin-club-table

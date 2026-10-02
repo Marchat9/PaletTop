@@ -24,6 +24,9 @@
           [uppercase]="true"
           [formControl]="group().controls.code"
         ></app-input-text>
+        <p class="form-help" [class.invalid]="group().controls.code.hasError('pattern')">
+          {{ codeFormatHint }}
+        </p>
       </div>
     }
 

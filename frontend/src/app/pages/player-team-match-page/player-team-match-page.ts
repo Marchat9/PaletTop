@@ -134,7 +134,7 @@ export class PlayerTeamMatchPageComponent {
    */
   public readonly matchTitle = computed(() => {
     if (this.matchView()?.isBye) {
-      return 'Au repos ce round';
+      return 'Au repos pour cette partie';
     }
     return this.matchView() ? 'Match en cours' : null;
   });
@@ -147,7 +147,7 @@ export class PlayerTeamMatchPageComponent {
 
   public readonly byeCopy = computed<PlayerByeCopy>(() => ({
     title: 'Exempté',
-    message: 'Votre équipe est exemptée pour ce round.',
+    message: 'Votre équipe est exemptée pour cette partie.',
     awardLabel: `Victoire accordée · +${this.currentMatch()?.scoreA ?? 0} pts`,
     pendingLabel: 'En attente de confirmation',
   }));

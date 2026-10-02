@@ -4,7 +4,7 @@
       <div class="header-title">
         <app-icon name="history" iconClass="icon" [ariaHidden]="true" />
         <span class="title"
-          >Rounds précédents <span class="count">({{ rounds().length }})</span></span
+          >Parties précédentes <span class="count">({{ rounds().length }})</span></span
         >
       </div>
     </div>
@@ -12,7 +12,7 @@
     <div content class="history-content">
       @for (round of rounds(); track round.id) {
         <div class="round">
-          <span class="round-label">Round {{ round.roundNumber }}</span>
+          <span class="round-label">Partie {{ round.roundNumber }}</span>
           <app-round-matches [round]="round" [pointsPerGame]="pointsPerGame()" [editable]="false" />
         </div>
       }

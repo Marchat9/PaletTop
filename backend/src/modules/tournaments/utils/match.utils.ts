@@ -50,7 +50,7 @@ export function generateMatchesInPool(
 
     // Byes
     if (currentTeams.length % 2 !== 0) {
-        const byeTeam = selectByeTeam(currentTeams, []);
+        const byeTeam = selectByeTeam(currentTeams, pastMatches);
         allMatches.push(
             buildByeMatchData(
                 toTeamRef(byeTeam),

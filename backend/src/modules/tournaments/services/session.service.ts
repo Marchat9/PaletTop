@@ -49,6 +49,23 @@ export class SessionService {
         if (!tournament.teams.length) {
             throw new BadRequestException('Aucune équipe inscrite au tournoi.');
         }
+        // Strategies may change the configuration in place: keep the original to restore it.
+        const originalConfiguration = structuredClone(tournament.configuration);
+        try {
+            return await this.runTournamentStart(tournament);
+        } catch (error) {
+            // A start that fails halfway must not leave an ACTIVE tournament with an empty
+            // session: it could neither be restarted nor played.
+            this.logger.warn(`Tournament ${tournament.code} start failed, reverting to draft`);
+            await this.tournamentRepo.revertStart({
+                ...tournament,
+                configuration: originalConfiguration,
+            });
+            throw error;
+        }
+    }
+
+    private async runTournamentStart(tournament: Tournament): Promise<AdminTournamentDto> {
         // ==== Common data ====
         const tournamentId = tournament.id;
         const tournamentCode = tournament.code;

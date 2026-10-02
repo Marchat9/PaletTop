@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { TrainingModule } from '../training/training.module';
 import { RealtimeModule } from '../realtime/realtime.module';
 import { MatchesSession } from '../../entities/matches-session.entity';
 import { Player } from '../../entities/player.entity';
@@ -39,6 +40,7 @@ import { SessionController } from 'src/modules/tournaments/controllers/session.c
             MatchesSession,
         ]),
         RealtimeModule,
+        TrainingModule,
     ],
     controllers: [
         TournamentsController,
