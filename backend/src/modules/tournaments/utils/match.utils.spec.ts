@@ -118,7 +118,7 @@ describe('generateMatchesInPool', () => {
         for (let i = 0; i < 20; i++) {
             const matches = generateMatchesInPool(
                 pool,
-                teams(['A', 'B', 'C']).map((team) => ({ ...team, players: [] }) as Team),
+                teams(['A', 'B', 'C']).map((team) => Object.assign(team, { players: [] })),
                 tournamentWithConfig,
                 session,
                 constraintConfig,

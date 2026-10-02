@@ -1,0 +1,77 @@
+<div class="detail-popup-container">
+  <div class="header-row">
+    <h2 class="title">
+      <app-icon name="visibility" iconClass="icon" [ariaHidden]="true" />
+      {{ detail().data?.name ?? "Détail de l'entraînement" }}
+    </h2>
+    <button class="close-button" type="button" aria-label="Fermer" (click)="onClose()">
+      <app-icon name="close" />
+    </button>
+  </div>
+
+  @if (detail().isLoading) {
+    <p class="empty-hint">Chargement…</p>
+  } @else if (detail().error) {
+    <div class="error-container">
+      <app-icon name="error" [ariaHidden]="true" />
+      <span>{{ detail().error }}</span>
+    </div>
+  } @else if (detail().data; as training) {
+    <dl class="detail-grid">
+      <div>
+        <dt>Code</dt>
+        <dd>{{ training.code }}</dd>
+      </div>
+      <div>
+        <dt>Sessions</dt>
+        <dd>{{ training.sessions.length }}</dd>
+      </div>
+      <div>
+        <dt>Créé le</dt>
+        <dd>{{ training.createdAt | date: 'dd/MM/yyyy HH:mm' }}</dd>
+      </div>
+    </dl>
+
+    @if (training.description) {
+      <p class="description">{{ training.description }}</p>
+    }
+
+    <div class="field-group">
+      <span class="field-label">Membres ({{ training.members.length }})</span>
+      @if (training.members.length) {
+        <div class="members">
+          @for (member of training.members; track member.id) {
+            <span class="member-chip">{{ member.name }}</span>
+          }
+        </div>
+      } @else {
+        <p class="empty-hint">Aucun membre.</p>
+      }
+    </div>
+
+    <div class="field-group">
+      <span class="field-label">Sessions ({{ training.sessions.length }})</span>
+      @if (training.sessions.length) {
+        <ul class="session-list">
+          @for (session of training.sessions; track session.code) {
+            <li class="session-item">
+              <span>{{ session.date | date: 'dd/MM/yyyy' }} · {{ session.code }}</span>
+              <span class="session-meta">
+                {{ session.participantsCount }} joueur(s)
+                <app-status-pill [tone]="sessionStatusTones[session.status]">
+                  {{ sessionStatusLabels[session.status] }}
+                </app-status-pill>
+              </span>
+            </li>
+          }
+        </ul>
+      } @else {
+        <p class="empty-hint">Aucune session.</p>
+      }
+    </div>
+  }
+
+  <div class="actions">
+    <app-button title="Fermer" variant="secondary" (clicked)="onClose()"></app-button>
+  </div>
+</div>

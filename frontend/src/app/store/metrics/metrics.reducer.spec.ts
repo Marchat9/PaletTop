@@ -4,6 +4,7 @@ import { initialMetricsState, metricsReducer } from './metrics.reducer';
 const SAMPLE_METRICS = {
   tournaments: { total: 13, draft: 2, active: 3, completed: 7, cancelled: 1 },
   clubs: { total: 14 },
+  trainings: { total: 5, openSessions: 2 },
 };
 
 describe('metricsReducer', () => {
