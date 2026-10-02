@@ -1,60 +1,76 @@
-# StructuredTournamentStrategy — Tournoi structuré (STANDARD)
+# StructuredTournamentStrategy — Pools + brackets (STANDARD)
 
-## Principe
+## Idea
 
-Le tournoi structuré est le mode par défaut. Les équipes sont réparties en poules au démarrage, puis jouent des sessions de round-robin au sein de leur poule. À chaque session, les paires sont tirées au sort en respectant les contraintes (pas de rematch, pas d'équipes du même club si possible).
+The default mode. Teams are split into pools and play a number of qualifying rounds. Then the
+best teams go into elimination brackets (principal, plus optional extra tables).
 
-## Comportement par session
+## Flow
 
 ```
 startTournament()
-  │
-  ├── assignTeamsToPools()   → Distribution aléatoire des équipes dans les poules (Fisher-Yates)
-  │
-  └── generateSessionMatches()
-        │
-        ├── Pour chaque poule :
-        │     ├── Si nombre d'équipes impair → sélectionner le bye (équipe avec le moins de byes passés)
-        │     └── Tirer les paires (DrawService — backtracking avec 4 niveaux de contrainte)
-        │
-        └── Attribuer les numéros de plaque séquentiellement (1, 2, 3…)
+  ├── prepareTournamentStart()   → fix principalBracketSize
+  ├── assignTeamsToFirstPools()  → random split into numberOfPools pools
+  └── generateSessionMatches()   → one call per session
+        ├── session ≤ numberOfQualifyingRounds → generateQualifyingMatches (draw in each pool)
+        └── session > numberOfQualifyingRounds → generateEliminationMatches (brackets)
 ```
 
-## Contraintes du tirage au sort
+Plates are numbered 1, 2, 3… after each generation.
 
-`DrawService.generatePairs` applique 4 niveaux de contrainte, dans l'ordre :
+## Configuration
 
-1. **NO_REMATCH_NO_SAME_CLUB** — interdit les rematches et tous appariements du même club
-2. **NO_REMATCH_NO_HOMOGENEOUS_CLUB** — interdit les rematches et les appariements entre deux équipes mono-club
-3. **NO_REMATCH** — interdit uniquement les rematches
-4. **NO_CONTRAINTE** — aucune contrainte (toujours une solution)
+| Field                         | Description                                                        |
+| ----------------------------- | ------------------------------------------------------------------ |
+| `numberOfPools`               | Number of qualifying pools                                         |
+| `numberOfQualifyingRounds`    | Number of pool rounds (default 4)                                  |
+| `principalBracketSize`        | Teams in the principal bracket. Must be a power of 2 ≤ team count, otherwise computed automatically |
+| `hasConsolanteTable`          | Bracket for teams ranked below the principal bracket               |
+| `hasChallengePrincipaleTable` | Bracket for teams losing the first principal round                 |
+| `hasChallengeConsolanteTable` | Bracket for teams losing the first consolante round                |
+| `hasThirdPlaceMatch`          | Third-place match between the principal semi-final losers          |
 
-Si aucune solution complète n'est trouvée au niveau courant, le niveau suivant est essayé automatiquement.
+## Qualifying rounds
 
-## Bye
+In each pool, `generateMatchesInPool` (`../../utils/match.utils.ts`):
 
-Quand une poule a un nombre impair d'équipes, une équipe reçoit un bye :
-- L'équipe exemptée est celle qui a le moins de byes dans les sessions passées (aléatoire en cas d'égalité)
-- Le match bye est créé avec `scoreA = pointsPerGame`, `scoreB = 0`, statut `VALIDATED`, `isBye = true`
-- L'équipe exemptée remporte le bye automatiquement (victoire comptabilisée dans le classement)
+- With an odd number of teams, the team with the fewest past byes gets a bye (random on a tie):
+  `scoreA = pointsPerGame`, `scoreB = 0`, `VALIDATED`, `isBye = true` (counts as a win).
+- Pairs are drawn by `generatePairsWithContraints` (`../../utils/draw.utils.ts`). It tries
+  constraint levels from strictest to loosest (no rematch, no same club, no partial same club…),
+  starting with the levels allowed by the tournament config (`buildConstraintLadder`). The last
+  level has no constraint, so a solution is always found.
 
-## Méthodes héritées (comportement par défaut suffisant)
+## Elimination
 
-- `canStartNextSession` → vérifie que tous les matchs de la session sont VALIDATED
-- `computeGlobalRanking` → tri selon `scoreCalculation` du tournoi (par défaut : wins DESC, goalAverage DESC)
-- `computeTeamHistory` → filtre les matchs VALIDATED des sessions fermées
-- `canCompleteTournament` → vérifie que le tournoi est en statut ACTIVE
-- `assignPlateNumbers` → numérotation séquentielle 1, 2, 3…
+Each table is filled from its own previous results, not from the global ranking:
 
-## Phase d'élimination (non encore implémentée)
+- **Principal**: top `principalBracketSize` of the ranking, then its own winners.
+- **Consolante**: the rest of the ranking, then its own winners.
+- **Challenge / Challenge-consolante**: start one round later with the first-round losers of
+  the principal / consolante, then their own winners.
+- **Third place**: the two principal semi-final losers, played with the final.
 
-La méthode privée `generateEliminationMatches` est un stub documenté pour la future phase d'élimination. Elle sera appelée après les qualifications pour générer le tableau selon la configuration `eliminationTableaux` du tournoi (principale, consolante A/B, challenge, etc.).
+Each table uses a virtual pool named after its `MatchGroupKey`.
 
-## Dépendances injectées
+## Ranking
 
-| Dépendance | Rôle |
-|-----------|------|
-| `PoolService` | Affectation aléatoire des équipes aux poules |
-| `DrawService` | Tirage des paires avec contraintes |
-| `MatchRepository` | Création et persistance des matchs |
-| `PoolRepository` | Chargement des poules avec leurs équipes et joueurs |
+- `computeGlobalRanking` (default) seeds the brackets.
+- `computeStandings` (override) gives the final ranking: grouped by table (principal, third
+  place, challenge, consolante, challenge-consolante, then teams out after the pools), then by
+  how far the team went, the score of its last match, and its seed.
+
+## Phase name (`phaseName`)
+
+| Tournament state            | Label                                   |
+| --------------------------- | --------------------------------------- |
+| Draft / cancelled           | _(empty)_                               |
+| Qualifying                  | `Phase qualificative x/N`               |
+| Elimination, > 4 teams left | `Phase éliminatoire`                    |
+| 4 teams left                | `Demi-Finale`                           |
+| 2 teams left                | `Finale` (`+ Petite Finale` if enabled) |
+| Completed                   | `Tournoi terminé`                       |
+
+## Injected dependencies
+
+`PoolService`, `MatchRepository`, `PoolRepository`, `TournamentRepository`.

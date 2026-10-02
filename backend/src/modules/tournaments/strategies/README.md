@@ -1,8 +1,10 @@
-# Pattern Strategy — Types de tournoi
+# Strategy pattern — tournament modes
 
-## Principe
+## Idea
 
-Chaque type de tournoi (`CompetitionMode`) a son propre comportement pour la génération de sessions, la gestion des poules et le calcul du classement. Le pattern Strategy encapsule ces comportements dans des classes dédiées, ce qui permet d'ajouter de nouveaux types de tournoi sans toucher aux services existants.
+Each tournament mode (`CompetitionMode`) has its own rules for starting the tournament, building
+pools, generating sessions, and showing progress. Each mode is a strategy class, so a new mode can
+be added without touching the services.
 
 ```
 TournamentStrategy (abstract)
@@ -11,124 +13,89 @@ TournamentStrategy (abstract)
 └── ChampionshipTournamentStrategy → CompetitionMode.CHAMPIONSHIP
 ```
 
-## Architecture
+Mode-specific settings live in `tournament.configuration.competitionConfiguration`
+(`src/entities/tournament-competition-configuration.entity.ts`). Read them with
+`extractCompetitionConfiguration`.
 
-### Classe abstraite `TournamentStrategy`
+## Abstract class `TournamentStrategy`
 
-Définit le contrat et fournit des comportements par défaut réutilisables :
+| Method                    | Default                                                    | Override     |
+| ------------------------- | ---------------------------------------------------------- | ------------ |
+| `computeTournamentStatus` | — (abstract)                                               | **Required** |
+| `assignTeamsToFirstPools` | Throws `NotImplementedException`                           | **Required** |
+| `generateSessionMatches`  | Throws `NotImplementedException`                           | **Required** |
+| `prepareTournamentStart`  | No-op                                                      | Optional     |
+| `canStartNextSession`     | Session OPEN and all its matches VALIDATED                 | Optional     |
+| `canCompleteTournament`   | Tournament ACTIVE and all matches VALIDATED                | Optional     |
+| `computeGlobalRanking`    | Sort by the tournament's `scoreCalculation`                | Optional     |
+| `computeStandings`        | Same as `computeGlobalRanking` (final ranking shown)       | Optional     |
+| `computeTeamHistory`      | VALIDATED matches of the team, mapped to `MatchHistoryDto` | Optional     |
+| `assignPlateNumbers`      | Plates 1, 2, 3… (byes get no plate)                        | Optional     |
 
-| Méthode                   | Par défaut                             | Surchargeable   |
-| ------------------------- | -------------------------------------- | --------------- |
-| `generateSessionMatches`  | Lance `NotImplementedException`        | **Obligatoire** |
-| `assignTeamsToPools`      | No-op (méthode vide, aucune poule créée) | Oui             |
-| `canStartNextSession`     | Tous les matchs VALIDATED              | Oui             |
-| `canCompleteTournament`   | Tournoi en statut ACTIVE               | Oui             |
-| `computeGlobalRanking`    | Tri selon `scoreCalculation` (défaut : wins DESC, goalAverage DESC) | Oui             |
-| `computeTeamHistory`      | Filtre VALIDATED + map MatchHistoryDto | Oui             |
-| `assignPlateNumbers`      | Numérotation séquentielle 1, 2, 3…     | Oui             |
-| `computeRawScoreToPoints` | Score brut 1:1                         | Oui             |
+`prepareTournamentStart`, `assignTeamsToFirstPools` and `generateSessionMatches` save their own
+changes and return the saved entities. Callers merge the result instead of reloading from the DB.
 
-### Factory `TournamentStrategyFactory`
+## Factory and services
 
-Service NestJS injectable qui instancie la bonne stratégie selon `CompetitionMode` :
+`TournamentStrategyFactory` returns the right strategy for a mode:
 
 ```typescript
 const strategy = this.strategyFactory.create(tournament.configuration.competitionMode);
-await strategy.generateSessionMatches(tournament, session, pastMatches);
+await strategy.generateSessionMatches(tournament, session);
 ```
 
-### Intégration dans les services
+- **`SessionService`**: `prepareTournamentStart`, `assignTeamsToFirstPools`,
+  `generateSessionMatches`, `canStartNextSession`, `canCompleteTournament`
+- **`RankingService`**: `computeStandings`, `computeTeamHistory`
+- **`ScoreService`** / **`TournamentsService`**: `computeTournamentStatus`
 
-- **`SessionService`** : utilise la stratégie pour `assignTeamsToPools`, `generateSessionMatches`, `canStartNextSession`, `canCompleteTournament`
-- **`RankingService`** : utilise la stratégie pour `computeGlobalRanking` et `computeTeamHistory`
+Shared helpers live in `../utils/` (`match.utils.ts`, `draw.utils.ts`, `bye.utils.ts`, …).
 
 ---
 
-## Créer une nouvelle stratégie
+## Adding a new mode
 
-### Étape 1 — Ajouter la valeur dans l'enum
+1. **Enum** — add a value to `CompetitionMode` in `src/enum/tounament.enum.ts`.
+2. **Configuration** — if needed, add a `…CompetitionConfiguration` class in
+   `tournament-competition-configuration.entity.ts`, plus its DTO and a migration.
+3. **Strategy** — create `strategies/<mode>/<mode>-tournament.strategy.ts`:
 
-Dans `backend/src/enum/tounament.enum.ts` :
+   ```typescript
+   export class MyModeTournamentStrategy extends TournamentStrategy {
+       override async assignTeamsToFirstPools(tournament: Tournament): Promise<TournamentPool[]> {
+           // ...
+       }
 
-```typescript
-export enum CompetitionMode {
-    STANDARD = 'standard',
-    UP_DOWN = 'up_down',
-    CHAMPIONSHIP = 'championship',
-    MA_NOUVELLE_MODE = 'ma_nouvelle_mode', // ← ajouter ici
-}
-```
+       override async generateSessionMatches(
+           tournament: Tournament,
+           session: MatchesSession,
+       ): Promise<TournamentMatch[]> {
+           // build, save and return the matches
+       }
 
-### Étape 2 — Créer le dossier et la classe
+       override computeTournamentStatus(
+           tournament: Tournament,
+           sessions: MatchesSession[],
+       ): TournamentStatusInfo {
+           // ...
+       }
+   }
+   ```
 
-```
-backend/src/modules/match/strategies/
-└── ma-nouvelle-mode/
-    ├── ma-nouvelle-mode-tournament.strategy.ts
-    └── README.md
-```
+   Only override what differs from the default. Put pure logic (phase name, etc.) in a
+   `<mode>-session.utils.ts` file so it can be unit-tested.
 
-La classe doit étendre `TournamentStrategy` et implémenter au minimum `generateSessionMatches` :
+4. **Factory** — add a `case` in `tournament-strategy.factory.ts`. If the strategy needs a
+   NestJS service, inject it in the factory constructor and pass it on.
+5. **Docs** — add a `README.md` in the strategy folder.
 
-```typescript
-import { MatchesSession } from 'src/entities/matches-session.entity';
-import { TournamentMatch } from 'src/entities/tounament-match.entity';
-import { Tournament } from 'src/entities/tournament.entity';
-import { TournamentStrategy } from '../tournament-strategy.abstract';
+## Dependencies available in the factory
 
-export class MaNouvelleModeTournamentStrategy extends TournamentStrategy {
-    override async generateSessionMatches(
-        tournament: Tournament,
-        session: MatchesSession,
-        pastMatches: TournamentMatch[],
-    ): Promise<TournamentMatch[]> {
-        // Votre logique ici
-        // Retourner et persister les TournamentMatch[] créés
-    }
-}
-```
+| Dependency             | Typical use                                |
+| ---------------------- | ------------------------------------------ |
+| `PoolService`          | Assign teams to pools                      |
+| `MatchRepository`      | Create and save matches                    |
+| `PoolRepository`       | Load pools, create virtual (bracket) pools |
+| `TournamentRepository` | Save tournament changes at start           |
 
-Surcharger uniquement les méthodes dont le comportement diffère du défaut.
-
-### Étape 3 — Enregistrer dans la factory
-
-Dans `tournament-strategy.factory.ts`, ajouter un case :
-
-```typescript
-case CompetitionMode.MON_NOUVEAU_MODE:
-  return new MonNouveauModeTournamentStrategy(/* injecter les dépendances si besoin */);
-```
-
-Si la stratégie a besoin de services NestJS (repositories, services métier), les injecter dans le constructeur de la factory et les passer à la stratégie :
-
-```typescript
-// Dans la factory :
-constructor(
-  // ... existants
-  private readonly maNouvelleDep: MaNouvelleService,
-) {}
-
-create(mode: CompetitionMode): TournamentStrategy {
-  case CompetitionMode.MON_NOUVEAU_MODE:
-    return new MonNouveauModeTournamentStrategy(this.maNouvelleDep);
-}
-
-// Dans match.module.ts, ajouter MonNouveauService aux providers si nécessaire
-```
-
-### Étape 4 — Documenter
-
-Créer un `README.md` dans le dossier de la stratégie (voir les autres comme modèle).
-
----
-
-## Dépendances disponibles dans la factory
-
-| Dépendance        | Usage typique                                                            |
-| ----------------- | ------------------------------------------------------------------------ |
-| `PoolService`     | Affectation des équipes aux poules                                       |
-| `DrawService`     | Génération des paires d'équipes (backtracking, contraintes club/rematch) |
-| `MatchRepository` | Création et persistance des matchs                                       |
-| `PoolRepository`  | Chargement des poules avec leurs équipes                                 |
-
-Pour ajouter d'autres dépendances, les déclarer dans le constructeur de `TournamentStrategyFactory` et enregistrer les services concernés dans `match.module.ts`.
+New dependencies must also be providers in `tournaments.module.ts`.

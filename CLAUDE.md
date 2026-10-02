@@ -16,6 +16,7 @@ npm run start:dev          # Dev mode with migrations (standard)
 npm run start:devDb        # Dev mode with schema sync+reset (APP_ENV=dev-bdd)
 npm run build              # Compile TypeScript
 npm run lint               # ESLint
+npm test                   # Vitest
 npm run migration:generate # Generate migration from entity diff
 npm run migration:run      # Apply pending migrations
 npm run migration:revert   # Revert last migration
@@ -30,7 +31,7 @@ npm test                   # Run tests with Vitest
 
 ### Full stack via Docker
 ```bash
-cd backend && docker-compose up   # Starts PostgreSQL + backend + frontend
+docker compose up --build        # From the repo root: PostgreSQL + backend + frontend
 ```
 
 ## Architecture
@@ -38,7 +39,10 @@ cd backend && docker-compose up   # Starts PostgreSQL + backend + frontend
 ### Backend
 - **NestJS** with TypeORM + PostgreSQL (port 3000)
 - Entities live in `src/entities/` and are auto-discovered via glob
-- Business logic organized in `src/modules/` — currently only `TournamentsModule`
+- Business logic organized in `src/modules/`: `tournaments`, `training`, `realtime`,
+  `super-admin`, `cleanup`, `health`
+- Tournament modes (standard, up-down, championship) are strategies in
+  `src/modules/tournaments/strategies/` (see the READMEs there)
 - DB config in `src/database/typeorm.config.ts` with two modes:
   - **Normal**: migrations run automatically, no schema sync
   - **dev-bdd** (`APP_ENV=dev-bdd`): drops and recreates schema on startup (for rapid iteration — do not use against data you want to keep)
