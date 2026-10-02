@@ -1,3 +1,4 @@
+import { UuidParam } from 'src/decorators/uuid-param.decorator';
 import {
     Body,
     Controller,
@@ -25,7 +26,7 @@ export class ScoreController {
     @Post('start')
     async startMatch(
         @Param('code') code: string,
-        @Param('matchId') matchId: string,
+        @UuidParam('matchId') matchId: string,
         @Body() dto: StartMatchDto,
     ): Promise<TournamentMatch> {
         try {
@@ -44,7 +45,7 @@ export class ScoreController {
     @Patch('score')
     async updateScore(
         @Param('code') code: string,
-        @Param('matchId') matchId: string,
+        @UuidParam('matchId') matchId: string,
         @Body() dto: UpdateScoreDto,
     ): Promise<ScoreUpdateResult> {
         try {
@@ -69,7 +70,7 @@ export class ScoreController {
     @Post('validate')
     async validateMatch(
         @Param('code') tournamentCode: string,
-        @Param('matchId') matchId: string,
+        @UuidParam('matchId') matchId: string,
         @Body() dto: ValidateMatchDto,
     ): Promise<ScoreUpdateResult> {
         try {
@@ -93,7 +94,7 @@ export class ScoreController {
     @Patch('score/admin')
     async adminUpdateScore(
         @Param('code') code: string,
-        @Param('matchId') matchId: string,
+        @UuidParam('matchId') matchId: string,
         @Body() dto: AdminUpdateScoreDto,
     ): Promise<ScoreUpdateResult> {
         try {
