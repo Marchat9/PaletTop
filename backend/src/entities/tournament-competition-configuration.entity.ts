@@ -28,6 +28,9 @@ export class StructuredCompetitionConfiguration extends TournamentCompetitionCon
 export class UpDownCompetitionConfiguration extends TournamentCompetitionConfiguration {
     @Column({ nullable: true })
     numberOfRound?: number;
+
+    @Column({ default: false })
+    lastRoundByRanking?: boolean;
 }
 
 export class ChampionShipCompetitionConfiguration extends TournamentCompetitionConfiguration {

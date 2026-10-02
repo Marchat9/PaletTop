@@ -169,6 +169,9 @@ export class PlayerTeamMatchPageComponent {
       !this.tournamentState().data && (this.tournamentState().isLoading || this.teamIsLoading()),
   );
   public readonly tournamentCode = computed(() => this.tournamentData()?.code ?? '—');
+  public readonly phaseName = computed(
+    () => this.tournamentData()?.tournamentStatus?.phaseName || null,
+  );
   public readonly pointsPerGame = computed(() =>
     Number(this.tournamentData()?.configuration.pointsPerGame ?? 13),
   );

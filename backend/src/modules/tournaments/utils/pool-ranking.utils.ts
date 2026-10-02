@@ -34,10 +34,13 @@ export function computeRanking(
     for (const match of relevantMatches) {
         if (match.isBye) {
             const entry = stats.get(match.teamA.id);
+            // A bye is a win only when it is worth points: the up-down ranking round gives a 0-0
+            // bye, which must count for nothing, exactly as in the global ranking.
             if (entry) {
-                entry.wins++;
+                const won = match.scoreA > 0;
+                if (won) entry.wins++;
                 entry.pointsFor += match.scoreA;
-                entry.tournamentPoints += computeTournamentScorePoints(true, match.scoreA);
+                entry.tournamentPoints += computeTournamentScorePoints(won, match.scoreA);
             }
             continue;
         }

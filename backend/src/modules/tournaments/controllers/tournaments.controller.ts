@@ -24,6 +24,7 @@ import { UpdateTournamentConfigurationDto } from '../dto/update-tournament-confi
 import { AdminTournamentDto, toAdminTournamentDto } from '../responses/admin-tournament.dto';
 import { GlobalRankingEntry } from '../responses/ranking.dto';
 import { SpectatorTournamentDto } from '../responses/spectator-tournament.dto';
+import { TournamentStatusInfo } from '../responses/tournament-status.dto';
 import { RankingService } from '../services/ranking.service';
 import { TournamentsService } from '../services/tournaments.service';
 import { TournamentStrategyFactory } from '../strategies/tournament-strategy.factory';
@@ -139,12 +140,20 @@ export class TournamentsController {
     }
 
     @Post('join')
-    async join(@Body() dto: JoinTournamentDto): Promise<Tournament> {
+    async join(
+        @Body() dto: JoinTournamentDto,
+    ): Promise<Tournament & { tournamentStatus: TournamentStatusInfo | null }> {
         try {
-            return await this.tournamentsService.findByTournamentCodeAndTeamCode(
+            const tournament = await this.tournamentsService.findByTournamentCodeAndTeamCode(
                 dto.tournamentCode,
                 dto.teamCode,
             );
+            // Players get the same phase label as the admin and spectators.
+            const tournamentStatus = await this.sessionService.buildTournamentStatus(
+                null,
+                tournament,
+            );
+            return { ...tournament, tournamentStatus };
         } catch (error: unknown) {
             if (error instanceof HttpException) {
                 throw error;

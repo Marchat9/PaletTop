@@ -6,6 +6,7 @@ import {
     IsOptional,
     IsString,
     Min,
+    Validate,
     validateSync,
     ValidationArguments,
     ValidatorConstraint,
@@ -46,12 +47,31 @@ export class StructuredTournamentConfig extends SpecificTournamentConfig {
     numberOfPools?: number;
 }
 
+@ValidatorConstraint({ name: 'lastRoundByRanking', async: false })
+class LastRoundByRankingConstraint implements ValidatorConstraintInterface {
+    validate(value: unknown, args: ValidationArguments): boolean {
+        if (value !== true) return true;
+        const { numberOfRound } = args.object as UpDownTournamentConfig;
+        return typeof numberOfRound === 'number' && numberOfRound >= 2;
+    }
+
+    defaultMessage(): string {
+        return 'La dernière partie au classement nécessite au moins 2 parties.';
+    }
+}
+
 export class UpDownTournamentConfig extends SpecificTournamentConfig {
     @Type(() => Number)
     @IsInt()
     @Min(1)
     @IsOptional()
     numberOfRound?: number;
+
+    // The ranking-based last round only makes sense after at least one drawn round.
+    @IsBoolean()
+    @IsOptional()
+    @Validate(LastRoundByRankingConstraint)
+    lastRoundByRanking?: boolean;
 }
 
 export class ChampionshipTournamentConfig extends SpecificTournamentConfig {

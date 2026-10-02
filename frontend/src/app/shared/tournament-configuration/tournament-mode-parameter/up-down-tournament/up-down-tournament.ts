@@ -1,15 +1,17 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, Signal } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
 import { environment } from '@environment';
+import { InputCheckbox } from 'src/app/shared/input-checkbox/input-checkbox';
 import { InputNumber } from 'src/app/shared/input-number/input-number';
 import { InputSelectOption } from 'src/app/shared/input-select/input-select';
 import { TournamentConfigurationField } from '../../tournament-configuration-form.model';
+import { isLastRoundByRankingAllowed } from '../../tournament-configuration.utils';
 import * as configuration from '../../tournament-create.data';
 import { UpDownTournamentForm } from './up-down-tournament-form.model';
 
 @Component({
   selector: 'app-up-down-tournament',
-  imports: [ReactiveFormsModule, InputNumber],
+  imports: [ReactiveFormsModule, InputNumber, InputCheckbox],
   templateUrl: './up-down-tournament.html',
   styleUrls: ['../../shared-config.scss', './up-down-tournament.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -30,4 +32,8 @@ export class UpDownTournament {
   public readonly numberOfQualifyingRoundsConfig =
     environment.tournamentConfiguration.numberOfQualifyingRounds;
   public readonly numberOfPoolsConfig = environment.tournamentConfiguration.numberOfPools;
+
+  public readonly isLastRoundByRankingAllowed: Signal<boolean> = computed(() =>
+    isLastRoundByRankingAllowed(this.group().controls.numberOfRound.value),
+  );
 }

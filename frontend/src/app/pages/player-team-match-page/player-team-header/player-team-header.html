@@ -10,6 +10,9 @@
         <span>Code Équipe:</span>
         <div class="code bold">{{ team().code }}</div>
       </div>
+      @if (phaseName(); as phase) {
+        <span class="phase">{{ phase }}</span>
+      }
     </div>
   </div>
 

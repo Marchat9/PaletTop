@@ -169,9 +169,11 @@ export function computePhaseName(
     switch (true) {
         case tournamentStatus === TournamentStatus.DRAFT:
         case tournamentStatus === TournamentStatus.CANCELLED:
-        case tournamentStatus === TournamentStatus.COMPLETED:
         default:
             return '';
+
+        case tournamentStatus === TournamentStatus.COMPLETED:
+            return 'Tournoi terminé';
 
         case tournamentStatus === TournamentStatus.ACTIVE && !isElimination:
             return `Phase qualificative ${currentSessionNumber}/${numberOfQualifyingRounds}`;

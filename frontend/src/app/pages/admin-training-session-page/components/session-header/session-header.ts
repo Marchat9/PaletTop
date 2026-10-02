@@ -3,16 +3,12 @@ import { DatePipe } from '@angular/common';
 import { Nullable } from 'src/app/models/nullable.model';
 import { Card } from 'src/app/shared/card/card';
 import { Icon } from 'src/app/shared/icon/icon';
+import { RulePill, RulePills } from 'src/app/shared/rule-pills/rule-pills';
 import { TrainingSessionAdminDto } from 'src/app/store/training/training.models';
-
-interface SessionRule {
-  icon: string;
-  label: string;
-}
 
 @Component({
   selector: 'app-session-header',
-  imports: [Card, Icon, DatePipe],
+  imports: [Card, Icon, DatePipe, RulePills],
   templateUrl: './session-header.html',
   styleUrl: './session-header.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -23,7 +19,7 @@ export class SessionHeader {
   protected readonly isOpen = computed(() => this.session()?.status === 'OPEN');
 
   /** The matchmaking settings, frozen at creation, summed up in one row of pills. */
-  protected readonly rules = computed<SessionRule[]>(() => {
+  protected readonly rules = computed<RulePill[]>(() => {
     const session = this.session();
     if (!session) {
       return [];
@@ -33,7 +29,7 @@ export class SessionHeader {
       (size) => size !== session.playersPerTeam,
     );
 
-    const rules: SessionRule[] = [
+    const rules: RulePill[] = [
       { icon: 'group', label: `${session.playersPerTeam} joueurs / équipe` },
       { icon: 'flag', label: `${session.pointsPerGame} points` },
       { icon: 'table_restaurant', label: `${session.plateCount} plaques` },

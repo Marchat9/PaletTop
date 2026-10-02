@@ -27,6 +27,7 @@ export interface StructuredTournamentConfig extends SpecificTournamentConfig {
 
 export interface UpDownTournamentConfig extends SpecificTournamentConfig {
   numberOfRound?: number;
+  lastRoundByRanking?: boolean;
 }
 
 export interface ChampionShipTournamentConfig extends SpecificTournamentConfig {

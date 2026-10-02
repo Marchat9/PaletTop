@@ -6,8 +6,10 @@ import { TournamentStatus } from 'src/app/models/tournament-status.enum';
 import { Button } from 'src/app/shared/button/button';
 import { Card } from 'src/app/shared/card/card';
 import { Icon } from 'src/app/shared/icon/icon';
+import { RulePills } from 'src/app/shared/rule-pills/rule-pills';
 import { StatusPill, StatusPillTone } from 'src/app/shared/status-pill/status-pill';
 import { TournamentDto } from 'src/app/store/tournament/tournament.models';
+import { buildTournamentRules } from 'src/app/utils/tournament-rules.util';
 
 const STATUS_PRESENTATION: Record<string, { label: string; tone: StatusPillTone }> = {
   [TournamentStatus.DRAFT]: { label: 'Brouillon', tone: 'draft' },
@@ -19,7 +21,7 @@ const STATUS_PRESENTATION: Record<string, { label: string; tone: StatusPillTone 
 @Component({
   selector: 'app-tournament-header',
   standalone: true,
-  imports: [DatePipe, Card, Button, Icon, StatusPill],
+  imports: [DatePipe, Card, Button, Icon, StatusPill, RulePills],
   templateUrl: './tournament-header.component.html',
   styleUrl: './tournament-header.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -55,6 +57,7 @@ export class TournamentHeaderComponent {
         return '-';
     }
   });
+  public readonly rules = computed(() => buildTournamentRules(this.tournament()?.configuration));
   public readonly hasDescription = computed(() => !!this.tournament()?.description?.trim());
   public readonly statusPresentation = computed(() => {
     const status = this.tournament()?.status ?? 'UNKNOWN';

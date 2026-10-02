@@ -63,6 +63,7 @@ export function extractCompetitionConfiguration(
       const upDownConfigControls = tournamentModeParameter.controls.upDownMode.controls;
       return {
         numberOfRound: upDownConfigControls.numberOfRound.value,
+        lastRoundByRanking: upDownConfigControls.lastRoundByRanking.value,
       };
     case 'championship':
       const championshipConfigControls = tournamentModeParameter.controls.championshipMode.controls;

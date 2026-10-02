@@ -53,6 +53,15 @@
         }
       }
 
+      .phase {
+        margin: 0;
+        padding: 0.25rem 0.6rem;
+        border-radius: 0.45rem;
+        background: var(--color-surface-container-high);
+        color: var(--color-tertiary);
+        align-content: center;
+      }
+
       .team-code {
         display: flex;
         flex-direction: row;
