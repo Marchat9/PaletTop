@@ -75,6 +75,9 @@ services:
             - palettop
         security_opt:
             - no-new-privileges:true
+        volumes:
+            # Every file of this folder is served at the site root (see frontend/nginx.conf).
+            - ./additional-web-pages:/usr/share/nginx/extra:ro
 
 # Networks
 networks:
