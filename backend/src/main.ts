@@ -1,10 +1,14 @@
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
+import { initializeTransactionalContext, StorageDriver } from 'typeorm-transactional';
 import { AppModule } from './app.module';
 import { corsOrigin } from './utils/cors-origin.util';
 
 async function bootstrap(): Promise<void> {
+    // Must run before the app is created: @Transactional() methods rely on this context.
+    initializeTransactionalContext({ storageDriver: StorageDriver.AUTO });
+
     const app = await NestFactory.create<NestExpressApplication>(AppModule, {
         cors: { origin: corsOrigin() },
     });

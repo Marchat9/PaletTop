@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Transactional } from 'typeorm-transactional';
 import { MatchesSession } from 'src/entities/matches-session.entity';
 import { TournamentMatch } from 'src/entities/tounament-match.entity';
 import { Tournament } from 'src/entities/tournament.entity';
@@ -49,48 +50,15 @@ export class SessionService {
         if (!tournament.teams.length) {
             throw new BadRequestException('Aucune équipe inscrite au tournoi.');
         }
-        // ==== Common data ====
-        const tournamentId = tournament.id;
+
         const tournamentCode = tournament.code;
         const strategy = this.strategyFactory.create(tournament.configuration.competitionMode);
-        // ====================
-
-        // ====== Common ======
-        // Common step: Create initial session
-        const session = await this.sessionRepo.save(
-            this.sessionRepo.create({
-                tournament: { id: tournamentId } as Tournament,
-                sessionNumber: 1,
-            }),
-        );
-        // Common step: Update Tournament status
-        const tournamentActive = await this.tournamentRepo.updateStatus(
+        const { tournamentWithMatches, session } = await this.writeTournamentStart(
             tournament,
-            TournamentStatus.ACTIVE,
+            strategy,
         );
-        this.logger.log(`Tournament ${tournamentCode} started with session '1' created`);
-        // ====================
 
-        // ========== Strategy ==========
-        // Strategy step: Prepare Tournament to start
-        const tournamentPrepared = await strategy.prepareTournamentStart(tournamentActive);
-
-        // Strategy step: Assign saved pools in current tournament object
-        const tournamentWithPool = {
-            ...tournamentPrepared,
-            pools: await strategy.assignTeamsToFirstPools(tournamentPrepared),
-        };
-
-        // Strategy step: Generate matches in session first
-        const tournamentWithMatches = appendMatchesSessionToTournament(
-            tournamentWithPool,
-            session,
-            await strategy.generateSessionMatches(tournamentWithPool, session),
-        );
-        // ==============================
-
-        // ==== Final common steps ====
-        // data
+        // ==== Final common steps (after commit) ====
         const newSessionMatches = tournamentWithMatches.matchsSessions.find(
             (s) => s.sessionNumber === session.sessionNumber,
         )!;
@@ -114,6 +82,52 @@ export class SessionService {
         return tournamentWithStatusInfo;
     }
 
+    /**
+     * Every write of a start, in one transaction: if a strategy step fails, the tournament stays
+     * in DRAFT with nothing created, and can be fixed then started again.
+     */
+    @Transactional()
+    private async writeTournamentStart(
+        tournament: Tournament,
+        strategy: TournamentStrategy,
+    ): Promise<{ tournamentWithMatches: Tournament; session: MatchesSession }> {
+        // ====== Common ======
+        // Common step: Create initial session
+        const session = await this.sessionRepo.save(
+            this.sessionRepo.create({
+                tournament: { id: tournament.id } as Tournament,
+                sessionNumber: 1,
+            }),
+        );
+        // Common step: Update Tournament status
+        const tournamentActive = await this.tournamentRepo.updateStatus(
+            tournament,
+            TournamentStatus.ACTIVE,
+        );
+        // ====================
+
+        // ========== Strategy ==========
+        // Strategy step: Prepare Tournament to start
+        const tournamentPrepared = await strategy.prepareTournamentStart(tournamentActive);
+
+        // Strategy step: Assign saved pools in current tournament object
+        const tournamentWithPool = {
+            ...tournamentPrepared,
+            pools: await strategy.assignTeamsToFirstPools(tournamentPrepared),
+        };
+
+        // Strategy step: Generate matches in session first
+        const tournamentWithMatches = appendMatchesSessionToTournament(
+            tournamentWithPool,
+            session,
+            await strategy.generateSessionMatches(tournamentWithPool, session),
+        );
+        // ==============================
+        this.logger.log(`Tournament ${tournament.code} started with session '1' created`);
+
+        return { tournamentWithMatches, session };
+    }
+
     async nextSession(code: string, password: string): Promise<AdminTournamentDto> {
         const tournament = await this.tournamentAuthService.findWithAdminAuth({ code }, password, {
             withTeams: true,
@@ -129,7 +143,6 @@ export class SessionService {
         }
 
         // ==== Common data ====
-        const tournamentId = tournament.id;
         const tournamentCode = tournament.code;
         const strategy = this.strategyFactory.create(tournament.configuration.competitionMode);
         const currentSession = tournament.matchsSessions.sort(
@@ -144,36 +157,15 @@ export class SessionService {
             );
         }
 
-        // Common step: Close current session
-        const currentSessionClosed = await this.sessionRepo.updateStatus(
-            currentSession,
-            MatchesSessionStatus.CLOSED,
-        );
-        const tournamentWithSessionUpdated = updateTournamentWithUpdatedSession(
-            tournament,
-            currentSessionClosed,
-        );
+        const { currentSessionClosed, newSession, tournamentWithMatches } =
+            await this.writeNextSession(tournament, currentSession, strategy);
 
-        // Common step: Generate new next session
-        const newSession = await this.sessionRepo.save(
-            this.sessionRepo.create({
-                tournament: { id: tournamentId } as Tournament,
-                sessionNumber: currentSession.sessionNumber + 1,
-            }),
-        );
+        // ======= Common steps (after commit) =======
         // Common step: emit session update
         this.gateway.emitSessionUpdated(tournamentCode, toSessionResponseDto(currentSessionClosed));
         // Common step: emit history update for just closed session
         await this.emitHistoryForSession(tournamentCode, currentSessionClosed);
 
-        // Strategy step: Generate new session with match associated
-        const tournamentWithMatches = appendMatchesSessionToTournament(
-            tournamentWithSessionUpdated,
-            newSession,
-            await strategy.generateSessionMatches(tournamentWithSessionUpdated, newSession),
-        );
-
-        // ======= Common steps =======
         // data
         const newSessionMatches = tournamentWithMatches.matchsSessions.find(
             (s) => s.sessionNumber === newSession.sessionNumber,
@@ -197,6 +189,45 @@ export class SessionService {
             sanitizeTournament(tournament),
             tournamentStatusInfoForNextSession,
         );
+    }
+
+    /** Closing the current session and opening the next one succeed or fail together. */
+    @Transactional()
+    private async writeNextSession(
+        tournament: Tournament,
+        currentSession: MatchesSession,
+        strategy: TournamentStrategy,
+    ): Promise<{
+        currentSessionClosed: MatchesSession;
+        newSession: MatchesSession;
+        tournamentWithMatches: Tournament;
+    }> {
+        // Common step: Close current session
+        const currentSessionClosed = await this.sessionRepo.updateStatus(
+            currentSession,
+            MatchesSessionStatus.CLOSED,
+        );
+        const tournamentWithSessionUpdated = updateTournamentWithUpdatedSession(
+            tournament,
+            currentSessionClosed,
+        );
+
+        // Common step: Generate new next session
+        const newSession = await this.sessionRepo.save(
+            this.sessionRepo.create({
+                tournament: { id: tournament.id } as Tournament,
+                sessionNumber: currentSession.sessionNumber + 1,
+            }),
+        );
+
+        // Strategy step: Generate new session with match associated
+        const tournamentWithMatches = appendMatchesSessionToTournament(
+            tournamentWithSessionUpdated,
+            newSession,
+            await strategy.generateSessionMatches(tournamentWithSessionUpdated, newSession),
+        );
+
+        return { currentSessionClosed, newSession, tournamentWithMatches };
     }
 
     async completeTournament(code: string, password: string): Promise<AdminTournamentDto> {
@@ -223,26 +254,16 @@ export class SessionService {
             `Tournament ${tournamentCode} completing — transitioning ACTIVE → COMPLETED`,
         );
 
-        // Common step: Close last session
-        const closedSession = await this.sessionRepo.updateStatus(
-            openSession,
-            MatchesSessionStatus.CLOSED,
-        );
-        const tounramentWithSessionUpdated = updateTournamentWithUpdatedSession(
+        const { closedSession, completedTournament } = await this.writeTournamentCompletion(
             tournament,
-            closedSession,
+            openSession,
         );
 
+        // ==== Common steps (after commit) ====
         // Common step: emit updated session data
         this.gateway.emitSessionUpdated(tournamentCode, toSessionResponseDto(closedSession));
         // Common step: emit history update for just closed session
         await this.emitHistoryForSession(tournamentCode, closedSession);
-
-        // Common step: Complete tournament
-        const completedTournament = await this.tournamentRepo.updateStatus(
-            tounramentWithSessionUpdated,
-            TournamentStatus.COMPLETED,
-        );
 
         // Common step: Emit new tournament information
         const statusAfterComplete = await this.buildTournamentStatus(strategy, completedTournament);
@@ -252,6 +273,31 @@ export class SessionService {
         );
 
         return toAdminTournamentDto(completedTournament, statusAfterComplete);
+    }
+
+    /** Closing the last session and completing the tournament succeed or fail together. */
+    @Transactional()
+    private async writeTournamentCompletion(
+        tournament: Tournament,
+        openSession: MatchesSession,
+    ): Promise<{ closedSession: MatchesSession; completedTournament: Tournament }> {
+        // Common step: Close last session
+        const closedSession = await this.sessionRepo.updateStatus(
+            openSession,
+            MatchesSessionStatus.CLOSED,
+        );
+        const tournamentWithSessionUpdated = updateTournamentWithUpdatedSession(
+            tournament,
+            closedSession,
+        );
+
+        // Common step: Complete tournament
+        const completedTournament = await this.tournamentRepo.updateStatus(
+            tournamentWithSessionUpdated,
+            TournamentStatus.COMPLETED,
+        );
+
+        return { closedSession, completedTournament };
     }
 
     async getSessions(tournamentCode: string): Promise<SessionResponseDto[]> {

@@ -4,6 +4,8 @@ import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { addTransactionalDataSource } from 'typeorm-transactional';
+import { DataSource } from 'typeorm';
 import { HttpThrottlerGuard } from './utils/http-throttler.guard';
 import { getTypeOrmConfig } from './database/typeorm.config';
 import cleanupConfig from './config/cleanup.config';
@@ -22,7 +24,12 @@ import { TrainingModule } from './modules/training/training.module';
             isGlobal: true,
             load: [cleanupConfig, superAdminConfig, trainingAutoCloseConfig],
         }),
-        TypeOrmModule.forRoot(getTypeOrmConfig()),
+        TypeOrmModule.forRootAsync({
+            useFactory: getTypeOrmConfig,
+            // Registers the data source so @Transactional() methods share one transaction.
+            dataSourceFactory: async (options) =>
+                addTransactionalDataSource(new DataSource(options!)),
+        }),
         ScheduleModule.forRoot(),
         // Only a floor against automated hammering (e.g. guessing 4-digit participant codes): the
         // limit is set well above what a room full of players and one admin can produce, so normal
