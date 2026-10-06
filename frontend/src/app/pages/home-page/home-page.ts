@@ -58,6 +58,11 @@ export class HomePageComponent implements OnInit {
       { value: activeTournament, label: 'Tournois actifs' },
       { value: pastTournament, label: 'Tournois passés' },
       { value: this.metricsData()?.clubs?.total + '', label: 'Clubs actifs' },
+      { value: (this.metricsData()?.trainings?.total ?? 0) + '', label: `Groupe d'entraînements` },
+      {
+        value: (this.metricsData()?.trainings?.total ?? 0) + '',
+        label: `Sessions d'entraînement`,
+      },
     ];
   });
 

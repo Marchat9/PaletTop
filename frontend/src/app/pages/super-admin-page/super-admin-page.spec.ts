@@ -8,10 +8,12 @@ import { ConfirmationPopupComponent } from 'src/app/modales/confirmation-popup/c
 import { SuperAdminClubRenamePopupComponent } from 'src/app/modales/super-admin-club-rename-popup/super-admin-club-rename-popup';
 import { SuperAdminTournamentDeletePopupComponent } from 'src/app/modales/super-admin-tournament-delete-popup/super-admin-tournament-delete-popup';
 import { SuperAdminTournamentDetailPopupComponent } from 'src/app/modales/super-admin-tournament-detail-popup/super-admin-tournament-detail-popup';
-import { SuperAdminTournamentPasswordResetPopupComponent } from 'src/app/modales/super-admin-tournament-password-reset-popup/super-admin-tournament-password-reset-popup';
+import { SuperAdminPasswordResetPopupComponent } from 'src/app/modales/super-admin-password-reset-popup/super-admin-password-reset-popup';
+import { SuperAdminTrainingDetailPopupComponent } from 'src/app/modales/super-admin-training-detail-popup/super-admin-training-detail-popup';
 import { SuperAdminTournamentStatusPopupComponent } from 'src/app/modales/super-admin-tournament-status-popup/super-admin-tournament-status-popup';
 import { SuperAdminClubSummaryDto } from 'src/app/services/super-admin-club.service';
 import { SuperAdminTournamentSummaryDto } from 'src/app/services/super-admin-tournament.service';
+import { SuperAdminTrainingSummaryDto } from 'src/app/services/super-admin-training.service';
 import { loadMetrics } from 'src/app/store/metrics/metrics.actions';
 import {
   deleteSuperAdminClubs,
@@ -21,6 +23,10 @@ import {
   deleteSuperAdminTournaments,
   searchSuperAdminTournaments,
 } from 'src/app/store/superadmin-tournaments/superadmin-tournaments.actions';
+import {
+  deleteSuperAdminTrainings,
+  searchSuperAdminTrainings,
+} from 'src/app/store/superadmin-trainings/superadmin-trainings.actions';
 import { clearSuperAdminSession } from 'src/app/store/superadmin/superadmin.actions';
 import { SuperAdminPageComponent } from './super-admin-page';
 
@@ -31,6 +37,23 @@ const TOURNAMENT_CRITERIA = {
   status: null,
   sortBy: 'createdAt' as const,
   sortDir: 'DESC' as const,
+};
+
+const TRAINING_CRITERIA = {
+  page: 1,
+  pageSize: 20,
+  search: '',
+  sortBy: 'createdAt' as const,
+  sortDir: 'DESC' as const,
+};
+
+const TRAINING: SuperAdminTrainingSummaryDto = {
+  id: 'id-training',
+  code: 'TRAIN-01',
+  name: 'Entraînement du lundi',
+  sessionsCount: 2,
+  openSessionsCount: 1,
+  createdAt: '2026-08-03T10:00:00.000Z',
 };
 
 const CLUB_CRITERIA = {
@@ -104,6 +127,18 @@ function setup(
             statusChangeRequest: { isLoading: false, error: null },
             passwordResetRequest: { isLoading: false, error: null },
           },
+          superAdminTrainings: {
+            list: {
+              items: [TRAINING],
+              total: 1,
+              criteria: TRAINING_CRITERIA,
+              isLoading: false,
+              error: null,
+            },
+            detail: { data: null, isLoading: false, error: null },
+            deleteRequest: { isLoading: false, error: null },
+            passwordResetRequest: { isLoading: false, error: null },
+          },
           superAdminClubs: {
             list: {
               items: clubItems,
@@ -148,17 +183,20 @@ describe('SuperAdminPageComponent', () => {
     expect(store.dispatch).toHaveBeenCalledWith(clearSuperAdminSession());
   });
 
-  it('loads metrics and both tables on init', () => {
+  it('loads metrics and all tables on init', () => {
     const { store } = setup('secret');
 
     expect(store.dispatch).toHaveBeenCalledWith(loadMetrics());
     expect(store.dispatch).toHaveBeenCalledWith(
       searchSuperAdminTournaments({ criteria: TOURNAMENT_CRITERIA }),
     );
+    expect(store.dispatch).toHaveBeenCalledWith(
+      searchSuperAdminTrainings({ criteria: TRAINING_CRITERIA }),
+    );
     expect(store.dispatch).toHaveBeenCalledWith(searchSuperAdminClubs({ criteria: CLUB_CRITERIA }));
   });
 
-  it('refresh() re-dispatches metrics and both tables using their current criteria', () => {
+  it('refresh() re-dispatches metrics and all tables using their current criteria', () => {
     const { fixture, store } = setup('secret');
     (store.dispatch as unknown as { mockClear: () => void }).mockClear();
 
@@ -167,6 +205,9 @@ describe('SuperAdminPageComponent', () => {
     expect(store.dispatch).toHaveBeenCalledWith(loadMetrics());
     expect(store.dispatch).toHaveBeenCalledWith(
       searchSuperAdminTournaments({ criteria: TOURNAMENT_CRITERIA }),
+    );
+    expect(store.dispatch).toHaveBeenCalledWith(
+      searchSuperAdminTrainings({ criteria: TRAINING_CRITERIA }),
     );
     expect(store.dispatch).toHaveBeenCalledWith(searchSuperAdminClubs({ criteria: CLUB_CRITERIA }));
   });
@@ -211,9 +252,14 @@ describe('SuperAdminPageComponent', () => {
     fixture.componentInstance.onTournamentPasswordResetRequested(DRAFT_TOURNAMENT);
 
     expect(dialogMock.open).toHaveBeenCalledWith(
-      SuperAdminTournamentPasswordResetPopupComponent,
+      SuperAdminPasswordResetPopupComponent,
       expect.objectContaining({
-        data: { id: DRAFT_TOURNAMENT.id, code: DRAFT_TOURNAMENT.code, name: DRAFT_TOURNAMENT.name },
+        data: {
+          kind: 'tournament',
+          id: DRAFT_TOURNAMENT.id,
+          code: DRAFT_TOURNAMENT.code,
+          name: DRAFT_TOURNAMENT.name,
+        },
       }),
     );
   });
@@ -321,6 +367,67 @@ describe('SuperAdminPageComponent', () => {
       SuperAdminTournamentStatusPopupComponent,
       expect.objectContaining({ data: { ids: [DRAFT_TOURNAMENT.id, ACTIVE_TOURNAMENT.id] } }),
     );
+  });
+
+  it('dispatches searchSuperAdminTrainings when the training table requests a search', () => {
+    const { fixture, store } = setup('secret');
+    (store.dispatch as unknown as { mockClear: () => void }).mockClear();
+    const criteria = { ...TRAINING_CRITERIA, search: 'lundi' };
+
+    fixture.componentInstance.onTrainingSearch(criteria);
+
+    expect(store.dispatch).toHaveBeenCalledWith(searchSuperAdminTrainings({ criteria }));
+  });
+
+  it('opens the training detail popup with the requested id', () => {
+    const { fixture, dialogMock } = setup('secret');
+
+    fixture.componentInstance.onTrainingDetailRequested(TRAINING.id);
+
+    expect(dialogMock.open).toHaveBeenCalledWith(
+      SuperAdminTrainingDetailPopupComponent,
+      expect.objectContaining({ data: { id: TRAINING.id } }),
+    );
+  });
+
+  it('opens the password reset popup for a training', () => {
+    const { fixture, dialogMock } = setup('secret');
+
+    fixture.componentInstance.onTrainingPasswordResetRequested(TRAINING);
+
+    expect(dialogMock.open).toHaveBeenCalledWith(
+      SuperAdminPasswordResetPopupComponent,
+      expect.objectContaining({
+        data: { kind: 'training', id: TRAINING.id, code: TRAINING.code, name: TRAINING.name },
+      }),
+    );
+  });
+
+  it('dispatches deleteSuperAdminTrainings for a single training when confirmed', () => {
+    const { fixture, store } = setup('secret');
+    (store.dispatch as unknown as { mockClear: () => void }).mockClear();
+
+    fixture.componentInstance.onTrainingDeleteOneRequested(TRAINING);
+
+    expect(store.dispatch).toHaveBeenCalledWith(deleteSuperAdminTrainings({ ids: [TRAINING.id] }));
+  });
+
+  it('dispatches deleteSuperAdminTrainings for the selection when confirmed', () => {
+    const { fixture, store } = setup('secret');
+    (store.dispatch as unknown as { mockClear: () => void }).mockClear();
+
+    fixture.componentInstance.onTrainingDeleteSelectionRequested(['a', 'b']);
+
+    expect(store.dispatch).toHaveBeenCalledWith(deleteSuperAdminTrainings({ ids: ['a', 'b'] }));
+  });
+
+  it('does not delete a training when the confirmation popup is dismissed', () => {
+    const { fixture, store } = setup('secret', undefined, undefined, false);
+    (store.dispatch as unknown as { mockClear: () => void }).mockClear();
+
+    fixture.componentInstance.onTrainingDeleteOneRequested(TRAINING);
+
+    expect(store.dispatch).not.toHaveBeenCalled();
   });
 
   it('dispatches searchSuperAdminClubs when the club table requests a search', () => {

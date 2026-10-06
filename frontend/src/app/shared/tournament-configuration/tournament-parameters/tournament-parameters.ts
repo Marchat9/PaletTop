@@ -7,6 +7,7 @@ import { InputTextarea } from '../../input-textarea/input-textarea';
 import { Icon } from '../../icon/icon';
 import { TournamentConfigurationField } from '../tournament-configuration-form.model';
 import { TournamentParametersForm } from './tournament-parameters-form.model';
+import { CODE_FORMAT_HINT } from 'src/app/utils/code-format.util';
 
 @Component({
   selector: 'app-tournament-parameters',
@@ -21,4 +22,5 @@ export class TournamentParameters {
   public readonly hiddenFields = input<TournamentConfigurationField[]>([]);
 
   public readonly minDate: Date = new Date();
+  public readonly codeFormatHint = CODE_FORMAT_HINT;
 }

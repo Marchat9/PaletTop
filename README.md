@@ -9,16 +9,18 @@ tournament admin and the players.
 
 ## Highlights
 
-- **Tournament setup** — standard bracket or up-down formats, configurable pool count, qualifying
-  rounds, and points-per-game rules.
+- **Tournament formats** — pools + brackets (with optional consolante, challenge and third-place
+  tables), up-down (optionally with a last round by ranking), and club-vs-club championship.
+- **Training** — training groups with sessions, rounds, and a leaderboard for regular club play.
 - **Team management** — add teams one at a time, edit or remove them, or bulk-import a whole
   roster from an Excel file (a styled, pre-filled template is generated for you, and `.xlsx`,
   `.xlsm`, `.xls`, `.ods`, and `.csv` are all accepted on import).
 - **Live scoring** — real-time score updates over WebSocket, visible to admins and players alike
   as matches happen.
 - **Pool rankings & standings** — computed automatically as sessions complete.
-- **Player view** — players join with a team code and follow their own matches and history without
-  needing an account.
+- **Player and spectator views** — players join with a team code and follow their own matches;
+  spectators follow a whole tournament. No account needed.
+- **Friendly match** — quick score counter for a single game.
 - **Mobile-friendly admin** — built with a non-technical, on-the-go admin in mind (large touch
   targets, bottom sheets on small screens, plain-language error messages).
 
@@ -52,13 +54,12 @@ on its own (with hot reload, without Docker), see the sub-project READMEs below.
 palettop/
 ├── backend/                  NestJS REST + WebSocket API — see backend/README.md
 ├── frontend/                 Angular admin/player web client — see frontend/README.md
-├── API.md                    HTTP + WebSocket API reference
-└── docker-compose.yml        Local dev stack — builds both apps from source
+├── docker-compose.yml        Local dev stack — builds both apps from source
+└── docker-compose-prod.yml   Runs the published images from GHCR
 ```
 
 - [`backend/README.md`](backend/README.md) — setup, running, migrations, architecture.
 - [`frontend/README.md`](frontend/README.md) — setup, running, building, architecture.
-- [`API.md`](API.md) — endpoint and WebSocket event reference for both clients.
 
 ## CI
 

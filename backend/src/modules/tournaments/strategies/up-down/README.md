@@ -1,38 +1,48 @@
-# UpDownTournamentStrategy — Tournoi montant-descendant (UP_DOWN)
+# UpDownTournamentStrategy — Up-down (UP_DOWN)
 
-## Principe
+## Idea
 
-Le tournoi montant-descendant ne repose pas sur des poules fixes : toutes les équipes sont dans une seule poule technique et jouent une série de parties.
+No real pools: all teams are in one technical pool and play a series of rounds.
 
-- **Parties tirées au sort** : chaque partie est un tirage aléatoire sous contraintes (même club, revanche), via `generateMatchesInPool` — le même algorithme que les phases de poule du mode STANDARD.
-- **Dernière partie au classement** (option `lastRoundByRanking`) : si l'option est cochée et que `numberOfRound` vaut au moins 2, la partie `numberOfRound` n'est pas tirée au sort.
+- **Drawn rounds**: each round is a random draw with constraints (same club, rematch), using
+  `generateMatchesInPool` — the same code as the STANDARD pool rounds.
+- **Last round by ranking** (`lastRoundByRanking`): if enabled and `numberOfRound` is at least 2,
+  round `numberOfRound` is not drawn.
 
-## Dernière partie au classement
+## Last round by ranking
 
-Quand `isRankingRound(config, sessionNumber)` est vrai :
+When `isRankingRound(config, sessionNumber)` is true:
 
-1. Le classement global est calculé après la partie précédente (`computeGlobalRanking`, selon la méthode de calcul du tournoi).
-2. Les équipes sont triées par rang ; une égalité stricte est départagée par l'identifiant de l'équipe (`orderTeamsByRanking`), pour un résultat reproductible.
-3. Chaque équipe affronte son voisin de classement : 1re contre 2e, 3e contre 4e… (`generateMatchesByRanking`). Les contraintes de tirage sont ignorées.
-4. Avec un nombre impair d'équipes, la dernière du classement est exemptée avec un **bye sans point** (0-0) : ni victoire, ni point, aussi bien dans le classement global que dans le classement de poule.
-5. Les plaques suivent l'ordre du classement (plaque 1 = 1re contre 2e).
+1. The global ranking is computed after the previous round (`computeGlobalRanking`).
+2. Teams are sorted by rank; exact ties are broken by team id (`orderTeamsByRanking`), so the
+   result is reproducible.
+3. Each team plays its ranking neighbour: 1st vs 2nd, 3rd vs 4th… (`generateMatchesByRanking`).
+   Draw constraints are ignored.
+4. With an odd number of teams, the last one gets a **bye worth nothing** (0-0): no win, no
+   points, in both the global and the pool ranking.
+5. Plates follow the ranking (plate 1 = 1st vs 2nd).
 
 ## Configuration
 
-| Champ                | Description                                                               |
-| -------------------- | ------------------------------------------------------------------------- |
-| `numberOfRound`      | Nombre de parties. Vide : illimité, l'admin clôture quand il le souhaite. |
-| `lastRoundByRanking` | Dernière partie au classement. Requiert `numberOfRound >= 2`.             |
+| Field                | Description                                                    |
+| -------------------- | -------------------------------------------------------------- |
+| `numberOfRound`      | Number of rounds. Empty: unlimited, the admin ends it manually |
+| `lastRoundByRanking` | Last round by ranking. Needs `numberOfRound >= 2`              |
 
-## Phase affichée (`phaseName`)
+## Phase name (`phaseName`)
 
-| Statut du tournoi                       | Libellé                                               |
-| --------------------------------------- | ----------------------------------------------------- |
-| Brouillon / annulé                      | _(vide)_                                              |
-| En cours                                | `Partie x/N` (ou `Partie x` sans limite)              |
-| En cours, dernière partie au classement | `Montée / Descente — Dernière partie (au classement)` |
-| Terminé                                 | `Montée / Descente terminée`                          |
+| Tournament state            | Label                                                 |
+| --------------------------- | ----------------------------------------------------- |
+| Draft / cancelled           | _(empty)_                                             |
+| Active                      | `Partie x/N` (or `Partie x` when unlimited)           |
+| Active, last round by rank  | `Montée / Descente — Dernière partie (au classement)` |
+| Completed                   | `Montée / Descente terminée`                          |
 
-## Classement
+## Ranking
 
-`computeGlobalRanking` n'est pas surchargée ici : la classe de base trie selon `scoreCalculation` du tournoi, ce qui couvre ce mode sans logique spécifique.
+`computeGlobalRanking` is not overridden: the base class sorts by the tournament's
+`scoreCalculation`.
+
+## Injected dependencies
+
+`PoolService`, `MatchRepository`.

@@ -44,6 +44,10 @@ import { SuperAdminTournamentsEffects } from './superadmin-tournaments/superadmi
 import { SuperAdminTournamentsState } from './superadmin-tournaments/superadmin-tournaments.reducer';
 import { superAdminTournamentsReducer } from './superadmin-tournaments/superadmin-tournaments.reducer';
 import { superAdminTournamentsFeatureKey } from './superadmin-tournaments/superadmin-tournaments.selectors';
+import { SuperAdminTrainingsEffects } from './superadmin-trainings/superadmin-trainings.effects';
+import { SuperAdminTrainingsState } from './superadmin-trainings/superadmin-trainings.reducer';
+import { superAdminTrainingsReducer } from './superadmin-trainings/superadmin-trainings.reducer';
+import { superAdminTrainingsFeatureKey } from './superadmin-trainings/superadmin-trainings.selectors';
 import { SuperAdminClubsEffects } from './superadmin-clubs/superadmin-clubs.effects';
 import { SuperAdminClubsState } from './superadmin-clubs/superadmin-clubs.reducer';
 import { superAdminClubsReducer } from './superadmin-clubs/superadmin-clubs.reducer';
@@ -69,6 +73,7 @@ export interface AppState {
   [superadminFeatureKey]: SuperAdminState;
   [metricsFeatureKey]: MetricsState;
   [superAdminTournamentsFeatureKey]: SuperAdminTournamentsState;
+  [superAdminTrainingsFeatureKey]: SuperAdminTrainingsState;
   [superAdminClubsFeatureKey]: SuperAdminClubsState;
   [spectatorFeatureKey]: SpectatorState;
   [trainingFeatureKey]: TrainingState;
@@ -86,6 +91,7 @@ export const reducers: ActionReducerMap<AppState> = {
   [superadminFeatureKey]: superadminReducer,
   [metricsFeatureKey]: metricsReducer,
   [superAdminTournamentsFeatureKey]: superAdminTournamentsReducer,
+  [superAdminTrainingsFeatureKey]: superAdminTrainingsReducer,
   [superAdminClubsFeatureKey]: superAdminClubsReducer,
   [spectatorFeatureKey]: spectatorReducer,
   [trainingFeatureKey]: trainingReducer,
@@ -104,6 +110,7 @@ export const effects = [
   SuperAdminEffects,
   MetricsEffects,
   SuperAdminTournamentsEffects,
+  SuperAdminTrainingsEffects,
   SuperAdminClubsEffects,
   SpectatorEffects,
   TrainingEffects,

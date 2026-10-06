@@ -10,6 +10,8 @@ export class SessionService {
   private readonly apiBaseUrl = environment.backBaseApiUrl;
 
   public getSessions(code: string): Observable<MatchesSessionDto[]> {
-    return this.http.get<MatchesSessionDto[]>(`${this.apiBaseUrl}/tournaments/${code}/sessions`);
+    return this.http.get<MatchesSessionDto[]>(
+      `${this.apiBaseUrl}/tournaments/${encodeURIComponent(code)}/sessions`,
+    );
   }
 }

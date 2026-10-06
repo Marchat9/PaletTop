@@ -65,6 +65,11 @@ export class Navigation {
       children: [
         { label: 'Rejoindre en joueur', route: '/player/tournament', icon: 'person' },
         { label: 'Administrer', route: '/admin/tournament', icon: 'admin_panel_settings' },
+        {
+          label: 'Organiser un tournoi',
+          route: '/admin/tournament-creation',
+          icon: 'add_moderator',
+        },
         { label: 'Suivre en spectateur', route: '/spectateur', icon: 'visibility' },
       ],
     },
@@ -76,6 +81,7 @@ export class Navigation {
       children: [
         { label: 'Rejoindre en joueur', route: '/player/training', icon: 'person' },
         { label: 'Administrer', route: '/admin/training', icon: 'admin_panel_settings' },
+        { label: 'Créer un Club', route: '/admin/training-creation', icon: 'group_add' },
       ],
     },
     {

@@ -1,3 +1,4 @@
+import { UuidParam } from 'src/decorators/uuid-param.decorator';
 import {
     Body,
     ConflictException,
@@ -121,7 +122,7 @@ export class TournamentsController {
 
     @Patch(':idtournament/configuration')
     async updateConfiguration(
-        @Param('idtournament') id: string,
+        @UuidParam('idtournament') id: string,
         @Body() dto: UpdateTournamentConfigurationDto,
     ): Promise<Tournament> {
         try {

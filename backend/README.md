@@ -39,6 +39,10 @@ cp .env.example .env   # adjust DB_* values if not using the defaults below
 | `DB_NAME`     | `palet`     | PostgreSQL database name                                  |
 | `APP_ENV`     | *(unset)*   | Set to `dev-bdd` to drop & resync the schema on every boot instead of running migrations (see below) |
 
+`.env.example` also lists optional settings, with their defaults: automatic cleanup of old
+tournaments (`CLEANUP_*`), automatic closing of idle training sessions (`TRAINING_*`), and the
+super-admin login (`SUPER_ADMIN_*`). `SUPER_ADMIN_PASSWORD` is required when `NODE_ENV=production`.
+
 ### Running
 
 ```bash
@@ -50,8 +54,7 @@ Use `start:devDb` only for early local iteration when you don't care about exist
 runs with `synchronize: true` and `dropSchema: true` (see `src/database/typeorm.config.ts`). Use
 `start:dev` (migrations) everywhere else, including anything resembling shared or persistent data.
 
-The API listens on `http://localhost:3000` by default. See [`../API.md`](../API.md) for the full
-HTTP + WebSocket reference.
+The API listens on `http://localhost:3000` by default.
 
 ### Database migrations
 
@@ -93,17 +96,17 @@ builds on every PR, and builds **and publishes** it to GitHub Container Registry
 Build it yourself with `docker build --target production .`.
 
 To run that published image against a fresh PostgreSQL instance without building anything
-locally, use the root [`docker-compose.prod.yml`](../docker-compose.prod.yml):
+locally, use the root [`docker-compose-prod.yml`](../docker-compose-prod.yml). It reads
+`DB_NAME`, `DB_USER`, `DB_PASSWORD`, `SUPER_ADMIN_PASSWORD` and `API_BASE_URL` from `.env`:
 
 ```bash
-echo "SUPER_ADMIN_PASSWORD=<a strong password>" > .env
-docker compose -f docker-compose.prod.yml up -d
+docker compose -f docker-compose-prod.yml up -d
 ```
 
 Pending migrations run automatically on boot (`migrationsRun` in `src/database/typeorm.config.ts`)
 — there's no separate migration step to run, and the production image doesn't ship the TypeScript
-source `npm run migration:run` needs anyway. Pin a specific release instead of `latest` with
-`BACKEND_IMAGE_TAG=1.4.2` in `.env`.
+source `npm run migration:run` needs anyway. The compose file uses the `latest` images; edit the
+`image:` tags to pin a release.
 
 ## Testing
 
@@ -128,11 +131,16 @@ npm run format:check   # Prettier, check-only (used in CI-style checks)
 
 - Entities live in `src/entities/` and are auto-discovered via glob (see
   `src/database/typeorm.config.ts`).
-- Business logic is organized in `src/modules/` — currently `tournaments` (the bulk of the
-  domain: teams, pools, matches, sessions, ranking, scoring strategies) and `realtime` (the
-  WebSocket gateway).
-- Tournament formats (standard bracket vs. up-down) are implemented as interchangeable strategies
-  under `src/modules/tournaments/strategies/`.
+- Business logic is organized in `src/modules/`:
+  - `tournaments` — teams, pools, matches, sessions, ranking, scoring
+  - `training` — training groups, sessions, rounds, leaderboard (own WebSocket gateway)
+  - `realtime` — tournament WebSocket gateway
+  - `super-admin` — global admin endpoints (tournaments, trainings, clubs)
+  - `cleanup` — scheduled deletion of old tournaments and closing of idle training sessions
+  - `health` — health check endpoint
+- Tournament formats (standard, up-down, championship) are interchangeable strategies under
+  `src/modules/tournaments/strategies/` — see the [README](src/modules/tournaments/strategies/README.md)
+  there.
 - `src/database/typeorm.config.ts` exposes two modes: normal (migrations, no sync) and `dev-bdd`
   (drop + resync from entities on every boot).
 

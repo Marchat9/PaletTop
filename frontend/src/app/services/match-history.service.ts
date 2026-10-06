@@ -11,7 +11,7 @@ export class MatchHistoryService {
 
   public getMatchHistory(tournamentCode: string, teamCode: string): Observable<MatchHistoryDto[]> {
     return this.http.get<MatchHistoryDto[]>(
-      `${this.apiBaseUrl}/tournaments/${tournamentCode}/teams/${teamCode}/history`,
+      `${this.apiBaseUrl}/tournaments/${encodeURIComponent(tournamentCode)}/teams/${teamCode}/history`,
     );
   }
 }

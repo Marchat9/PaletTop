@@ -1,8 +1,8 @@
 # PaletTop — Frontend
 
 Angular 21 single-page app for **PaletTop**, a tournament management app for the French game
-*Palet*. Covers the admin flows (tournament setup, team management, live scoring, ranking) and the
-player-facing views (joining a tournament, following a match).
+*Palet*. Covers the admin flows (tournament setup, team management, live scoring, ranking), the
+player and spectator views, training groups, friendly matches, and the super-admin page.
 
 For the backend API, see [`../backend`](../backend). For the full project overview, see the
 [root README](../README.md).
@@ -88,10 +88,19 @@ npm run format:check   # check-only (used in CI-style checks)
 - Standalone components throughout — no NgModules.
 - Global state lives under `src/app/store/<feature>/`, each with its own
   `actions` / `reducer` / `effects` / `selectors` files (`tournament`, `team`, `match`,
-  `session`, `ranking`, `app-config`, `realtime`, …). Effects call services in
-  `src/app/services/` which hit the backend API.
-- Routes are defined in `src/app/app-routes.ts`: `/accueil` (home), `/admin/tournament-creation`,
-  `/admin` (admin config), `/player`, `/player/:tournamentCode/:teamCode`.
+  `session`, `ranking`, `training`, `spectator`, `realtime`, `app-config`, `superadmin…`, …).
+  Effects call services in `src/app/services/` which hit the backend API.
+- Only page components read the store and dispatch actions; sub-components use
+  `input()` / `output()`.
+- Routes are defined in `src/app/app-routes.ts`:
+  - `/accueil` — home
+  - Tournament: `/admin/tournament-creation`, `/admin/tournament[/:tournamentCode]`,
+    `/player/tournament[/:tournamentCode/:teamCode]`, `/spectateur[/:tournamentCode]`
+  - Training: `/admin/training-creation`, `/admin/training[/:trainingCode]`,
+    `/admin/training/:trainingCode/session-creation`,
+    `/admin/training/:trainingCode/session/:sessionCode`,
+    `/player/training[/:sessionCode/:participantCode]`
+  - `/friendly-match`, `/super-admin`
 - Shared, feature-agnostic UI lives in `src/app/shared/` (buttons, inputs, cards, navigation…);
   modals live in `src/app/modales/`.
 - Locale is fixed to `fr-FR`; environment config lives in `src/environments/`.

@@ -45,7 +45,7 @@
 
   .stats-row {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 0.85rem;
 
     @media (width < 768px) {

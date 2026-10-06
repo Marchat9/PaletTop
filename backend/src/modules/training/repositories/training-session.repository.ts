@@ -21,6 +21,10 @@ export class TrainingSessionRepository {
         return this.repo.save(session as TrainingSession);
     }
 
+    countOpen(): Promise<number> {
+        return this.repo.countBy({ status: TrainingSessionStatus.OPEN });
+    }
+
     async codeExists(code: string): Promise<boolean> {
         const count = await this.repo.countBy({ code });
         return count > 0;

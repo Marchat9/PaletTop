@@ -4,7 +4,7 @@
     <span class="title">{{ isEditMode ? "Modifier l'équipe" : 'Ajouter une équipe' }}</span>
   </div>
 
-  @if (!isEditMode) {
+  @if (!isEditMode && canImportExcel()) {
     <div class="creation-tabs" role="tablist">
       <app-button
         title="Ajout manuel"
