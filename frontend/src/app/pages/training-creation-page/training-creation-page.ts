@@ -17,6 +17,7 @@ import {
   selectTrainingCreationError,
   selectTrainingCreationIsLoading,
 } from 'src/app/store/training/training.selectors';
+import { CODE_FORMAT_HINT, isValidCode } from 'src/app/utils/code-format.util';
 
 @Component({
   selector: 'app-training-creation-page',
@@ -38,11 +39,12 @@ export class TrainingCreationPage {
   public readonly adminPassword = signal('');
   public readonly userHasSubmitted = signal(false);
 
+  public readonly codeFormatHint = CODE_FORMAT_HINT;
+  public readonly codeIsValid = computed(() => isValidCode(this.code()));
+
   public readonly canSubmit = computed(
     () =>
-      this.code().trim().length > 0 &&
-      this.name().trim().length > 0 &&
-      this.adminPassword().trim().length > 0,
+      this.codeIsValid() && this.name().trim().length > 0 && this.adminPassword().trim().length > 0,
   );
 
   constructor() {

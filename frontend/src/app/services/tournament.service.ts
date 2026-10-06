@@ -52,28 +52,37 @@ export class TournamentService {
     teams: TeamConfigCreateTeamPayload[],
     password: string,
   ): Observable<TournamentDto> {
-    return this.http.post<TournamentDto>(`${this.apiBaseUrl}/tournaments/${tournamentCode}/teams`, {
-      password,
-      teams: teams,
-    });
+    return this.http.post<TournamentDto>(
+      `${this.apiBaseUrl}/tournaments/${encodeURIComponent(tournamentCode)}/teams`,
+      {
+        password,
+        teams: teams,
+      },
+    );
   }
 
   public startTournament(code: string, password: string): Observable<TournamentDto> {
-    return this.http.post<TournamentDto>(`${this.apiBaseUrl}/tournaments/${code}/start`, {
-      password,
-    });
+    return this.http.post<TournamentDto>(
+      `${this.apiBaseUrl}/tournaments/${encodeURIComponent(code)}/start`,
+      {
+        password,
+      },
+    );
   }
 
   public nextSession(code: string, password: string): Observable<TournamentDto> {
     return this.http.post<TournamentDto>(
-      `${this.apiBaseUrl}/tournaments/${code}/matches/next-session`,
+      `${this.apiBaseUrl}/tournaments/${encodeURIComponent(code)}/matches/next-session`,
       { password },
     );
   }
 
   public completeTournament(code: string, password: string): Observable<TournamentDto> {
-    return this.http.post<TournamentDto>(`${this.apiBaseUrl}/tournaments/${code}/complete`, {
-      password,
-    });
+    return this.http.post<TournamentDto>(
+      `${this.apiBaseUrl}/tournaments/${encodeURIComponent(code)}/complete`,
+      {
+        password,
+      },
+    );
   }
 }
