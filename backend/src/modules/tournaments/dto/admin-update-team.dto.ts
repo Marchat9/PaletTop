@@ -1,4 +1,5 @@
-import { IsNotEmpty, IsString } from 'class-validator';
+import { Type } from 'class-transformer';
+import { IsNotEmpty, IsString, ValidateNested } from 'class-validator';
 import { TournamentTeamDto } from 'src/modules/tournaments/dto/team-tournament.dto';
 
 export class AdminUpdateTeam {
@@ -15,5 +16,7 @@ export class AdminUpdateTeam {
     teamId!: string;
 
     @IsNotEmpty()
+    @ValidateNested()
+    @Type(() => TournamentTeamDto)
     teamData!: TournamentTeamDto;
 }
