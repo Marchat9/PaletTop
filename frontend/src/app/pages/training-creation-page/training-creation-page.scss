@@ -58,6 +58,7 @@
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 2rem;
+    column-gap: 3rem;
 
     @media (width < 768px) {
       grid-template-columns: minmax(0, 1fr);
@@ -67,7 +68,7 @@
     .field-credential {
       display: flex;
       flex-direction: column;
-      gap: 0.8rem;
+      gap: 1.5rem;
 
       .field-title {
         font-family: var(--font-label);
@@ -75,7 +76,7 @@
         font-weight: 500;
         letter-spacing: 0.08em;
         color: var(--color-primary);
-        margin-bottom: 0.2rem;
+        margin-bottom: 0.8rem;
       }
     }
   }

@@ -20,8 +20,8 @@
 
       <div class="fields">
         <div class="fields-training">
-          <span class="field-title">Informations de l'entraînement</span>
           <div class="field">
+            <span class="field-title">Informations de l'entraînement</span>
             <label class="field-label" for="training-name">Nom du club / personnalisé</label>
             <app-input-text
               id="training-name"
@@ -42,7 +42,7 @@
             </label>
             <app-input-text
               id="training-description"
-              placeholder="Ex : Entraînements le lundi et jeudi soir dans la salle des sports 3."
+              placeholder="Ex : Ent. salle des sports 3"
               icon="notes"
               [value]="description()"
               (valueChange)="onDescriptionChange($event)"
@@ -52,8 +52,8 @@
         </div>
 
         <div class="field-credential">
-          <span class="field-title">Identifiant de connexion admin</span>
           <div class="field">
+            <span class="field-title">Identifiant de connexion admin</span>
             <label class="field-label" for="training-code">Code du groupe d'entraînement</label>
             <app-input-text
               id="training-code"

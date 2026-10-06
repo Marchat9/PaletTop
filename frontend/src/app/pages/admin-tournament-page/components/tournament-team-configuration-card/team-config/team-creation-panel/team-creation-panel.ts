@@ -67,6 +67,9 @@ export class TeamCreationPanel {
 
   public readonly editingTeam: Nullable<TeamEditFormValue> = this.dialogData?.editingTeam ?? null;
   public readonly isEditMode = !!this.editingTeam;
+  public readonly canImportExcel = computed(
+    () => this.tournament()?.configuration.competitionMode !== 'championship',
+  );
 
   public readonly existingTeamCount = computed(() => this.resolvedTournament()?.teams?.length ?? 0);
   public readonly canCreateTeam = computed(
