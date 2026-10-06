@@ -11,7 +11,9 @@
   border-radius: 0.8rem;
   background: var(--color-surface-container-high);
   box-shadow: 0 1rem 2.5rem var(--color-shadow-strong);
-  overflow: hidden;
+  // Many members or sessions make the popup taller than a phone screen: scroll inside it.
+  max-height: calc(100dvh - 2rem);
+  overflow-y: auto;
 }
 
 .title {

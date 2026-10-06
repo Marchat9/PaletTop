@@ -33,8 +33,8 @@ export class PlayerMatchHistory {
         ...result,
         isFinished,
         isOngoing: result.status === 'ONGOING',
-        // A validated match stays "finished" for the player: the nuance is of no interest to them.
-        statusLabel: result.status === 'VALIDATED' ? 'ENDED' : result.status,
+        // ENDED means "waiting for the opponent's validation": a validated match keeps its status.
+        statusLabel: result.status,
         outcomeClass,
         outcomeLabel: this.outcomeLabels[outcomeClass] ?? '',
       };
