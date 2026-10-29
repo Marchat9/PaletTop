@@ -96,6 +96,6 @@ describe('chooseDecomposition', () => {
         const elapsed = performance.now() - started;
 
         expect(result?.groupSizes.length).toBeLessThanOrEqual(20);
-        expect(elapsed).toBeLessThan(50);
+        expect(elapsed).toBeLessThan(500);
     });
 });

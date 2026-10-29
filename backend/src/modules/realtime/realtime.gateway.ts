@@ -20,6 +20,28 @@ interface JoinTournamentPayload {
     password?: string;
 }
 
+// What a socket is connected to, read from its handshake: a tournament or a training session.
+interface ConnectionTarget {
+    key: string;
+    label: string;
+}
+
+export function resolveConnectionTarget(auth: Record<string, unknown>): ConnectionTarget {
+    if (typeof auth.tournamentCode === 'string' && auth.tournamentCode) {
+        return {
+            key: `tournament:${auth.tournamentCode}`,
+            label: `tournament '${auth.tournamentCode}'`,
+        };
+    }
+    if (typeof auth.sessionCode === 'string' && auth.sessionCode) {
+        return {
+            key: `training-session:${auth.sessionCode}`,
+            label: `training session '${auth.sessionCode}'`,
+        };
+    }
+    return { key: 'unknown', label: 'no tournament or training session' };
+}
+
 export const WsAuth = createParamDecorator((_data: unknown, ctx: ExecutionContext) => {
     const client: Socket = ctx.switchToWs().getClient();
     return client.handshake.auth;
@@ -32,7 +54,9 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
 
     private readonly logger = new Logger(RealtimeGateway.name);
 
-    private readonly clientIdsByTournament: Map<string, string[]> = new Map();
+    // Every socket goes through these hooks, tournament or training: both gateways share the
+    // default namespace. The count is kept per tournament and per training session.
+    private readonly clientIdsByTarget: Map<string, string[]> = new Map();
 
     constructor(
         @InjectRepository(Tournament)
@@ -41,27 +65,33 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
     ) {}
 
     handleConnection(client: Socket) {
-        const tournamentCode: string = client.handshake.auth.tournamentCode;
-        const clientIds: string[] = this.clientIdsByTournament.get(tournamentCode) ?? [];
-
-        this.clientIdsByTournament.set(tournamentCode, [...new Set([...clientIds, client.id])]);
+        const target = resolveConnectionTarget(client.handshake.auth);
+        const clientIds: string[] = [
+            ...new Set([...(this.clientIdsByTarget.get(target.key) ?? []), client.id]),
+        ];
+        this.clientIdsByTarget.set(target.key, clientIds);
 
         this.logger.debug(
-            `[WS] New connection (${client.id}) to tournament '${tournamentCode}'. ${clientIds.length + 1} current connections.`,
+            `[WS] New connection (${client.id}) to ${target.label}. ${clientIds.length} current connections.`,
         );
     }
 
     handleDisconnect(client: Socket) {
-        const tournamentCode: string = client.handshake.auth.tournamentCode;
-        const clientIds: string[] = this.clientIdsByTournament.get(tournamentCode) ?? [];
-
-        this.clientIdsByTournament.set(
-            tournamentCode,
-            clientIds.filter((id) => id !== client.id),
+        const target = resolveConnectionTarget(client.handshake.auth);
+        const remainingIds: string[] = (this.clientIdsByTarget.get(target.key) ?? []).filter(
+            (id) => id !== client.id,
         );
 
+        // An empty entry is dropped: otherwise every tournament and session ever played would stay
+        // in memory until the next restart.
+        if (remainingIds.length > 0) {
+            this.clientIdsByTarget.set(target.key, remainingIds);
+        } else {
+            this.clientIdsByTarget.delete(target.key);
+        }
+
         this.logger.debug(
-            `[WS] Disconnection (${client.id}) to tournament '${tournamentCode}'. ${clientIds.length - 1} current connections.`,
+            `[WS] Disconnection (${client.id}) from ${target.label}. ${remainingIds.length} current connections.`,
         );
     }
 

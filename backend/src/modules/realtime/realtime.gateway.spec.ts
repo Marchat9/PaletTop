@@ -1,8 +1,9 @@
+import { Logger } from '@nestjs/common';
 import { describe, expect, it, vi } from 'vitest';
 import { Repository } from 'typeorm';
 import { Socket } from 'socket.io';
 import { Tournament } from 'src/entities/tournament.entity';
-import { RealtimeGateway } from './realtime.gateway';
+import { RealtimeGateway, resolveConnectionTarget } from './realtime.gateway';
 import { TournamentAuthService } from '../tournaments/services/tournament-auth.service';
 
 function makeGateway(tournament: Partial<Tournament> | null) {
@@ -58,5 +59,57 @@ describe('RealtimeGateway.emitMatchUpdated', () => {
         expect(gateway.server.to).toHaveBeenCalledWith('tournament:ABC123:admin');
         expect(gateway.server.to).toHaveBeenCalledWith('tournament:ABC123:spectator');
         expect(emitToRoom).toHaveBeenCalledWith('match:updated', { id: 'match-1' });
+    });
+});
+
+describe('resolveConnectionTarget', () => {
+    it('targets the tournament of a tournament socket', () => {
+        expect(resolveConnectionTarget({ tournamentCode: 'ABC123', teamCode: '1234' })).toEqual({
+            key: 'tournament:ABC123',
+            label: "tournament 'ABC123'",
+        });
+    });
+
+    it('targets the session of a training socket', () => {
+        expect(resolveConnectionTarget({ sessionCode: '7599' })).toEqual({
+            key: 'training-session:7599',
+            label: "training session '7599'",
+        });
+    });
+
+    it('says so when the socket targets nothing', () => {
+        expect(resolveConnectionTarget({})).toEqual({
+            key: 'unknown',
+            label: 'no tournament or training session',
+        });
+    });
+});
+
+describe('RealtimeGateway connection tracking', () => {
+    function makeSocket(id: string, auth: Record<string, string>): Socket {
+        return { id, handshake: { auth } } as unknown as Socket;
+    }
+
+    it('counts the connections of each tournament and training session separately', () => {
+        const { gateway } = makeGateway(null);
+        const debug = vi.spyOn(Logger.prototype, 'debug').mockImplementation(() => undefined);
+
+        const player = makeSocket('client-1', { tournamentCode: 'ABC123' });
+        const trainee = makeSocket('client-2', { sessionCode: '7599' });
+        const otherTrainee = makeSocket('client-3', { sessionCode: '7599' });
+        gateway.handleConnection(player);
+        gateway.handleConnection(trainee);
+        gateway.handleConnection(otherTrainee);
+        gateway.handleDisconnect(trainee);
+        gateway.handleDisconnect(otherTrainee);
+
+        expect(debug.mock.calls.map(([message]) => message)).toEqual([
+            "[WS] New connection (client-1) to tournament 'ABC123'. 1 current connections.",
+            "[WS] New connection (client-2) to training session '7599'. 1 current connections.",
+            "[WS] New connection (client-3) to training session '7599'. 2 current connections.",
+            "[WS] Disconnection (client-2) from training session '7599'. 1 current connections.",
+            "[WS] Disconnection (client-3) from training session '7599'. 0 current connections.",
+        ]);
+        debug.mockRestore();
     });
 });
