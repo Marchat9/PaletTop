@@ -2,6 +2,7 @@ import {
     BadRequestException,
     ConflictException,
     Injectable,
+    Logger,
     NotFoundException,
 } from '@nestjs/common';
 import { CheckinParticipantDto } from '../dto/checkin-participant.dto';
@@ -29,6 +30,8 @@ import { TrainingRealtimeGateway } from '../training-realtime.gateway';
 
 @Injectable()
 export class TrainingSessionsService {
+    private readonly logger = new Logger(TrainingSessionsService.name);
+
     constructor(
         private readonly trainingSessionRepo: TrainingSessionRepository,
         private readonly trainingParticipantRepo: TrainingParticipantRepository,
@@ -68,6 +71,7 @@ export class TrainingSessionsService {
             closedAt: null,
         });
         const saved = await this.trainingSessionRepo.save(session);
+        this.logger.log(`Training session ${saved.code} created (training: ${trainingCode})`);
         return toTrainingSessionAdminDto(saved);
     }
 
@@ -103,6 +107,7 @@ export class TrainingSessionsService {
             session.status = TrainingSessionStatus.CLOSED;
             session.closedAt = new Date();
             await this.trainingSessionRepo.closeSession(session.id, session.closedAt);
+            this.logger.log(`Training session ${sessionCode} closed by the admin`);
             this.trainingRealtimeGateway.emitSessionUpdatedFrom(session);
         }
         return toTrainingSessionAdminDto(session);
@@ -116,9 +121,12 @@ export class TrainingSessionsService {
             sessionCode,
             dto.password,
         );
-        assertSessionOpen(session);
+        assertSessionOpen(session, this.logger, 'Check-in');
 
         if (!dto.memberId && !dto.name) {
+            this.logger.warn(
+                `Check-in refused in session ${sessionCode}: no member nor name given`,
+            );
             throw new BadRequestException(
                 'Il faut renseigner soit memberId (roster existant), soit name (venue en découverte).',
             );
@@ -129,6 +137,9 @@ export class TrainingSessionsService {
         if (dto.memberId) {
             member = await this.trainingMemberRepo.findById(dto.memberId);
             if (!member || member.training.id !== session.training.id) {
+                this.logger.warn(
+                    `Check-in refused in session ${sessionCode}: member ${dto.memberId} not found in its training`,
+                );
                 throw new NotFoundException('Membre introuvable pour cet entraînement.');
             }
             // Application-level net with a clear message against a double check-in (admin double-
@@ -140,6 +151,9 @@ export class TrainingSessionsService {
                     p.member?.id === member!.id && p.status === TrainingParticipantStatus.PRESENT,
             );
             if (alreadyPresent) {
+                this.logger.warn(
+                    `Check-in refused in session ${sessionCode}: '${member.name}' is already present`,
+                );
                 throw new ConflictException(`${member.name} est déjà inscrit(e) à cette session.`);
             }
             name = member.name;
@@ -160,6 +174,7 @@ export class TrainingSessionsService {
                     p.id === back.id ? back : p,
                 );
                 await this.touchLastActivity(session.id);
+                this.logger.log(`'${back.name}' checked in again in session ${sessionCode}`);
                 return this.emitAndReturn(session);
             }
         }
@@ -176,6 +191,9 @@ export class TrainingSessionsService {
 
         session.participants = [...session.participants, saved];
         await this.touchLastActivity(session.id);
+        this.logger.log(
+            `'${saved.name}' checked in session ${sessionCode} (${member ? 'member' : 'guest'})`,
+        );
         return this.emitAndReturn(session);
     }
 
@@ -188,9 +206,10 @@ export class TrainingSessionsService {
             sessionCode,
             password,
         );
-        assertSessionOpen(session);
+        assertSessionOpen(session, this.logger, 'Participant removal');
         const participant = session.participants.find((p) => p.id === participantId);
         if (!participant) {
+            this.logger.warn(`Participant ${participantId} not found in session ${sessionCode}`);
             throw new NotFoundException('Participant introuvable pour cette session.');
         }
 
@@ -198,6 +217,9 @@ export class TrainingSessionsService {
             participant.id,
         );
         if (activeMembership) {
+            this.logger.warn(
+                `'${participant.name}' cannot leave session ${sessionCode}: still in an active fixed team`,
+            );
             throw new BadRequestException(
                 "Ce participant fait partie d'une équipe fixe active ; dissolvez l'équipe avant de le retirer.",
             );
@@ -206,6 +228,7 @@ export class TrainingSessionsService {
         participant.status = TrainingParticipantStatus.LEFT;
         await this.trainingParticipantRepo.save(participant);
         await this.touchLastActivity(session.id);
+        this.logger.log(`'${participant.name}' marked as left in session ${sessionCode}`);
         return this.emitAndReturn(session);
     }
 

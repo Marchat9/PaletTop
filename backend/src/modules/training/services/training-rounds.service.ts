@@ -1,4 +1,4 @@
-import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
 import { TrainingMatch } from 'src/entities/training-match.entity';
@@ -41,6 +41,8 @@ function levelHistoryDepth(): number {
 
 @Injectable()
 export class TrainingRoundsService {
+    private readonly logger = new Logger(TrainingRoundsService.name);
+
     constructor(
         private readonly trainingSessionRepo: TrainingSessionRepository,
         private readonly trainingRoundRepo: TrainingRoundRepository,
@@ -56,7 +58,7 @@ export class TrainingRoundsService {
             sessionCode,
             password,
         );
-        assertSessionOpen(session);
+        assertSessionOpen(session, this.logger, 'Round generation');
 
         // The whole session, not only the last round: the rest rotation and the pair rotation both
         // need what happened before.
@@ -67,6 +69,9 @@ export class TrainingRoundsService {
                 (match) => !match.isBye && match.status !== MatchStatus.VALIDATED,
             );
             if (hasUnfinishedMatch) {
+                this.logger.warn(
+                    `Round generation refused in session ${sessionCode}: round ${previousRound.roundNumber} has unvalidated matches`,
+                );
                 throw new BadRequestException(
                     'Tous les matchs du round précédent doivent être validés avant de générer le suivant.',
                 );
@@ -94,6 +99,7 @@ export class TrainingRoundsService {
             .map((p) => p.id);
 
         if (activeFixedTeams.length === 0 && soloParticipantIds.length === 0) {
+            this.logger.warn(`Round generation refused in session ${sessionCode}: nobody present`);
             throw new BadRequestException('Aucun participant présent pour générer un round.');
         }
 
@@ -206,6 +212,11 @@ export class TrainingRoundsService {
 
         await this.trainingSessionRepo.touchLastActivity(session.id);
 
+        const byeCount = matchRows.filter((match) => match.isBye).length;
+        this.logger.log(
+            `Round ${nextRoundNumber} generated in session ${sessionCode} (${matchRows.length - byeCount} matches, ${byeCount} byes)`,
+        );
+
         const roundDto = toTrainingRoundDto({ ...savedRound, matches: matchRows });
         this.trainingRealtimeGateway.emitRoundGenerated(sessionCode, roundDto);
         return roundDto;
@@ -215,6 +226,7 @@ export class TrainingRoundsService {
         const session = await this.trainingSessionRepo.findByCodeOrThrow(sessionCode);
         const round = await this.trainingRoundRepo.findBySessionAndNumber(session.id, roundNumber);
         if (!round) {
+            this.logger.warn(`Round ${roundNumber} not found in session ${sessionCode}`);
             throw new NotFoundException('Round introuvable pour cette session.');
         }
         return toTrainingRoundDto(round);

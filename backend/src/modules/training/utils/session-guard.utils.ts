@@ -1,4 +1,4 @@
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, Logger } from '@nestjs/common';
 import { TrainingSession } from 'src/entities/training-session.entity';
 import { TrainingSessionStatus } from 'src/enum/training.enum';
 
@@ -9,8 +9,9 @@ import { TrainingSessionStatus } from 'src/enum/training.enum';
  * validation) and of `adminUpdateScore` (admin correction after the fact, mirroring the
  * `wasSessionClosed` behaviour already accepted on the tournament side).
  */
-export function assertSessionOpen(session: TrainingSession): void {
+export function assertSessionOpen(session: TrainingSession, logger: Logger, action: string): void {
     if (session.status === TrainingSessionStatus.CLOSED) {
+        logger.warn(`${action} refused: training session ${session.code} is closed`);
         throw new BadRequestException('Cette session est clôturée.');
     }
 }

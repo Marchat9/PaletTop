@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { TrainingParticipant } from 'src/entities/training-participant.entity';
 import { TrainingSession } from 'src/entities/training-session.entity';
 import { TrainingTeam } from 'src/entities/training-team.entity';
@@ -10,6 +10,8 @@ import { TrainingMatchDto, toTrainingMatchDto } from '../responses/training-roun
 
 @Injectable()
 export class TrainingParticipantViewService {
+    private readonly logger = new Logger(TrainingParticipantViewService.name);
+
     constructor(
         private readonly trainingSessionRepo: TrainingSessionRepository,
         private readonly trainingRoundRepo: TrainingRoundRepository,
@@ -78,6 +80,7 @@ export class TrainingParticipantViewService {
         const session = await this.trainingSessionRepo.findByCodeOrThrow(sessionCode);
         const participant = session.participants.find((p) => p.code === participantCode);
         if (!participant) {
+            this.logger.warn(`Invalid participant code for training session ${sessionCode}`);
             throw new NotFoundException('Code participant invalide pour cette session.');
         }
         return { session, participant };

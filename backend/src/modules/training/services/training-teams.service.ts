@@ -2,6 +2,7 @@ import {
     BadRequestException,
     ConflictException,
     Injectable,
+    Logger,
     NotFoundException,
 } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
@@ -25,6 +26,8 @@ import { TrainingRealtimeGateway } from '../training-realtime.gateway';
 
 @Injectable()
 export class TrainingTeamsService {
+    private readonly logger = new Logger(TrainingTeamsService.name);
+
     constructor(
         private readonly trainingSessionRepo: TrainingSessionRepository,
         private readonly trainingTeamRepo: TrainingTeamRepository,
@@ -42,19 +45,23 @@ export class TrainingTeamsService {
             sessionCode,
             dto.password,
         );
-        assertSessionOpen(session);
+        assertSessionOpen(session, this.logger, 'Fixed team creation');
 
         const size = dto.participantIds.length;
         const allowedSizes = [
             ...new Set([session.playersPerTeam, ...session.allowedTeamSizes]),
         ].sort((a, b) => a - b);
         if (!allowedSizes.includes(size)) {
+            this.logger.warn(
+                `Fixed team refused in session ${sessionCode}: size ${size} not allowed (${allowedSizes.join(', ')})`,
+            );
             throw new BadRequestException(
                 `La taille de l'équipe doit être ${allowedSizes.join(' ou ')} (reçu ${size}).`,
             );
         }
 
         if (new Set(dto.participantIds).size !== size) {
+            this.logger.warn(`Fixed team refused in session ${sessionCode}: duplicate participant`);
             throw new BadRequestException(
                 "Un participant ne peut apparaître qu'une fois dans une équipe.",
             );
@@ -63,6 +70,9 @@ export class TrainingTeamsService {
         const participants = dto.participantIds.map((id) => {
             const participant = session.participants.find((p) => p.id === id);
             if (!participant || participant.status !== TrainingParticipantStatus.PRESENT) {
+                this.logger.warn(
+                    `Fixed team refused in session ${sessionCode}: participant ${id} not found or not present`,
+                );
                 throw new BadRequestException(
                     `Participant ${id} introuvable ou non présent dans cette session.`,
                 );
@@ -78,6 +88,9 @@ export class TrainingTeamsService {
             dto.participantIds,
         );
         if (activeMemberships.length > 0) {
+            this.logger.warn(
+                `Fixed team refused in session ${sessionCode}: '${activeMemberships[0].participant.name}' is already in an active fixed team`,
+            );
             throw new ConflictException(
                 `${activeMemberships[0].participant.name} fait déjà partie d'une équipe fixe active.`,
             );
@@ -112,6 +125,9 @@ export class TrainingTeamsService {
         });
 
         session.teams = [...session.teams, savedTeam];
+        this.logger.log(
+            `Fixed team created in session ${sessionCode} (${participants.map((p) => p.name).join(', ')})`,
+        );
         return this.emitAndReturn(session);
     }
 
@@ -124,12 +140,16 @@ export class TrainingTeamsService {
             sessionCode,
             password,
         );
-        assertSessionOpen(session);
+        assertSessionOpen(session, this.logger, 'Team dissolution');
         const team = await this.trainingTeamRepo.findByIdInSession(teamId, session.id);
         if (!team) {
+            this.logger.warn(`Team ${teamId} not found in session ${sessionCode}`);
             throw new NotFoundException('Équipe introuvable pour cette session.');
         }
         if (team.kind !== TrainingTeamKind.FIXED) {
+            this.logger.warn(
+                `Team ${teamId} of session ${sessionCode} is not fixed: not dissolved`,
+            );
             throw new BadRequestException('Seule une équipe fixe peut être dissoute manuellement.');
         }
 
@@ -142,6 +162,7 @@ export class TrainingTeamsService {
         if (index !== -1) session.teams[index] = team;
 
         await this.trainingSessionRepo.touchLastActivity(session.id);
+        this.logger.log(`Fixed team ${team.id} dissolved in session ${sessionCode}`);
         return this.emitAndReturn(session);
     }
 
