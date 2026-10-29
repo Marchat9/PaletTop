@@ -2,7 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { Store } from '@ngrx/store';
-import { catchError, concatMap, map, of, switchMap, withLatestFrom } from 'rxjs';
+import { catchError, concatMap, debounceTime, map, of, switchMap, withLatestFrom } from 'rxjs';
 import { TrainingService } from 'src/app/services/training.service';
 import { convertErrorToString } from 'src/app/utils/api-call.utils';
 import {
@@ -111,6 +111,7 @@ import {
   selectCurrentTrainingParticipantInformations,
 } from './training.selectors';
 import { newId } from 'src/app/utils/unique-id.util';
+import { environment } from '@environment';
 
 @Injectable()
 export class TrainingEffects {
@@ -517,6 +518,7 @@ export class TrainingEffects {
   updateTrainingScore$ = createEffect(() =>
     this.actions$.pipe(
       ofType(updateTrainingScore),
+      debounceTime(environment.apiConfiguration.delayToUpdateScore ?? 0),
       switchMap(({ sessionCode, matchId, participantCode, scoreA, scoreB }) =>
         this.trainingService
           .updateScore(sessionCode, matchId, participantCode, scoreA, scoreB)

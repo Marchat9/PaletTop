@@ -7,6 +7,33 @@ function isDevBddEnvironment(): boolean {
     return environment === 'dev-bdd';
 }
 
+function parseNumber(value: string | undefined, defaultValue: number): number {
+    if (value === undefined) return defaultValue;
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : defaultValue;
+}
+
+/**
+ * Connection pool of the running app. Without a wait limit, a request that finds no free
+ * connection waits forever: the reverse proxy then answers 504 after its own timeout and the
+ * backend logs nothing. With these limits it fails within seconds, with an error in the logs.
+ *
+ * Kept out of the CLI data source: a migration run by hand must not be cut by the statement
+ * timeout.
+ */
+function getPoolConfig() {
+    return {
+        poolSize: parseNumber(process.env.DB_POOL_SIZE, 20),
+        // Also bounds the wait for a free connection when the pool is full (pg-pool).
+        connectTimeoutMS: parseNumber(process.env.DB_POOL_ACQUIRE_TIMEOUT_MS, 5_000),
+        // Logged as a warning by TypeORM ("query is slow"), whatever the logging level.
+        maxQueryExecutionTime: parseNumber(process.env.DB_SLOW_QUERY_MS, 1_000),
+        extra: {
+            statement_timeout: parseNumber(process.env.DB_STATEMENT_TIMEOUT_MS, 30_000),
+        },
+    };
+}
+
 function getBaseConfig() {
     return {
         type: 'postgres' as const,
@@ -26,6 +53,7 @@ export function getTypeOrmConfig(): TypeOrmModuleOptions {
 
     return {
         ...getBaseConfig(),
+        ...getPoolConfig(),
         autoLoadEntities: true,
         synchronize: isDevBdd,
         dropSchema: isDevBdd,
