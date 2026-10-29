@@ -3,14 +3,16 @@ import { TestBed } from '@angular/core/testing';
 import { MockStore, provideMockStore } from '@ngrx/store/testing';
 import { describe, expect, it, vi } from 'vitest';
 import { loadTrainingParticipantCurrentMatch } from 'src/app/store/training/training.actions';
+import { TrainingParticipantSession } from 'src/app/store/training/training.models';
 import {
+  selectCurrentTrainingParticipantInformations,
   selectTrainingParticipantCurrentMatch,
   selectTrainingParticipantCurrentMatchError,
   selectTrainingParticipantCurrentMatchIsLoading,
 } from 'src/app/store/training/training.selectors';
 import { JoinTrainingPopup } from './join-training-popup';
 
-function setup() {
+function setup(savedCodes: TrainingParticipantSession | null = null) {
   const dialogRef = { close: vi.fn() } as unknown as DialogRef;
 
   TestBed.configureTestingModule({
@@ -22,6 +24,7 @@ function setup() {
           { selector: selectTrainingParticipantCurrentMatch, value: null },
           { selector: selectTrainingParticipantCurrentMatchError, value: null },
           { selector: selectTrainingParticipantCurrentMatchIsLoading, value: false },
+          { selector: selectCurrentTrainingParticipantInformations, value: savedCodes },
         ],
       }),
     ],
@@ -35,6 +38,21 @@ function setup() {
 }
 
 describe('JoinTrainingPopup', () => {
+  it('prefills the codes of the last session joined on this device', () => {
+    const { fixture, store } = setup({ sessionCode: '1234', participantCode: '5678' });
+    const dispatchSpy = vi.spyOn(store, 'dispatch');
+
+    const inputs = Array.from(
+      fixture.nativeElement.querySelectorAll('input.code-input') as NodeListOf<HTMLInputElement>,
+    ).map((input) => input.value);
+    expect(inputs).toEqual(['1', '2', '3', '4', '5', '6', '7', '8']);
+
+    fixture.componentInstance.onJoin();
+    expect(dispatchSpy).toHaveBeenCalledWith(
+      loadTrainingParticipantCurrentMatch({ sessionCode: '1234', participantCode: '5678' }),
+    );
+  });
+
   it('creates the component', () => {
     const { fixture } = setup();
     expect(fixture.componentInstance).toBeTruthy();

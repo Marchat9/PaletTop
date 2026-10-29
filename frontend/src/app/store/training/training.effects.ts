@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { Store } from '@ngrx/store';
@@ -12,12 +13,15 @@ import {
 import {
   STORAGE_TRAINING_CODE_KEY,
   STORAGE_TRAINING_PASSWORD_KEY,
+  STORAGE_TRAINING_SESSION_CODE_KEY,
+  STORAGE_TRAINING_SESSION_PLAYER_CODE_KEY,
 } from '../app-config/app-config.effects';
 import {
   createTraining,
   createTrainingFailure,
   createTrainingSuccess,
   disconnectTrainingAdministrator,
+  forgetTrainingParticipantCodes,
   loadTrainingParticipantCurrentMatch,
   loadTrainingParticipantCurrentMatchFailure,
   loadTrainingParticipantCurrentMatchSuccess,
@@ -102,7 +106,10 @@ import {
   validateTrainingMatchFailure,
   validateTrainingMatchSuccess,
 } from './training.match.actions';
-import { selectCurrentTrainingAdminInformations } from './training.selectors';
+import {
+  selectCurrentTrainingAdminInformations,
+  selectCurrentTrainingParticipantInformations,
+} from './training.selectors';
 import { newId } from 'src/app/utils/unique-id.util';
 
 @Injectable()
@@ -139,7 +146,8 @@ export class TrainingEffects {
   loadTrainingParticipantCurrentMatch$ = createEffect(() =>
     this.actions$.pipe(
       ofType(loadTrainingParticipantCurrentMatch),
-      switchMap(({ sessionCode, participantCode }) =>
+      withLatestFrom(this.store.select(selectCurrentTrainingParticipantInformations)),
+      switchMap(([{ sessionCode, participantCode }, savedCodes]) =>
         this.trainingService.getCurrentMatch(sessionCode, participantCode).pipe(
           switchMap((currentMatch) =>
             of(
@@ -148,11 +156,34 @@ export class TrainingEffects {
                 participantCode,
                 currentMatch,
               }),
+              setLocalStorageData({ key: STORAGE_TRAINING_SESSION_CODE_KEY, value: sessionCode }),
+              setLocalStorageData({
+                key: STORAGE_TRAINING_SESSION_PLAYER_CODE_KEY,
+                value: participantCode,
+              }),
             ),
           ),
-          catchError((error) =>
-            of(loadTrainingParticipantCurrentMatchFailure({ error: convertErrorToString(error) })),
-          ),
+          catchError((error) => {
+            const failureAction = loadTrainingParticipantCurrentMatchFailure({
+              error: convertErrorToString(error),
+            });
+            // Only a refusal of the saved codes themselves forgets them: a typo in other codes or a
+            // network failure leaves them in place.
+            const savedCodesRefused =
+              error instanceof HttpErrorResponse &&
+              error.status === 404 &&
+              savedCodes?.sessionCode === sessionCode &&
+              savedCodes.participantCode === participantCode;
+
+            return savedCodesRefused
+              ? of(
+                  failureAction,
+                  forgetTrainingParticipantCodes(),
+                  removeLocalStorageData({ key: STORAGE_TRAINING_SESSION_CODE_KEY }),
+                  removeLocalStorageData({ key: STORAGE_TRAINING_SESSION_PLAYER_CODE_KEY }),
+                )
+              : of(failureAction);
+          }),
         ),
       ),
     ),

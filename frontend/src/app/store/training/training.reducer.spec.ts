@@ -1,7 +1,20 @@
 import { describe, expect, it } from 'vitest';
-import { resetTraining } from './training.actions';
+import { updateLocalStorageData } from '../app-config/app-config.actions';
+import {
+  STORAGE_TRAINING_SESSION_CODE_KEY,
+  STORAGE_TRAINING_SESSION_PLAYER_CODE_KEY,
+} from '../app-config/app-config.effects';
+import {
+  forgetTrainingParticipantCodes,
+  loadTrainingParticipantCurrentMatchSuccess,
+  resetTraining,
+} from './training.actions';
 import { checkinTrainingParticipantSuccess } from './training.session.actions';
-import { TrainingParticipantAdminDto, TrainingSessionAdminDto } from './training.models';
+import {
+  TrainingCurrentMatchDto,
+  TrainingParticipantAdminDto,
+  TrainingSessionAdminDto,
+} from './training.models';
 import { initialTrainingState, trainingReducer } from './training.reducer';
 
 function buildSession(participants: TrainingParticipantAdminDto[]): TrainingSessionAdminDto {
@@ -102,5 +115,51 @@ describe('trainingReducer', () => {
     expect(state.currentSession.data).toBeNull();
     expect(state.leaderboard.data).toEqual([]);
     expect(state.rounds.data).toEqual([]);
+  });
+
+  describe('codes du joueur', () => {
+    it('les restaure depuis le localStorage', () => {
+      const state = trainingReducer(
+        initialTrainingState,
+        updateLocalStorageData({
+          data: {
+            [STORAGE_TRAINING_SESSION_CODE_KEY]: '1234',
+            [STORAGE_TRAINING_SESSION_PLAYER_CODE_KEY]: '4821',
+          },
+        }),
+      );
+
+      expect(state.participantInformations).toEqual({
+        sessionCode: '1234',
+        participantCode: '4821',
+      });
+    });
+
+    it('les retient quand la séance accepte le joueur', () => {
+      const state = trainingReducer(
+        initialTrainingState,
+        loadTrainingParticipantCurrentMatchSuccess({
+          sessionCode: '1234',
+          participantCode: '4821',
+          currentMatch: {} as TrainingCurrentMatchDto,
+        }),
+      );
+
+      expect(state.participantInformations).toEqual({
+        sessionCode: '1234',
+        participantCode: '4821',
+      });
+    });
+
+    it('les oublie quand le serveur les a refusés', () => {
+      const before = {
+        ...initialTrainingState,
+        participantInformations: { sessionCode: '1234', participantCode: '4821' },
+      };
+
+      const state = trainingReducer(before, forgetTrainingParticipantCodes());
+
+      expect(state.participantInformations).toBeNull();
+    });
   });
 });

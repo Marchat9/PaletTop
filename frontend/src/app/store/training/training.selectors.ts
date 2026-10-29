@@ -26,6 +26,11 @@ export const selectCurrentTrainingAdminInformations = createSelector(
   (state) => state.adminInformations,
 );
 
+export const selectCurrentTrainingParticipantInformations = createSelector(
+  selectTrainingState,
+  (state) => state.participantInformations,
+);
+
 export const selectLastRequestedTrainingCode = createSelector(
   selectTrainingState,
   (state) => state.lastRequestedCode,

@@ -23,6 +23,9 @@ export const STORAGE_FRIENDLY_MATCH_KEY = 'friendly-match-state';
 export const STORAGE_TRAINING_CODE_KEY = 'training-code';
 export const STORAGE_TRAINING_PASSWORD_KEY = 'training-pass';
 
+export const STORAGE_TRAINING_SESSION_CODE_KEY = 'training-session-code';
+export const STORAGE_TRAINING_SESSION_PLAYER_CODE_KEY = 'training-player-code';
+
 @Injectable()
 export class AppConfigEffects {
   private readonly actions$ = inject(Actions);

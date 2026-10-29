@@ -29,6 +29,10 @@ export const loadTrainingParticipantCurrentMatchFailure = createAction(
   '[Training] Load Training Participant Current Match Failure',
   props<{ error: string }>(),
 );
+// The saved codes were refused by the server: they must no longer be offered to the player.
+export const forgetTrainingParticipantCodes = createAction(
+  '[Training] Forget Training Participant Codes',
+);
 // -------------------------------------------------------
 
 // ----------- Load Training Participant History -----------
