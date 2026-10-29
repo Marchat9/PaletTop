@@ -13,4 +13,5 @@ export class SectionTournament {
   public readonly eventTournamentJoin = output<void>();
   public readonly eventTournamentSpectate = output<void>();
   public readonly eventTournamentCreation = output<void>();
+  public readonly eventTournamentAdministration = output<void>();
 }

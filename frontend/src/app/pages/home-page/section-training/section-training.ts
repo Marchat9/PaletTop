@@ -13,4 +13,5 @@ import { Icon } from 'src/app/shared/icon/icon';
 export class SectionTraining {
   public readonly eventTrainingJoin = output<void>();
   public readonly eventTrainingCreation = output<void>();
+  public readonly eventTrainingAdministration = output<void>();
 }

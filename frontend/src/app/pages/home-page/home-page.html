@@ -6,12 +6,14 @@
     (eventTournamentJoin)="openModaleTournamentJoin()"
     (eventTournamentSpectate)="openModaleTournamentSpectate()"
     (eventTournamentCreation)="goToTournamentCreation()"
+    (eventTournamentAdministration)="goToTournamentAdministration()"
   ></app-section-tournament>
 
   <app-section-training
     class="two-column"
     (eventTrainingJoin)="openModaleTrainingJoin()"
     (eventTrainingCreation)="goToTrainingCreation()"
+    (eventTrainingAdministration)="goToTrainingAdministration()"
   ></app-section-training>
 
   <app-section-friendly-match class="one-column" (eventGoToFriendlyMatch)="goToFriendlyMatch()" />

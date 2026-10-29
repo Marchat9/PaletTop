@@ -78,6 +78,14 @@ export class HomePageComponent implements OnInit {
     this.router.navigate(['/admin/training-creation']);
   }
 
+  public goToTournamentAdministration(): void {
+    this.router.navigate(['/admin/tournament']);
+  }
+
+  public goToTrainingAdministration(): void {
+    this.router.navigate(['/admin/training']);
+  }
+
   public goToFriendlyMatch(): void {
     this.router.navigate(['/friendly-match']);
   }
