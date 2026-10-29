@@ -77,9 +77,16 @@ export interface TournamentAdminSession {
   password: string;
 }
 
+export interface TournamentPlayerSession {
+  tournamentCode: string;
+  teamCode: string;
+}
+
 export interface TournamentState {
   tournament: ApiCall<Nullable<TournamentDto>>;
   adminInformations: Nullable<TournamentAdminSession>;
+  // Codes of the last tournament joined as a player, kept to prefill the join popup.
+  playerInformations: Nullable<TournamentPlayerSession>;
   adminRequest: TournamentAdminRequest;
   lastRequestedCode: Nullable<string>;
 }

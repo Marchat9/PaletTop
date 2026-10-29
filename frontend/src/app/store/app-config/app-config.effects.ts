@@ -19,10 +19,13 @@ const LOCAL_STORAGE_DATA_KEY = 'app-local-storage-data';
 //
 export const STORAGE_TOURNAMENT_CODE_KEY = 'tournament-code';
 export const STORAGE_TOURNAMENT_PASSWORD_KEY = 'tournament-pass';
+export const STORAGE_TOURNAMENT_PLAYER_CODE_KEY = 'tournament-player-code';
+export const STORAGE_TOURNAMENT_TEAM_CODE_KEY = 'tournament-team-code';
+
 export const STORAGE_FRIENDLY_MATCH_KEY = 'friendly-match-state';
+
 export const STORAGE_TRAINING_CODE_KEY = 'training-code';
 export const STORAGE_TRAINING_PASSWORD_KEY = 'training-pass';
-
 export const STORAGE_TRAINING_SESSION_CODE_KEY = 'training-session-code';
 export const STORAGE_TRAINING_SESSION_PLAYER_CODE_KEY = 'training-player-code';
 

@@ -30,6 +30,10 @@ export const loadTournamentInformationFailure = createAction(
   '[Tournament] Load Tournament Information Failure',
   props<{ error: string }>(),
 );
+// The saved codes were refused by the server: they must no longer be offered to the player.
+export const forgetTournamentPlayerCodes = createAction(
+  '[Tournament] Forget Tournament Player Codes',
+);
 // -------------------------------------------------------
 
 export const resetTournament = createAction('[Tournament] Reset Tournament');
