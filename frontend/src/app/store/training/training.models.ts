@@ -157,6 +157,7 @@ export interface TrainingRequestStatus {
   trainingCreation: ApiCallStatus;
   updateTraining: ApiCallStatus;
   addMember: ApiCallStatus;
+  renameMember: ApiCallStatus;
   removeMember: ApiCallStatus;
   createSession: ApiCallStatus;
   closeSession: ApiCallStatus;

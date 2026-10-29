@@ -23,6 +23,9 @@ import {
   removeTrainingMember,
   removeTrainingMemberFailure,
   removeTrainingMemberSuccess,
+  renameTrainingMember,
+  renameTrainingMemberFailure,
+  renameTrainingMemberSuccess,
   updateTrainingAdministratorInformations,
   updateTrainingAdministratorInformationsFailure,
   updateTrainingAdministratorInformationsSuccess,
@@ -123,6 +126,7 @@ export const initialTrainingState: TrainingState = {
     trainingCreation: { isLoading: false, error: null },
     updateTraining: { isLoading: false, error: null },
     addMember: { isLoading: false, error: null },
+    renameMember: { isLoading: false, error: null },
     removeMember: { isLoading: false, error: null },
     createSession: { isLoading: false, error: null },
     closeSession: { isLoading: false, error: null },
@@ -360,6 +364,30 @@ export const trainingReducer = createReducer(
     requestStatus: {
       ...state.requestStatus,
       addMember: { isLoading: false, error },
+    },
+  })),
+
+  // Rename member
+  on(renameTrainingMember, (state) => ({
+    ...state,
+    requestStatus: {
+      ...state.requestStatus,
+      renameMember: { isLoading: true, error: null },
+    },
+  })),
+  on(renameTrainingMemberSuccess, (state, { training }) => ({
+    ...state,
+    training: { ...state.training, data: training },
+    requestStatus: {
+      ...state.requestStatus,
+      renameMember: { isLoading: false, error: null },
+    },
+  })),
+  on(renameTrainingMemberFailure, (state, { error }) => ({
+    ...state,
+    requestStatus: {
+      ...state.requestStatus,
+      renameMember: { isLoading: false, error },
     },
   })),
 

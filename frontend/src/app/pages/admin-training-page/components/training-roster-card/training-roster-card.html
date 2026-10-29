@@ -7,7 +7,8 @@
       >
     </div>
     <span class="header-description">
-      Les membres inscrits ici se retrouvent en un clic au check-in d'une séance.
+      Les membres inscrits ici se retrouvent en un clic au check-in d'une séance. Touchez un membre
+      pour le modifier ou le retirer.
     </span>
   </div>
 
@@ -35,18 +36,16 @@
     } @else {
       <div class="members" [appStagger]="staggerKey()">
         @for (member of members(); track member.id) {
-          <span class="member-chip">
+          <button
+            type="button"
+            class="member-chip"
+            [attr.aria-label]="'Modifier ou retirer ' + member.name"
+            (click)="memberSelected.emit(member)"
+          >
             <app-icon name="person" iconClass="member-icon" [ariaHidden]="true" />
             {{ member.name }}
-            <button
-              type="button"
-              class="remove"
-              [attr.aria-label]="'Retirer ' + member.name"
-              (click)="removeMember.emit(member)"
-            >
-              <app-icon name="close" [ariaHidden]="true" />
-            </button>
-          </span>
+            <app-icon name="more_vert" iconClass="more-icon" [ariaHidden]="true" />
+          </button>
         }
       </div>
     }

@@ -40,6 +40,9 @@ import {
   removeTrainingMember,
   removeTrainingMemberFailure,
   removeTrainingMemberSuccess,
+  renameTrainingMember,
+  renameTrainingMemberFailure,
+  renameTrainingMemberSuccess,
   updateTrainingAdministratorInformations,
   updateTrainingAdministratorInformationsFailure,
   updateTrainingAdministratorInformationsSuccess,
@@ -258,6 +261,21 @@ export class TrainingEffects {
           switchMap((training) => of(addTrainingMemberSuccess({ training }))),
           catchError((error) =>
             of(addTrainingMemberFailure({ error: convertErrorToString(error) })),
+          ),
+        ),
+      ),
+    ),
+  );
+
+  renameTrainingMember$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(renameTrainingMember),
+      withLatestFrom(this.store.select(selectCurrentTrainingAdminInformations)),
+      concatMap(([{ code, memberId, name }, adminInfo]) =>
+        this.trainingService.renameMember(code, memberId, adminInfo?.password ?? '', name).pipe(
+          switchMap((training) => of(renameTrainingMemberSuccess({ training }))),
+          catchError((error) =>
+            of(renameTrainingMemberFailure({ error: convertErrorToString(error) })),
           ),
         ),
       ),
@@ -596,6 +614,7 @@ export class TrainingEffects {
         loadTrainingLeaderboardFailure,
         updateTrainingAdministratorInformationsFailure,
         addTrainingMemberFailure,
+        renameTrainingMemberFailure,
         removeTrainingMemberFailure,
         createTrainingSessionFailure,
         closeTrainingSessionFailure,

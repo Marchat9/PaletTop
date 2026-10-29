@@ -56,7 +56,7 @@ export const selectUpdateTrainingError = createSelector(
   (state) => state.requestStatus.updateTraining.error,
 );
 
-// ---------- Add / remove member ----------
+// ---------- Add / rename / remove member ----------
 export const selectAddTrainingMemberLoading = createSelector(
   selectTrainingState,
   (state) => state.requestStatus.addMember.isLoading,
@@ -64,6 +64,14 @@ export const selectAddTrainingMemberLoading = createSelector(
 export const selectAddTrainingMemberError = createSelector(
   selectTrainingState,
   (state) => state.requestStatus.addMember.error,
+);
+export const selectRenameTrainingMemberLoading = createSelector(
+  selectTrainingState,
+  (state) => state.requestStatus.renameMember.isLoading,
+);
+export const selectRenameTrainingMemberError = createSelector(
+  selectTrainingState,
+  (state) => state.requestStatus.renameMember.error,
 );
 export const selectRemoveTrainingMemberLoading = createSelector(
   selectTrainingState,

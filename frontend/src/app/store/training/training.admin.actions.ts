@@ -46,6 +46,21 @@ export const addTrainingMemberFailure = createAction(
 );
 // -------------------------------------------------------
 
+// --------- Training Administrator Rename member ---------
+export const renameTrainingMember = createAction(
+  '[Training] Rename Training Member',
+  props<{ code: string; memberId: string; name: string }>(),
+);
+export const renameTrainingMemberSuccess = createAction(
+  '[Training] Rename Training Member Success',
+  props<{ training: AdminTrainingDto }>(),
+);
+export const renameTrainingMemberFailure = createAction(
+  '[Training] Rename Training Member Failure',
+  props<{ error: string }>(),
+);
+// -------------------------------------------------------
+
 // --------- Training Administrator Remove member ---------
 export const removeTrainingMember = createAction(
   '[Training] Remove Training Member',

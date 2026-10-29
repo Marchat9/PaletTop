@@ -33,6 +33,11 @@ import {
 } from 'src/app/store/training/training.selectors';
 import { TrainingMemberDto } from 'src/app/store/training/training.models';
 import {
+  EditTrainingMemberPopup,
+  EditTrainingMemberPopupData,
+  EditTrainingMemberPopupResult,
+} from 'src/app/modales/edit-training-member-popup/edit-training-member-popup';
+import {
   EditTrainingPopup,
   EditTrainingPopupData,
 } from 'src/app/modales/edit-training-popup/edit-training-popup';
@@ -168,7 +173,27 @@ export class AdminTrainingPage implements OnInit {
     this.store.dispatch(addTrainingMember({ code, name }));
   }
 
-  public removeMember(member: TrainingMemberDto): void {
+  public openMember(member: TrainingMemberDto): void {
+    const trainingCode = this.training()?.code;
+    if (!trainingCode) {
+      return;
+    }
+
+    this.dialog
+      .open<EditTrainingMemberPopupResult, EditTrainingMemberPopupData>(EditTrainingMemberPopup, {
+        data: { trainingCode, member },
+        panelClass: 'dialog-panel',
+        backdropClass: 'dialog-backdrop-light',
+        disableClose: false,
+      })
+      .closed.subscribe((result) => {
+        if (result === 'remove') {
+          this.removeMember(member);
+        }
+      });
+  }
+
+  private removeMember(member: TrainingMemberDto): void {
     const code = this.training()?.code;
     if (!code) {
       return;
