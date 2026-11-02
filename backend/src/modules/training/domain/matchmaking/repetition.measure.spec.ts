@@ -41,7 +41,30 @@ function restingOf(plan: RoundPlan): string[] {
         .flatMap((team) => team.participantIds);
 }
 
-function simulate(playerCount: number, rounds: number, seed = 1) {
+function fallbackOf(plan: RoundPlan, playersPerTeam: number): string[] {
+    return playingTeams(plan)
+        .filter((team) => team.participantIds.length !== playersPerTeam)
+        .flatMap((team) => team.participantIds);
+}
+
+interface SimulationOptions {
+    playersPerTeam: number;
+    allowedTeamSizes: number[];
+    teamComposition: TrainingTeamComposition;
+}
+
+const ONE_V_ONE_FALLBACK: SimulationOptions = {
+    playersPerTeam: 2,
+    allowedTeamSizes: [1],
+    teamComposition: TrainingTeamComposition.RANDOM,
+};
+
+function simulate(
+    playerCount: number,
+    rounds: number,
+    options: SimulationOptions = ONE_V_ONE_FALLBACK,
+    seed = 1,
+) {
     // Reproducible random: the measure must give the same figure on every run.
     let state = seed;
     const random = () => {
@@ -53,8 +76,14 @@ function simulate(playerCount: number, rounds: number, seed = 1) {
 
     const recentRounds: GenerateRoundInput['history']['recentRounds'] = [];
     const sitOutCountByParticipant: Record<string, number> = {};
+    const fallbackCountByParticipant: Record<string, number> = {};
+    // A level per player, so the learning mode has a ranking to band.
+    const levelByParticipant = Object.fromEntries(solos.map((id, index) => [id, -index]));
     let repeatedPartners = 0;
     let repeatedOpponents = 0;
+    let consecutiveFallbacks = 0;
+    let longestFallbackStreak = 0;
+    const fallbackStreak: Record<string, number> = {};
     const started = performance.now();
 
     for (let round = 0; round < rounds; round++) {
@@ -62,16 +91,16 @@ function simulate(playerCount: number, rounds: number, seed = 1) {
             fixedTeams: [],
             soloParticipantIds: solos,
             config: {
-                playersPerTeam: 2,
-                allowedTeamSizes: [1],
+                playersPerTeam: options.playersPerTeam,
+                allowedTeamSizes: options.allowedTeamSizes,
                 preferTargetTeamSize: false,
                 plateCount: 99,
-                teamComposition: TrainingTeamComposition.RANDOM,
+                teamComposition: options.teamComposition,
                 avoidSamePartnerConsecutive: true,
                 avoidSameOpponentConsecutive: true,
             },
-            history: { recentRounds, sitOutCountByParticipant },
-            levelByParticipant: {},
+            history: { recentRounds, sitOutCountByParticipant, fallbackCountByParticipant },
+            levelByParticipant,
         });
 
         const forbiddenPartners = new Set(
@@ -89,21 +118,38 @@ function simulate(playerCount: number, rounds: number, seed = 1) {
             forbiddenOpponents.has([a, b].sort().join('|')),
         ).length;
 
+        const fallback = fallbackOf(plan, options.playersPerTeam);
+        const previousFallback = new Set(recentRounds[0]?.fallbackParticipantIds ?? []);
+        consecutiveFallbacks += fallback.filter((id) => previousFallback.has(id)).length;
+        for (const id of solos) {
+            fallbackStreak[id] = fallback.includes(id) ? (fallbackStreak[id] ?? 0) + 1 : 0;
+            longestFallbackStreak = Math.max(longestFallbackStreak, fallbackStreak[id]);
+        }
+
         for (const participantId of restingOf(plan)) {
             sitOutCountByParticipant[participantId] =
                 (sitOutCountByParticipant[participantId] ?? 0) + 1;
         }
+        for (const participantId of fallback) {
+            fallbackCountByParticipant[participantId] =
+                (fallbackCountByParticipant[participantId] ?? 0) + 1;
+        }
         recentRounds.unshift({
             partnerPairs: partnersOf(plan),
             opponentCanonicalPairs: opponentsOf(plan),
+            fallbackParticipantIds: fallback,
         });
     }
 
     const restCounts = solos.map((id) => sitOutCountByParticipant[id] ?? 0);
+    const fallbackCounts = solos.map((id) => fallbackCountByParticipant[id] ?? 0);
     return {
         repeatedPartners,
         repeatedOpponents,
         restSpread: Math.max(...restCounts) - Math.min(...restCounts),
+        fallbackSpread: Math.max(...fallbackCounts) - Math.min(...fallbackCounts),
+        consecutiveFallbacks,
+        longestFallbackStreak,
         ms: performance.now() - started,
     };
 }
@@ -125,5 +171,39 @@ describe('rotation des binômes et des adversaires', () => {
             // Rest rotates: nobody should rest much more than the others.
             expect(restSpread).toBeLessThanOrEqual(1);
         });
+    }
+});
+
+describe('rotation des équipes de repli', () => {
+    for (const teamComposition of [
+        TrainingTeamComposition.RANDOM,
+        TrainingTeamComposition.LEARNING,
+    ]) {
+        it(`ne remet personne en trio deux rounds de suite à 22 joueurs (${teamComposition})`, () => {
+            // 22 players in teams of 2 would leave one team without an opponent: two trios each
+            // round, i.e. 6 fallback slots for 22 players.
+            const { consecutiveFallbacks, fallbackSpread } = simulate(22, 30, {
+                playersPerTeam: 2,
+                allowedTeamSizes: [3],
+                teamComposition,
+            });
+            expect(consecutiveFallbacks).toBe(0);
+            // Fallback rotates: nobody plays in a trio much more often than the others.
+            expect(fallbackSpread).toBeLessThanOrEqual(1);
+        });
+
+        for (const playerCount of [5, 15]) {
+            it(`limite les trios d'affilée à deux à ${playerCount} joueurs (${teamComposition})`, () => {
+                // More than half the players are in a trio each round: some must chain two, but a
+                // regular rotation never needs a third in a row.
+                const { longestFallbackStreak, fallbackSpread } = simulate(playerCount, 30, {
+                    playersPerTeam: 2,
+                    allowedTeamSizes: [3],
+                    teamComposition,
+                });
+                expect(longestFallbackStreak).toBeLessThanOrEqual(2);
+                expect(fallbackSpread).toBeLessThanOrEqual(1);
+            });
+        }
     }
 });

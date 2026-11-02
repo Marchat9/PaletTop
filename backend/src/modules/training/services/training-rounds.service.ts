@@ -115,7 +115,7 @@ export class TrainingRoundsService {
                 avoidSamePartnerConsecutive: session.avoidSamePartnerConsecutive,
                 avoidSameOpponentConsecutive: session.avoidSameOpponentConsecutive,
             },
-            history: this.buildHistory(rounds),
+            history: this.buildHistory(rounds, session.playersPerTeam),
             // Levels blend this session (rounds already loaded, matches in memory) with the group's
             // recent sessions, so the learning mode has something to go on from the very first round
             // instead of drawing at random. Guests, with no roster member, are levelled on this
@@ -240,20 +240,25 @@ export class TrainingRoundsService {
 
     /**
      * What the session has produced so far: the pairs and match-ups of each round, most recent
-     * first, and how many times each participant has rested.
+     * first, how many times each participant has rested and played in a fallback-size team.
      *
      * Partners are derived ONLY from EPHEMERAL teams (a FIXED team is meant to play together, that
      * is not a repetition to avoid). The "opponent" identity is canonical (fixedTeamId or sorted
      * participantIds) because the TrainingTeam id of an ephemeral team never survives from one
      * round to the next.
      */
-    private buildHistory(rounds: TrainingRound[]): GenerateRoundInput['history'] {
+    private buildHistory(
+        rounds: TrainingRound[],
+        playersPerTeam: number,
+    ): GenerateRoundInput['history'] {
         const sitOutCountByParticipant: Record<string, number> = {};
+        const fallbackCountByParticipant: Record<string, number> = {};
         const recentRounds = [];
 
         for (const round of rounds) {
             const partnerPairs: [string, string][] = [];
             const opponentCanonicalPairs: [string, string][] = [];
+            const fallbackParticipantIds: string[] = [];
 
             for (const match of round.matches ?? []) {
                 if (match.isBye) {
@@ -265,8 +270,14 @@ export class TrainingRoundsService {
                 }
 
                 this.collectPartnerPairs(match.teamA, partnerPairs);
+                this.collectFallbackPlayers(match.teamA, playersPerTeam, fallbackParticipantIds);
                 if (match.teamB) {
                     this.collectPartnerPairs(match.teamB, partnerPairs);
+                    this.collectFallbackPlayers(
+                        match.teamB,
+                        playersPerTeam,
+                        fallbackParticipantIds,
+                    );
                     opponentCanonicalPairs.push([
                         this.canonicalTeamId(match.teamA),
                         this.canonicalTeamId(match.teamB),
@@ -274,10 +285,25 @@ export class TrainingRoundsService {
                 }
             }
 
-            recentRounds.unshift({ partnerPairs, opponentCanonicalPairs });
+            for (const participantId of fallbackParticipantIds) {
+                fallbackCountByParticipant[participantId] =
+                    (fallbackCountByParticipant[participantId] ?? 0) + 1;
+            }
+            recentRounds.unshift({ partnerPairs, opponentCanonicalPairs, fallbackParticipantIds });
         }
 
-        return { recentRounds, sitOutCountByParticipant };
+        return { recentRounds, sitOutCountByParticipant, fallbackCountByParticipant };
+    }
+
+    /** Members of an ephemeral team whose size is not the session target (a fallback size). */
+    private collectFallbackPlayers(
+        team: TrainingTeam,
+        playersPerTeam: number,
+        participantIds: string[],
+    ): void {
+        if (team.kind !== TrainingTeamKind.EPHEMERAL) return;
+        const ids = this.activeMemberIds(team);
+        if (ids.length !== playersPerTeam) participantIds.push(...ids);
     }
 
     private canonicalTeamId(team: TrainingTeam): string {
