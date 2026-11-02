@@ -18,6 +18,6 @@
     [members]="training()?.members ?? []"
     [addLoading]="addMemberLoading()"
     (addMember)="addMember($event)"
-    (removeMember)="removeMember($event)"
+    (memberSelected)="openMember($event)"
   />
 </div>

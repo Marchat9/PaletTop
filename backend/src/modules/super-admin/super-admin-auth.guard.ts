@@ -1,6 +1,6 @@
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
 import { Request } from 'express';
-import { resolveClientIp } from './super-admin-ip.utils';
+import { resolveClientIp } from 'src/utils/client-ip.util';
 import { SuperAdminService } from './super-admin.service';
 
 @Injectable()

@@ -1,4 +1,4 @@
-import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
 import { TrainingMatch } from 'src/entities/training-match.entity';
@@ -41,6 +41,8 @@ function levelHistoryDepth(): number {
 
 @Injectable()
 export class TrainingRoundsService {
+    private readonly logger = new Logger(TrainingRoundsService.name);
+
     constructor(
         private readonly trainingSessionRepo: TrainingSessionRepository,
         private readonly trainingRoundRepo: TrainingRoundRepository,
@@ -56,7 +58,7 @@ export class TrainingRoundsService {
             sessionCode,
             password,
         );
-        assertSessionOpen(session);
+        assertSessionOpen(session, this.logger, 'Round generation');
 
         // The whole session, not only the last round: the rest rotation and the pair rotation both
         // need what happened before.
@@ -67,6 +69,9 @@ export class TrainingRoundsService {
                 (match) => !match.isBye && match.status !== MatchStatus.VALIDATED,
             );
             if (hasUnfinishedMatch) {
+                this.logger.warn(
+                    `Round generation refused in session ${sessionCode}: round ${previousRound.roundNumber} has unvalidated matches`,
+                );
                 throw new BadRequestException(
                     'Tous les matchs du round précédent doivent être validés avant de générer le suivant.',
                 );
@@ -94,6 +99,7 @@ export class TrainingRoundsService {
             .map((p) => p.id);
 
         if (activeFixedTeams.length === 0 && soloParticipantIds.length === 0) {
+            this.logger.warn(`Round generation refused in session ${sessionCode}: nobody present`);
             throw new BadRequestException('Aucun participant présent pour générer un round.');
         }
 
@@ -109,7 +115,7 @@ export class TrainingRoundsService {
                 avoidSamePartnerConsecutive: session.avoidSamePartnerConsecutive,
                 avoidSameOpponentConsecutive: session.avoidSameOpponentConsecutive,
             },
-            history: this.buildHistory(rounds),
+            history: this.buildHistory(rounds, session.playersPerTeam),
             // Levels blend this session (rounds already loaded, matches in memory) with the group's
             // recent sessions, so the learning mode has something to go on from the very first round
             // instead of drawing at random. Guests, with no roster member, are levelled on this
@@ -206,6 +212,11 @@ export class TrainingRoundsService {
 
         await this.trainingSessionRepo.touchLastActivity(session.id);
 
+        const byeCount = matchRows.filter((match) => match.isBye).length;
+        this.logger.log(
+            `Round ${nextRoundNumber} generated in session ${sessionCode} (${matchRows.length - byeCount} matches, ${byeCount} byes)`,
+        );
+
         const roundDto = toTrainingRoundDto({ ...savedRound, matches: matchRows });
         this.trainingRealtimeGateway.emitRoundGenerated(sessionCode, roundDto);
         return roundDto;
@@ -215,6 +226,7 @@ export class TrainingRoundsService {
         const session = await this.trainingSessionRepo.findByCodeOrThrow(sessionCode);
         const round = await this.trainingRoundRepo.findBySessionAndNumber(session.id, roundNumber);
         if (!round) {
+            this.logger.warn(`Round ${roundNumber} not found in session ${sessionCode}`);
             throw new NotFoundException('Round introuvable pour cette session.');
         }
         return toTrainingRoundDto(round);
@@ -228,20 +240,25 @@ export class TrainingRoundsService {
 
     /**
      * What the session has produced so far: the pairs and match-ups of each round, most recent
-     * first, and how many times each participant has rested.
+     * first, how many times each participant has rested and played in a fallback-size team.
      *
      * Partners are derived ONLY from EPHEMERAL teams (a FIXED team is meant to play together, that
      * is not a repetition to avoid). The "opponent" identity is canonical (fixedTeamId or sorted
      * participantIds) because the TrainingTeam id of an ephemeral team never survives from one
      * round to the next.
      */
-    private buildHistory(rounds: TrainingRound[]): GenerateRoundInput['history'] {
+    private buildHistory(
+        rounds: TrainingRound[],
+        playersPerTeam: number,
+    ): GenerateRoundInput['history'] {
         const sitOutCountByParticipant: Record<string, number> = {};
+        const fallbackCountByParticipant: Record<string, number> = {};
         const recentRounds = [];
 
         for (const round of rounds) {
             const partnerPairs: [string, string][] = [];
             const opponentCanonicalPairs: [string, string][] = [];
+            const fallbackParticipantIds: string[] = [];
 
             for (const match of round.matches ?? []) {
                 if (match.isBye) {
@@ -253,8 +270,14 @@ export class TrainingRoundsService {
                 }
 
                 this.collectPartnerPairs(match.teamA, partnerPairs);
+                this.collectFallbackPlayers(match.teamA, playersPerTeam, fallbackParticipantIds);
                 if (match.teamB) {
                     this.collectPartnerPairs(match.teamB, partnerPairs);
+                    this.collectFallbackPlayers(
+                        match.teamB,
+                        playersPerTeam,
+                        fallbackParticipantIds,
+                    );
                     opponentCanonicalPairs.push([
                         this.canonicalTeamId(match.teamA),
                         this.canonicalTeamId(match.teamB),
@@ -262,10 +285,25 @@ export class TrainingRoundsService {
                 }
             }
 
-            recentRounds.unshift({ partnerPairs, opponentCanonicalPairs });
+            for (const participantId of fallbackParticipantIds) {
+                fallbackCountByParticipant[participantId] =
+                    (fallbackCountByParticipant[participantId] ?? 0) + 1;
+            }
+            recentRounds.unshift({ partnerPairs, opponentCanonicalPairs, fallbackParticipantIds });
         }
 
-        return { recentRounds, sitOutCountByParticipant };
+        return { recentRounds, sitOutCountByParticipant, fallbackCountByParticipant };
+    }
+
+    /** Members of an ephemeral team whose size is not the session target (a fallback size). */
+    private collectFallbackPlayers(
+        team: TrainingTeam,
+        playersPerTeam: number,
+        participantIds: string[],
+    ): void {
+        if (team.kind !== TrainingTeamKind.EPHEMERAL) return;
+        const ids = this.activeMemberIds(team);
+        if (ids.length !== playersPerTeam) participantIds.push(...ids);
     }
 
     private canonicalTeamId(team: TrainingTeam): string {

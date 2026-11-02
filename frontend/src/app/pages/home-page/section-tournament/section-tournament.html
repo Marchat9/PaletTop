@@ -53,6 +53,23 @@
           />
         </div>
       </div>
+
+      <div class="admin-tournament">
+        <div class="header">
+          <div class="sub-title">
+            <h3>Administrer un tournoi existant</h3>
+          </div>
+        </div>
+
+        <div class="action">
+          <app-button
+            title="Administrer un tournoi"
+            icon="admin_panel_settings"
+            variant="secondary"
+            (clicked)="eventTournamentAdministration.emit()"
+          />
+        </div>
+      </div>
     </div>
   </div>
 </app-card>

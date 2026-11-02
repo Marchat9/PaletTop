@@ -9,6 +9,12 @@ interface TeamRef {
     participantIds: string[];
 }
 
+/** Players split into teams of the given sizes, independently of the other parts. */
+interface GroupPart {
+    players: string[];
+    sizes: number[];
+}
+
 // Placement is greedy: it can get stuck on the last players and rebuild a forbidden pair for lack
 // of a free candidate. Rather than giving up right away, the split is replayed with another
 // shuffle. The computation is in memory and negligible next to the database writes.
@@ -132,25 +138,49 @@ export class DefaultMatchmakingStrategy implements MatchmakingPort {
         };
     }
 
-    /** Builds the teams, at random or by nearby levels depending on the session setting. */
+    /**
+     * Builds the teams, at random or by nearby levels depending on the session setting.
+     *
+     * Who fills the fallback-size teams is decided first, from the history: left to the draw (or to
+     * the level bands), the same players would carry the odd team round after round. Each part is
+     * then built on its own.
+     */
     private buildGroups(
         input: GenerateRoundInput,
         playing: string[],
         groupSizes: number[],
         forbiddenPartners: Set<string>,
     ): string[][] {
+        const target = input.config.playersPerTeam;
+        const fallbackSizes = groupSizes.filter((size) => size !== target);
+        const fallbackPlayers = this.pickFallbackPlayers(
+            input,
+            playing,
+            fallbackSizes.reduce((sum, size) => sum + size, 0),
+        );
+        const inFallback = new Set(fallbackPlayers);
+        const parts: GroupPart[] = [
+            { players: fallbackPlayers, sizes: fallbackSizes },
+            {
+                players: playing.filter((id) => !inFallback.has(id)),
+                sizes: groupSizes.filter((size) => size === target),
+            },
+        ].filter((part) => part.sizes.length > 0);
+
         if (input.config.teamComposition === TrainingTeamComposition.LEARNING) {
-            return this.buildLearningGroups(input, playing, groupSizes, forbiddenPartners);
+            return this.buildLearningGroups(input, parts, forbiddenPartners);
         }
 
         let best: string[][] | null = null;
         let fewest = Number.POSITIVE_INFINITY;
 
         for (let attempt = 0; attempt < PLACEMENT_ATTEMPTS; attempt++) {
-            const candidate = this.fillGroups(
-                shuffleFisherYates(playing, this.random),
-                groupSizes,
-                forbiddenPartners,
+            const candidate = parts.flatMap((part) =>
+                this.fillGroups(
+                    shuffleFisherYates(part.players, this.random),
+                    part.sizes,
+                    forbiddenPartners,
+                ),
             );
             const conflicts = countForbiddenPairs(candidate, forbiddenPartners);
             if (conflicts === 0) {
@@ -166,9 +196,51 @@ export class DefaultMatchmakingStrategy implements MatchmakingPort {
     }
 
     /**
+     * Players for the fallback-size teams: those who have played the fewest rounds in one, then
+     * those whose last time is the oldest, then at random.
+     */
+    private pickFallbackPlayers(
+        input: GenerateRoundInput,
+        playing: string[],
+        slots: number,
+    ): string[] {
+        if (slots <= 0) {
+            return [];
+        }
+        if (slots >= playing.length) {
+            return [...playing];
+        }
+
+        const counts = input.history.fallbackCountByParticipant;
+        const roundsAgo = new Map<string, number>();
+        input.history.recentRounds.forEach((round, index) => {
+            for (const participantId of round.fallbackParticipantIds) {
+                if (!roundsAgo.has(participantId)) roundsAgo.set(participantId, index);
+            }
+        });
+        const ago = (id: string) => roundsAgo.get(id) ?? Number.POSITIVE_INFINITY;
+        const streak = (id: string) => {
+            const index = input.history.recentRounds.findIndex(
+                (round) => !round.fallbackParticipantIds.includes(id),
+            );
+            return index === -1 ? input.history.recentRounds.length : index;
+        };
+
+        return shuffleFisherYates(playing, this.random)
+            .sort(
+                (a, b) =>
+                    (counts[a] ?? 0) - (counts[b] ?? 0) ||
+                    compareDesc(ago(a), ago(b)) ||
+                    streak(a) - streak(b),
+            )
+            .slice(0, slots);
+    }
+
+    /**
      * Learning mode: players are ranked by level, then teams are served band by band - the best of
      * the top band with the best of the bottom band, and so on. Nobody ends up with a partner from
-     * the other end of the ranking.
+     * the other end of the ranking. Each part (fallback-size teams, target-size teams) is ranked
+     * and banded on its own, so the fallback players are balanced among themselves.
      *
      * Each slot draws from one contiguous band of the ranking, so every team spans the same level
      * bands whatever we do. The natural order (band member N to team N) gives the tightest balance,
@@ -178,27 +250,25 @@ export class DefaultMatchmakingStrategy implements MatchmakingPort {
      */
     private buildLearningGroups(
         input: GenerateRoundInput,
-        playing: string[],
-        groupSizes: number[],
+        parts: GroupPart[],
         forbiddenPartners: Set<string>,
     ): string[][] {
-        const ranked = this.rankByLevel(input, playing);
-
-        const bands: string[][] = [];
-        const maxSize = Math.max(0, ...groupSizes);
-        let cursor = 0;
-        for (let slot = 0; slot < maxSize; slot++) {
-            const width = groupSizes.filter((size) => size > slot).length;
-            bands.push(ranked.slice(cursor, cursor + width));
-            cursor += width;
-        }
+        const banded = parts.map((part) => ({
+            sizes: part.sizes,
+            bands: this.levelBands(this.rankByLevel(input, part.players), part.sizes),
+        }));
 
         let best: string[][] | null = null;
         let fewest = Number.POSITIVE_INFINITY;
         for (let attempt = 0; attempt < PLACEMENT_ATTEMPTS; attempt++) {
-            const arranged =
-                attempt === 0 ? bands : bands.map((band) => shuffleFisherYates(band, this.random));
-            const candidate = this.assembleBands(groupSizes, arranged);
+            const candidate = banded.flatMap(({ sizes, bands }) =>
+                this.assembleBands(
+                    sizes,
+                    attempt === 0
+                        ? bands
+                        : bands.map((band) => shuffleFisherYates(band, this.random)),
+                ),
+            );
             const conflicts = countForbiddenPairs(candidate, forbiddenPartners);
             if (conflicts === 0) {
                 return candidate;
@@ -210,6 +280,19 @@ export class DefaultMatchmakingStrategy implements MatchmakingPort {
         }
 
         return best!;
+    }
+
+    /** Slot N of the teams draws from band N: as many players as teams with at least N+1 places. */
+    private levelBands(ranked: string[], groupSizes: number[]): string[][] {
+        const bands: string[][] = [];
+        const maxSize = Math.max(0, ...groupSizes);
+        let cursor = 0;
+        for (let slot = 0; slot < maxSize; slot++) {
+            const width = groupSizes.filter((size) => size > slot).length;
+            bands.push(ranked.slice(cursor, cursor + width));
+            cursor += width;
+        }
+        return bands;
     }
 
     /** One member per band into each team still short of that slot, in band order. */
@@ -408,6 +491,11 @@ function countForbiddenPairs(groups: string[][], forbiddenPairs: Set<string>): n
         }
     }
     return count;
+}
+
+/** Descending order that stays defined with Infinity on both sides (Infinity - Infinity is NaN). */
+function compareDesc(a: number, b: number): number {
+    return a === b ? 0 : a > b ? -1 : 1;
 }
 
 function pairKey(a: string, b: string): string {

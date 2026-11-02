@@ -3,6 +3,7 @@ import { runGuarded } from 'src/utils/run-guarded.util';
 import { UuidParam } from 'src/decorators/uuid-param.decorator';
 import { AddTrainingMemberDto } from '../dto/add-training-member.dto';
 import { CreateTrainingDto } from '../dto/create-training.dto';
+import { RenameTrainingMemberDto } from '../dto/rename-training-member.dto';
 import { TrainingAdminAccessDto } from '../dto/training-admin-access.dto';
 import { TrainingPasswordDto } from '../dto/training-password.dto';
 import { UpdateTrainingDto } from '../dto/update-training.dto';
@@ -46,6 +47,17 @@ export class TrainingController {
     ): Promise<AdminTrainingDto> {
         return runGuarded(this.logger, "Erreur lors de l'ajout du membre.", () =>
             this.trainingsService.addMember(code, dto),
+        );
+    }
+
+    @Patch(':code/members/:memberId')
+    renameMember(
+        @Param('code') code: string,
+        @UuidParam('memberId') memberId: string,
+        @Body() dto: RenameTrainingMemberDto,
+    ): Promise<AdminTrainingDto> {
+        return runGuarded(this.logger, 'Erreur lors du renommage du membre.', () =>
+            this.trainingsService.renameMember(code, memberId, dto),
         );
     }
 

@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { Action, Store } from '@ngrx/store';
@@ -13,6 +14,8 @@ import {
 import {
   STORAGE_TOURNAMENT_CODE_KEY,
   STORAGE_TOURNAMENT_PASSWORD_KEY,
+  STORAGE_TOURNAMENT_PLAYER_CODE_KEY,
+  STORAGE_TOURNAMENT_TEAM_CODE_KEY,
 } from '../app-config/app-config.effects';
 import { resetRankingTournament } from '../ranking/ranking.actions';
 import {
@@ -20,6 +23,7 @@ import {
   createTournamentFailure,
   createTournamentSuccess,
   disconnectTournamentAdministrator,
+  forgetTournamentPlayerCodes,
   loadTournamentInformation,
   loadTournamentInformationFailure,
   loadTournamentInformationSuccess,
@@ -53,7 +57,10 @@ import {
   startTournamentFailure,
   startTournamentSuccess,
 } from './tournament.match.actions';
-import { selectCurrentTournamentAdminInformations } from './tournament.selectors';
+import {
+  selectCurrentTournamentAdminInformations,
+  selectCurrentTournamentPlayerInformations,
+} from './tournament.selectors';
 import { newId } from 'src/app/utils/unique-id.util';
 
 @Injectable()
@@ -66,12 +73,40 @@ export class TournamentEffects {
   getTournamentInformations$ = createEffect(() =>
     this.actions$.pipe(
       ofType(loadTournamentInformation),
-      switchMap(({ tournamentCode, teamCode }) =>
+      withLatestFrom(this.store.select(selectCurrentTournamentPlayerInformations)),
+      switchMap(([{ tournamentCode, teamCode }, savedCodes]) =>
         this.tournamentService.joinTournamentAsPlayer(tournamentCode, teamCode).pipe(
-          switchMap((tournament) => of(loadTournamentInformationSuccess({ tournament, teamCode }))),
-          catchError((error) =>
-            of(loadTournamentInformationFailure({ error: convertErrorToString(error) })),
+          switchMap((tournament) =>
+            of(
+              loadTournamentInformationSuccess({ tournament, teamCode }),
+              setLocalStorageData({
+                key: STORAGE_TOURNAMENT_PLAYER_CODE_KEY,
+                value: tournament.code,
+              }),
+              setLocalStorageData({ key: STORAGE_TOURNAMENT_TEAM_CODE_KEY, value: teamCode }),
+            ),
           ),
+          catchError((error) => {
+            const failureAction = loadTournamentInformationFailure({
+              error: convertErrorToString(error),
+            });
+            // Only a refusal of the saved codes themselves forgets them: a typo in other codes or a
+            // network failure leaves them in place.
+            const savedCodesRefused =
+              error instanceof HttpErrorResponse &&
+              error.status === 404 &&
+              savedCodes?.tournamentCode.toUpperCase() === tournamentCode.toUpperCase() &&
+              savedCodes.teamCode === teamCode;
+
+            return savedCodesRefused
+              ? of(
+                  failureAction,
+                  forgetTournamentPlayerCodes(),
+                  removeLocalStorageData({ key: STORAGE_TOURNAMENT_PLAYER_CODE_KEY }),
+                  removeLocalStorageData({ key: STORAGE_TOURNAMENT_TEAM_CODE_KEY }),
+                )
+              : of(failureAction);
+          }),
         ),
       ),
     ),

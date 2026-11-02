@@ -28,6 +28,7 @@
     <label class="field-label">Code Equipe</label>
     <app-code-number-input
       [digitCount]="4"
+      [initialCode]="teamCode()"
       (codeChange)="onCodeChange($event)"
     ></app-code-number-input>
     <p class="field-help">

@@ -14,6 +14,7 @@ import { Icon } from 'src/app/shared/icon/icon';
 import { Store } from '@ngrx/store';
 import {
   selectCurrentTournamentData,
+  selectCurrentTournamentPlayerInformations,
   selectCurrentTournamentError,
   selectCurrentTournamentIsLoading,
 } from 'src/app/store/tournament/tournament.selectors';
@@ -34,9 +35,14 @@ export class JoinTournamentPopupComponent {
   private readonly store = inject(Store);
   private readonly dialogRef = inject(DialogRef<{ tournamentCode: string; teamCode: string }>);
 
+  // Codes of the last tournament joined on this device: prefilled so the player only has to confirm.
+  private readonly savedCodes = this.store.selectSignal(
+    selectCurrentTournamentPlayerInformations,
+  )();
+
   //------
-  readonly tournamentCode = signal('');
-  private readonly teamCode = signal('');
+  readonly tournamentCode = signal(this.savedCodes?.tournamentCode ?? '');
+  readonly teamCode = signal(this.savedCodes?.teamCode ?? '');
   //------
   readonly isUnknownTournament = signal(false);
 

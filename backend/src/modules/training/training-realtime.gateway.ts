@@ -1,8 +1,6 @@
 import { Logger } from '@nestjs/common';
 import {
     ConnectedSocket,
-    OnGatewayConnection,
-    OnGatewayDisconnect,
     SubscribeMessage,
     WebSocketGateway,
     WebSocketServer,
@@ -23,21 +21,13 @@ interface JoinTrainingSessionAuth {
 }
 
 @WebSocketGateway({ cors: { origin: corsOrigin() } })
-export class TrainingRealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect {
+export class TrainingRealtimeGateway {
     @WebSocketServer()
     server!: Server;
 
     private readonly logger = new Logger(TrainingRealtimeGateway.name);
 
     constructor(private readonly trainingSessionAuthService: TrainingSessionAuthService) {}
-
-    handleConnection(client: Socket): void {
-        this.logger.debug(`[WS][Training] New connection (${client.id}).`);
-    }
-
-    handleDisconnect(client: Socket): void {
-        this.logger.debug(`[WS][Training] Disconnection (${client.id}).`);
-    }
 
     @SubscribeMessage('join-training-session')
     async handleJoinTrainingSession(

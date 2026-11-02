@@ -1,7 +1,8 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { Store } from '@ngrx/store';
-import { catchError, concatMap, map, of, switchMap, withLatestFrom } from 'rxjs';
+import { catchError, concatMap, debounceTime, map, of, switchMap, withLatestFrom } from 'rxjs';
 import { TrainingService } from 'src/app/services/training.service';
 import { convertErrorToString } from 'src/app/utils/api-call.utils';
 import {
@@ -12,12 +13,15 @@ import {
 import {
   STORAGE_TRAINING_CODE_KEY,
   STORAGE_TRAINING_PASSWORD_KEY,
+  STORAGE_TRAINING_SESSION_CODE_KEY,
+  STORAGE_TRAINING_SESSION_PLAYER_CODE_KEY,
 } from '../app-config/app-config.effects';
 import {
   createTraining,
   createTrainingFailure,
   createTrainingSuccess,
   disconnectTrainingAdministrator,
+  forgetTrainingParticipantCodes,
   loadTrainingParticipantCurrentMatch,
   loadTrainingParticipantCurrentMatchFailure,
   loadTrainingParticipantCurrentMatchSuccess,
@@ -36,6 +40,9 @@ import {
   removeTrainingMember,
   removeTrainingMemberFailure,
   removeTrainingMemberSuccess,
+  renameTrainingMember,
+  renameTrainingMemberFailure,
+  renameTrainingMemberSuccess,
   updateTrainingAdministratorInformations,
   updateTrainingAdministratorInformationsFailure,
   updateTrainingAdministratorInformationsSuccess,
@@ -102,8 +109,12 @@ import {
   validateTrainingMatchFailure,
   validateTrainingMatchSuccess,
 } from './training.match.actions';
-import { selectCurrentTrainingAdminInformations } from './training.selectors';
+import {
+  selectCurrentTrainingAdminInformations,
+  selectCurrentTrainingParticipantInformations,
+} from './training.selectors';
 import { newId } from 'src/app/utils/unique-id.util';
+import { environment } from '@environment';
 
 @Injectable()
 export class TrainingEffects {
@@ -139,7 +150,8 @@ export class TrainingEffects {
   loadTrainingParticipantCurrentMatch$ = createEffect(() =>
     this.actions$.pipe(
       ofType(loadTrainingParticipantCurrentMatch),
-      switchMap(({ sessionCode, participantCode }) =>
+      withLatestFrom(this.store.select(selectCurrentTrainingParticipantInformations)),
+      switchMap(([{ sessionCode, participantCode }, savedCodes]) =>
         this.trainingService.getCurrentMatch(sessionCode, participantCode).pipe(
           switchMap((currentMatch) =>
             of(
@@ -148,11 +160,34 @@ export class TrainingEffects {
                 participantCode,
                 currentMatch,
               }),
+              setLocalStorageData({ key: STORAGE_TRAINING_SESSION_CODE_KEY, value: sessionCode }),
+              setLocalStorageData({
+                key: STORAGE_TRAINING_SESSION_PLAYER_CODE_KEY,
+                value: participantCode,
+              }),
             ),
           ),
-          catchError((error) =>
-            of(loadTrainingParticipantCurrentMatchFailure({ error: convertErrorToString(error) })),
-          ),
+          catchError((error) => {
+            const failureAction = loadTrainingParticipantCurrentMatchFailure({
+              error: convertErrorToString(error),
+            });
+            // Only a refusal of the saved codes themselves forgets them: a typo in other codes or a
+            // network failure leaves them in place.
+            const savedCodesRefused =
+              error instanceof HttpErrorResponse &&
+              error.status === 404 &&
+              savedCodes?.sessionCode === sessionCode &&
+              savedCodes.participantCode === participantCode;
+
+            return savedCodesRefused
+              ? of(
+                  failureAction,
+                  forgetTrainingParticipantCodes(),
+                  removeLocalStorageData({ key: STORAGE_TRAINING_SESSION_CODE_KEY }),
+                  removeLocalStorageData({ key: STORAGE_TRAINING_SESSION_PLAYER_CODE_KEY }),
+                )
+              : of(failureAction);
+          }),
         ),
       ),
     ),
@@ -226,6 +261,21 @@ export class TrainingEffects {
           switchMap((training) => of(addTrainingMemberSuccess({ training }))),
           catchError((error) =>
             of(addTrainingMemberFailure({ error: convertErrorToString(error) })),
+          ),
+        ),
+      ),
+    ),
+  );
+
+  renameTrainingMember$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(renameTrainingMember),
+      withLatestFrom(this.store.select(selectCurrentTrainingAdminInformations)),
+      concatMap(([{ code, memberId, name }, adminInfo]) =>
+        this.trainingService.renameMember(code, memberId, adminInfo?.password ?? '', name).pipe(
+          switchMap((training) => of(renameTrainingMemberSuccess({ training }))),
+          catchError((error) =>
+            of(renameTrainingMemberFailure({ error: convertErrorToString(error) })),
           ),
         ),
       ),
@@ -486,6 +536,7 @@ export class TrainingEffects {
   updateTrainingScore$ = createEffect(() =>
     this.actions$.pipe(
       ofType(updateTrainingScore),
+      debounceTime(environment.apiConfiguration.delayToUpdateScore ?? 0),
       switchMap(({ sessionCode, matchId, participantCode, scoreA, scoreB }) =>
         this.trainingService
           .updateScore(sessionCode, matchId, participantCode, scoreA, scoreB)
@@ -563,6 +614,7 @@ export class TrainingEffects {
         loadTrainingLeaderboardFailure,
         updateTrainingAdministratorInformationsFailure,
         addTrainingMemberFailure,
+        renameTrainingMemberFailure,
         removeTrainingMemberFailure,
         createTrainingSessionFailure,
         closeTrainingSessionFailure,

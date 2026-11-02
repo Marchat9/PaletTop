@@ -24,6 +24,7 @@ function baseHistory(
     return {
         recentRounds: [],
         sitOutCountByParticipant: {},
+        fallbackCountByParticipant: {},
         ...overrides,
     };
 }
@@ -31,8 +32,9 @@ function baseHistory(
 function round(
     partnerPairs: [string, string][] = [],
     opponentCanonicalPairs: [string, string][] = [],
+    fallbackParticipantIds: string[] = [],
 ) {
-    return { partnerPairs, opponentCanonicalPairs };
+    return { partnerPairs, opponentCanonicalPairs, fallbackParticipantIds };
 }
 
 function solos(count: number): string[] {
@@ -136,6 +138,105 @@ describe('DefaultMatchmakingStrategy', () => {
             .map((t) => t.participantIds.length);
         expect(playingSizes).toEqual([2, 2]);
         expect(restingParticipants(plan)).toHaveLength(2);
+    });
+
+    it('confie les équipes de repli à ceux qui y ont le moins joué', () => {
+        const strategy = new DefaultMatchmakingStrategy(Math.random);
+        // 10 players, teams of 2 or 3: two trios and two pairs, so 6 fallback slots.
+        const plan = strategy.generateRound(
+            input({
+                soloParticipantIds: solos(10),
+                config: baseConfig({ allowedTeamSizes: [3] }),
+                history: baseHistory({
+                    fallbackCountByParticipant: { p1: 1, p2: 1, p3: 1, p4: 1 },
+                }),
+            }),
+        );
+
+        expect(fallbackParticipants(plan, 2)).toEqual(
+            new Set(['p5', 'p6', 'p7', 'p8', 'p9', 'p10']),
+        );
+    });
+
+    it('à égalité, confie le repli à ceux qui y ont joué il y a le plus longtemps', () => {
+        const strategy = new DefaultMatchmakingStrategy(Math.random);
+        const everyoneOnce = Object.fromEntries(solos(10).map((id) => [id, 1]));
+        const plan = strategy.generateRound(
+            input({
+                soloParticipantIds: solos(10),
+                config: baseConfig({ allowedTeamSizes: [3] }),
+                history: baseHistory({
+                    recentRounds: [
+                        round([], [], ['p1', 'p2', 'p3', 'p4']),
+                        round([], [], ['p5', 'p6', 'p7', 'p8', 'p9', 'p10']),
+                    ],
+                    fallbackCountByParticipant: everyoneOnce,
+                }),
+            }),
+        );
+
+        expect(fallbackParticipants(plan, 2)).toEqual(
+            new Set(['p5', 'p6', 'p7', 'p8', 'p9', 'p10']),
+        );
+    });
+
+    it('à égalité, épargne le repli à celui qui vient d’en enchaîner plusieurs', () => {
+        const strategy = new DefaultMatchmakingStrategy(Math.random);
+        // p4 played the last two trios in a row; p2 and p3 had a break in between. With equal counts
+        // and the same last round, the next trio must not hand p4 a third one.
+        const history = baseHistory({
+            recentRounds: [
+                round([], [], ['p2', 'p3', 'p4']),
+                round([], [], ['p1', 'p4', 'p5']),
+                round([], [], ['p1', 'p2', 'p3']),
+            ],
+            fallbackCountByParticipant: { p1: 2, p2: 2, p3: 2, p4: 2, p5: 1 },
+        });
+
+        for (let i = 0; i < 20; i++) {
+            const plan = strategy.generateRound(
+                input({
+                    soloParticipantIds: solos(5),
+                    config: baseConfig({ allowedTeamSizes: [3] }),
+                    history,
+                }),
+            );
+            const fallback = fallbackParticipants(plan, 2);
+            expect(fallback).toContain('p5');
+            expect(fallback).toContain('p1');
+            expect(fallback).not.toContain('p4');
+        }
+    });
+
+    it('choisit les joueurs du repli avant les niveaux en apprentissage, puis les équilibre entre eux', () => {
+        const strategy = new DefaultMatchmakingStrategy(NO_SHUFFLE);
+        const levelByParticipant = Object.fromEntries(
+            solos(10).map((id, index) => [id, 100 - index * 10]),
+        );
+        // Banded over the whole ranking, the trios would take the two weakest (p9, p10) every round.
+        const plan = strategy.generateRound(
+            input({
+                soloParticipantIds: solos(10),
+                config: baseConfig({
+                    allowedTeamSizes: [3],
+                    teamComposition: TrainingTeamComposition.LEARNING,
+                }),
+                history: baseHistory({
+                    fallbackCountByParticipant: { p1: 1, p2: 1, p9: 1, p10: 1 },
+                }),
+                levelByParticipant,
+            }),
+        );
+
+        expect(fallbackParticipants(plan, 2)).toEqual(
+            new Set(['p3', 'p4', 'p5', 'p6', 'p7', 'p8']),
+        );
+        // Balanced among themselves: the best of the fallback players with the weakest ones.
+        const trios = plan.ephemeralTeams
+            .filter((t) => t.participantIds.length === 3)
+            .map((t) => [...t.participantIds].sort());
+        expect(trios).toContainEqual(['p3', 'p5', 'p7']);
+        expect(trios).toContainEqual(['p4', 'p6', 'p8']);
     });
 
     it('associe chaque joueur à un partenaire de niveau voisin en apprentissage', () => {
@@ -356,6 +457,20 @@ describe('DefaultMatchmakingStrategy', () => {
 
 function allParticipants(plan: { ephemeralTeams: { participantIds: string[] }[] }): Set<string> {
     return new Set(plan.ephemeralTeams.flatMap((t) => t.participantIds));
+}
+
+function fallbackParticipants(
+    plan: { ephemeralTeams: { tempId: string; participantIds: string[] }[] },
+    playersPerTeam: number,
+): Set<string> {
+    return new Set(
+        plan.ephemeralTeams
+            .filter(
+                (t) =>
+                    !t.tempId.startsWith('sit-out') && t.participantIds.length !== playersPerTeam,
+            )
+            .flatMap((t) => t.participantIds),
+    );
 }
 
 function restingParticipants(plan: {

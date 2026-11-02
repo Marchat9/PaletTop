@@ -50,6 +50,23 @@
           />
         </div>
       </div>
+
+      <div class="admin-training">
+        <div class="header">
+          <div class="sub-title">
+            <h3>Administrer un groupe d'entraînement existant</h3>
+          </div>
+        </div>
+
+        <div class="action">
+          <app-button
+            title="Administrer un group d'entraînement"
+            icon="admin_panel_settings"
+            variant="secondary"
+            (clicked)="eventTrainingAdministration.emit()"
+          />
+        </div>
+      </div>
     </div>
   </div>
 </app-card>

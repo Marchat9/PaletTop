@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { resolveClientIp } from './super-admin-ip.utils';
+import { resolveClientIp } from './client-ip.util';
 
 describe('resolveClientIp', () => {
     it('uses CF-Connecting-IP when present', () => {

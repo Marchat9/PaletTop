@@ -148,10 +148,16 @@ export interface TrainingAdminSession {
   password: string;
 }
 
+export interface TrainingParticipantSession {
+  sessionCode: string;
+  participantCode: string;
+}
+
 export interface TrainingRequestStatus {
   trainingCreation: ApiCallStatus;
   updateTraining: ApiCallStatus;
   addMember: ApiCallStatus;
+  renameMember: ApiCallStatus;
   removeMember: ApiCallStatus;
   createSession: ApiCallStatus;
   closeSession: ApiCallStatus;
@@ -169,6 +175,9 @@ export interface TrainingRequestStatus {
 export interface TrainingState {
   training: ApiCall<Nullable<AdminTrainingDto>>;
   adminInformations: Nullable<TrainingAdminSession>;
+  // Codes of the last session joined as a player, kept so that the player comes back to it without
+  // typing them again.
+  participantInformations: Nullable<TrainingParticipantSession>;
   requestStatus: TrainingRequestStatus;
   lastRequestedCode: Nullable<string>;
 

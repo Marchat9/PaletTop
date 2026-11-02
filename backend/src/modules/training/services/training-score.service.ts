@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { TrainingMatch } from 'src/entities/training-match.entity';
 import { TrainingSession } from 'src/entities/training-session.entity';
 import { TrainingTeam } from 'src/entities/training-team.entity';
@@ -13,6 +13,8 @@ import { TrainingRealtimeGateway } from '../training-realtime.gateway';
 
 @Injectable()
 export class TrainingScoreService {
+    private readonly logger = new Logger(TrainingScoreService.name);
+
     constructor(
         private readonly trainingMatchRepo: TrainingMatchRepository,
         private readonly trainingSessionRepo: TrainingSessionRepository,
@@ -31,10 +33,11 @@ export class TrainingScoreService {
             matchId,
             participantCode,
         );
-        assertSessionOpen(session);
+        assertSessionOpen(session, this.logger, 'Match start');
 
-        this.rejectBye(match);
+        this.rejectBye(match, sessionCode);
         if (match.status !== MatchStatus.PENDING) {
+            this.logger.warn(`Match ${matchId} of session ${sessionCode} is already started`);
             throw new BadRequestException('Le match est déjà démarré.');
         }
 
@@ -45,6 +48,7 @@ export class TrainingScoreService {
             this.trainingMatchRepo.save([match]),
             this.trainingSessionRepo.touchLastActivity(session.id),
         ]);
+        this.logger.log(`Match ${matchId} started (training session: ${sessionCode})`);
         return this.emitMatchUpdate(sessionCode, session.id, saved);
     }
 
@@ -60,17 +64,21 @@ export class TrainingScoreService {
             matchId,
             participantCode,
         );
-        assertSessionOpen(session);
+        assertSessionOpen(session, this.logger, 'Score update');
 
-        this.rejectBye(match);
+        this.rejectBye(match, sessionCode);
         if (match.status === MatchStatus.VALIDATED) {
+            this.logger.warn(
+                `Score update refused: match ${matchId} of session ${sessionCode} is already validated`,
+            );
             throw new BadRequestException(
                 "Le score d'un match validé ne peut pas être modifié par un joueur.",
             );
         }
 
-        this.validateScores(scoreA, scoreB, session.pointsPerGame);
+        this.validateScores(scoreA, scoreB, session.pointsPerGame, matchId, sessionCode);
         const isFinished = this.isMatchFinished(scoreA, scoreB, session.pointsPerGame);
+        const wasEnded = match.status === MatchStatus.ENDED;
 
         match.scoreA = scoreA;
         match.scoreB = scoreB;
@@ -87,6 +95,12 @@ export class TrainingScoreService {
             this.trainingMatchRepo.save([match]),
             this.trainingSessionRepo.touchLastActivity(session.id),
         ]);
+        // Only the end of the match is logged: every point entered would flood the logs.
+        if (isFinished && !wasEnded) {
+            this.logger.log(
+                `Match ${matchId} ended ${scoreA}-${scoreB} (training session: ${sessionCode})`,
+            );
+        }
         return this.emitMatchUpdate(sessionCode, session.id, saved);
     }
 
@@ -102,14 +116,20 @@ export class TrainingScoreService {
             participantCode,
         );
 
-        this.rejectBye(match);
+        this.rejectBye(match, sessionCode);
         if (match.status !== MatchStatus.ENDED) {
+            this.logger.warn(
+                `Validation refused: match ${matchId} of session ${sessionCode} is not ended (${match.status})`,
+            );
             throw new BadRequestException("Le match doit être terminé avant d'être validé.");
         }
 
         const isParticipantOnTeamA = this.hasParticipantCode(match.teamA, participantCode);
         const opponentTeam = isParticipantOnTeamA ? match.teamB : match.teamA;
         if (!opponentTeam || !this.hasParticipantCode(opponentTeam, opponentParticipantCode)) {
+            this.logger.warn(
+                `Validation refused: wrong opponent code for match ${matchId} of session ${sessionCode}`,
+            );
             throw new BadRequestException('Code participant adverse incorrect.');
         }
 
@@ -120,6 +140,9 @@ export class TrainingScoreService {
             this.trainingMatchRepo.save([match]),
             this.trainingSessionRepo.touchLastActivity(session.id),
         ]);
+        this.logger.log(
+            `Match ${matchId} validated ${match.scoreA}-${match.scoreB} (training session: ${sessionCode})`,
+        );
         return this.emitMatchUpdate(sessionCode, session.id, saved);
     }
 
@@ -136,11 +159,12 @@ export class TrainingScoreService {
         );
         const match = await this.trainingMatchRepo.findByIdInSession(matchId, session.id);
         if (!match) {
+            this.logger.warn(`Match ${matchId} not found in session ${sessionCode}`);
             throw new NotFoundException('Match introuvable.');
         }
-        this.rejectBye(match);
+        this.rejectBye(match, sessionCode);
 
-        this.validateScores(scoreA, scoreB, session.pointsPerGame);
+        this.validateScores(scoreA, scoreB, session.pointsPerGame, matchId, sessionCode);
         const isFinished = this.isMatchFinished(scoreA, scoreB, session.pointsPerGame);
 
         const wasValidated = match.status === MatchStatus.VALIDATED;
@@ -160,6 +184,9 @@ export class TrainingScoreService {
             this.trainingMatchRepo.save([match]),
             this.trainingSessionRepo.touchLastActivity(session.id),
         ]);
+        this.logger.log(
+            `Admin corrected match ${matchId} to ${scoreA}-${scoreB} (training session: ${sessionCode}, now ${match.status})`,
+        );
         // Reopening a validated match removes its points from the leaderboard: it must be
         // rebroadcast on the way out of VALIDATED too, not only on the way in - otherwise clients
         // keep showing points that no longer count.
@@ -193,8 +220,9 @@ export class TrainingScoreService {
         return isFinished ? MatchStatus.VALIDATED : MatchStatus.ONGOING;
     }
 
-    private rejectBye(match: TrainingMatch): void {
+    private rejectBye(match: TrainingMatch, sessionCode: string): void {
         if (match.isBye) {
+            this.logger.warn(`Score refused: match ${match.id} of session ${sessionCode} is a bye`);
             throw new BadRequestException('Un match bye ne peut pas recevoir de score.');
         }
     }
@@ -203,8 +231,17 @@ export class TrainingScoreService {
         return scoreA >= pointsPerGame || scoreB >= pointsPerGame;
     }
 
-    private validateScores(scoreA: number, scoreB: number, max: number): void {
+    private validateScores(
+        scoreA: number,
+        scoreB: number,
+        max: number,
+        matchId: string,
+        sessionCode: string,
+    ): void {
         if (scoreA > max || scoreB > max || (scoreA === max && scoreB === max)) {
+            this.logger.warn(
+                `Score ${scoreA}-${scoreB} refused for match ${matchId} of session ${sessionCode} (max ${max})`,
+            );
             throw new BadRequestException(
                 `Les scores ne peuvent pas dépasser ${max} points par partie et les deux équipes ne peuvent pas avoir ${max} points toutes les deux.`,
             );
@@ -224,6 +261,7 @@ export class TrainingScoreService {
 
         const match = await this.trainingMatchRepo.findByIdInSession(matchId, session.id);
         if (!match) {
+            this.logger.warn(`Match ${matchId} not found in session ${sessionCode}`);
             throw new NotFoundException('Match introuvable.');
         }
 
@@ -234,6 +272,9 @@ export class TrainingScoreService {
             ? this.hasParticipantCode(match.teamB, participantCode)
             : false;
         if (!isOnTeamA && !isOnTeamB) {
+            this.logger.warn(
+                `Invalid participant code for match ${matchId} of session ${sessionCode}`,
+            );
             throw new BadRequestException('Code participant invalide pour ce match.');
         }
 

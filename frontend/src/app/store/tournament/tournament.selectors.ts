@@ -29,6 +29,11 @@ export const selectCurrentTournamentAdminInformations = createSelector(
   (state) => state.adminInformations,
 );
 
+export const selectCurrentTournamentPlayerInformations = createSelector(
+  selectTournamentState,
+  (state) => state.playerInformations,
+);
+
 export const selectLastRequestedTournamentCode = createSelector(
   selectTournamentState,
   (state) => state.lastRequestedCode,

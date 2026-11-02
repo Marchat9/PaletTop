@@ -4,6 +4,7 @@ import {
   createTrainingFailure,
   createTrainingSuccess,
   disconnectTrainingAdministrator,
+  forgetTrainingParticipantCodes,
   loadTrainingParticipantCurrentMatch,
   loadTrainingParticipantCurrentMatchFailure,
   loadTrainingParticipantCurrentMatchSuccess,
@@ -22,6 +23,9 @@ import {
   removeTrainingMember,
   removeTrainingMemberFailure,
   removeTrainingMemberSuccess,
+  renameTrainingMember,
+  renameTrainingMemberFailure,
+  renameTrainingMemberSuccess,
   updateTrainingAdministratorInformations,
   updateTrainingAdministratorInformationsFailure,
   updateTrainingAdministratorInformationsSuccess,
@@ -110,15 +114,19 @@ import { updateLocalStorageData } from '../app-config/app-config.actions';
 import {
   STORAGE_TRAINING_CODE_KEY,
   STORAGE_TRAINING_PASSWORD_KEY,
+  STORAGE_TRAINING_SESSION_CODE_KEY,
+  STORAGE_TRAINING_SESSION_PLAYER_CODE_KEY,
 } from '../app-config/app-config.effects';
 
 export const initialTrainingState: TrainingState = {
   training: { data: null, isLoading: false, error: null },
   adminInformations: null,
+  participantInformations: null,
   requestStatus: {
     trainingCreation: { isLoading: false, error: null },
     updateTraining: { isLoading: false, error: null },
     addMember: { isLoading: false, error: null },
+    renameMember: { isLoading: false, error: null },
     removeMember: { isLoading: false, error: null },
     createSession: { isLoading: false, error: null },
     closeSession: { isLoading: false, error: null },
@@ -244,13 +252,21 @@ export const trainingReducer = createReducer(
     ...state,
     participantCurrentMatch: { ...state.participantCurrentMatch, isLoading: true, error: null },
   })),
-  on(loadTrainingParticipantCurrentMatchSuccess, (state, { currentMatch }) => ({
-    ...state,
-    participantCurrentMatch: { data: currentMatch, isLoading: false, error: null },
-  })),
+  on(
+    loadTrainingParticipantCurrentMatchSuccess,
+    (state, { sessionCode, participantCode, currentMatch }) => ({
+      ...state,
+      participantCurrentMatch: { data: currentMatch, isLoading: false, error: null },
+      participantInformations: { sessionCode, participantCode },
+    }),
+  ),
   on(loadTrainingParticipantCurrentMatchFailure, (state, { error }) => ({
     ...state,
     participantCurrentMatch: { ...state.participantCurrentMatch, isLoading: false, error },
+  })),
+  on(forgetTrainingParticipantCodes, (state) => ({
+    ...state,
+    participantInformations: null,
   })),
 
   // Load participant history
@@ -279,6 +295,14 @@ export const trainingReducer = createReducer(
             password: data[STORAGE_TRAINING_PASSWORD_KEY] as string,
           }
         : state.adminInformations,
+    participantInformations:
+      typeof data[STORAGE_TRAINING_SESSION_CODE_KEY] === 'string' &&
+      typeof data[STORAGE_TRAINING_SESSION_PLAYER_CODE_KEY] === 'string'
+        ? {
+            sessionCode: data[STORAGE_TRAINING_SESSION_CODE_KEY] as string,
+            participantCode: data[STORAGE_TRAINING_SESSION_PLAYER_CODE_KEY] as string,
+          }
+        : state.participantInformations,
   })),
   on(connectTrainingAdministrator, (state, { code, password }) => ({
     ...state,
@@ -340,6 +364,30 @@ export const trainingReducer = createReducer(
     requestStatus: {
       ...state.requestStatus,
       addMember: { isLoading: false, error },
+    },
+  })),
+
+  // Rename member
+  on(renameTrainingMember, (state) => ({
+    ...state,
+    requestStatus: {
+      ...state.requestStatus,
+      renameMember: { isLoading: true, error: null },
+    },
+  })),
+  on(renameTrainingMemberSuccess, (state, { training }) => ({
+    ...state,
+    training: { ...state.training, data: training },
+    requestStatus: {
+      ...state.requestStatus,
+      renameMember: { isLoading: false, error: null },
+    },
+  })),
+  on(renameTrainingMemberFailure, (state, { error }) => ({
+    ...state,
+    requestStatus: {
+      ...state.requestStatus,
+      renameMember: { isLoading: false, error },
     },
   })),
 

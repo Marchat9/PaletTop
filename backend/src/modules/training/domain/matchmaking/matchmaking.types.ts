@@ -35,9 +35,17 @@ export interface GenerateRoundInput {
             // for a fixed team, or the sorted set of participantIds joined by ',' for an ephemeral
             // one.
             opponentCanonicalPairs: [string, string][];
+            /** Participants who played in a team of a fallback size (other than the target). */
+            fallbackParticipantIds: string[];
         }[];
         /** Number of rounds spent resting, per participant. Missing = never rested. */
         sitOutCountByParticipant: Record<string, number>;
+        /**
+         * Number of rounds played in a team of a fallback size, per participant. Missing = never.
+         * Fallback slots go to those with the lowest count, so the same players do not carry the
+         * odd team round after round.
+         */
+        fallbackCountByParticipant: Record<string, number>;
     };
     /**
      * Estimated level of each participant, the higher the stronger. A participant missing from this

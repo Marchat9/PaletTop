@@ -62,48 +62,32 @@
     display: inline-flex;
     align-items: center;
     gap: 0.45rem;
-    padding: 0.4rem 0.5rem 0.4rem 0.65rem;
+    padding: 0.4rem 0.45rem 0.4rem 0.65rem;
     border-radius: 10rem;
     background: var(--color-hover-surface-soft);
     border: 1px solid var(--color-border-subtle);
+    color: inherit;
+    font: inherit;
     font-size: 0.85rem;
+    cursor: pointer;
+    transition:
+      background 0.2s ease,
+      border-color 0.2s ease;
 
-    ::ng-deep .member-icon {
+    // The trailing dots only say "this opens something": the whole chip is the target.
+    ::ng-deep .member-icon,
+    ::ng-deep .more-icon {
       color: var(--color-on-surface-variant);
       font-size: 1rem;
     }
 
-    .remove {
-      display: inline-flex;
-      align-items: center;
-      border: 0;
-      padding: 0;
-      background: transparent;
-      color: var(--color-on-surface-variant);
-      cursor: pointer;
+    &:hover {
+      border-color: var(--color-primary);
+    }
 
-      // The cross stays small in the list, but the finger aims 8px wider on each side.
-      position: relative;
-
-      &::after {
-        content: '';
-        position: absolute;
-        inset: -8px;
-      }
-
-      &:hover {
-        color: var(--color-error);
-      }
-
-      &:focus-visible {
-        outline: 2px solid var(--color-primary);
-        outline-offset: 2px;
-        border-radius: 0.25rem;
-      }
-
-      ::ng-deep .material-symbols-outlined {
-        font-size: 0.95rem;
-      }
+    &:focus-visible {
+      outline: 2px solid var(--color-primary);
+      outline-offset: 2px;
     }
   }
 }

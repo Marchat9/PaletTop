@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { LessThan, Repository, UpdateResult } from 'typeorm';
 import { TrainingSession } from 'src/entities/training-session.entity';
@@ -8,6 +8,8 @@ const FIXED_TEAM_JOIN_CONDITION = 'team.round_id IS NULL';
 
 @Injectable()
 export class TrainingSessionRepository {
+    private readonly logger = new Logger(TrainingSessionRepository.name);
+
     constructor(
         @InjectRepository(TrainingSession)
         private readonly repo: Repository<TrainingSession>,
@@ -46,6 +48,7 @@ export class TrainingSessionRepository {
     async findByCodeOrThrow(code: string): Promise<TrainingSession> {
         const session = await this.findByCode(code);
         if (!session) {
+            this.logger.warn(`Training session not found with code: ${code}`);
             throw new NotFoundException('Session introuvable.');
         }
         return session;
@@ -102,6 +105,18 @@ export class TrainingSessionRepository {
             .leftJoinAndSelect('teamMember.participant', 'teamMemberParticipant')
             .where('session.id IN (:...ids)', { ids })
             .getMany();
+    }
+
+    /** Codes of the sessions still open in which a roster member takes part. */
+    async findOpenCodesWithMember(memberId: string): Promise<string[]> {
+        const rows = await this.repo
+            .createQueryBuilder('session')
+            .select('DISTINCT session.code', 'code')
+            .innerJoin('session.participants', 'participant')
+            .where('participant.member_id = :memberId', { memberId })
+            .andWhere('session.status = :status', { status: TrainingSessionStatus.OPEN })
+            .getRawMany<{ code: string }>();
+        return rows.map((row) => row.code);
     }
 
     findAllByTraining(trainingId: string): Promise<TrainingSession[]> {

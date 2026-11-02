@@ -7,6 +7,7 @@ import {
   ChangeDetectionStrategy,
   ElementRef,
   inject,
+  OnInit,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
@@ -21,8 +22,10 @@ import { CommonModule } from '@angular/common';
     class: 'code-number-input',
   },
 })
-export class CodeNumberInputComponent {
+export class CodeNumberInputComponent implements OnInit {
   public readonly digitCount = input(4);
+  // Prefills the digits once: the parent already knows this value, so nothing is emitted.
+  public readonly initialCode = input('');
   public readonly codeChange = output<string>();
 
   private readonly hostElement = inject(ElementRef<HTMLElement>);
@@ -35,6 +38,15 @@ export class CodeNumberInputComponent {
   public readonly isComplete = computed(() => this.digits().every((digit) => digit !== ''));
 
   public readonly fullCode = computed(() => this.digits().join(''));
+
+  ngOnInit(): void {
+    const digits = this.initialCode()
+      .replace(/[^0-9]/g, '')
+      .slice(0, this.digitCount());
+    if (digits) {
+      this.codeDigits.set(digits.split(''));
+    }
+  }
 
   public onDigitInput(value: string, index: number): void {
     const numericValue = value.replace(/[^0-9]/g, '').slice(-1);

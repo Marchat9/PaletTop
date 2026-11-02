@@ -18,7 +18,7 @@ export class TrainingRosterCard {
   public readonly addLoading = input<boolean>(false);
 
   public readonly addMember = output<string>();
-  public readonly removeMember = output<TrainingMemberDto>();
+  public readonly memberSelected = output<TrainingMemberDto>();
 
   protected readonly newMemberName = signal('');
   protected readonly canAdd = computed(() => this.newMemberName().trim().length > 0);

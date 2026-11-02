@@ -27,6 +27,7 @@
     gap: 1.5rem;
 
     .join-tournament,
+    .admin-tournament,
     .create-tournament {
       display: flex;
       flex-direction: column;
@@ -46,7 +47,7 @@
             margin: 0;
             font-family: var(--font-body);
             font-size: 1.4rem;
-            line-height: 0.8;
+            line-height: 1;
             font-weight: 600;
           }
 

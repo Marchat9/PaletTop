@@ -1,0 +1,25 @@
+:host {
+  display: block;
+}
+
+// The shell (background, header, close button, fields) comes from `.popup-surface`, in
+// styles/dialog.scss: only this popup's own layout is left here.
+.popup-container {
+  width: min(100vw - 2rem, 29rem);
+  overflow: hidden;
+
+  .actions {
+    display: flex;
+    gap: 1rem;
+    width: 100%;
+
+    app-button {
+      flex: 1;
+    }
+  }
+
+  .remove-row {
+    display: flex;
+    justify-content: center;
+  }
+}

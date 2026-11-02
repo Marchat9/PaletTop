@@ -4,6 +4,7 @@ import {
   createTournamentFailure,
   createTournamentSuccess,
   disconnectTournamentAdministrator,
+  forgetTournamentPlayerCodes,
   loadTournamentInformation,
   loadTournamentInformationFailure,
   loadTournamentInformationSuccess,
@@ -43,11 +44,14 @@ import { updateLocalStorageData } from '../app-config/app-config.actions';
 import {
   STORAGE_TOURNAMENT_CODE_KEY,
   STORAGE_TOURNAMENT_PASSWORD_KEY,
+  STORAGE_TOURNAMENT_PLAYER_CODE_KEY,
+  STORAGE_TOURNAMENT_TEAM_CODE_KEY,
 } from '../app-config/app-config.effects';
 
 export const initialTournamentState: TournamentState = {
   tournament: { data: null, isLoading: false, error: null },
   adminInformations: null,
+  playerInformations: null,
   adminRequest: {
     tournamentCreation: { isLoading: false, error: null },
     updateConfiguration: { isLoading: false, error: null },
@@ -137,6 +141,14 @@ export const tournamentReducer = createReducer(
             password: data[STORAGE_TOURNAMENT_PASSWORD_KEY] as string,
           }
         : state.adminInformations,
+    playerInformations:
+      typeof data[STORAGE_TOURNAMENT_PLAYER_CODE_KEY] === 'string' &&
+      typeof data[STORAGE_TOURNAMENT_TEAM_CODE_KEY] === 'string'
+        ? {
+            tournamentCode: data[STORAGE_TOURNAMENT_PLAYER_CODE_KEY] as string,
+            teamCode: data[STORAGE_TOURNAMENT_TEAM_CODE_KEY] as string,
+          }
+        : state.playerInformations,
   })),
   on(connectTournamentAdministrator, (state, { code, password }) => ({
     ...state,
@@ -175,13 +187,14 @@ export const tournamentReducer = createReducer(
       isLoading: true,
     },
   })),
-  on(loadTournamentInformationSuccess, (state, { tournament }) => ({
+  on(loadTournamentInformationSuccess, (state, { tournament, teamCode }) => ({
     ...state,
     tournament: {
       data: tournament,
       isLoading: false,
       error: null,
     },
+    playerInformations: { tournamentCode: tournament.code, teamCode },
   })),
   on(loadTournamentInformationFailure, (state, { error }) => ({
     ...state,
@@ -190,6 +203,10 @@ export const tournamentReducer = createReducer(
       isLoading: false,
       error,
     },
+  })),
+  on(forgetTournamentPlayerCodes, (state) => ({
+    ...state,
+    playerInformations: null,
   })),
 
   // Update tournament configuration as admin

@@ -15,6 +15,7 @@
     <label class="field-label">Code de session</label>
     <app-code-number-input
       [digitCount]="4"
+      [initialCode]="initialSessionCode"
       (codeChange)="onSessionCodeChange($event)"
     ></app-code-number-input>
     <p class="field-help">
@@ -27,6 +28,7 @@
     <label class="field-label">Code Participant</label>
     <app-code-number-input
       [digitCount]="4"
+      [initialCode]="initialParticipantCode"
       (codeChange)="onCodeChange($event)"
     ></app-code-number-input>
     <p class="field-help">

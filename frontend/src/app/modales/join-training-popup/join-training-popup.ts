@@ -16,6 +16,7 @@ import {
   resetTraining,
 } from 'src/app/store/training/training.actions';
 import {
+  selectCurrentTrainingParticipantInformations,
   selectTrainingParticipantCurrentMatch,
   selectTrainingParticipantCurrentMatchError,
   selectTrainingParticipantCurrentMatchIsLoading,
@@ -32,9 +33,16 @@ export class JoinTrainingPopup {
   private readonly store = inject(Store);
   private readonly dialogRef = inject(DialogRef<{ sessionCode: string; participantCode: string }>);
 
+  // Codes of the last session joined on this device: prefilled so the player only has to confirm.
+  private readonly savedCodes = this.store.selectSignal(
+    selectCurrentTrainingParticipantInformations,
+  )();
+  readonly initialSessionCode = this.savedCodes?.sessionCode ?? '';
+  readonly initialParticipantCode = this.savedCodes?.participantCode ?? '';
+
   //------
-  readonly sessionCode = signal('');
-  private readonly participantCode = signal('');
+  readonly sessionCode = signal(this.initialSessionCode);
+  private readonly participantCode = signal(this.initialParticipantCode);
   //------
   readonly isUnknownSession = signal(false);
 

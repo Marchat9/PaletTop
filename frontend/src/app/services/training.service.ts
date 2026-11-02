@@ -69,6 +69,18 @@ export class TrainingService {
     );
   }
 
+  public renameMember(
+    code: string,
+    memberId: string,
+    password: string,
+    name: string,
+  ): Observable<AdminTrainingDto> {
+    return this.http.patch<AdminTrainingDto>(
+      `${this.apiBaseUrl}/trainings/${encodeURIComponent(code)}/members/${memberId}`,
+      { password, name },
+    );
+  }
+
   public removeMember(
     code: string,
     memberId: string,
