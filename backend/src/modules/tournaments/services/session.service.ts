@@ -72,14 +72,14 @@ export class SessionService {
 
         // Build then return and emit tournament status info.
         const statusAfterStart = await this.buildTournamentStatus(strategy, tournamentWithMatches);
-        const tournamentWithStatusInfo = toAdminTournamentDto(
-            tournamentWithMatches,
-            statusAfterStart,
+        // The general room is public (spectators): no team codes in what is broadcast there.
+        this.gateway.emitTournamentUpdated(
+            tournamentCode,
+            toTournamentMetaDto(tournamentWithMatches, statusAfterStart),
         );
-        this.gateway.emitTournamentUpdated(tournamentCode, tournamentWithStatusInfo);
         // ====================
 
-        return tournamentWithStatusInfo;
+        return toAdminTournamentDto(tournamentWithMatches, statusAfterStart);
     }
 
     /**
