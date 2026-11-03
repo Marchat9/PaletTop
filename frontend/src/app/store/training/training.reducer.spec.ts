@@ -15,6 +15,11 @@ import {
   checkinTrainingParticipantSuccess,
 } from './training.session.actions';
 import {
+  renameTrainingMemberSuccess,
+  setTrainingAdminMemberSuccess,
+} from './training.admin.actions';
+import {
+  AdminTrainingDto,
   TrainingCurrentMatchDto,
   TrainingParticipantAdminDto,
   TrainingSessionAdminDto,
@@ -189,6 +194,42 @@ describe('trainingReducer', () => {
       const state = trainingReducer(before, forgetTrainingParticipantCodes());
 
       expect(state.participantInformations).toBeNull();
+    });
+  });
+
+  describe('renommage et admin joueur enregistrés ensemble', () => {
+    const before: AdminTrainingDto = {
+      id: 't1',
+      code: 'CLUB-1',
+      name: 'Club du jeudi',
+      createdAt: '2026-01-01T18:00:00.000Z',
+      members: [{ id: 'm1', name: 'Mathieu' }],
+      adminMemberId: null,
+    };
+    // Each response was built by the server before the other request was saved.
+    const renamed = renameTrainingMemberSuccess({
+      training: { ...before, members: [{ id: 'm1', name: 'Mathieu A.' }] },
+    });
+    const adminSet = setTrainingAdminMemberSuccess({
+      training: { ...before, adminMemberId: 'm1' },
+    });
+    const loaded = {
+      ...initialTrainingState,
+      training: { ...initialTrainingState.training, data: before },
+    };
+
+    it('garde les deux quand le renommage répond en dernier', () => {
+      const state = [adminSet, renamed].reduce(trainingReducer, loaded);
+
+      expect(state.training.data?.adminMemberId).toBe('m1');
+      expect(state.training.data?.members[0].name).toBe('Mathieu A.');
+    });
+
+    it('garde les deux quand l’admin joueur répond en dernier', () => {
+      const state = [renamed, adminSet].reduce(trainingReducer, loaded);
+
+      expect(state.training.data?.adminMemberId).toBe('m1');
+      expect(state.training.data?.members[0].name).toBe('Mathieu A.');
     });
   });
 });

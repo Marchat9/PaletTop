@@ -381,9 +381,15 @@ export const trainingReducer = createReducer(
       renameMember: { isLoading: true, error: null },
     },
   })),
+  // A rename and an admin player change can be saved together, and their responses come back in
+  // any order: each one only applies what it changed, otherwise the last response would undo the
+  // other with what it read before.
   on(renameTrainingMemberSuccess, (state, { training }) => ({
     ...state,
-    training: { ...state.training, data: training },
+    training: {
+      ...state.training,
+      data: state.training.data ? { ...state.training.data, members: training.members } : training,
+    },
     requestStatus: {
       ...state.requestStatus,
       renameMember: { isLoading: false, error: null },
@@ -415,7 +421,12 @@ export const trainingReducer = createReducer(
   })),
   on(setTrainingAdminMemberSuccess, (state, { training }) => ({
     ...state,
-    training: { ...state.training, data: training },
+    training: {
+      ...state.training,
+      data: state.training.data
+        ? { ...state.training.data, adminMemberId: training.adminMemberId }
+        : training,
+    },
     requestStatus: {
       ...state.requestStatus,
       setAdminMember: { isLoading: false, error: null },
