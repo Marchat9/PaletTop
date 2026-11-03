@@ -221,14 +221,17 @@ export class ScoreService {
             toPlayerMatchDto(result.match),
         );
 
-        if (newStatus === MatchStatus.VALIDATED || wasSessionClosed) {
+        // Leaving VALIDATED takes the match out of the ranking too: it must be rebroadcast, or the
+        // clients keep showing a win that no longer counts.
+        const wasValidated = match.status === MatchStatus.VALIDATED;
+        if (newStatus === MatchStatus.VALIDATED || wasValidated || wasSessionClosed) {
             this.rankingService.scheduleRankingUpdate(code);
         }
 
         await this.emitTournamentStatusOnValidationChange(
             code,
             match.session?.id,
-            match.status === MatchStatus.VALIDATED,
+            wasValidated,
             newStatus,
         );
 
