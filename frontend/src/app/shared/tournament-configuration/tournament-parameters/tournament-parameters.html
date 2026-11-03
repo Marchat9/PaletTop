@@ -7,8 +7,11 @@
   <div class="card-content padding">
     @if (!hiddenFields().includes('name')) {
       <div class="form-group">
-        <label class="form-label">Nom du tournoi <span class="mandatory">*</span></label>
+        <label class="form-label" for="tournament-name"
+          >Nom du tournoi <span class="mandatory">*</span></label
+        >
         <app-input-text
+          id="tournament-name"
           placeholder="Ex: Coupe du Laiton Doré"
           [autofocus]="true"
           [formControl]="group().controls.name"
@@ -18,8 +21,11 @@
 
     @if (!hiddenFields().includes('code')) {
       <div class="form-group">
-        <label class="form-label">Code Unique <span class="mandatory">*</span></label>
+        <label class="form-label" for="tournament-code"
+          >Code Unique <span class="mandatory">*</span></label
+        >
         <app-input-text
+          id="tournament-code"
           placeholder="Ex: PALET-2026"
           [uppercase]="true"
           [formControl]="group().controls.code"
@@ -32,10 +38,11 @@
 
     @if (!hiddenFields().includes('adminPassword')) {
       <div class="form-group">
-        <label class="form-label"
+        <label class="form-label" for="tournament-admin-password"
           >Mot de passe administrateur <span class="mandatory">*</span></label
         >
         <app-input-text
+          id="tournament-admin-password"
           placeholder="Ex: Admin123"
           [isPassword]="true"
           [formControl]="group().controls.adminPassword"
@@ -52,8 +59,9 @@
 
     @if (!hiddenFields().includes('description')) {
       <div class="form-group">
-        <label class="form-label">Description</label>
+        <label class="form-label" for="tournament-description">Description</label>
         <app-input-textarea
+          id="tournament-description"
           placeholder="L'histoire de ce tournoi commence ici..."
           [rows]="3"
           [formControl]="group().controls.description"

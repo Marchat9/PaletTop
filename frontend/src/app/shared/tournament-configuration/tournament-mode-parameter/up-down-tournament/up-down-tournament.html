@@ -1,8 +1,9 @@
 <div class="card-content">
   <div class="form-group">
-    <label class="form-label">Nombre de partie</label>
+    <label class="form-label" for="tournament-number-of-round">Nombre de partie</label>
     <p class="form-label-description">Limiter le nombre de rounds dans ce mode de compétition</p>
     <app-input-number
+      id="tournament-number-of-round"
       [formControl]="group().controls.numberOfRound"
       [zeroAsUndefined]="true"
       placeholder="Sans limite - l'admin cloture quand il le souhaite"

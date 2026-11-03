@@ -17,6 +17,9 @@ import { Icon } from '../icon/icon';
   templateUrl: './input-number.html',
   styleUrl: './input-number.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  // The id is forwarded to the inner field: left on the host too, it would be duplicated in the
+  // page and a <label for> would point at the wrapper instead of the field.
+  host: { '[attr.id]': 'null' },
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,

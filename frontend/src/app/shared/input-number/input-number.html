@@ -4,7 +4,7 @@
   [class.placeholder-as-value]="placeholderAsValue()"
 >
   <input
-    [id]="id()"
+    [attr.id]="id() || null"
     class="input-number"
     type="number"
     [placeholder]="placeholder() ?? ''"

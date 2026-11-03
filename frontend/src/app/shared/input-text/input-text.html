@@ -5,7 +5,7 @@
 
   <input
     #inputElement
-    [id]="id() || null"
+    [attr.id]="id() || null"
     class="input-text"
     [class.with-icon]="!!icon()"
     [class.with-password-toggle]="isPassword()"
