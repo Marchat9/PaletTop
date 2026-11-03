@@ -158,6 +158,14 @@ export class TournamentsService {
             );
         }
 
+        // The capacity is also checked by the form, but the API must not rely on it.
+        const capacity = tournament.configuration.maxTeamCapacity;
+        if (tournament.teams.length + dto.teams.length > capacity) {
+            throw new BadRequestException(
+                `Capacité maximale atteinte : ${capacity} équipes pour ce tournoi (${tournament.teams.length} déjà inscrites).`,
+            );
+        }
+
         // Clubs
         const allClubNames: string[] = [
             ...new Set(

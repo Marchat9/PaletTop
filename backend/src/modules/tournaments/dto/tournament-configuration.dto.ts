@@ -6,6 +6,7 @@ import {
     IsInt,
     IsNotEmpty,
     IsOptional,
+    Max,
     Min,
     Validate,
 } from 'class-validator';
@@ -15,10 +16,14 @@ import {
     SpecificTournamentConfig,
 } from './tournament-comptetition-configuration.dto';
 
+/** Same bound as the frontend form: also caps a single team import. */
+export const MAX_TEAM_CAPACITY = 256;
+
 export class TournamentConfigurationDto {
     @Type(() => Number)
     @IsInt()
     @Min(1)
+    @Max(MAX_TEAM_CAPACITY)
     @IsNotEmpty()
     maxTeamCapacity!: number;
 
