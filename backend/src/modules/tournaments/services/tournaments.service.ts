@@ -262,10 +262,8 @@ export class TournamentsService {
             code: dto.code ?? tournament.code,
             date: dto.date ?? tournament.date,
             description: dto.description ?? tournament.description,
-            configuration: {
-                ...tournament.configuration,
-                ...dto.configuration,
-            },
+            // Validated as a whole by the DTO: every stored field is overwritten.
+            configuration: { ...tournament.configuration, ...dto.configuration },
         };
 
         const saved = await this.tournamentRepo.save(mergedTournament);

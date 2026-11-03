@@ -19,6 +19,9 @@ import {
 /** Same bound as the frontend form: also caps a single team import. */
 export const MAX_TEAM_CAPACITY = 256;
 
+/** Nothing to do with the game, only a bound so a typo cannot travel to the database. */
+export const MAX_POINTS_PER_GAME = 100;
+
 export class TournamentConfigurationDto {
     @Type(() => Number)
     @IsInt()
@@ -34,6 +37,7 @@ export class TournamentConfigurationDto {
     @Type(() => Number)
     @IsInt()
     @Min(1)
+    @Max(MAX_POINTS_PER_GAME)
     @IsNotEmpty()
     pointsPerGame!: number;
 
