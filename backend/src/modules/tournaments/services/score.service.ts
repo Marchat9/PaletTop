@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { TournamentMatch } from 'src/entities/tounament-match.entity';
-import { MatchStatus, MatchesSessionStatus } from 'src/enum/status.enum';
+import { MatchStatus, MatchesSessionStatus, TournamentStatus } from 'src/enum/status.enum';
 import { ScoreCalculation } from 'src/enum/tounament.enum';
 import { RealtimeGateway } from 'src/modules/realtime/realtime.gateway';
 import { TournamentAuthService } from 'src/modules/tournaments/services/tournament-auth.service';
@@ -32,7 +32,8 @@ export class ScoreService {
     ) {}
 
     async startMatch(code: string, matchId: string, teamCode: string): Promise<PlayerMatchDto> {
-        const { match } = await this.findMatchWithTeamAuth(code, matchId, teamCode);
+        const { match, tournament } = await this.findMatchWithTeamAuth(code, matchId, teamCode);
+        this.assertPlayableByTeam(tournament.status, match);
 
         if (match.status !== MatchStatus.PENDING) {
             throw new BadRequestException('Le match est déjà démarré.');
@@ -65,6 +66,7 @@ export class ScoreService {
         scoreB: number,
     ): Promise<ScoreUpdateResult> {
         const { match, tournament } = await this.findMatchWithTeamAuth(code, matchId, teamCode);
+        this.assertPlayableByTeam(tournament.status, match);
 
         if (match.status === MatchStatus.VALIDATED) {
             throw new BadRequestException(
@@ -178,6 +180,12 @@ export class ScoreService {
         this.validateScores(scoreA, scoreB, max);
 
         const isFinished = scoreA >= max || scoreB >= max;
+        // Reopened, the match would wait for a validation its closed session no longer accepts.
+        if (wasSessionClosed && !isFinished) {
+            throw new BadRequestException(
+                `La session de ce match est clôturée : le score corrigé doit rester final (${max} points pour une équipe).`,
+            );
+        }
         const finishedAt = isFinished ? (match.finishedAt ?? new Date()) : null;
         const duration =
             isFinished && match.startedAt && finishedAt
@@ -270,6 +278,19 @@ export class ScoreService {
         );
     }
 
+    /**
+     * A team plays only in an active tournament and an open session. An admin correction can
+     * reopen an old match, but its teams must not take it over from there.
+     */
+    private assertPlayableByTeam(tournamentStatus: TournamentStatus, match: TournamentMatch): void {
+        if (tournamentStatus !== TournamentStatus.ACTIVE) {
+            throw new BadRequestException("Le tournoi n'est pas en cours.");
+        }
+        if (match.session?.status === MatchesSessionStatus.CLOSED) {
+            throw new BadRequestException('La session est déjà clôturée.');
+        }
+    }
+
     private validateScores(scoreA: number, scoreB: number, max: number): void {
         if (scoreA > max || scoreB > max || (scoreA === max && scoreB === max)) {
             throw new BadRequestException(
@@ -285,6 +306,7 @@ export class ScoreService {
     ): Promise<{
         match: TournamentMatch;
         tournament: {
+            status: TournamentStatus;
             configuration: { pointsPerGame: number; scoreCalculation: ScoreCalculation };
         };
     }> {

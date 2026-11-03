@@ -10,7 +10,7 @@ describe('generateNumericCode', () => {
     });
 
     it('still finds the last free code when the space is nearly full', () => {
-        const existing = Array.from({ length: 99 }, (_, i) => i.toString().padStart(2, '0'));
+        const existing = Array.from({ length: 100 }, (_, i) => i.toString().padStart(2, '0'));
         const free = existing.splice(42, 1)[0];
         expect(generateNumericCode(existing, 2)).toBe(free);
     });

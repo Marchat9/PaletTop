@@ -3,6 +3,7 @@ import { TrainingMatch } from 'src/entities/training-match.entity';
 import { TrainingSession } from 'src/entities/training-session.entity';
 import { TrainingTeam } from 'src/entities/training-team.entity';
 import { MatchStatus } from 'src/enum/status.enum';
+import { TrainingRoundStatus } from 'src/enum/training.enum';
 import { TrainingMatchRepository } from '../repositories/training-match.repository';
 import { TrainingSessionRepository } from '../repositories/training-session.repository';
 import { TrainingMatchDto, toTrainingMatchDto } from '../responses/training-round.dto';
@@ -166,6 +167,16 @@ export class TrainingScoreService {
 
         this.validateScores(scoreA, scoreB, session.pointsPerGame, matchId, sessionCode);
         const isFinished = this.isMatchFinished(scoreA, scoreB, session.pointsPerGame);
+        // Only the latest round blocks the next generation: reopened in an older round, the match
+        // would stay ONGOING for ever and silently drop out of the leaderboard.
+        if (match.round.status === TrainingRoundStatus.CLOSED && !isFinished) {
+            this.logger.warn(
+                `Admin correction refused: match ${matchId} of session ${sessionCode} is in a closed round`,
+            );
+            throw new BadRequestException(
+                `Ce round est clôturé : le score corrigé doit rester final (${session.pointsPerGame} points pour une équipe).`,
+            );
+        }
 
         const wasValidated = match.status === MatchStatus.VALIDATED;
 
