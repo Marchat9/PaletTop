@@ -130,8 +130,9 @@ export class AdminTrainingPage implements OnInit {
   // ========= Actions =========
 
   public disconnect(): void {
-    this.store.dispatch(disconnectTrainingAdministrator());
-    this.router.navigate(['/accueil']);
+    // Leave the page first: cleared while still on screen, the session makes the page ask for the
+    // admin login again, and that navigation won over the one to the home page.
+    void this.router.navigate(['/accueil']).then(() => this.store.dispatch(disconnectTrainingAdministrator()));
   }
 
   public openEdit(): void {
