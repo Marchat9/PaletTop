@@ -156,6 +156,13 @@ export class SessionService {
                 'Tous les matchs de la session en cours doivent être validés avant de lancer la suivante.',
             );
         }
+        // Phase limits (rounds count, final reached) were only enforced by the UI buttons.
+        const statusBeforeNext = await this.computePhaseStatus(strategy, tournament);
+        if (!statusBeforeNext.canGenerateNewSession) {
+            throw new BadRequestException(
+                "Aucune session supplémentaire n'est prévue : le tournoi peut être clôturé.",
+            );
+        }
 
         const { currentSessionClosed, newSession, tournamentWithMatches } =
             await this.writeNextSession(tournament, currentSession, strategy);
@@ -250,6 +257,12 @@ export class SessionService {
                 `Le tournoi et une session doivent être ACTIVE pour clôturer le tournoi. Statut actuel : "${tournament.status}".`,
             );
         }
+        const statusBeforeCompletion = await this.computePhaseStatus(strategy, tournament);
+        if (!statusBeforeCompletion.canFinishTournament) {
+            throw new BadRequestException(
+                "Le tournoi ne peut pas encore être clôturé : toutes ses phases n'ont pas été jouées.",
+            );
+        }
         this.logger.log(
             `Tournament ${tournamentCode} completing — transitioning ACTIVE → COMPLETED`,
         );
@@ -320,6 +333,15 @@ export class SessionService {
         );
         if (!session) throw new NotFoundException('Session introuvable');
         return toSessionResponseDto(session);
+    }
+
+    /** Status from the persisted sessions, with their matches: what the admin buttons rely on. */
+    private async computePhaseStatus(
+        strategy: TournamentStrategy,
+        tournament: Tournament,
+    ): Promise<TournamentStatusInfo> {
+        const sessions = await this.sessionRepo.findAllByTournament(tournament.id);
+        return strategy.computeTournamentStatus(tournament, sessions);
     }
 
     public async buildTournamentStatus(
