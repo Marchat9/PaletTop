@@ -1,3 +1,4 @@
+import { InputMode } from '../input-text/input-text';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -30,6 +31,8 @@ import { Icon } from '../icon/icon';
 })
 export class InputNumber implements ControlValueAccessor {
   readonly id = input<string>('');
+  /** Whole numbers by default: the digit keypad rather than the full keyboard on mobile. */
+  readonly inputmode = input<InputMode>('numeric');
   readonly value = input<Nullable<number>>(null);
   readonly placeholder = input<Nullable<string>>(null);
   readonly placeholderAsValue = input<boolean>(false);

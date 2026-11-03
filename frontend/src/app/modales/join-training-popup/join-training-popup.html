@@ -17,6 +17,8 @@
       [digitCount]="4"
       [initialCode]="initialSessionCode"
       (codeChange)="onSessionCodeChange($event)"
+      (completed)="participantCode.focus()"
+      (overflow)="participantCode.fill($event)"
     ></app-code-number-input>
     <p class="field-help">
       <app-icon name="info" [ariaHidden]="true" />
@@ -27,6 +29,7 @@
   <div class="field-group">
     <label class="field-label">Code Participant</label>
     <app-code-number-input
+      #participantCode
       [digitCount]="4"
       [initialCode]="initialParticipantCode"
       (codeChange)="onCodeChange($event)"

@@ -109,6 +109,9 @@
           <div class="validate-form" (keydown.enter)="onValidate()">
             <app-input-text
               id="opponent-code"
+              inputmode="numeric"
+              enterKeyHint="done"
+              [maxLength]="4"
               [placeholder]="validationCopy().placeholder"
               [value]="opponentCode()"
               [uppercase]="true"

@@ -34,6 +34,9 @@ export class TournamentCreatePageComponent {
   public readonly tournamentForm = signal<Nullable<TournamentConfigurationForm>>(null);
   public readonly invalidFieldNames = signal<Nullable<string[]>>(null);
   public readonly userHasSubmitted = signal(false);
+  /** The list of invalid fields waits for a first edit: a blank form is not an error yet. */
+  public readonly formEdited = signal(false);
+  private invalidFieldsReports = 0;
 
   constructor() {
     effect(() => {
@@ -48,6 +51,14 @@ export class TournamentCreatePageComponent {
         this.router.navigate([`/admin/tournament/${normalizeCode(tournamentCode)}`]);
       }
     });
+  }
+
+  public onInvalidFields(fields: Nullable<string[]>): void {
+    this.invalidFieldNames.set(fields);
+    // The first report comes from the form construction, the next ones from the user's edits.
+    if (this.invalidFieldsReports++ > 0) {
+      this.formEdited.set(true);
+    }
   }
 
   public submit(): void {

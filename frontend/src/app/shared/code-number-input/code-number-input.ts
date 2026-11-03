@@ -27,6 +27,10 @@ export class CodeNumberInputComponent implements OnInit {
   // Prefills the digits once: the parent already knows this value, so nothing is emitted.
   public readonly initialCode = input('');
   public readonly codeChange = output<string>();
+  /** The last digit has just been typed: the parent can move on to the next field. */
+  public readonly completed = output<void>();
+  /** Digits pasted beyond this group (e.g. both codes at once), for the next group. */
+  public readonly overflow = output<string>();
 
   private readonly hostElement = inject(ElementRef<HTMLElement>);
   private readonly codeDigits = signal<string[]>([]);
@@ -62,6 +66,9 @@ export class CodeNumberInputComponent implements OnInit {
     }
 
     this.codeChange.emit(this.fullCode());
+    if (numericValue && index === this.digitCount() - 1 && this.isComplete()) {
+      this.completed.emit();
+    }
   }
 
   public onDigitKeyDown(event: KeyboardEvent, index: number): void {
@@ -92,6 +99,12 @@ export class CodeNumberInputComponent implements OnInit {
 
     this.codeChange.emit(this.fullCode());
 
+    const extra = digits.slice(this.digitCount() - index).join('');
+    if (extra) {
+      this.overflow.emit(extra);
+      return;
+    }
+
     // Focus the next empty field or the last field
     const nextEmptyIndex = this.codeDigits().findIndex((digit, idx) => !digit && idx > index);
     const nextFocusIndex =
@@ -99,6 +112,21 @@ export class CodeNumberInputComponent implements OnInit {
         ? nextEmptyIndex
         : Math.min(index + digits.length, this.digitCount() - 1);
     this.focusInput(nextFocusIndex);
+  }
+
+  /** Fills the group from the start (digits handed over by the previous group). */
+  public fill(code: string): void {
+    const digits = code
+      .replace(/[^0-9]/g, '')
+      .slice(0, this.digitCount())
+      .split('');
+    this.codeDigits.set(digits);
+    this.codeChange.emit(this.fullCode());
+    this.focusInput(Math.min(digits.length, this.digitCount() - 1));
+  }
+
+  public focus(): void {
+    this.focusInput(0);
   }
 
   public reset(): void {

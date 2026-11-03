@@ -27,7 +27,7 @@
   <app-tournament-configuration
     [columns]="2"
     (form)="tournamentForm.set($event)"
-    (invalidFields)="invalidFieldNames.set($event)"
+    (invalidFields)="onInvalidFields($event)"
   />
 
   <div class="actions-wrapper">
@@ -37,7 +37,7 @@
         {{ creationError() }}
       </p>
     }
-    @if (!!invalidFieldNames()) {
+    @if (formEdited() && !!invalidFieldNames()) {
       <div class="validation-error">
         <p>Les champs suivants sont requis ou invalides :</p>
         <ul>
