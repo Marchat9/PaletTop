@@ -62,6 +62,19 @@ export class RoundMatches {
     }));
   });
 
+  /** Shown under the edited row: the draft stays open instead of being lost to a server error. */
+  protected readonly editError = computed(() => {
+    const max = this.pointsPerGame();
+    const [a, b] = [this.draftScoreA(), this.draftScoreB()];
+    if (a > max || b > max) {
+      return `Un score ne peut pas dépasser ${max} points.`;
+    }
+    if (a === max && b === max) {
+      return `Les deux équipes ne peuvent pas avoir ${max} points.`;
+    }
+    return null;
+  });
+
   protected startEdit(match: TrainingMatchDto): void {
     this.editingMatchId.set(match.id);
     this.draftScoreA.set(match.scoreA);
@@ -73,6 +86,9 @@ export class RoundMatches {
   }
 
   protected saveEdit(matchId: string): void {
+    if (this.editError()) {
+      return;
+    }
     this.updateScore.emit({
       matchId,
       scoreA: this.draftScoreA(),

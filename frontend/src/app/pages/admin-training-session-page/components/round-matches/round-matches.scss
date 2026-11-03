@@ -160,6 +160,13 @@
     app-input-number {
       width: 5rem;
     }
+
+    .edit-error {
+      flex: 1 1 100%;
+      margin: 0;
+      font-size: 0.8rem;
+      color: var(--color-error);
+    }
   }
 
   .edit-actions {

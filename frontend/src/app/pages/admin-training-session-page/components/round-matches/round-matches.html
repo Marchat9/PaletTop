@@ -37,10 +37,14 @@
               icon="check"
               variant="primary"
               [loading]="scoreLoading()"
+              [disabled]="!!editError()"
               (clicked)="saveEdit(row.match.id)"
             />
             <app-button title="Annuler" variant="secondary" (clicked)="cancelEdit()" />
           </div>
+          @if (editError()) {
+            <p class="edit-error" role="alert">{{ editError() }}</p>
+          }
         </div>
       } @else if (row.match.isBye) {
         <div class="teams-and-score">
