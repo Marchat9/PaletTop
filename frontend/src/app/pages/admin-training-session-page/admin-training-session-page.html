@@ -45,7 +45,9 @@
       [closeLoading]="closeSessionLoading()"
       (openCheckin)="openCheckin()"
       (generateRound)="generateRound()"
+      [canPlayMyMatches]="!!adminParticipant()"
       (closeSession)="closeSession()"
+      (playMyMatches)="playMyMatches()"
     />
 
     <app-session-round

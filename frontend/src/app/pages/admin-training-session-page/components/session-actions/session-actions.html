@@ -17,6 +17,15 @@
         [disabled]="!canGenerateRound()"
         (clicked)="generateRound.emit()"
       />
+      @if (canPlayMyMatches()) {
+        <app-button
+          title="Jouer mes matchs"
+          icon="sports_esports"
+          variant="secondary"
+          [large]="true"
+          (clicked)="playMyMatches.emit()"
+        />
+      }
       <span class="spacer"></span>
       <app-button
         title="Clôturer la séance"

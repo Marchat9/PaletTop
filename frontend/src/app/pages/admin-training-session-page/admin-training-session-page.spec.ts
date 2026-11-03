@@ -38,6 +38,7 @@ function buildTraining(): AdminTrainingDto {
       { id: 'm1', name: 'Jean Dubois' },
       { id: 'm2', name: 'Marie Lefèvre' },
     ],
+    adminMemberId: null,
   };
 }
 
@@ -133,6 +134,30 @@ describe('AdminTrainingSessionPage', () => {
     expect(dispatchSpy).toHaveBeenCalledWith(
       connectTrainingSessionAdministrator({ sessionCode: '1234' }),
     );
+  });
+
+  it('ouvre les matchs de l’admin joueur inscrit à la séance', () => {
+    const { fixture, store, routerMock } = setup();
+
+    store.overrideSelector(selectCurrentTrainingData, { ...buildTraining(), adminMemberId: 'm1' });
+    store.refreshState();
+    fixture.detectChanges();
+    fixture.componentInstance.playMyMatches();
+
+    expect(routerMock.navigate).toHaveBeenCalledWith(['/player/training/1234/4821']);
+  });
+
+  it('ne propose pas « Jouer mes matchs » sans admin joueur présent à la séance', () => {
+    const { fixture, store } = setup();
+
+    expect(fixture.componentInstance.adminParticipant()).toBeNull();
+
+    // m2 is the admin player but has not checked in to this session.
+    store.overrideSelector(selectCurrentTrainingData, { ...buildTraining(), adminMemberId: 'm2' });
+    store.refreshState();
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.adminParticipant()).toBeNull();
   });
 
   it('ne compte que les participants présents', () => {

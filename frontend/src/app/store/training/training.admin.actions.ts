@@ -1,4 +1,5 @@
 import { createAction, props } from '@ngrx/store';
+import { Nullable } from 'src/app/models/nullable.model';
 import { AdminTrainingDto } from './training.models';
 
 // --------- Training Administrator Connection ---------
@@ -72,6 +73,21 @@ export const removeTrainingMemberSuccess = createAction(
 );
 export const removeTrainingMemberFailure = createAction(
   '[Training] Remove Training Member Failure',
+  props<{ error: string }>(),
+);
+// -------------------------------------------------------
+
+// --------- Training Administrator Admin player ---------
+export const setTrainingAdminMember = createAction(
+  '[Training] Set Training Admin Member',
+  props<{ code: string; memberId: Nullable<string> }>(),
+);
+export const setTrainingAdminMemberSuccess = createAction(
+  '[Training] Set Training Admin Member Success',
+  props<{ training: AdminTrainingDto }>(),
+);
+export const setTrainingAdminMemberFailure = createAction(
+  '[Training] Set Training Admin Member Failure',
   props<{ error: string }>(),
 );
 // -------------------------------------------------------

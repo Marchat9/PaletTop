@@ -12,6 +12,7 @@ import { EditTrainingMemberPopup, EditTrainingMemberPopupData } from './edit-tra
 const DATA: EditTrainingMemberPopupData = {
   trainingCode: 'CLUB-1',
   member: { id: 'member-1', name: 'Thomas' },
+  isAdminPlayer: false,
 };
 
 function setup(error: string | null = null) {
@@ -56,6 +57,14 @@ describe('EditTrainingMemberPopup', () => {
     expect(dispatchSpy).toHaveBeenCalledWith(
       renameTrainingMember({ code: 'CLUB-1', memberId: 'member-1', name: 'Thomas Martin' }),
     );
+  });
+
+  it('rend la main à la page pour désigner ce membre comme admin joueur', () => {
+    const { fixture, dialogRef } = setup();
+
+    fixture.componentInstance.onToggleAdminPlayer();
+
+    expect(dialogRef.close).toHaveBeenCalledWith('toggle-admin-player');
   });
 
   it('se ferme une fois le renommage passé', () => {

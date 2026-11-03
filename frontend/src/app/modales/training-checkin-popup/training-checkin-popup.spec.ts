@@ -31,6 +31,7 @@ function buildTraining(): AdminTrainingDto {
       { id: 'm2', name: 'Marie Lefèvre' },
       { id: 'm3', name: 'Paul Renaud' },
     ],
+    adminMemberId: null,
   };
 }
 

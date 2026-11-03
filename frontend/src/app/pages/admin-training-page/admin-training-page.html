@@ -16,6 +16,7 @@
 
   <app-training-roster-card
     [members]="training()?.members ?? []"
+    [adminMemberId]="training()?.adminMemberId ?? null"
     [addLoading]="addMemberLoading()"
     (addMember)="addMember($event)"
     (memberSelected)="openMember($event)"

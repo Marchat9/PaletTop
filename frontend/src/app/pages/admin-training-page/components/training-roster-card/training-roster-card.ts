@@ -4,6 +4,7 @@ import { CardCollapsible } from 'src/app/shared/card-collapsible/card-collapsibl
 import { Icon } from 'src/app/shared/icon/icon';
 import { InputText } from 'src/app/shared/input-text/input-text';
 import { StaggerDirective } from 'src/app/shared/stagger/stagger.directive';
+import { Nullable } from 'src/app/models/nullable.model';
 import { TrainingMemberDto } from 'src/app/store/training/training.models';
 
 @Component({
@@ -15,6 +16,8 @@ import { TrainingMemberDto } from 'src/app/store/training/training.models';
 })
 export class TrainingRosterCard {
   public readonly members = input<TrainingMemberDto[]>([]);
+  /** Member who runs the group and also plays: their chip says so. */
+  public readonly adminMemberId = input<Nullable<string>>(null);
   public readonly addLoading = input<boolean>(false);
 
   public readonly addMember = output<string>();

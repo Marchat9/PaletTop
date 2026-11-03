@@ -46,6 +46,22 @@
     ></app-button>
   </div>
 
+  <div class="admin-player-row">
+    <p class="admin-player-hint">
+      @if (isAdminPlayer) {
+        Ce membre est l'admin du groupe : ses séances proposent « Jouer mes matchs ».
+      } @else {
+        Vous administrez le groupe et jouez aussi ? Indiquez quel membre vous êtes.
+      }
+    </p>
+    <app-button
+      [title]="isAdminPlayer ? 'Ce n’est plus moi' : 'C’est moi'"
+      variant="secondary"
+      [icon]="isAdminPlayer ? 'person_off' : 'admin_panel_settings'"
+      (clicked)="onToggleAdminPlayer()"
+    ></app-button>
+  </div>
+
   <div class="remove-row">
     <app-button
       title="Retirer du club"

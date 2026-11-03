@@ -144,6 +144,14 @@ export class AdminTrainingSessionPage implements OnInit, OnDestroy {
     () => this.session()?.participants.filter((p) => p.status === 'PRESENT') ?? [],
   );
 
+  /** The group admin who also plays, once checked in to this session. */
+  public readonly adminParticipant = computed(() => {
+    const adminMemberId = this.training()?.adminMemberId;
+    return adminMemberId
+      ? (this.presentParticipants().find((p) => p.memberId === adminMemberId) ?? null)
+      : null;
+  });
+
   /** A player can only belong to one active fixed team. */
   public readonly participantsWithoutTeam = computed(() => {
     const takenIds = new Set(
@@ -395,6 +403,15 @@ export class AdminTrainingSessionPage implements OnInit, OnDestroy {
   }
 
   // ========= Navigation =========
+
+  public playMyMatches(): void {
+    const sessionCode = this.session()?.code;
+    const participant = this.adminParticipant();
+    if (!sessionCode || !participant) {
+      return;
+    }
+    this.router.navigate([`/player/training/${sessionCode}/${participant.code}`]);
+  }
 
   public backToTraining(): void {
     this.router.navigate([`/admin/training/${this.trainingCode()}`]);

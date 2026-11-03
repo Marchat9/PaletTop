@@ -27,6 +27,7 @@ import {
   renameTrainingMember,
   renameTrainingMemberFailure,
   renameTrainingMemberSuccess,
+  setTrainingAdminMemberSuccess,
   updateTrainingAdministratorInformations,
   updateTrainingAdministratorInformationsFailure,
   updateTrainingAdministratorInformationsSuccess,
@@ -400,6 +401,10 @@ export const trainingReducer = createReducer(
       ...state.requestStatus,
       removeMember: { isLoading: true, error: null },
     },
+  })),
+  on(setTrainingAdminMemberSuccess, (state, { training }) => ({
+    ...state,
+    training: { ...state.training, data: training },
   })),
   on(removeTrainingMemberSuccess, (state, { training }) => ({
     ...state,

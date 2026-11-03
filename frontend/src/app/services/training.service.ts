@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
+import { Nullable } from 'src/app/models/nullable.model';
 import {
   AdminTrainingDto,
   TrainingCurrentMatchDto,
@@ -78,6 +79,18 @@ export class TrainingService {
     return this.http.patch<AdminTrainingDto>(
       `${this.apiBaseUrl}/trainings/${encodeURIComponent(code)}/members/${memberId}`,
       { password, name },
+    );
+  }
+
+  /** `memberId` null: the group no longer has a member who is also its admin. */
+  public setAdminMember(
+    code: string,
+    password: string,
+    memberId: Nullable<string>,
+  ): Observable<AdminTrainingDto> {
+    return this.http.put<AdminTrainingDto>(
+      `${this.apiBaseUrl}/trainings/${encodeURIComponent(code)}/admin-member`,
+      { password, memberId: memberId ?? null },
     );
   }
 

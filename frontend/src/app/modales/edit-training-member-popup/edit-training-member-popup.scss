@@ -18,6 +18,22 @@
     }
   }
 
+  .admin-player-row {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--color-border-subtle);
+
+    .admin-player-hint {
+      margin: 0;
+      color: var(--color-on-surface-variant);
+      font-size: 0.82rem;
+      text-align: center;
+    }
+  }
+
   .remove-row {
     display: flex;
     justify-content: center;

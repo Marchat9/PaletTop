@@ -21,10 +21,15 @@ import { InputText } from 'src/app/shared/input-text/input-text';
 export interface EditTrainingMemberPopupData {
   trainingCode: string;
   member: TrainingMemberDto;
+  /** This member is the admin who also plays. */
+  isAdminPlayer: boolean;
 }
 
-/** `remove`: the admin asked to remove the member, the page takes over with its confirmation. */
-export type EditTrainingMemberPopupResult = 'remove';
+/**
+ * `remove`: the admin asked to remove the member, the page takes over with its confirmation.
+ * `toggle-admin-player`: the admin says this member is them (or no longer is), the page saves it.
+ */
+export type EditTrainingMemberPopupResult = 'remove' | 'toggle-admin-player';
 
 @Component({
   selector: 'app-edit-training-member-popup',
@@ -40,6 +45,7 @@ export class EditTrainingMemberPopup {
   private readonly data = inject<EditTrainingMemberPopupData>(DIALOG_DATA);
 
   public readonly name = signal(this.data.member.name);
+  public readonly isAdminPlayer = this.data.isAdminPlayer;
 
   public readonly loading = this.store.selectSignal(selectRenameTrainingMemberLoading);
   private readonly error = this.store.selectSignal(selectRenameTrainingMemberError);
@@ -68,6 +74,10 @@ export class EditTrainingMemberPopup {
 
   public onCancel(): void {
     this.dialogRef.close();
+  }
+
+  public onToggleAdminPlayer(): void {
+    this.dialogRef.close('toggle-admin-player');
   }
 
   public onRemove(): void {
