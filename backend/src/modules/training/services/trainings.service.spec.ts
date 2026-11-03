@@ -8,11 +8,12 @@ import { TrainingsService } from './trainings.service';
 const PASSWORD = 'secret';
 const CREATED_AT = new Date('2026-01-01T18:00:00Z');
 
-function makeService(openSessionCodes: string[] = []) {
+function makeService(openSessionCodes: string[] = [], adminMemberId: string | null = null) {
     const training = {
         id: 'training-1',
         code: 'CLUB-1',
         createdAt: CREATED_AT,
+        adminMemberId,
         members: [
             { id: 'member-1', name: 'Thomas', createdAt: CREATED_AT },
             { id: 'member-2', name: 'Thomas Durand', createdAt: CREATED_AT },
@@ -45,12 +46,14 @@ function makeService(openSessionCodes: string[] = []) {
             ...data,
         })),
         save: vi.fn((member: TrainingMember) => Promise.resolve(member)),
+        remove: vi.fn(() => Promise.resolve()),
     };
+    const trainingRepo = { setAdminMember: vi.fn(() => Promise.resolve()) };
     const leaderboardService = { getLeaderboardBySessionId: vi.fn(() => Promise.resolve([])) };
     const gateway = { emitSessionUpdatedFrom: vi.fn(), emitLeaderboardUpdated: vi.fn() };
 
     const service = new TrainingsService(
-        {} as never,
+        trainingRepo as never,
         memberRepo as never,
         sessionRepo as never,
         { findWithAdminAuth: vi.fn(() => Promise.resolve(training)) } as never,
@@ -59,7 +62,15 @@ function makeService(openSessionCodes: string[] = []) {
         dataSource as never,
     );
 
-    return { service, manager, participantUpdate, sessionRepo, memberRepo, gateway };
+    return {
+        service,
+        manager,
+        participantUpdate,
+        sessionRepo,
+        memberRepo,
+        trainingRepo,
+        gateway,
+    };
 }
 
 describe('TrainingsService.renameMember', () => {
@@ -159,5 +170,45 @@ describe('TrainingsService.addMember', () => {
         const result = await service.addMember('CLUB-1', { password: PASSWORD, name: 'Léa' });
 
         expect(result.members.map((m) => m.name)).toContain('Léa');
+    });
+});
+
+describe('TrainingsService.setAdminMember', () => {
+    it('désigne un membre du groupe comme admin joueur', async () => {
+        const { service, trainingRepo } = makeService();
+
+        const result = await service.setAdminMember('CLUB-1', {
+            password: PASSWORD,
+            memberId: 'member-1',
+        });
+
+        expect(trainingRepo.setAdminMember).toHaveBeenCalledWith('training-1', 'member-1');
+        expect(result.adminMemberId).toBe('member-1');
+    });
+
+    it('retire l’admin joueur sans memberId', async () => {
+        const { service, trainingRepo } = makeService([], 'member-1');
+
+        const result = await service.setAdminMember('CLUB-1', { password: PASSWORD });
+
+        expect(trainingRepo.setAdminMember).toHaveBeenCalledWith('training-1', null);
+        expect(result.adminMemberId).toBeNull();
+    });
+
+    it('refuse un membre qui n’appartient pas au groupe', async () => {
+        const { service, trainingRepo } = makeService();
+
+        await expect(
+            service.setAdminMember('CLUB-1', { password: PASSWORD, memberId: 'member-other' }),
+        ).rejects.toBeInstanceOf(NotFoundException);
+        expect(trainingRepo.setAdminMember).not.toHaveBeenCalled();
+    });
+
+    it('n’annonce plus d’admin joueur une fois ce membre retiré du groupe', async () => {
+        const { service } = makeService([], 'member-1');
+
+        const result = await service.removeMember('CLUB-1', 'member-1', PASSWORD);
+
+        expect(result.adminMemberId).toBeNull();
     });
 });

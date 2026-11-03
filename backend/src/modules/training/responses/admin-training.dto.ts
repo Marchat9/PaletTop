@@ -13,6 +13,7 @@ export interface AdminTrainingDto {
     description?: string;
     createdAt: string;
     members: TrainingMemberDto[];
+    adminMemberId: string | null;
 }
 
 export function toTrainingMemberDto(member: TrainingMember): TrainingMemberDto {
@@ -27,5 +28,6 @@ export function toAdminTrainingDto(training: Training): AdminTrainingDto {
         description: training.description,
         createdAt: training.createdAt.toISOString(),
         members: (training.members ?? []).map(toTrainingMemberDto),
+        adminMemberId: training.adminMemberId ?? null,
     };
 }

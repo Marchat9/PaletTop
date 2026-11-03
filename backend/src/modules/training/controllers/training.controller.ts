@@ -1,9 +1,10 @@
-import { Body, Controller, Delete, Logger, Param, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Logger, Param, Patch, Post, Put } from '@nestjs/common';
 import { runGuarded } from 'src/utils/run-guarded.util';
 import { UuidParam } from 'src/decorators/uuid-param.decorator';
 import { AddTrainingMemberDto } from '../dto/add-training-member.dto';
 import { CreateTrainingDto } from '../dto/create-training.dto';
 import { RenameTrainingMemberDto } from '../dto/rename-training-member.dto';
+import { SetTrainingAdminMemberDto } from '../dto/set-training-admin-member.dto';
 import { TrainingAdminAccessDto } from '../dto/training-admin-access.dto';
 import { TrainingPasswordDto } from '../dto/training-password.dto';
 import { UpdateTrainingDto } from '../dto/update-training.dto';
@@ -47,6 +48,16 @@ export class TrainingController {
     ): Promise<AdminTrainingDto> {
         return runGuarded(this.logger, "Erreur lors de l'ajout du membre.", () =>
             this.trainingsService.addMember(code, dto),
+        );
+    }
+
+    @Put(':code/admin-member')
+    setAdminMember(
+        @Param('code') code: string,
+        @Body() dto: SetTrainingAdminMemberDto,
+    ): Promise<AdminTrainingDto> {
+        return runGuarded(this.logger, "Erreur lors du choix de l'admin joueur.", () =>
+            this.trainingsService.setAdminMember(code, dto),
         );
     }
 
