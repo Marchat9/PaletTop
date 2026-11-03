@@ -199,30 +199,15 @@
   border-radius: 999px;
   border: 1px solid color-mix(in srgb, var(--sync-color) 55%, transparent);
   background: color-mix(in srgb, var(--sync-color) 14%, transparent);
-  font-family: var(--font-label);
   font-size: 0.8rem;
   font-weight: 600;
   color: var(--sync-color);
 
-  ::ng-deep .material-symbols-outlined {
-    font-size: 1.1rem;
-    color: var(--sync-color);
-  }
-
   &.is-synced {
     --sync-color: var(--color-success);
 
-    animation: sync-badge-fade 2.5s ease-in forwards;
-  }
-}
-
-@keyframes sync-badge-fade {
-  0%,
-  75% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
+    // Keyframes in styles/animations.scss (shared, and keeps this sheet within its budget).
+    animation: palettop-sync-badge-fade 2.5s ease-in forwards;
   }
 }
 
