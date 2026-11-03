@@ -2,7 +2,7 @@
   <div header class="header">
     <div class="header-title">
       <app-icon name="sports_score" iconClass="icon" />
-      <span class="title">Sessions de matchs</span>
+      <span class="title">Rounds</span>
       @if (isActive() && sessionNumber() > 0) {
         <span class="header-session-info"> - </span>
         <span class="header-session-info"> Round {{ sessionNumber() }} </span>
@@ -29,7 +29,7 @@
       <div class="info-section">
         <p class="message">
           Le tournoi n'a pas encore démarré. En démarrant, les équipes seront réparties dans les
-          poules et les matchs de la première session seront générés.
+          poules et les matchs du premier round seront générés.
         </p>
         @if (startBlocker()) {
           <p class="message blocker">{{ startBlocker() }}</p>

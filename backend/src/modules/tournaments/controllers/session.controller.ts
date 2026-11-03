@@ -27,7 +27,7 @@ export class SessionController {
 
             this.logger.error(`Get sessions failed`, error);
 
-            throw new InternalServerErrorException('Erreur lors de la récupération des sessions.');
+            throw new InternalServerErrorException('Erreur lors de la récupération des rounds.');
         }
     }
 
@@ -45,7 +45,7 @@ export class SessionController {
 
             this.logger.error(`Get session by number failed`, error);
 
-            throw new InternalServerErrorException('Erreur lors de la récupération de la session.');
+            throw new InternalServerErrorException('Erreur lors de la récupération du round.');
         }
     }
 }

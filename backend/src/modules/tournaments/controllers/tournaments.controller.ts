@@ -212,11 +212,11 @@ export class TournamentsController {
     ): Promise<AdminTournamentDto> {
         return runGuarded(
             this.logger,
-            'Erreur lors de la génération de la session suivante.',
+            'Erreur lors de la génération du round suivant.',
             () => this.sessionService.nextSession(code, dto.password),
             {
                 pgErrorMessages: {
-                    '23505': 'La session suivante est déjà en cours de génération.',
+                    '23505': 'Le round suivant est déjà en cours de génération.',
                 },
             },
         );

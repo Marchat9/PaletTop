@@ -29,12 +29,12 @@ export class TrainingSessionController {
     ): Promise<TrainingSessionAdminDto> {
         return runGuarded(
             this.logger,
-            'Erreur lors de la création de la session.',
+            'Erreur lors de la création de la séance.',
             () => this.sessionsService.create(code, dto),
             {
                 // Two creations drawing the same free code at the same time: the loser of the
                 // unique code constraint gets a clean 409 and can simply retry.
-                pgErrorMessages: { '23505': 'Collision de code de session, merci de réessayer.' },
+                pgErrorMessages: { '23505': 'Collision de code de séance, merci de réessayer.' },
             },
         );
     }
@@ -91,7 +91,7 @@ export class TrainingSessionController {
                 // message, since retrying does not help for the second one.
                 pgErrorMessages: {
                     UQ_training_participant_active_member:
-                        'Ce membre du roster est déjà inscrit à cette session.',
+                        'Ce membre du roster est déjà inscrit à cette séance.',
                     '23505': 'Collision de code participant, merci de réessayer.',
                 },
             },

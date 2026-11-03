@@ -45,7 +45,7 @@ export class TrainingRealtimeGateway {
                 await this.trainingSessionAuthService.findWithAdminAuth(sessionCode, auth.password);
             } catch {
                 client.emit('join-error', {
-                    message: 'Session introuvable ou mot de passe invalide.',
+                    message: 'Séance introuvable ou mot de passe invalide.',
                 });
                 return;
             }

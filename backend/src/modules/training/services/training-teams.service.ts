@@ -74,7 +74,7 @@ export class TrainingTeamsService {
                     `Fixed team refused in session ${sessionCode}: participant ${id} not found or not present`,
                 );
                 throw new BadRequestException(
-                    `Participant ${id} introuvable ou non présent dans cette session.`,
+                    `Participant ${id} introuvable ou non présent dans cette séance.`,
                 );
             }
             return participant;

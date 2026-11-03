@@ -254,7 +254,7 @@ export class AdminTournamentPageComponent implements OnInit {
     const data: ConfirmationData = {
       title: 'Démarrer le tournoi',
       message:
-        'Cette action est irréversible. Les équipes seront réparties aléatoirement dans les poules et les matchs de la première session seront générés.',
+        'Cette action est irréversible. Les équipes seront réparties aléatoirement dans les poules et les matchs du premier round seront générés.',
       confirmLabel: 'Démarrer',
     };
 
@@ -285,7 +285,7 @@ export class AdminTournamentPageComponent implements OnInit {
     const data: ConfirmationData = {
       title: 'Terminer le tournoi',
       message:
-        'Cette action est irréversible. Le tournoi sera clôturé et aucune nouvelle session ne pourra être démarrée.',
+        'Cette action est irréversible. Le tournoi sera clôturé et aucun nouveau round ne pourra être démarré.',
       confirmLabel: 'Terminer',
     };
 

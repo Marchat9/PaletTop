@@ -23,7 +23,7 @@ export class TrainingRoundController {
                 // Net against two concurrent generations for the same session: the loser of the
                 // unique (session, round number) constraint gets a clean 409.
                 pgErrorMessages: {
-                    '23505': 'Un round est déjà en cours de génération pour cette session.',
+                    '23505': 'Un round est déjà en cours de génération pour cette séance.',
                 },
             },
         );

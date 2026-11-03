@@ -160,7 +160,7 @@ export class TrainingSessionsService {
                 this.logger.warn(
                     `Check-in refused in session ${sessionCode}: '${member.name}' is already present`,
                 );
-                throw new ConflictException(`${member.name} est déjà inscrit(e) à cette session.`);
+                throw new ConflictException(`${member.name} est déjà inscrit(e) à cette séance.`);
             }
             name = member.name;
 
@@ -278,7 +278,7 @@ export class TrainingSessionsService {
         }
         this.logger.error(`No free session code found after ${SESSION_CODE_ATTEMPTS} attempts`);
         throw new ConflictException(
-            'Aucun code de session disponible pour le moment, merci de réessayer.',
+            'Aucun code de séance disponible pour le moment, merci de réessayer.',
         );
     }
 }

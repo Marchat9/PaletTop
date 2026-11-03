@@ -128,7 +128,7 @@ export class ScoreService {
         }
 
         if (match.session?.status === MatchesSessionStatus.CLOSED) {
-            throw new BadRequestException('La session est déjà clôturée.');
+            throw new BadRequestException('Le round est déjà clôturé.');
         }
 
         const isTeamA = match.teamA?.code === teamCode;
@@ -201,7 +201,7 @@ export class ScoreService {
         // Reopened, the match would wait for a validation its closed session no longer accepts.
         if (wasSessionClosed && !isFinished) {
             throw new BadRequestException(
-                `La session de ce match est clôturée : le score corrigé doit rester final (${max} points pour une équipe).`,
+                `Le round de ce match est clôturé : le score corrigé doit rester final (${max} points pour une équipe).`,
             );
         }
         const finishedAt = isFinished ? (match.finishedAt ?? new Date()) : null;
@@ -309,7 +309,7 @@ export class ScoreService {
             throw new BadRequestException("Le tournoi n'est pas en cours.");
         }
         if (match.session?.status === MatchesSessionStatus.CLOSED) {
-            throw new BadRequestException('La session est déjà clôturée.');
+            throw new BadRequestException('Le round est déjà clôturé.');
         }
     }
 

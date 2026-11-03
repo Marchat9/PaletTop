@@ -10,7 +10,7 @@
     @if (isLoading()) {
       <p class="empty-hint">Chargement du classement...</p>
     } @else if (!hasData()) {
-      <p class="empty-hint">Aucune session démarrée.</p>
+      <p class="empty-hint">Aucun round démarré.</p>
     } @else {
       <table class="ranking-table">
         <thead>
@@ -82,6 +82,9 @@
           }
         </tbody>
       </table>
+      @if (scoreCalculation() !== 'score' && scoreCalculation() !== 'tournament_score') {
+        <p class="legend">V = victoires · Pts+ = points marqués · GA = Goal average</p>
+      }
     }
   </div>
 </app-card-collapsible>

@@ -12,7 +12,7 @@ export class TrainingSessionAuthService {
         const session = await this.trainingSessionRepo.findWithTrainingAuth(sessionCode, password);
         if (!session) {
             this.logger.warn(`Admin auth failed for training session ${sessionCode}`);
-            throw new NotFoundException('Session introuvable ou mot de passe invalide.');
+            throw new NotFoundException('Séance introuvable ou mot de passe invalide.');
         }
         return session;
     }

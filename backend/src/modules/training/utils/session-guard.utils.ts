@@ -12,6 +12,6 @@ import { TrainingSessionStatus } from 'src/enum/training.enum';
 export function assertSessionOpen(session: TrainingSession, logger: Logger, action: string): void {
     if (session.status === TrainingSessionStatus.CLOSED) {
         logger.warn(`${action} refused: training session ${session.code} is closed`);
-        throw new BadRequestException('Cette session est clôturée.');
+        throw new BadRequestException('Cette séance est clôturée.');
     }
 }
