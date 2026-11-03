@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
+import { environment } from '@environment';
 import { Nullable } from 'src/app/models/nullable.model';
 import { TournamentStatus } from 'src/app/models/tournament-status.enum';
 import { Button } from 'src/app/shared/button/button';
@@ -32,7 +33,11 @@ export class TournamentNextStep {
 
   public readonly isDraft = computed(() => this.tournament()?.status === TournamentStatus.DRAFT);
   public readonly teamCount = computed(() => this.tournament()?.teams?.length ?? 0);
-  public readonly capacity = computed(() => this.tournament()?.configuration.maxTeamCapacity ?? 0);
+  public readonly capacity = computed(
+    () =>
+      this.tournament()?.configuration.maxTeamCapacity ??
+      environment.tournamentConfiguration.maxTeamCapacity.max,
+  );
   public readonly isFull = computed(() => this.teamCount() >= this.capacity());
 
   /** Enough teams registered: the start becomes the current step. */
