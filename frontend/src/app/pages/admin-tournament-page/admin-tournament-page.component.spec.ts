@@ -16,6 +16,7 @@ import {
   selectCompleteTournamentLoading,
   selectCurrentTournamentAdminInformations,
   selectCurrentTournamentData,
+  selectCurrentTournamentIsAdminView,
   selectCurrentTournamentIsLoading,
   selectNextSessionLoading,
   selectStartTournamentLoading,
@@ -47,7 +48,7 @@ function buildTournament(): TournamentDto {
   };
 }
 
-function setup() {
+function setup({ isAdminView = true } = {}) {
   const activatedRoute = {
     paramMap: of(convertToParamMap({ tournamentCode: 'ABCD' })),
   } as unknown as ActivatedRoute;
@@ -70,6 +71,7 @@ function setup() {
             value: { code: 'ABCD', password: 'secret' },
           },
           { selector: selectCurrentTournamentIsLoading, value: false },
+          { selector: selectCurrentTournamentIsAdminView, value: isAdminView },
           { selector: selectCompleteTournamentLoading, value: false },
           { selector: selectTournamentUpdateConfigLoading, value: false },
           { selector: selectStartTournamentLoading, value: false },
@@ -95,6 +97,29 @@ describe('AdminTournamentPageComponent', () => {
     const dispatchSpy = vi.spyOn(store, 'dispatch');
 
     actions$.next(resyncRequested());
+
+    expect(dispatchSpy).toHaveBeenCalledWith(
+      connectTournamentAdministrator({ code: 'ABCD', password: 'secret' }),
+    );
+  });
+
+  it('does not reconnect when the admin view of this tournament is already loaded', () => {
+    const { fixture, store } = setup();
+    const dispatchSpy = vi.spyOn(store, 'dispatch');
+
+    fixture.detectChanges();
+
+    expect(dispatchSpy).not.toHaveBeenCalledWith(
+      connectTournamentAdministrator({ code: 'ABCD', password: 'secret' }),
+    );
+  });
+
+  // Admin who also plays: the player view of the same tournament only has their own team code.
+  it('fetches the admin view when only the player view of this tournament is loaded', () => {
+    const { fixture, store } = setup({ isAdminView: false });
+    const dispatchSpy = vi.spyOn(store, 'dispatch');
+
+    fixture.detectChanges();
 
     expect(dispatchSpy).toHaveBeenCalledWith(
       connectTournamentAdministrator({ code: 'ABCD', password: 'secret' }),

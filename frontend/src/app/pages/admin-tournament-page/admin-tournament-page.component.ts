@@ -47,6 +47,7 @@ import {
 import {
   selectCompleteTournamentLoading,
   selectCurrentTournamentAdminInformations,
+  selectCurrentTournamentIsAdminView,
   selectCurrentTournamentData,
   selectCurrentTournamentIsLoading,
   selectNextSessionLoading,
@@ -90,6 +91,7 @@ export class AdminTournamentPageComponent implements OnInit {
   // Selects
   public readonly tournament = this.store.selectSignal(selectCurrentTournamentData);
   private readonly adminSession = this.store.selectSignal(selectCurrentTournamentAdminInformations);
+  private readonly isAdminView = this.store.selectSignal(selectCurrentTournamentIsAdminView);
   public readonly sessions = this.store.selectSignal(selectSessions);
   public readonly ranking = this.store.selectSignal(selectRanking);
 
@@ -124,7 +126,9 @@ export class AdminTournamentPageComponent implements OnInit {
       const password = this.adminPassword();
       const currentTournamentCode = this.tournament()?.code;
 
-      if (!code || !password || currentTournamentCode === code) {
+      // Same tournament loaded from the player page (admin who also plays): that view only has the
+      // player's own team code, so the admin view still has to be fetched.
+      if (!code || !password || (currentTournamentCode === code && this.isAdminView())) {
         return;
       }
 

@@ -84,6 +84,9 @@ export interface TournamentPlayerSession {
 
 export interface TournamentState {
   tournament: ApiCall<Nullable<TournamentDto>>;
+  // Whether `tournament.data` is the admin view (every team code) rather than the player view,
+  // which only carries the player's own team code: both views share the same slot.
+  isAdminView: boolean;
   adminInformations: Nullable<TournamentAdminSession>;
   // Codes of the last tournament joined as a player, kept to prefill the join popup.
   playerInformations: Nullable<TournamentPlayerSession>;
