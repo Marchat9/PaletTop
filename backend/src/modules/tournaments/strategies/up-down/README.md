@@ -31,12 +31,12 @@ When `isRankingRound(config, sessionNumber)` is true:
 
 ## Phase name (`phaseName`)
 
-| Tournament state            | Label                                                 |
-| --------------------------- | ----------------------------------------------------- |
-| Draft / cancelled           | _(empty)_                                             |
-| Active                      | `Partie x/N` (or `Partie x` when unlimited)           |
-| Active, last round by rank  | `Montée / Descente — Dernière partie (au classement)` |
-| Completed                   | `Montée / Descente terminée`                          |
+| Tournament state           | Label                                                 |
+| -------------------------- | ----------------------------------------------------- |
+| Draft / cancelled          | _(empty)_                                             |
+| Active                     | `Partie x/N` (or `Partie x` when unlimited)           |
+| Active, last round by rank | `Montée / Descente — Dernière partie (au classement)` |
+| Completed                  | `Montée / Descente terminée`                          |
 
 ## Ranking
 

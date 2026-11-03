@@ -115,7 +115,7 @@ export class TrainingRoundsService {
                 avoidSamePartnerConsecutive: session.avoidSamePartnerConsecutive,
                 avoidSameOpponentConsecutive: session.avoidSameOpponentConsecutive,
             },
-            history: this.buildHistory(rounds, session.playersPerTeam),
+            history: this.buildHistory(rounds, session.playersPerTeam, soloParticipantIds),
             // Levels blend this session (rounds already loaded, matches in memory) with the group's
             // recent sessions, so the learning mode has something to go on from the very first round
             // instead of drawing at random. Guests, with no roster member, are levelled on this
@@ -128,6 +128,16 @@ export class TrainingRoundsService {
         };
 
         const plan = this.matchmaking.generateRound(input);
+        // A round made of rests only needs no validation: it could be generated again and again.
+        // The UI already explains it before the click; the API must refuse it too.
+        if (!plan.matches.some((match) => match.opponentRef !== null)) {
+            this.logger.warn(
+                `Round generation refused in session ${sessionCode}: no match possible with ${soloParticipantIds.length} solo player(s)`,
+            );
+            throw new BadRequestException(
+                "Aucun match n'est possible avec les joueurs présents et les tailles d'équipe autorisées.",
+            );
+        }
         const participantById = new Map<string, TrainingParticipant>(
             session.participants.map((p) => [p.id, p]),
         );
@@ -240,7 +250,8 @@ export class TrainingRoundsService {
 
     /**
      * What the session has produced so far: the pairs and match-ups of each round, most recent
-     * first, how many times each participant has rested and played in a fallback-size team.
+     * first, how many times each participant has rested (missed rounds included) and played in a
+     * fallback-size team.
      *
      * Partners are derived ONLY from EPHEMERAL teams (a FIXED team is meant to play together, that
      * is not a repetition to avoid). The "opponent" identity is canonical (fixedTeamId or sorted
@@ -250,6 +261,7 @@ export class TrainingRoundsService {
     private buildHistory(
         rounds: TrainingRound[],
         playersPerTeam: number,
+        soloParticipantIds: string[],
     ): GenerateRoundInput['history'] {
         const sitOutCountByParticipant: Record<string, number> = {};
         const fallbackCountByParticipant: Record<string, number> = {};
@@ -259,12 +271,14 @@ export class TrainingRoundsService {
             const partnerPairs: [string, string][] = [];
             const opponentCanonicalPairs: [string, string][] = [];
             const fallbackParticipantIds: string[] = [];
+            const restingParticipantIds: string[] = [];
 
             for (const match of round.matches ?? []) {
                 if (match.isBye) {
                     for (const participantId of this.activeMemberIds(match.teamA)) {
                         sitOutCountByParticipant[participantId] =
                             (sitOutCountByParticipant[participantId] ?? 0) + 1;
+                        restingParticipantIds.push(participantId);
                     }
                     continue;
                 }
@@ -289,7 +303,27 @@ export class TrainingRoundsService {
                 fallbackCountByParticipant[participantId] =
                     (fallbackCountByParticipant[participantId] ?? 0) + 1;
             }
-            recentRounds.unshift({ partnerPairs, opponentCanonicalPairs, fallbackParticipantIds });
+            // A round missed (checked in late, or away for a while) counts as a rest: otherwise a
+            // late arrival, with no rest at all, would be benched first until they "caught up".
+            // Every member, including those who left the team since: they did play that round.
+            const inRound = new Set(
+                (round.matches ?? [])
+                    .flatMap((match) => [match.teamA, match.teamB])
+                    .flatMap((team) => (team?.members ?? []).map((m) => m.participant.id)),
+            );
+            for (const participantId of soloParticipantIds) {
+                if (inRound.has(participantId)) continue;
+                sitOutCountByParticipant[participantId] =
+                    (sitOutCountByParticipant[participantId] ?? 0) + 1;
+                restingParticipantIds.push(participantId);
+            }
+
+            recentRounds.unshift({
+                partnerPairs,
+                opponentCanonicalPairs,
+                fallbackParticipantIds,
+                restingParticipantIds,
+            });
         }
 
         return { recentRounds, sitOutCountByParticipant, fallbackCountByParticipant };

@@ -7,8 +7,19 @@
       </section>
     } @else if (error()) {
       <section class="state state--error">
-        <app-icon name="error" />
-        <p>{{ error() }}</p>
+        <div class="state-message">
+          <app-icon name="error" />
+          <p>{{ error() }}</p>
+        </div>
+        <div class="state-actions">
+          <app-button title="Ressaisir mes codes" icon="edit" (clicked)="retypeCodes()" />
+          <app-button
+            title="Retour à l'accueil"
+            icon="home"
+            variant="secondary"
+            (clicked)="goHome()"
+          />
+        </div>
       </section>
     } @else if (!team()) {
       <section class="state state--empty">
@@ -40,6 +51,7 @@
           [validateError]="validateMatchError()"
           [startLoading]="startMatchLoading()"
           [validateLoading]="validateMatchLoading()"
+          [syncStatus]="scoreSync().status"
           [emptyTone]="teamMatchStatus() === 'FINISH' ? 'celebration' : 'neutral'"
           (startMatch)="startMatch()"
           (scoreChange)="updateScore($event)"

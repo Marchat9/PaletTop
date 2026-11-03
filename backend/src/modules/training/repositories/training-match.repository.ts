@@ -12,6 +12,8 @@ const FULL_TEAM_RELATIONS = {
 
 // Cross-session level needs each player's roster member to link their matches across sessions.
 const HISTORY_TEAM_RELATIONS = {
+    // The session's points target: levels compare scores as a share of it.
+    session: true,
     teamA: { members: { participant: { member: true } } },
     teamB: { members: { participant: { member: true } } },
 } as const;
@@ -29,6 +31,22 @@ export class TrainingMatchRepository {
 
     save(matches: Partial<TrainingMatch>[]): Promise<TrainingMatch[]> {
         return this.repo.save(matches as TrainingMatch[]);
+    }
+
+    /**
+     * Writes only if the match is still in one of the expected statuses, in the same statement: a
+     * read then a write would let a concurrent validation slip in between. Returns whether the
+     * match was updated.
+     */
+    async updateIfStatus(
+        matchId: string,
+        expected: MatchStatus[],
+        data: Partial<
+            Pick<TrainingMatch, 'scoreA' | 'scoreB' | 'status' | 'startedAt' | 'finishedAt'>
+        >,
+    ): Promise<boolean> {
+        const result = await this.repo.update({ id: matchId, status: In(expected) }, data);
+        return (result.affected ?? 0) > 0;
     }
 
     findByIdInSession(matchId: string, sessionId: string): Promise<TrainingMatch | null> {

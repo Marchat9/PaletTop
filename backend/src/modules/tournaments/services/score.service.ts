@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { TournamentMatch } from 'src/entities/tounament-match.entity';
-import { MatchStatus, MatchesSessionStatus } from 'src/enum/status.enum';
+import { MatchStatus, MatchesSessionStatus, TournamentStatus } from 'src/enum/status.enum';
 import { ScoreCalculation } from 'src/enum/tounament.enum';
 import { RealtimeGateway } from 'src/modules/realtime/realtime.gateway';
 import { TournamentAuthService } from 'src/modules/tournaments/services/tournament-auth.service';
@@ -12,8 +12,11 @@ import { MatchRepository } from '../repositories/match.repository';
 import { PoolRepository } from '../repositories/pool.repository';
 import { SessionRepository } from '../repositories/session.repository';
 import { TournamentStrategyFactory } from '../strategies/tournament-strategy.factory';
-import { ScoreUpdateResult } from '../responses/score.dto';
+import { RawScoreUpdateResult, ScoreUpdateResult } from '../responses/score.dto';
+import { PlayerMatchDto } from '../responses/player-match.dto';
 import { computeRanking } from '../utils/pool-ranking.utils';
+
+const NOT_VALIDATED = [MatchStatus.PENDING, MatchStatus.ONGOING, MatchStatus.ENDED];
 
 @Injectable()
 export class ScoreService {
@@ -30,8 +33,9 @@ export class ScoreService {
         private readonly strategyFactory: TournamentStrategyFactory,
     ) {}
 
-    async startMatch(code: string, matchId: string, teamCode: string): Promise<TournamentMatch> {
-        const { match } = await this.findMatchWithTeamAuth(code, matchId, teamCode);
+    async startMatch(code: string, matchId: string, teamCode: string): Promise<PlayerMatchDto> {
+        const { match, tournament } = await this.findMatchWithTeamAuth(code, matchId, teamCode);
+        this.assertPlayableByTeam(tournament.status, match);
 
         if (match.status !== MatchStatus.PENDING) {
             throw new BadRequestException('Le match est déjà démarré.');
@@ -52,7 +56,8 @@ export class ScoreService {
             updated.teamB?.code ?? null,
             toPlayerMatchDto(updated),
         );
-        return updated;
+        // The raw match carries the opponent's code, which is the proof asked at validation.
+        return toPlayerMatchDto(updated);
     }
 
     async updateScore(
@@ -63,6 +68,7 @@ export class ScoreService {
         scoreB: number,
     ): Promise<ScoreUpdateResult> {
         const { match, tournament } = await this.findMatchWithTeamAuth(code, matchId, teamCode);
+        this.assertPlayableByTeam(tournament.status, match);
 
         if (match.status === MatchStatus.VALIDATED) {
             throw new BadRequestException(
@@ -75,12 +81,21 @@ export class ScoreService {
 
         const isFinished = scoreA >= max || scoreB >= max;
 
-        await this.matchRepo.update(matchId, {
+        const now = new Date();
+        const updated = await this.matchRepo.updateIfStatus(matchId, NOT_VALIDATED, {
             scoreA,
             scoreB,
             status: isFinished ? MatchStatus.ENDED : MatchStatus.ONGOING,
-            finishedAt: isFinished ? new Date() : null,
+            finishedAt: isFinished ? now : null,
+            // Scored without being started first: it still needs a start date for its duration.
+            ...(!match.startedAt && { startedAt: now }),
         });
+        // Validated by the other team while this score was on its way: it must not reopen it.
+        if (!updated) {
+            throw new BadRequestException(
+                "Le match vient d'être validé : le score ne peut plus changer.",
+            );
+        }
 
         const result = await this.buildScoreUpdateResult(
             matchId,
@@ -93,7 +108,7 @@ export class ScoreService {
             result.match.teamB?.code ?? null,
             toPlayerMatchDto(result.match),
         );
-        return result;
+        return toScoreUpdateResult(result);
     }
 
     async validateMatch(
@@ -113,7 +128,7 @@ export class ScoreService {
         }
 
         if (match.session?.status === MatchesSessionStatus.CLOSED) {
-            throw new BadRequestException('La session est déjà clôturée.');
+            throw new BadRequestException('Le round est déjà clôturé.');
         }
 
         const isTeamA = match.teamA?.code === teamCode;
@@ -133,11 +148,18 @@ export class ScoreService {
             ? Math.round((finishedAt.getTime() - match.startedAt.getTime()) / 1000)
             : null;
 
-        await this.matchRepo.update(matchId, {
+        const validated = await this.matchRepo.updateIfStatus(matchId, [MatchStatus.ENDED], {
             status: MatchStatus.VALIDATED,
             finishedAt,
             duration,
         });
+        // Two validations at once (both teams, or a double tap): only the first one goes through,
+        // so the ranking is recomputed and broadcast once.
+        if (!validated) {
+            throw new BadRequestException(
+                'Le match a déjà été validé ou son score vient de changer.',
+            );
+        }
 
         const result = await this.buildScoreUpdateResult(
             matchId,
@@ -158,7 +180,7 @@ export class ScoreService {
             false,
             MatchStatus.VALIDATED,
         );
-        return result;
+        return toScoreUpdateResult(result);
     }
 
     async adminUpdateScore(
@@ -176,24 +198,31 @@ export class ScoreService {
         this.validateScores(scoreA, scoreB, max);
 
         const isFinished = scoreA >= max || scoreB >= max;
+        // Reopened, the match would wait for a validation its closed session no longer accepts.
+        if (wasSessionClosed && !isFinished) {
+            throw new BadRequestException(
+                `Le round de ce match est clôturé : le score corrigé doit rester final (${max} points pour une équipe).`,
+            );
+        }
         const finishedAt = isFinished ? (match.finishedAt ?? new Date()) : null;
         const duration =
             isFinished && match.startedAt && finishedAt
                 ? Math.round((finishedAt.getTime() - match.startedAt.getTime()) / 1000)
                 : null;
 
-        const newStatus = isFinished
-            ? MatchStatus.VALIDATED
-            : match.status === MatchStatus.VALIDATED || match.status === MatchStatus.ENDED
-              ? MatchStatus.ONGOING
-              : match.status;
+        // A score below the target reopens a finished match, and starts a PENDING one: left PENDING
+        // with a score, spectators saw "7-3 en attente" while the players could still "start" it.
+        const newStatus = isFinished ? MatchStatus.VALIDATED : MatchStatus.ONGOING;
 
         await this.matchRepo.update(matchId, {
             scoreA,
             scoreB,
             status: newStatus,
-            finishedAt: finishedAt ?? undefined,
+            // null, not undefined: TypeORM skips undefined, so a reopened match kept its old end
+            // date and the next validation reused it. The duration is only overwritten when known.
+            finishedAt,
             ...(duration !== null && { duration }),
+            ...(!match.startedAt && { startedAt: isFinished ? finishedAt : new Date() }),
         });
 
         const result = await this.buildScoreUpdateResult(
@@ -211,14 +240,17 @@ export class ScoreService {
             toPlayerMatchDto(result.match),
         );
 
-        if (newStatus === MatchStatus.VALIDATED || wasSessionClosed) {
+        // Leaving VALIDATED takes the match out of the ranking too: it must be rebroadcast, or the
+        // clients keep showing a win that no longer counts.
+        const wasValidated = match.status === MatchStatus.VALIDATED;
+        if (newStatus === MatchStatus.VALIDATED || wasValidated || wasSessionClosed) {
             this.rankingService.scheduleRankingUpdate(code);
         }
 
         await this.emitTournamentStatusOnValidationChange(
             code,
             match.session?.id,
-            match.status === MatchStatus.VALIDATED,
+            wasValidated,
             newStatus,
         );
 
@@ -232,7 +264,7 @@ export class ScoreService {
             }
         }
 
-        return result;
+        return toScoreUpdateResult(result);
     }
 
     private async emitTournamentStatusOnValidationChange(
@@ -268,6 +300,19 @@ export class ScoreService {
         );
     }
 
+    /**
+     * A team plays only in an active tournament and an open session. An admin correction can
+     * reopen an old match, but its teams must not take it over from there.
+     */
+    private assertPlayableByTeam(tournamentStatus: TournamentStatus, match: TournamentMatch): void {
+        if (tournamentStatus !== TournamentStatus.ACTIVE) {
+            throw new BadRequestException("Le tournoi n'est pas en cours.");
+        }
+        if (match.session?.status === MatchesSessionStatus.CLOSED) {
+            throw new BadRequestException('Le round est déjà clôturé.');
+        }
+    }
+
     private validateScores(scoreA: number, scoreB: number, max: number): void {
         if (scoreA > max || scoreB > max || (scoreA === max && scoreB === max)) {
             throw new BadRequestException(
@@ -283,6 +328,7 @@ export class ScoreService {
     ): Promise<{
         match: TournamentMatch;
         tournament: {
+            status: TournamentStatus;
             configuration: { pointsPerGame: number; scoreCalculation: ScoreCalculation };
         };
     }> {
@@ -321,7 +367,7 @@ export class ScoreService {
         matchId: string,
         poolId: string | null | undefined,
         scoreCalculation: ScoreCalculation,
-    ): Promise<ScoreUpdateResult> {
+    ): Promise<RawScoreUpdateResult> {
         const match = await this.matchRepo.findByIdWithSession(matchId);
         if (!match) throw new NotFoundException('Match introuvable après mise à jour.');
 
@@ -334,4 +380,8 @@ export class ScoreService {
         const ranking = computeRanking(pool.teams, poolMatches, scoreCalculation);
         return { match, ranking };
     }
+}
+
+function toScoreUpdateResult(result: RawScoreUpdateResult): ScoreUpdateResult {
+    return { match: toPlayerMatchDto(result.match), ranking: result.ranking };
 }

@@ -1,9 +1,12 @@
 import { Dialog } from '@angular/cdk/dialog';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { first, of, switchMap } from 'rxjs';
-import { AdminTournamentConnectionPopupComponent } from 'src/app/modales/admin-tournament-connection-popup/admin-tournament-connection-popup';
+import {
+  AdminTournamentConnectionData,
+  AdminTournamentConnectionPopupComponent,
+} from 'src/app/modales/admin-tournament-connection-popup/admin-tournament-connection-popup';
 import { selectCurrentTournamentAdminInformations } from 'src/app/store/tournament/tournament.selectors';
 
 @Component({
@@ -17,6 +20,7 @@ export class AdminConnectionPageComponent {
   private readonly dialog = inject(Dialog);
   private readonly router = inject(Router);
   private readonly store = inject(Store);
+  private readonly route = inject(ActivatedRoute);
 
   constructor() {
     this.store
@@ -27,7 +31,11 @@ export class AdminConnectionPageComponent {
           if (!!adminInfo?.code && !!adminInfo.password) {
             return of({ tournamentCode: adminInfo.code });
           } else {
+            const data: AdminTournamentConnectionData = {
+              tournamentCode: this.route.snapshot.queryParamMap.get('code') ?? undefined,
+            };
             return this.dialog.open(AdminTournamentConnectionPopupComponent, {
+              data,
               panelClass: 'dialog-panel',
               backdropClass: 'dialog-backdrop-light',
               disableClose: false,

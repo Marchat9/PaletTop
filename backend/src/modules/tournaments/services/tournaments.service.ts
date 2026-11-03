@@ -158,6 +158,14 @@ export class TournamentsService {
             );
         }
 
+        // The capacity is also checked by the form, but the API must not rely on it.
+        const capacity = tournament.configuration.maxTeamCapacity;
+        if (tournament.teams.length + dto.teams.length > capacity) {
+            throw new BadRequestException(
+                `Capacité maximale atteinte : ${capacity} équipes pour ce tournoi (${tournament.teams.length} déjà inscrites).`,
+            );
+        }
+
         // Clubs
         const allClubNames: string[] = [
             ...new Set(
@@ -178,7 +186,7 @@ export class TournamentsService {
             const code = generateNumericCode(existingTeamCodes, this.nbNumberInCode);
 
             const team = this.teamRepo.create({
-                name: teamDto.name || `Equipe ${existingTeamCount + index + 1}`,
+                name: teamDto.name || `Équipe ${existingTeamCount + index + 1}`,
                 club: teamDto.club || undefined,
                 code,
                 tournament,
@@ -254,10 +262,8 @@ export class TournamentsService {
             code: dto.code ?? tournament.code,
             date: dto.date ?? tournament.date,
             description: dto.description ?? tournament.description,
-            configuration: {
-                ...tournament.configuration,
-                ...dto.configuration,
-            },
+            // Validated as a whole by the DTO: every stored field is overwritten.
+            configuration: { ...tournament.configuration, ...dto.configuration },
         };
 
         const saved = await this.tournamentRepo.save(mergedTournament);
@@ -268,6 +274,36 @@ export class TournamentsService {
     async getTeamById(tournamentCode: string, teamId: string): Promise<Team> {
         const team = await this.teamRepo.findById(teamId);
         if (!team || team.tournament.code !== tournamentCode) {
+            throw new NotFoundException('Équipe introuvable.');
+        }
+        return team;
+    }
+
+    /**
+     * The team an admin is about to edit or delete. The URL and the body must name the same
+     * tournament and team (the URL used to be ignored), and teams only change while the
+     * tournament is a draft: afterwards their matches reference them.
+     */
+    async findEditableTeam(
+        route: { tournamentCode: string; teamCode: string },
+        dto: { code: string; password: string; teamId: string },
+    ): Promise<Team> {
+        if (route.tournamentCode.trim().toUpperCase() !== dto.code.trim().toUpperCase()) {
+            throw new BadRequestException("Le code du tournoi ne correspond pas à l'URL.");
+        }
+
+        const tournament = await this.tournamentAuthService.findWithAdminAuth(
+            { code: dto.code.trim().toUpperCase() },
+            dto.password,
+        );
+        if (tournament.status !== TournamentStatus.DRAFT) {
+            throw new BadRequestException(
+                "Les équipes ne peuvent être modifiées ou supprimées qu'en phase de configuration (statut Brouillon).",
+            );
+        }
+
+        const team = await this.getTeamById(tournament.code, dto.teamId);
+        if (team.code !== route.teamCode) {
             throw new NotFoundException('Équipe introuvable.');
         }
         return team;

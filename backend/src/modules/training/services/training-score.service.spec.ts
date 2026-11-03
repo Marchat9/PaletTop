@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { TrainingMatch } from 'src/entities/training-match.entity';
 import { TrainingSession } from 'src/entities/training-session.entity';
 import { MatchStatus } from 'src/enum/status.enum';
-import { TrainingSessionStatus } from 'src/enum/training.enum';
+import { TrainingRoundStatus, TrainingSessionStatus } from 'src/enum/training.enum';
 import { TrainingScoreService } from './training-score.service';
 
 function makeService(match: TrainingMatch) {
@@ -43,6 +43,7 @@ function match(overrides: Partial<TrainingMatch>): TrainingMatch {
         finishedAt: null,
         teamA: { members: [] },
         teamB: { members: [] },
+        round: { status: TrainingRoundStatus.OPEN },
         ...overrides,
     } as unknown as TrainingMatch;
 }
@@ -74,5 +75,26 @@ describe('TrainingScoreService.adminUpdateScore', () => {
         await service.adminUpdateScore('1234', 'm1', 'pwd', 8, 5);
 
         expect(gateway.emitLeaderboardUpdated).not.toHaveBeenCalled();
+    });
+});
+
+describe('TrainingScoreService.adminUpdateScore on a closed round', () => {
+    it('refuses to reopen a match of a closed round, but accepts a final correction', async () => {
+        const validated = {
+            status: MatchStatus.VALIDATED,
+            scoreA: 13,
+            scoreB: 5,
+            round: { status: TrainingRoundStatus.CLOSED },
+        } as unknown as Partial<TrainingMatch>;
+
+        const reopened = makeService(match(validated));
+        await expect(reopened.service.adminUpdateScore('1234', 'm1', 'pw', 5, 5)).rejects.toThrow(
+            'round est clôturé',
+        );
+
+        const corrected = makeService(match(validated));
+        await expect(
+            corrected.service.adminUpdateScore('1234', 'm1', 'pw', 13, 7),
+        ).resolves.toMatchObject({ scoreA: 13, scoreB: 7 });
     });
 });

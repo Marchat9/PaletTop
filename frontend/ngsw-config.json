@@ -17,6 +17,14 @@
       "resources": {
         "files": ["/assets/images/**", "/icons/**"]
       }
+    },
+    {
+      "name": "google-fonts",
+      "installMode": "lazy",
+      "updateMode": "lazy",
+      "resources": {
+        "urls": ["https://fonts.googleapis.com/**", "https://fonts.gstatic.com/**"]
+      }
     }
   ]
 }

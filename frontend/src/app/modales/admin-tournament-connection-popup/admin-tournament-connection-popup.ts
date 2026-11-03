@@ -1,4 +1,4 @@
-import { DialogRef } from '@angular/cdk/dialog';
+import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -20,6 +20,11 @@ import { Button } from '../../shared/button/button';
 import { InputText } from '../../shared/input-text/input-text';
 import { Icon } from 'src/app/shared/icon/icon';
 
+/** Code of the tournament the admin link pointed at, when there is one. */
+export interface AdminTournamentConnectionData {
+  tournamentCode?: string;
+}
+
 @Component({
   selector: 'app-admin-tournament-connection-popup',
   standalone: true,
@@ -31,9 +36,14 @@ import { Icon } from 'src/app/shared/icon/icon';
 export class AdminTournamentConnectionPopupComponent {
   private readonly store = inject(Store);
   private readonly dialogRef = inject(DialogRef<{ tournamentCode: string; password: string }>);
+  private readonly data = inject<AdminTournamentConnectionData | null>(DIALOG_DATA, {
+    optional: true,
+  });
 
   //------
-  readonly tournamentCode = signal('');
+  readonly tournamentCode = signal(this.data?.tournamentCode ?? '');
+  /** Code known from the link: the password is the only thing left to type. */
+  readonly codeIsPrefilled = !!this.data?.tournamentCode;
   readonly password = signal('');
   //------
   readonly isUnknownTournament = signal(false);

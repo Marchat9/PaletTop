@@ -1,3 +1,6 @@
+import { selectTrainingScoreSync } from 'src/app/store/training/training.selectors';
+import { withPendingScore } from 'src/app/utils/pending-score.util';
+import { isSessionCode } from 'src/app/utils/code-format.util';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -104,7 +107,11 @@ export class PlayerTrainingSessionPage implements OnInit, OnDestroy {
   public readonly me = computed(() => this.currentMatchState()?.participant ?? null);
   public readonly roundNumber = computed(() => this.currentMatchState()?.roundNumber ?? null);
   public readonly isSittingOut = computed(() => this.currentMatchState()?.sitOut ?? false);
-  private readonly match = computed(() => this.currentMatchState()?.match ?? null);
+  public readonly scoreSync = this.store.selectSignal(selectTrainingScoreSync);
+  // A score typed during an outage stays on the card until it is resent.
+  private readonly match = computed(() =>
+    withPendingScore(this.currentMatchState()?.match ?? null, this.scoreSync().pending),
+  );
   public readonly isSessionClosed = computed(() => this.session()?.status === 'CLOSED');
   public readonly pointsPerGame = computed(() => this.session()?.pointsPerGame ?? 13);
 
@@ -193,7 +200,7 @@ export class PlayerTrainingSessionPage implements OnInit, OnDestroy {
     if (this.isSessionClosed()) {
       return this.cardMatch() ? 'Dernier match' : null;
     }
-    return 'Match en cours';
+    return this.matchView()?.status === 'PENDING' ? 'Prochain match' : 'Match en cours';
   });
 
   public readonly statTiles = computed<PlayerStatTile[]>(() => {
@@ -268,8 +275,9 @@ export class PlayerTrainingSessionPage implements OnInit, OnDestroy {
       const sessionCode = params.get('sessionCode');
       const participantCode = params.get('participantCode');
 
-      // Four-digit codes: without them, the page has nothing to show.
-      if (sessionCode?.length !== 4 || participantCode?.length !== 4) {
+      // Numeric codes (6-digit session, or 4 for the older ones; 4-digit participant): without
+      // them, the page has nothing to show.
+      if (!isSessionCode(sessionCode) || participantCode?.length !== 4) {
         this.router.navigate(['/player/training']);
         return;
       }

@@ -4,9 +4,10 @@
   [class.placeholder-as-value]="placeholderAsValue()"
 >
   <input
-    [id]="id()"
+    [attr.id]="id() || null"
     class="input-number"
     type="number"
+    [attr.inputmode]="inputmode()"
     [placeholder]="placeholder() ?? ''"
     [value]="internalValue()"
     [min]="min()"

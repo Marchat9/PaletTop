@@ -5,4 +5,12 @@
   padding: 1rem;
   max-width: 800px;
   margin: 0 auto;
+
+  // On a phone the score pads are what people tap during the game: they come first, the names
+  // and the target (set once) below them.
+  @media (width < 768px) {
+    app-friendly-match-score {
+      order: -1;
+    }
+  }
 }

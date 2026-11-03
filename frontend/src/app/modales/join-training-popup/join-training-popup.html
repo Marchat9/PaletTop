@@ -12,21 +12,25 @@
   <p class="popup-subtitle">Saisissez vos identifiants fournis par votre référent.</p>
 
   <div class="field-group">
-    <label class="field-label">Code de session</label>
+    <label class="field-label">Code de séance</label>
     <app-code-number-input
-      [digitCount]="4"
+      [digitCount]="sessionCodeLength"
       [initialCode]="initialSessionCode"
       (codeChange)="onSessionCodeChange($event)"
+      (completed)="participantCode.focus()"
+      (overflow)="participantCode.fill($event)"
     ></app-code-number-input>
     <p class="field-help">
       <app-icon name="info" [ariaHidden]="true" />
-      Identifiant numérique à 4 chiffres d'identifier la session d'entraînement.
+      Identifiant numérique à {{ sessionCodeLength }} chiffres permettant d'identifier la session
+      d'entraînement.
     </p>
   </div>
 
   <div class="field-group">
     <label class="field-label">Code Participant</label>
     <app-code-number-input
+      #participantCode
       [digitCount]="4"
       [initialCode]="initialParticipantCode"
       (codeChange)="onCodeChange($event)"
@@ -41,7 +45,7 @@
     <div class="error-container">
       <span class="message">
         <app-icon name="error" [ariaHidden]="true" />
-        Session d'entraînement introuvable
+        Code de séance ou code participant incorrect
       </span>
       <span class="description">
         Veuillez vérifier le code saisi ou contacter le référent d'entraînement pour plus

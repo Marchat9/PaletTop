@@ -1,6 +1,7 @@
 import { FormControl, FormGroup } from '@angular/forms';
 import { TournamentConfigurationForm } from './tournament-configuration-form.model';
 import {
+  differentFromHomeClub,
   isLastRoundByRankingAllowed,
   resetLastRoundByRankingIfNotAllowed,
 } from './tournament-configuration.utils';
@@ -46,5 +47,26 @@ describe('resetLastRoundByRankingIfNotAllowed', () => {
     const { form, upDownMode } = upDownForm(5, true);
     resetLastRoundByRankingIfNotAllowed(form);
     expect(upDownMode.controls.lastRoundByRanking.value).toBe(true);
+  });
+});
+
+describe('differentFromHomeClub', () => {
+  function championshipGroup(homeTeam: string, awayTeam: string) {
+    return new FormGroup({
+      homeTeam: new FormControl(homeTeam, { nonNullable: true }),
+      awayTeam: new FormControl(awayTeam, { nonNullable: true }),
+    });
+  }
+
+  it('rejects the same club on both sides, whatever the case and spaces', () => {
+    const group = championshipGroup('Club A', ' club a ');
+    expect(differentFromHomeClub(group.controls.awayTeam)).toEqual({ sameClub: true });
+  });
+
+  it('accepts two different clubs, or a home club not filled in yet', () => {
+    expect(
+      differentFromHomeClub(championshipGroup('Club A', 'Club B').controls.awayTeam),
+    ).toBeNull();
+    expect(differentFromHomeClub(championshipGroup('', '').controls.awayTeam)).toBeNull();
   });
 });

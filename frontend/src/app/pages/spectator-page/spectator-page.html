@@ -45,6 +45,15 @@
         Veuillez vérifier le code du tournoi ou contacter l'administrateur du tournoi pour plus
         d'informations.
       </span>
+      <div class="state-actions">
+        <app-button title="Ressaisir le code" icon="edit" (clicked)="retypeCodes()" />
+        <app-button
+          title="Retour à l'accueil"
+          icon="home"
+          variant="secondary"
+          (clicked)="goHome()"
+        />
+      </div>
     </div>
   } @else {
     <div class="content">

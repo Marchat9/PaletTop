@@ -31,11 +31,20 @@ select {
   font: inherit;
 }
 
+// A name typed as one long word (no space) must wrap instead of widening the page: on a phone it
+// pushed the header buttons off screen.
+h1,
+h2,
+h3 {
+  overflow-wrap: anywhere;
+}
+
 .no-wrap {
   white-space: nowrap;
 }
 
 .max-two-lines {
+  overflow-wrap: anywhere;
   overflow: hidden;
   display: -webkit-box;
   -webkit-line-clamp: 2;

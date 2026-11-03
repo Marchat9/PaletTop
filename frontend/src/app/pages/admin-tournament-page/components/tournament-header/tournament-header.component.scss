@@ -33,12 +33,9 @@
 
       .info-header-action {
         display: flex;
-        gap: 1rem;
-
-        @media (width < 768px) {
-          flex-direction: column;
-          width: 100%;
-        }
+        align-items: center;
+        gap: 0.75rem;
+        margin-left: auto;
       }
 
       .eyebrow {

@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { Nullable } from 'src/app/models/nullable.model';
 import { ScoreNumber } from 'src/app/shared/score-number/score-number';
+import { FriendlyMatchSide } from 'src/app/store/friendly-match/friendly-match.selectors';
 
 @Component({
   selector: 'app-friendly-match-score',
@@ -17,6 +18,7 @@ export class FriendlyMatchScore {
   readonly targetScore = input.required<number>();
   readonly isMatchFinished = input<boolean>(false);
   readonly winner = input<Nullable<string>>(null);
+  readonly winnerSide = input<Nullable<FriendlyMatchSide>>(null);
 
   readonly team1ScoreChange = output<number>();
   readonly team2ScoreChange = output<number>();

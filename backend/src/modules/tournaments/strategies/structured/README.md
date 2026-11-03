@@ -20,15 +20,15 @@ Plates are numbered 1, 2, 3… after each generation.
 
 ## Configuration
 
-| Field                         | Description                                                        |
-| ----------------------------- | ------------------------------------------------------------------ |
-| `numberOfPools`               | Number of qualifying pools                                         |
-| `numberOfQualifyingRounds`    | Number of pool rounds (default 4)                                  |
+| Field                         | Description                                                                                         |
+| ----------------------------- | --------------------------------------------------------------------------------------------------- |
+| `numberOfPools`               | Number of qualifying pools                                                                          |
+| `numberOfQualifyingRounds`    | Number of pool rounds (default 4)                                                                   |
 | `principalBracketSize`        | Teams in the principal bracket. Must be a power of 2 ≤ team count, otherwise computed automatically |
-| `hasConsolanteTable`          | Bracket for teams ranked below the principal bracket               |
-| `hasChallengePrincipaleTable` | Bracket for teams losing the first principal round                 |
-| `hasChallengeConsolanteTable` | Bracket for teams losing the first consolante round                |
-| `hasThirdPlaceMatch`          | Third-place match between the principal semi-final losers          |
+| `hasConsolanteTable`          | Bracket for teams ranked below the principal bracket                                                |
+| `hasChallengePrincipaleTable` | Bracket for teams losing the first principal round                                                  |
+| `hasChallengeConsolanteTable` | Bracket for teams losing the first consolante round                                                 |
+| `hasThirdPlaceMatch`          | Third-place match between the principal semi-final losers                                           |
 
 ## Qualifying rounds
 

@@ -2,6 +2,8 @@ import { createReducer, on } from '@ngrx/store';
 import { ApiCall, ApiCallStatus } from 'src/app/models/api-call.model';
 import { Nullable } from 'src/app/models/nullable.model';
 import { PlayerMatchDto } from 'src/app/models/player-match.model';
+import { TeamScoreUpdate } from 'src/app/models/score-update.model';
+import { INITIAL_SCORE_SYNC, ScoreSync } from 'src/app/models/score-sync.model';
 import { wsMatchUpdated } from 'src/app/store/realtime/realtime.actions';
 import { resetTournament } from 'src/app/store/tournament/tournament.actions';
 import {
@@ -15,6 +17,7 @@ import {
   startMatchFailure,
   startMatchSuccess,
   updateScore,
+  scoreSyncBadgeExpired,
   updateScoreFailure,
   updateScoreSuccess,
   validateMatch,
@@ -32,6 +35,7 @@ export interface ScoreRequest {
 export interface MatchState {
   data: ApiCall<Nullable<PlayerMatchDto>>;
   scoreRequest: ScoreRequest;
+  scoreSync: ScoreSync<TeamScoreUpdate>;
 }
 
 const initialScoreRequest: ScoreRequest = {
@@ -44,6 +48,7 @@ const initialScoreRequest: ScoreRequest = {
 export const initialMatchState: MatchState = {
   data: { data: null, isLoading: false, error: null },
   scoreRequest: initialScoreRequest,
+  scoreSync: INITIAL_SCORE_SYNC,
 };
 
 export const matchReducer = createReducer(
@@ -64,7 +69,7 @@ export const matchReducer = createReducer(
     ...state,
     data: {
       ...state.data,
-      data: match,
+      data: isCurrentOrNewerMatch(state.data.data, match) ? match : state.data.data,
     },
   })),
   on(startMatch, (state) => ({
@@ -83,13 +88,35 @@ export const matchReducer = createReducer(
     ...state,
     scoreRequest: { ...state.scoreRequest, updateScore: { isLoading: true, error: null } },
   })),
-  on(updateScoreSuccess, (state) => ({
+  on(updateScoreSuccess, (state) => {
+    const { pending } = state.scoreSync;
+    const current = state.data.data;
+    return {
+      ...state,
+      // The resent score is now the server's: shown in the card until the match update arrives,
+      // instead of flashing back to the score loaded during the outage.
+      data:
+        pending && current?.id === pending.matchId
+          ? { ...state.data, data: { ...current, scoreA: pending.scoreA, scoreB: pending.scoreB } }
+          : state.data,
+      scoreRequest: { ...state.scoreRequest, updateScore: { isLoading: false, error: null } },
+      scoreSync: pending ? { status: 'synced' as const, pending: null } : state.scoreSync,
+    };
+  }),
+  on(updateScoreFailure, (state, { error, request, offline }) => ({
     ...state,
-    scoreRequest: { ...state.scoreRequest, updateScore: { isLoading: false, error: null } },
+    // No network: the score is kept and resent, the badge says so instead of an error.
+    scoreRequest: {
+      ...state.scoreRequest,
+      updateScore: { isLoading: false, error: offline ? null : error },
+    },
+    scoreSync: offline
+      ? { status: 'pending' as const, pending: request }
+      : { status: 'idle' as const, pending: null },
   })),
-  on(updateScoreFailure, (state, { error }) => ({
+  on(scoreSyncBadgeExpired, (state) => ({
     ...state,
-    scoreRequest: { ...state.scoreRequest, updateScore: { isLoading: false, error } },
+    scoreSync: state.scoreSync.status === 'synced' ? INITIAL_SCORE_SYNC : state.scoreSync,
   })),
   on(validateMatch, (state) => ({
     ...state,
@@ -117,3 +144,19 @@ export const matchReducer = createReducer(
   })),
   on(resetTournament, () => initialMatchState),
 );
+
+/**
+ * An admin correcting a match of a previous session broadcasts it to both teams: it must not take
+ * the place of the match they are playing. Only the same match, or one of a newer session (the
+ * next session's match), replaces the current one.
+ */
+export function isCurrentOrNewerMatch(
+  current: Nullable<PlayerMatchDto>,
+  incoming: PlayerMatchDto,
+): boolean {
+  return (
+    !current ||
+    current.id === incoming.id ||
+    incoming.session.sessionNumber > current.session.sessionNumber
+  );
+}

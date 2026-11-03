@@ -119,3 +119,38 @@ describe('TrainingSessionsService.checkin', () => {
         expect(result.participants).toHaveLength(2);
     });
 });
+
+describe('TrainingSessionsService.create', () => {
+    it('gives up with a 409 instead of looping when no session code is free', async () => {
+        const sessionRepo = { codeExists: vi.fn(() => Promise.resolve(true)) };
+        const service = new TrainingSessionsService(
+            sessionRepo as never,
+            {} as never,
+            {} as never,
+            {} as never,
+            { findWithAdminAuth: vi.fn(() => Promise.resolve({ id: 't1', members: [] })) } as never,
+            {} as never,
+            {} as never,
+        );
+
+        await expect(service.create('CLUB', { password: 'pw' } as never)).rejects.toBeInstanceOf(
+            ConflictException,
+        );
+        expect(sessionRepo.codeExists).toHaveBeenCalledTimes(50);
+    });
+});
+
+describe('TrainingSessionsService.checkin of a guest', () => {
+    it('refuses a guest named like a present participant, whatever the case', async () => {
+        const present = participant({ status: TrainingParticipantStatus.PRESENT });
+        const { service, participantRepo } = makeService([present]);
+
+        await expect(
+            service.checkin('1234', {
+                password: 'pw',
+                name: ` ${present.name.toUpperCase()} `,
+            } as never),
+        ).rejects.toBeInstanceOf(ConflictException);
+        expect(participantRepo.save).not.toHaveBeenCalled();
+    });
+});

@@ -13,12 +13,20 @@ import {
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Icon } from '../icon/icon';
 
+/** Values of the inputmode attribute: which virtual keyboard a mobile browser shows. */
+export type InputMode =
+  'text' | 'numeric' | 'decimal' | 'tel' | 'email' | 'url' | 'search' | 'none';
+export type EnterKeyHint = 'enter' | 'done' | 'go' | 'next' | 'previous' | 'search' | 'send';
+
 @Component({
   selector: 'app-input-text',
   imports: [Icon],
   templateUrl: './input-text.html',
   styleUrl: './input-text.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  // The id is forwarded to the inner field: left on the host too, it would be duplicated in the
+  // page and a <label for> would point at the wrapper instead of the field.
+  host: { '[attr.id]': 'null' },
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -35,6 +43,9 @@ export class InputText implements AfterViewInit, ControlValueAccessor {
   readonly autofocus = input<boolean>(false);
   readonly uppercase = input<boolean>(false);
   readonly maxLength = input<number>(100);
+  /** Mobile keyboard to show, e.g. 'numeric' for a code made of digits. */
+  readonly inputmode = input<InputMode | null>(null);
+  readonly enterKeyHint = input<EnterKeyHint | null>(null);
   readonly disabled = input<boolean>(false);
   readonly icon = input<string>('');
   readonly isPassword = input<boolean>(false);

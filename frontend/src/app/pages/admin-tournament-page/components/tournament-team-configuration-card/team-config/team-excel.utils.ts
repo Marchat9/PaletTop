@@ -20,7 +20,8 @@ export interface TeamImportLimits {
 
 const TEAM_NAME_COLUMN_INDEX = 0;
 const PLAYER_NAME_HEADER_REGEX = /^nom joueur\s*(\d+)$/i;
-const CLUB_HEADER_REGEX = /^club\s*(\d+)$/i;
+// The template writes "Nom Club N" (same wording as "Nom Joueur N"); a bare "Club N" is accepted too.
+const CLUB_HEADER_REGEX = /^(?:nom\s+)?club\s*(\d+)$/i;
 const HEADER_FILL: Fill = {
   type: 'pattern',
   pattern: 'solid',
@@ -37,7 +38,7 @@ export async function generateTeamsExcelTemplate(maxPlayers: number): Promise<Bl
   const workbook = new ExcelJS.Workbook();
   const worksheet = workbook.addWorksheet('Équipes');
 
-  const columns: Partial<Column>[] = [{ header: 'Nom Equipe (optionnel)', key: 'team', width: 26 }];
+  const columns: Partial<Column>[] = [{ header: 'Nom Équipe (optionnel)', key: 'team', width: 26 }];
   for (let i = 1; i <= maxPlayers; i++) {
     columns.push({ header: `Nom Joueur ${i}`, key: `playerName${i}`, width: 22 });
     columns.push({ header: `Nom Club ${i}`, key: `playerClub${i}`, width: 20 });

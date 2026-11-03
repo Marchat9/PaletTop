@@ -39,17 +39,18 @@ function setup(savedCodes: TrainingParticipantSession | null = null) {
 
 describe('JoinTrainingPopup', () => {
   it('prefills the codes of the last session joined on this device', () => {
-    const { fixture, store } = setup({ sessionCode: '1234', participantCode: '5678' });
+    const { fixture, store } = setup({ sessionCode: '123456', participantCode: '5678' });
     const dispatchSpy = vi.spyOn(store, 'dispatch');
 
+    // 6 boxes for the session code, 4 for the participant code.
     const inputs = Array.from(
       fixture.nativeElement.querySelectorAll('input.code-input') as NodeListOf<HTMLInputElement>,
     ).map((input) => input.value);
-    expect(inputs).toEqual(['1', '2', '3', '4', '5', '6', '7', '8']);
+    expect(inputs).toEqual(['1', '2', '3', '4', '5', '6', '5', '6', '7', '8']);
 
     fixture.componentInstance.onJoin();
     expect(dispatchSpy).toHaveBeenCalledWith(
-      loadTrainingParticipantCurrentMatch({ sessionCode: '1234', participantCode: '5678' }),
+      loadTrainingParticipantCurrentMatch({ sessionCode: '123456', participantCode: '5678' }),
     );
   });
 

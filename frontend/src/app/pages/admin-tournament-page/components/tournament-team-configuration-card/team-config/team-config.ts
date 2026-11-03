@@ -5,6 +5,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  ElementRef,
   inject,
   input,
   output,
@@ -46,6 +47,7 @@ export class TeamConfig {
   private readonly dialog = inject(Dialog);
   private readonly overlay = inject(Overlay);
   private readonly breakpointObserver = inject(BreakpointObserver);
+  private readonly host = inject(ElementRef<HTMLElement>);
 
   // ======= Input / Output =======
   public readonly tournament = input<Nullable<TournamentDto>>(null);
@@ -96,6 +98,22 @@ export class TeamConfig {
       }
       return next;
     });
+  }
+
+  /**
+   * Entry point for "add a team" from elsewhere on the page: the creation sheet on mobile, the
+   * creation form (scrolled to, name field focused) on larger screens.
+   */
+  public startTeamCreation(): void {
+    if (this.isMobile()) {
+      this.openCreationSheet();
+      return;
+    }
+    const nameField = this.host.nativeElement.querySelector(
+      '.creation-column input[id$="-team-name"]',
+    ) as HTMLInputElement | null;
+    nameField?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    nameField?.focus({ preventScroll: true });
   }
 
   // ======= Creation / edition sheet (mobile) =======

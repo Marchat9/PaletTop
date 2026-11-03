@@ -1,9 +1,9 @@
 <div class="friendly-match-score">
   <div class="teams">
-    <span class="name max-two-lines" [class.winner]="winner() === team1Name()">
+    <span class="name max-two-lines" [class.winner]="winnerSide() === 'team1'">
       {{ team1Name() || 'Équipe 1' }}
     </span>
-    <span class="name max-two-lines" [class.winner]="winner() === team2Name()">
+    <span class="name max-two-lines" [class.winner]="winnerSide() === 'team2'">
       {{ team2Name() || 'Équipe 2' }}
     </span>
   </div>

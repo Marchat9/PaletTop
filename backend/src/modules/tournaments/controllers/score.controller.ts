@@ -9,12 +9,12 @@ import {
     Patch,
     Post,
 } from '@nestjs/common';
-import { TournamentMatch } from 'src/entities/tounament-match.entity';
 import { AdminUpdateScoreDto } from '../dto/admin-update-score.dto';
 import { StartMatchDto } from '../dto/start-match.dto';
 import { UpdateScoreDto } from '../dto/update-score.dto';
 import { ValidateMatchDto } from '../dto/validate-match.dto';
 import { ScoreService } from '../services/score.service';
+import { PlayerMatchDto } from '../responses/player-match.dto';
 import { ScoreUpdateResult } from '../responses/score.dto';
 
 @Controller('tournaments/:code/matches/:matchId')
@@ -28,7 +28,7 @@ export class ScoreController {
         @Param('code') code: string,
         @UuidParam('matchId') matchId: string,
         @Body() dto: StartMatchDto,
-    ): Promise<TournamentMatch> {
+    ): Promise<PlayerMatchDto> {
         try {
             return await this.scoreService.startMatch(code, matchId, dto.teamCode);
         } catch (error) {

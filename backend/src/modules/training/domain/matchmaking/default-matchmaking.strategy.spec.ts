@@ -33,8 +33,9 @@ function round(
     partnerPairs: [string, string][] = [],
     opponentCanonicalPairs: [string, string][] = [],
     fallbackParticipantIds: string[] = [],
+    restingParticipantIds: string[] = [],
 ) {
-    return { partnerPairs, opponentCanonicalPairs, fallbackParticipantIds };
+    return { partnerPairs, opponentCanonicalPairs, fallbackParticipantIds, restingParticipantIds };
 }
 
 function solos(count: number): string[] {
@@ -81,6 +82,61 @@ describe('DefaultMatchmakingStrategy', () => {
         expect(resting).toHaveLength(2);
         expect(resting).not.toContain('p1');
         expect(resting).not.toContain('p2');
+    });
+
+    it('à égalité de repos, ne remet pas au repos celui qui vient de se reposer', () => {
+        const strategy = new DefaultMatchmakingStrategy(Math.random);
+        // 7 players, teams of 2 kept: 3 rest each round. p1-p3 rested last round, p4-p6 the one
+        // before: with everyone at one rest, p7 and the oldest resters (p4-p6) go first.
+        const history = baseHistory({
+            recentRounds: [
+                round([], [], [], ['p1', 'p2', 'p3']),
+                round([], [], [], ['p4', 'p5', 'p6']),
+            ],
+            sitOutCountByParticipant: { p1: 1, p2: 1, p3: 1, p4: 1, p5: 1, p6: 1 },
+        });
+
+        for (let i = 0; i < 20; i++) {
+            const plan = strategy.generateRound(
+                input({
+                    soloParticipantIds: solos(7),
+                    config: baseConfig({ preferTargetTeamSize: true }),
+                    history,
+                }),
+            );
+            const resting = restingParticipants(plan);
+            expect(resting).toHaveLength(3);
+            expect(resting).toContain('p7');
+            for (const justRested of ['p1', 'p2', 'p3']) {
+                expect(resting).not.toContain(justRested);
+            }
+        }
+    });
+
+    it("fait jouer l'équipe fixe qui a le plus attendu quand les plaques manquent", () => {
+        const strategy = new DefaultMatchmakingStrategy(Math.random);
+        const fixedTeams = [
+            { id: 'fixed-1', participantIds: ['a1', 'a2'] },
+            { id: 'fixed-2', participantIds: ['b1', 'b2'] },
+            { id: 'fixed-3', participantIds: ['c1', 'c2'] },
+        ];
+
+        for (let i = 0; i < 20; i++) {
+            const plan = strategy.generateRound(
+                input({
+                    fixedTeams,
+                    soloParticipantIds: [],
+                    config: baseConfig({ plateCount: 1 }),
+                    // fixed-3 waited the last two rounds: it must play this time.
+                    history: baseHistory({ sitOutCountByParticipant: { c1: 2, c2: 2 } }),
+                }),
+            );
+            const waiting = plan.matches
+                .filter((m) => m.opponentRef === null)
+                .map((m) => m.teamRef);
+            expect(waiting).toHaveLength(1);
+            expect(waiting).not.toContain('fixed-3');
+        }
     });
 
     it('ne dépasse pas le nombre de plaques et met les autres en attente', () => {
@@ -138,6 +194,59 @@ describe('DefaultMatchmakingStrategy', () => {
             .map((t) => t.participantIds.length);
         expect(playingSizes).toEqual([2, 2]);
         expect(restingParticipants(plan)).toHaveLength(2);
+    });
+
+    it.each([TrainingTeamComposition.RANDOM, TrainingTeamComposition.LEARNING])(
+        'oppose les équipes de même taille entre elles (%s)',
+        (teamComposition) => {
+            const strategy = new DefaultMatchmakingStrategy(Math.random);
+            const levelByParticipant = Object.fromEntries(solos(22).map((id, i) => [id, -i]));
+            // 22 players: 8 pairs and 2 trios. The two trios must meet, not each face a pair.
+            const plan = strategy.generateRound(
+                input({
+                    soloParticipantIds: solos(22),
+                    config: baseConfig({ allowedTeamSizes: [3], teamComposition }),
+                    levelByParticipant,
+                }),
+            );
+
+            const sizeByRef = new Map(
+                plan.ephemeralTeams.map((t) => [t.tempId, t.participantIds.length]),
+            );
+            for (const match of plan.matches.filter((m) => m.opponentRef !== null)) {
+                expect(sizeByRef.get(match.teamRef)).toBe(sizeByRef.get(match.opponentRef!));
+            }
+        },
+    );
+
+    it('à égalité de rotation, compose le trio sans reformer un binôme récent', () => {
+        const strategy = new DefaultMatchmakingStrategy(Math.random);
+        const lastRoundPairs: [string, string][] = [
+            ['p1', 'p2'],
+            ['p3', 'p4'],
+            ['p5', 'p6'],
+            ['p7', 'p8'],
+        ];
+        const forbidden = new Set(lastRoundPairs.map(([a, b]) => [a, b].sort().join('|')));
+
+        for (let i = 0; i < 20; i++) {
+            // 9 players, teams of 2 or 3: a single trio, everyone tied for it.
+            const plan = strategy.generateRound(
+                input({
+                    soloParticipantIds: solos(9),
+                    config: baseConfig({ allowedTeamSizes: [3] }),
+                    history: baseHistory({ recentRounds: [round(lastRoundPairs)] }),
+                }),
+            );
+            const trio = plan.ephemeralTeams.find((t) => t.participantIds.length === 3)!;
+            const ids = trio.participantIds;
+            const pairs = [
+                [ids[0], ids[1]],
+                [ids[0], ids[2]],
+                [ids[1], ids[2]],
+            ];
+            expect(pairs.some(([a, b]) => forbidden.has([a, b].sort().join('|')))).toBe(false);
+        }
     });
 
     it('confie les équipes de repli à ceux qui y ont le moins joué', () => {

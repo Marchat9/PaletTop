@@ -1,5 +1,5 @@
 import { createAction, props } from '@ngrx/store';
-import { TrainingMatchDto } from './training.models';
+import { TrainingMatchDto, TrainingScoreUpdateRequest } from './training.models';
 
 // --------- Start match ---------
 export const startTrainingMatch = createAction(
@@ -19,13 +19,7 @@ export const startTrainingMatchFailure = createAction(
 // --------- Update score ---------
 export const updateTrainingScore = createAction(
   '[Training] Update Training Score',
-  props<{
-    sessionCode: string;
-    matchId: string;
-    participantCode: string;
-    scoreA: number;
-    scoreB: number;
-  }>(),
+  props<TrainingScoreUpdateRequest>(),
 );
 export const updateTrainingScoreSuccess = createAction(
   '[Training] Update Training Score Success',
@@ -33,8 +27,10 @@ export const updateTrainingScoreSuccess = createAction(
 );
 export const updateTrainingScoreFailure = createAction(
   '[Training] Update Training Score Failure',
-  props<{ error: string }>(),
+  props<{ error: string; request: TrainingScoreUpdateRequest; offline: boolean }>(),
 );
+/** The "Synchronisé" badge has been shown long enough. */
+export const trainingScoreSyncBadgeExpired = createAction('[Training] Score Sync Badge Expired');
 // -------------------------------------------------------
 
 // --------- Validate match ---------

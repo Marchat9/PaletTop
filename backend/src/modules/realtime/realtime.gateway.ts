@@ -42,6 +42,10 @@ export function resolveConnectionTarget(auth: Record<string, unknown>): Connecti
     return { key: 'unknown', label: 'no tournament or training session' };
 }
 
+// Wrong team codes or passwords tolerated on one socket before it is disconnected: the join answer
+// tells a valid code from a wrong one, so unlimited attempts would let a client guess team codes.
+export const MAX_FAILED_JOINS_PER_SOCKET = 5;
+
 export const WsAuth = createParamDecorator((_data: unknown, ctx: ExecutionContext) => {
     const client: Socket = ctx.switchToWs().getClient();
     return client.handshake.auth;
@@ -57,6 +61,8 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
     // Every socket goes through these hooks, tournament or training: both gateways share the
     // default namespace. The count is kept per tournament and per training session.
     private readonly clientIdsByTarget: Map<string, string[]> = new Map();
+
+    private readonly failedJoinsBySocket: Map<string, number> = new Map();
 
     constructor(
         @InjectRepository(Tournament)
@@ -77,6 +83,7 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
     }
 
     handleDisconnect(client: Socket) {
+        this.failedJoinsBySocket.delete(client.id);
         const target = resolveConnectionTarget(client.handshake.auth);
         const remainingIds: string[] = (this.clientIdsByTarget.get(target.key) ?? []).filter(
             (id) => id !== client.id,
@@ -100,20 +107,27 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
         @WsAuth() auth: JoinTournamentPayload,
         @ConnectedSocket() client: Socket,
     ): Promise<void> {
-        const tournamentCode: string = auth.tournamentCode;
-        const password: string | undefined = auth.password;
-        const teamCode: string | undefined = auth.teamCode;
+        const tournamentCode: string | undefined = auth?.tournamentCode;
+        const password: string | undefined = auth?.password;
+        const teamCode: string | undefined = auth?.teamCode;
+
+        // Without a code, findOneBy({ code: undefined }) has no condition and returns any
+        // tournament. A training socket never sends this event: it joins with its session code.
+        if (typeof tournamentCode !== 'string' || !tournamentCode) {
+            client.emit('join-error', { message: 'tournamentCode requis.' });
+            return;
+        }
 
         const tournament = await this.tournamentRepo.findOneBy({ code: tournamentCode });
         if (!tournament) {
-            client.emit('join-error', { message: 'Tournoi introuvable.' });
+            this.rejectJoin(client, 'Tournoi introuvable.');
             return;
         }
 
         if (teamCode) {
             const team = tournament.teams.find((t) => t.code === teamCode);
             if (!team) {
-                client.emit('join-error', { message: 'Équipe introuvable.' });
+                this.rejectJoin(client, 'Équipe introuvable.');
                 return;
             }
             void client.join(`tournament:${tournamentCode}`);
@@ -125,15 +139,15 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
         }
 
         if (password) {
-            const tournament = await this.tournamentAuthService.findWithAdminAuth(
-                { code: tournamentCode },
-                password,
-            );
-
-            if (!tournament) {
-                client.emit('join-error', {
-                    message: 'Tournoi innexistant ou mot de passe incorrect.',
-                });
+            // findWithAdminAuth throws on a wrong password: uncaught, the client only got Nest's
+            // generic "Internal server error" exception instead of a join-error.
+            try {
+                await this.tournamentAuthService.findWithAdminAuth(
+                    { code: tournamentCode },
+                    password,
+                );
+            } catch {
+                this.rejectJoin(client, 'Tournoi inexistant ou mot de passe incorrect.');
                 return;
             }
             void client.join(`tournament:${tournamentCode}`);
@@ -152,6 +166,18 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
         this.logger.log(
             `[WS][Spectator] ${client.id} joined rooms: 'tournament:${tournamentCode}' and 'tournament:${tournamentCode}:spectator'.`,
         );
+    }
+
+    /** Answers a failed join, and disconnects the socket once it has failed too many times. */
+    private rejectJoin(client: Socket, message: string): void {
+        const failures = (this.failedJoinsBySocket.get(client.id) ?? 0) + 1;
+        this.failedJoinsBySocket.set(client.id, failures);
+        client.emit('join-error', { message });
+
+        if (failures >= MAX_FAILED_JOINS_PER_SOCKET) {
+            this.logger.warn(`[WS] ${client.id} disconnected after ${failures} failed joins.`);
+            client.disconnect(true);
+        }
     }
 
     emitMatchUpdated(

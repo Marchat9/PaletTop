@@ -15,7 +15,7 @@
       <div class="background-clip">
         <img
           class="image"
-          ngSrc="assets/images/palet_sombre.png"
+          ngSrc="assets/images/palet_sombre.webp"
           priority
           width="1200"
           height="800"
@@ -27,7 +27,7 @@
   <app-tournament-configuration
     [columns]="2"
     (form)="tournamentForm.set($event)"
-    (invalidFields)="invalidFieldNames.set($event)"
+    (invalidFields)="onInvalidFields($event)"
   />
 
   <div class="actions-wrapper">
@@ -37,7 +37,7 @@
         {{ creationError() }}
       </p>
     }
-    @if (!!invalidFieldNames()) {
+    @if (formEdited() && !!invalidFieldNames()) {
       <div class="validation-error">
         <p>Les champs suivants sont requis ou invalides :</p>
         <ul>

@@ -47,7 +47,10 @@ export const friendlyMatchReducer = createReducer(
   }),
   on(setTeam1Name, (state, { name }) => ({ ...state, team1Name: name })),
   on(setTeam2Name, (state, { name }) => ({ ...state, team2Name: name })),
-  on(setTargetScore, (state, { targetScore }) => ({ ...state, targetScore })),
+  // A cleared or negative field must not become the target: at 0, the match is "finished" at 0-0.
+  on(setTargetScore, (state, { targetScore }) =>
+    Number.isInteger(targetScore) && targetScore >= 1 ? { ...state, targetScore } : state,
+  ),
   on(updateTeam1Score, (state, { score }) => ({ ...state, team1Score: score })),
   on(updateTeam2Score, (state, { score }) => ({ ...state, team2Score: score })),
   on(startNextMatch, (state) => ({

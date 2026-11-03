@@ -70,7 +70,7 @@ export class TeamForm {
   );
 
   public readonly existingTeamCount = computed(() => this.tournament()?.teams?.length ?? 0);
-  public readonly suggestedTeamName = computed(() => `Equipe ${this.existingTeamCount() + 1}`);
+  public readonly suggestedTeamName = computed(() => `Équipe ${this.existingTeamCount() + 1}`);
   public readonly canSubmit = computed(
     () =>
       this.teamPlayers().every((player) => !!player.name.trim()) &&

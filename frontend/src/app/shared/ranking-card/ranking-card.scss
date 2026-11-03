@@ -37,6 +37,12 @@
   color: var(--color-on-surface-variant);
 }
 
+.legend {
+  margin: 0.75rem 0 0;
+  font-size: 0.75rem;
+  color: var(--color-on-surface-variant);
+}
+
 .pool-ranking {
   display: flex;
   flex-direction: column;

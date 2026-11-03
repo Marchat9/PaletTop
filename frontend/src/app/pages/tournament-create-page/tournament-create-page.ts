@@ -1,3 +1,4 @@
+import { normalizeCode } from 'src/app/utils/code-format.util';
 import { CommonModule, NgOptimizedImage } from '@angular/common';
 import { ChangeDetectionStrategy, Component, effect, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
@@ -33,6 +34,9 @@ export class TournamentCreatePageComponent {
   public readonly tournamentForm = signal<Nullable<TournamentConfigurationForm>>(null);
   public readonly invalidFieldNames = signal<Nullable<string[]>>(null);
   public readonly userHasSubmitted = signal(false);
+  /** The list of invalid fields waits for a first edit: a blank form is not an error yet. */
+  public readonly formEdited = signal(false);
+  private invalidFieldsReports = 0;
 
   constructor() {
     effect(() => {
@@ -44,9 +48,17 @@ export class TournamentCreatePageComponent {
         !this.creationError() &&
         !!tournamentCode
       ) {
-        this.router.navigate([`/admin/tournament/${tournamentCode}`]);
+        this.router.navigate([`/admin/tournament/${normalizeCode(tournamentCode)}`]);
       }
     });
+  }
+
+  public onInvalidFields(fields: Nullable<string[]>): void {
+    this.invalidFieldNames.set(fields);
+    // The first report comes from the form construction, the next ones from the user's edits.
+    if (this.invalidFieldsReports++ > 0) {
+      this.formEdited.set(true);
+    }
   }
 
   public submit(): void {

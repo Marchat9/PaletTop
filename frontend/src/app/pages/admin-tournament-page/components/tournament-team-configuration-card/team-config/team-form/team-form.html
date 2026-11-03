@@ -1,14 +1,15 @@
 <div class="field-group">
-  <label for="{{ formId }}-team-name">Nom de l'equipe (optionnel)</label>
+  <label for="{{ formId }}-team-name">Nom de l'équipe (optionnel)</label>
   <app-input-text
     id="{{ formId }}-team-name"
     icon="groups"
     [value]="teamName()"
     [placeholder]="suggestedTeamName()"
+    [maxLength]="50"
     (valueChange)="updateTeamName($event)"
   />
   @if (isChampionship()) {
-    <label for="{{ formId }}-team-name">Club de l'équipe</label>
+    <label for="{{ formId }}-team-club">Club de l'équipe</label>
     <app-input-select
       id="{{ formId }}-team-club"
       icon="location_city"
@@ -67,7 +68,7 @@
     <app-button title="Annuler" variant="tertiary" icon="close" (clicked)="onCancel()" />
   }
   <app-button
-    [title]="isEditMode() ? 'Enregistrer' : 'Creer l\'equipe'"
+    [title]="isEditMode() ? 'Enregistrer' : 'Créer l\'équipe'"
     [icon]="isEditMode() ? 'save' : 'group_add'"
     [disabled]="!canSubmit()"
     (clicked)="onSubmit()"

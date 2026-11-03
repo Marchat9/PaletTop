@@ -20,6 +20,7 @@ import {
     toTrainingSessionSummaryDto,
 } from '../responses/training-session.dto';
 import { generateNumericCode } from 'src/utils/numeric-code.util';
+import { sameName } from '../utils/same-name.utils';
 import { assertSessionOpen } from '../utils/session-guard.utils';
 import { TrainingParticipantStatus, TrainingSessionStatus } from 'src/enum/training.enum';
 import { TrainingMember } from 'src/entities/training-member.entity';
@@ -27,6 +28,11 @@ import { TrainingSession } from 'src/entities/training-session.entity';
 import { TrainingAuthService } from './training-auth.service';
 import { TrainingSessionAuthService } from './training-session-auth.service';
 import { TrainingRealtimeGateway } from '../training-realtime.gateway';
+
+const SESSION_CODE_ATTEMPTS = 50;
+// Session codes are global to the app: 6 digits (a million codes) instead of 4, so they neither
+// run out nor can be guessed easily. Sessions created before keep their 4-digit code.
+export const SESSION_CODE_LENGTH = 6;
 
 @Injectable()
 export class TrainingSessionsService {
@@ -154,7 +160,7 @@ export class TrainingSessionsService {
                 this.logger.warn(
                     `Check-in refused in session ${sessionCode}: '${member.name}' is already present`,
                 );
-                throw new ConflictException(`${member.name} est déjà inscrit(e) à cette session.`);
+                throw new ConflictException(`${member.name} est déjà inscrit(e) à cette séance.`);
             }
             name = member.name;
 
@@ -176,6 +182,22 @@ export class TrainingSessionsService {
                 await this.touchLastActivity(session.id);
                 this.logger.log(`'${back.name}' checked in again in session ${sessionCode}`);
                 return this.emitAndReturn(session);
+            }
+        }
+
+        // A guest named like someone already present: rounds would show "Alice · Alice" and nobody
+        // could tell them apart in the leaderboard. Ask for a distinguishing name instead.
+        if (!member) {
+            const homonym = session.participants.find(
+                (p) => p.status === TrainingParticipantStatus.PRESENT && sameName(p.name, name!),
+            );
+            if (homonym) {
+                this.logger.warn(
+                    `Check-in refused in session ${sessionCode}: '${homonym.name}' is already present`,
+                );
+                throw new ConflictException(
+                    `${homonym.name} est déjà présent(e) : ajoutez une initiale pour les distinguer.`,
+                );
             }
         }
 
@@ -243,11 +265,20 @@ export class TrainingSessionsService {
         return toTrainingSessionAdminDto(session);
     }
 
+    /**
+     * Session codes are global: once they are nearly all taken, drawing at random would loop on the
+     * database for ever. Past a few attempts, the creation fails with a 409 instead.
+     */
     private async generateUniqueSessionCode(): Promise<string> {
-        let code: string;
-        do {
-            code = generateNumericCode([]);
-        } while (await this.trainingSessionRepo.codeExists(code));
-        return code;
+        for (let attempt = 0; attempt < SESSION_CODE_ATTEMPTS; attempt++) {
+            const code = generateNumericCode([], SESSION_CODE_LENGTH);
+            if (!(await this.trainingSessionRepo.codeExists(code))) {
+                return code;
+            }
+        }
+        this.logger.error(`No free session code found after ${SESSION_CODE_ATTEMPTS} attempts`);
+        throw new ConflictException(
+            'Aucun code de séance disponible pour le moment, merci de réessayer.',
+        );
     }
 }

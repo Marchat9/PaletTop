@@ -21,11 +21,9 @@ export class MatchSessionsCardComponent {
   // ======= Input / Output =======
   public readonly tournament = input<Nullable<TournamentDto>>(null);
   public readonly sessions = input<Nullable<MatchesSessionDto[]>>(null);
-  public readonly startLoading = input<boolean>(false);
   public readonly nextLoading = input<boolean>(false);
   public readonly scoreUpdateLoading = input<boolean>(false);
 
-  public readonly startTournament = output<void>();
   public readonly nextSession = output<void>();
   public readonly scoreUpdate = output<ScoreUpdate>();
   // ==============================

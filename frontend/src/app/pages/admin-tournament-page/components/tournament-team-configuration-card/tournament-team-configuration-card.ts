@@ -9,6 +9,7 @@ import {
   input,
   output,
   signal,
+  viewChild,
 } from '@angular/core';
 import { Nullable } from 'src/app/models/nullable.model';
 import { TeamConfigEvent } from 'src/app/models/team-config.model';
@@ -43,6 +44,13 @@ export class TournamentTeamConfigurationCard {
   // ==============================
 
   public readonly isPrinting = signal(false);
+
+  private readonly teamConfig = viewChild(TeamConfig);
+
+  /** "Add a team" asked from the next-step card. */
+  public startTeamCreation(): void {
+    this.teamConfig()?.startTeamCreation();
+  }
 
   public readonly hasTeams = computed(() => (this.tournament()?.teams?.length ?? 0) > 0);
 

@@ -16,8 +16,9 @@ export interface SessionMatchResponseDto {
     plateNumber: number | null;
     sessionNumber: number | null;
     poolNumber: number | null;
-    teamA: { id: string; name: string; code: string };
-    teamB: { id: string; name: string; code: string } | null;
+    // No team code: it is the team's credential, and this DTO is public (spectators).
+    teamA: { id: string; name: string };
+    teamB: { id: string; name: string } | null;
     group: MatchGroupDto | null;
     startedAt: Date | null;
     finishedAt: Date | null;
@@ -48,10 +49,8 @@ export function toSessionMatchResponseDto(match: TournamentMatch): SessionMatchR
         plateNumber: match.plateNumber ?? null,
         sessionNumber: match.sessionNumber ?? null,
         poolNumber: match.pool?.poolNumber ?? null,
-        teamA: { id: match.teamA.id, name: match.teamA.name, code: match.teamA.code },
-        teamB: match.teamB
-            ? { id: match.teamB.id, name: match.teamB.name, code: match.teamB.code }
-            : null,
+        teamA: { id: match.teamA.id, name: match.teamA.name },
+        teamB: match.teamB ? { id: match.teamB.id, name: match.teamB.name } : null,
         group: toMatchGroup(match.pool?.name),
         startedAt: match.startedAt ?? null,
         finishedAt: match.finishedAt ?? null,

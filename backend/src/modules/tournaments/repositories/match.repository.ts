@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DeepPartial, Repository } from 'typeorm';
+import { DeepPartial, In, Repository } from 'typeorm';
+import { MatchStatus } from 'src/enum/status.enum';
 import { TournamentMatch } from 'src/entities/tounament-match.entity';
 
 @Injectable()
@@ -33,6 +34,20 @@ export class MatchRepository {
 
     async update(matchId: string, data: Partial<TournamentMatch>): Promise<void> {
         await this.repo.update(matchId, data);
+    }
+
+    /**
+     * Writes only if the match is still in one of the expected statuses, in the same statement: a
+     * read then a write would let a concurrent validation slip in between. Returns whether the
+     * match was updated.
+     */
+    async updateIfStatus(
+        matchId: string,
+        expected: MatchStatus[],
+        data: Partial<TournamentMatch>,
+    ): Promise<boolean> {
+        const result = await this.repo.update({ id: matchId, status: In(expected) }, data);
+        return (result.affected ?? 0) > 0;
     }
 
     save(matches: DeepPartial<TournamentMatch>[]): Promise<TournamentMatch[]> {

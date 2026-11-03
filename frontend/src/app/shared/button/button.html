@@ -9,7 +9,7 @@
 >
   <div class="button-content">
     @if (icon()) {
-      <app-icon [name]="icon()!" iconClass="button-icon" />
+      <app-icon [name]="icon()!" iconClass="button-icon" [ariaHidden]="true" />
     }
     @if (title()) {
       <span class="text" [class.can-wrap]="titleCanWrap()">{{ title() }}</span>

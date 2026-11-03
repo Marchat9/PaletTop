@@ -9,6 +9,14 @@ interface TeamRef {
     participantIds: string[];
 }
 
+/** What the fallback pick needs to know besides the rotation. */
+interface FallbackPick {
+    slots: number;
+    fallbackTeamCount: number;
+    targetTeamCount: number;
+    forbiddenPartners: Set<string>;
+}
+
 /** Players split into teams of the given sizes, independently of the other parts. */
 interface GroupPart {
     players: string[];
@@ -67,9 +75,11 @@ export class DefaultMatchmakingStrategy implements MatchmakingPort {
             participantIds: [participantId],
         }));
 
-        // Fixed teams beyond the plate count wait for the next round.
-        const fixedPlaying = input.fixedTeams.slice(0, decomposition.fixedTeamsPlaying);
-        const fixedWaiting = input.fixedTeams.slice(decomposition.fixedTeamsPlaying);
+        // Fixed teams beyond the plate count wait for the next round: those that waited the most
+        // play first, otherwise the last team of the list would wait every round.
+        const fixedOrder = this.fixedTeamsByRest(input, decomposition.fixedTeamsPlaying);
+        const fixedPlaying = fixedOrder.slice(0, decomposition.fixedTeamsPlaying);
+        const fixedWaiting = fixedOrder.slice(decomposition.fixedTeamsPlaying);
 
         const teamRefs: TeamRef[] = [
             ...fixedPlaying.map((team) => ({
@@ -99,6 +109,25 @@ export class DefaultMatchmakingStrategy implements MatchmakingPort {
         };
     }
 
+    /** Most rested first (average over the members), ties drawn at random. */
+    private fixedTeamsByRest(
+        input: GenerateRoundInput,
+        playingCount: number,
+    ): GenerateRoundInput['fixedTeams'] {
+        if (playingCount >= input.fixedTeams.length) {
+            return input.fixedTeams;
+        }
+        const counts = input.history.sitOutCountByParticipant;
+        const restOf = (team: GenerateRoundInput['fixedTeams'][number]) =>
+            team.participantIds.length === 0
+                ? 0
+                : team.participantIds.reduce((sum, id) => sum + (counts[id] ?? 0), 0) /
+                  team.participantIds.length;
+        return shuffleFisherYates(input.fixedTeams, this.random).sort(
+            (a, b) => restOf(b) - restOf(a),
+        );
+    }
+
     /** Nobody can play: everyone rests, the round still exists. */
     private allAtRest(input: GenerateRoundInput): RoundPlan {
         const restingTeams = input.soloParticipantIds.map((participantId, index) => ({
@@ -116,8 +145,9 @@ export class DefaultMatchmakingStrategy implements MatchmakingPort {
     }
 
     /**
-     * Who plays, who rests. Rest goes to those who have rested the least so far: over a whole
-     * session everyone waits about as much as the others.
+     * Who plays, who rests. Rest goes to those who have rested the least so far, then with the same
+     * tie-breaks as the fallback teams: over a whole session everyone waits about as much as the
+     * others, and nobody rests twice in a row while others rested long ago.
      */
     private splitPlayersAndRest(
         input: GenerateRoundInput,
@@ -127,9 +157,11 @@ export class DefaultMatchmakingStrategy implements MatchmakingPort {
             return { playing: [...input.soloParticipantIds], resting: [] };
         }
 
-        const counts = input.history.sitOutCountByParticipant;
-        const ordered = shuffleFisherYates(input.soloParticipantIds, this.random).sort(
-            (a, b) => (counts[a] ?? 0) - (counts[b] ?? 0),
+        const ordered = this.rotationOrder(
+            input,
+            input.soloParticipantIds,
+            input.history.sitOutCountByParticipant,
+            (round) => round.restingParticipantIds,
         );
 
         return {
@@ -153,11 +185,12 @@ export class DefaultMatchmakingStrategy implements MatchmakingPort {
     ): string[][] {
         const target = input.config.playersPerTeam;
         const fallbackSizes = groupSizes.filter((size) => size !== target);
-        const fallbackPlayers = this.pickFallbackPlayers(
-            input,
-            playing,
-            fallbackSizes.reduce((sum, size) => sum + size, 0),
-        );
+        const fallbackPlayers = this.pickFallbackPlayers(input, playing, {
+            slots: fallbackSizes.reduce((sum, size) => sum + size, 0),
+            fallbackTeamCount: fallbackSizes.length,
+            targetTeamCount: groupSizes.length - fallbackSizes.length,
+            forbiddenPartners,
+        });
         const inFallback = new Set(fallbackPlayers);
         const parts: GroupPart[] = [
             { players: fallbackPlayers, sizes: fallbackSizes },
@@ -202,7 +235,7 @@ export class DefaultMatchmakingStrategy implements MatchmakingPort {
     private pickFallbackPlayers(
         input: GenerateRoundInput,
         playing: string[],
-        slots: number,
+        { slots, fallbackTeamCount, targetTeamCount, forbiddenPartners }: FallbackPick,
     ): string[] {
         if (slots <= 0) {
             return [];
@@ -211,29 +244,92 @@ export class DefaultMatchmakingStrategy implements MatchmakingPort {
             return [...playing];
         }
 
-        const counts = input.history.fallbackCountByParticipant;
-        const roundsAgo = new Map<string, number>();
-        input.history.recentRounds.forEach((round, index) => {
-            for (const participantId of round.fallbackParticipantIds) {
-                if (!roundsAgo.has(participantId)) roundsAgo.set(participantId, index);
+        const rank = this.rotationRank(
+            input,
+            input.history.fallbackCountByParticipant,
+            (round) => round.fallbackParticipantIds,
+        );
+        const ordered = shuffleFisherYates(playing, this.random).sort(rank);
+
+        // The rotation only fixes who must go; among the players tied at the cut-off, the choice is
+        // free. When a part forms a single team (e.g. one trio, or the lone pair left with 5
+        // players), that choice alone decides partners: pick the tied players that rebuild the
+        // fewest recent pairs instead of leaving it to the draw.
+        const weighFallback = fallbackTeamCount === 1;
+        const weighRest = targetTeamCount === 1;
+        if (forbiddenPartners.size === 0 || (!weighFallback && !weighRest)) {
+            return ordered.slice(0, slots);
+        }
+        const cutoff = ordered[slots - 1];
+        const sure = ordered.filter((id) => rank(id, cutoff) < 0);
+        const tied = ordered.filter((id) => rank(id, cutoff) === 0);
+        const needed = slots - sure.length;
+        if (tied.length === needed) {
+            return ordered.slice(0, slots);
+        }
+
+        let best = [...sure, ...tied.slice(0, needed)];
+        let fewest = Number.POSITIVE_INFINITY;
+        for (let attempt = 0; attempt < PLACEMENT_ATTEMPTS * 5; attempt++) {
+            const picked =
+                attempt === 0
+                    ? tied.slice(0, needed)
+                    : shuffleFisherYates(tied, this.random).slice(0, needed);
+            const pool = [...sure, ...picked];
+            const inPool = new Set(pool);
+            const conflicts =
+                (weighFallback ? countForbiddenPairs([pool], forbiddenPartners) : 0) +
+                (weighRest
+                    ? countForbiddenPairs(
+                          [playing.filter((id) => !inPool.has(id))],
+                          forbiddenPartners,
+                      )
+                    : 0);
+            if (conflicts < fewest) {
+                fewest = conflicts;
+                best = pool;
             }
-        });
-        const ago = (id: string) => roundsAgo.get(id) ?? Number.POSITIVE_INFINITY;
+            if (conflicts === 0) break;
+        }
+        return best;
+    }
+
+    /**
+     * Whose turn it is for a chore (resting, a fallback team): first those who did it the fewest
+     * times, then those whose last time is the oldest, then those with the shortest current streak,
+     * then at random.
+     */
+    private rotationOrder(
+        input: GenerateRoundInput,
+        candidates: string[],
+        counts: Record<string, number>,
+        idsOfRound: (round: GenerateRoundInput['history']['recentRounds'][number]) => string[],
+    ): string[] {
+        return shuffleFisherYates(candidates, this.random).sort(
+            this.rotationRank(input, counts, idsOfRound),
+        );
+    }
+
+    /** Comparator behind rotationOrder: 0 means a tie, left to the draw. */
+    private rotationRank(
+        input: GenerateRoundInput,
+        counts: Record<string, number>,
+        idsOfRound: (round: GenerateRoundInput['history']['recentRounds'][number]) => string[],
+    ): (a: string, b: string) => number {
+        const recent = input.history.recentRounds.map((round) => new Set(idsOfRound(round)));
+        const roundsAgo = (id: string) => {
+            const index = recent.findIndex((ids) => ids.has(id));
+            return index === -1 ? Number.POSITIVE_INFINITY : index;
+        };
         const streak = (id: string) => {
-            const index = input.history.recentRounds.findIndex(
-                (round) => !round.fallbackParticipantIds.includes(id),
-            );
-            return index === -1 ? input.history.recentRounds.length : index;
+            const index = recent.findIndex((ids) => !ids.has(id));
+            return index === -1 ? recent.length : index;
         };
 
-        return shuffleFisherYates(playing, this.random)
-            .sort(
-                (a, b) =>
-                    (counts[a] ?? 0) - (counts[b] ?? 0) ||
-                    compareDesc(ago(a), ago(b)) ||
-                    streak(a) - streak(b),
-            )
-            .slice(0, slots);
+        return (a, b) =>
+            (counts[a] ?? 0) - (counts[b] ?? 0) ||
+            compareDesc(roundsAgo(a), roundsAgo(b)) ||
+            streak(a) - streak(b);
     }
 
     /**
@@ -350,15 +446,58 @@ export class DefaultMatchmakingStrategy implements MatchmakingPort {
     }
 
     /**
-     * Pairs the teams. In learning mode nearby strengths meet so the matches stay close; otherwise
-     * the order is drawn at random, avoiding recent opponents.
+     * Pairs the teams, same sizes first. In learning mode nearby strengths meet so the matches stay
+     * close; otherwise the order is drawn at random, avoiding recent opponents.
      */
     private pairTeams(
         input: GenerateRoundInput,
         teamRefs: TeamRef[],
     ): { teamRef: string; opponentRef: string | null }[] {
         const forbiddenOpponents = this.forbiddenPairs(input, 'opponent');
+        return this.splitBySize(input, teamRefs).flatMap((group) =>
+            this.pairGroup(input, group, forbiddenOpponents),
+        );
+    }
 
+    /**
+     * Teams of the same size meet first: two trios play each other rather than each facing a
+     * pair. Each size with an odd count gives up one team, and only those leftovers are mixed.
+     * With a single size, the teams go through untouched (no extra draw).
+     */
+    private splitBySize(input: GenerateRoundInput, teamRefs: TeamRef[]): TeamRef[][] {
+        const bySize = new Map<number, TeamRef[]>();
+        for (const team of teamRefs) {
+            const size = team.participantIds.length;
+            bySize.set(size, [...(bySize.get(size) ?? []), team]);
+        }
+        if (bySize.size <= 1) {
+            return [teamRefs];
+        }
+
+        const groups: TeamRef[][] = [];
+        const leftovers: TeamRef[] = [];
+        for (const group of bySize.values()) {
+            if (group.length % 2 === 0) {
+                groups.push(group);
+                continue;
+            }
+            // Learning mode: the weakest of the size is the one mixed, so it meets a team of its
+            // level among the leftovers. Otherwise the one mixed is drawn at random.
+            const ordered =
+                input.config.teamComposition === TrainingTeamComposition.LEARNING
+                    ? [...group].sort((x, y) => this.teamLevel(input, y) - this.teamLevel(input, x))
+                    : shuffleFisherYates(group, this.random);
+            leftovers.push(ordered[ordered.length - 1]);
+            if (ordered.length > 1) groups.push(ordered.slice(0, -1));
+        }
+        return leftovers.length > 0 ? [...groups, leftovers] : groups;
+    }
+
+    private pairGroup(
+        input: GenerateRoundInput,
+        teamRefs: TeamRef[],
+        forbiddenOpponents: Set<string>,
+    ): { teamRef: string; opponentRef: string | null }[] {
         if (input.config.teamComposition === TrainingTeamComposition.LEARNING) {
             const byStrength = [...teamRefs].sort(
                 (a, b) => this.teamLevel(input, b) - this.teamLevel(input, a),

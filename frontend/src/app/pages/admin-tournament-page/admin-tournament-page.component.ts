@@ -1,3 +1,5 @@
+import { normalizeCode } from 'src/app/utils/code-format.util';
+import { TournamentNextStep } from './components/tournament-next-step/tournament-next-step';
 import { Dialog } from '@angular/cdk/dialog';
 import { CommonModule } from '@angular/common';
 import {
@@ -9,6 +11,7 @@ import {
   OnInit,
   signal,
   DestroyRef,
+  viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -67,6 +70,7 @@ import { onResyncRequested } from 'src/app/utils/resync-on-reconnect.util';
     TournamentConfigurationCardComponent,
     TournamentTeamConfigurationCard,
     MatchSessionsCardComponent,
+    TournamentNextStep,
     RankingCard,
     AnimateOnChangeDirective,
   ],
@@ -147,7 +151,9 @@ export class AdminTournamentPageComponent implements OnInit {
     this.activatedRoute.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
       const code = params.get('tournamentCode');
       if (code) {
-        this.tournamentCode.set(code);
+        // Normalized like the stored code: otherwise "abc" never equals the loaded "ABC" and the
+        // connection effect fires again on every response.
+        this.tournamentCode.set(normalizeCode(code));
       } else {
         this.reconnectAsAdmin();
       }
@@ -157,12 +163,17 @@ export class AdminTournamentPageComponent implements OnInit {
   // ========= Actions  =========
 
   public disconnect(): void {
-    this.store.dispatch(disconnectTournamentAdministrator());
-    this.router.navigate(['/home']);
+    // Leave the page first: cleared while still on screen, the session makes the page ask for the
+    // admin login again, and that navigation won over the one to the home page.
+    void this.router
+      .navigate(['/accueil'])
+      .then(() => this.store.dispatch(disconnectTournamentAdministrator()));
   }
   private reconnectAsAdmin(): void {
     this.store.dispatch(disconnectTournamentAdministrator());
-    this.router.navigate(['/admin/tournament']);
+    // Opened from a link without an admin session: keep the code, only the password is missing.
+    const code = this.tournamentCode();
+    this.router.navigate(['/admin/tournament'], code ? { queryParams: { code } } : {});
   }
 
   public updateTournamentConfiguration(tournament: TournamentConfigurationDto): void {
@@ -249,7 +260,7 @@ export class AdminTournamentPageComponent implements OnInit {
     const data: ConfirmationData = {
       title: 'Démarrer le tournoi',
       message:
-        'Cette action est irréversible. Les équipes seront réparties aléatoirement dans les poules et les matchs de la première session seront générés.',
+        'Cette action est irréversible. Les équipes seront réparties aléatoirement dans les poules et les matchs du premier round seront générés.',
       confirmLabel: 'Démarrer',
     };
 
@@ -261,13 +272,25 @@ export class AdminTournamentPageComponent implements OnInit {
         disableClose: false,
       })
       .closed.subscribe((confirmed) => {
-        if (confirmed) {
+        if (confirmed && !this.startLoading()) {
           this.store.dispatch(startTournament());
         }
       });
   }
 
+  private readonly teamCard = viewChild(TournamentTeamConfigurationCard);
+
+  /** From the next-step card: open the team creation (sheet on mobile, form on desktop). */
+  public addTeam(): void {
+    this.teamCard()?.startTeamCreation();
+  }
+
   public nextSession(): void {
+    // The button only re-renders as loading on the next change detection: a double click can
+    // land in between. The store signal is already up to date after the first dispatch.
+    if (this.nextLoading()) {
+      return;
+    }
     this.store.dispatch(nextSession());
   }
 
@@ -275,7 +298,7 @@ export class AdminTournamentPageComponent implements OnInit {
     const data: ConfirmationData = {
       title: 'Terminer le tournoi',
       message:
-        'Cette action est irréversible. Le tournoi sera clôturé et aucune nouvelle session ne pourra être démarrée.',
+        'Cette action est irréversible. Le tournoi sera clôturé et aucun nouveau round ne pourra être démarré.',
       confirmLabel: 'Terminer',
     };
 

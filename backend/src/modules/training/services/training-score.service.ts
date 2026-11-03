@@ -3,6 +3,7 @@ import { TrainingMatch } from 'src/entities/training-match.entity';
 import { TrainingSession } from 'src/entities/training-session.entity';
 import { TrainingTeam } from 'src/entities/training-team.entity';
 import { MatchStatus } from 'src/enum/status.enum';
+import { TrainingParticipantStatus, TrainingRoundStatus } from 'src/enum/training.enum';
 import { TrainingMatchRepository } from '../repositories/training-match.repository';
 import { TrainingSessionRepository } from '../repositories/training-session.repository';
 import { TrainingMatchDto, toTrainingMatchDto } from '../responses/training-round.dto';
@@ -10,6 +11,8 @@ import { assertSessionOpen } from '../utils/session-guard.utils';
 import { TrainingSessionAuthService } from './training-session-auth.service';
 import { TrainingLeaderboardService } from './training-leaderboard.service';
 import { TrainingRealtimeGateway } from '../training-realtime.gateway';
+
+const NOT_VALIDATED = [MatchStatus.PENDING, MatchStatus.ONGOING, MatchStatus.ENDED];
 
 @Injectable()
 export class TrainingScoreService {
@@ -91,17 +94,27 @@ export class TrainingScoreService {
             match.startedAt = new Date();
         }
 
-        const [[saved]] = await Promise.all([
-            this.trainingMatchRepo.save([match]),
-            this.trainingSessionRepo.touchLastActivity(session.id),
-        ]);
+        const updated = await this.trainingMatchRepo.updateIfStatus(matchId, NOT_VALIDATED, {
+            scoreA: match.scoreA,
+            scoreB: match.scoreB,
+            status: match.status,
+            finishedAt: match.finishedAt,
+            startedAt: match.startedAt,
+        });
+        // Validated by the other team while this score was on its way: it must not reopen it.
+        if (!updated) {
+            throw new BadRequestException(
+                "Le match vient d'être validé : le score ne peut plus changer.",
+            );
+        }
+        await this.trainingSessionRepo.touchLastActivity(session.id);
         // Only the end of the match is logged: every point entered would flood the logs.
         if (isFinished && !wasEnded) {
             this.logger.log(
                 `Match ${matchId} ended ${scoreA}-${scoreB} (training session: ${sessionCode})`,
             );
         }
-        return this.emitMatchUpdate(sessionCode, session.id, saved);
+        return this.emitMatchUpdate(sessionCode, session.id, match);
     }
 
     async validateMatch(
@@ -136,14 +149,26 @@ export class TrainingScoreService {
         match.status = MatchStatus.VALIDATED;
         match.finishedAt = match.finishedAt ?? new Date();
 
-        const [[saved]] = await Promise.all([
-            this.trainingMatchRepo.save([match]),
-            this.trainingSessionRepo.touchLastActivity(session.id),
-        ]);
+        // Two validations at once: only the first one goes through, so the leaderboard is
+        // recomputed and broadcast once.
+        const validated = await this.trainingMatchRepo.updateIfStatus(
+            matchId,
+            [MatchStatus.ENDED],
+            {
+                status: match.status,
+                finishedAt: match.finishedAt,
+            },
+        );
+        if (!validated) {
+            throw new BadRequestException(
+                'Le match a déjà été validé ou son score vient de changer.',
+            );
+        }
+        await this.trainingSessionRepo.touchLastActivity(session.id);
         this.logger.log(
             `Match ${matchId} validated ${match.scoreA}-${match.scoreB} (training session: ${sessionCode})`,
         );
-        return this.emitMatchUpdate(sessionCode, session.id, saved);
+        return this.emitMatchUpdate(sessionCode, session.id, match);
     }
 
     async adminUpdateScore(
@@ -166,6 +191,16 @@ export class TrainingScoreService {
 
         this.validateScores(scoreA, scoreB, session.pointsPerGame, matchId, sessionCode);
         const isFinished = this.isMatchFinished(scoreA, scoreB, session.pointsPerGame);
+        // Only the latest round blocks the next generation: reopened in an older round, the match
+        // would stay ONGOING for ever and silently drop out of the leaderboard.
+        if (match.round.status === TrainingRoundStatus.CLOSED && !isFinished) {
+            this.logger.warn(
+                `Admin correction refused: match ${matchId} of session ${sessionCode} is in a closed round`,
+            );
+            throw new BadRequestException(
+                `Ce round est clôturé : le score corrigé doit rester final (${session.pointsPerGame} points pour une équipe).`,
+            );
+        }
 
         const wasValidated = match.status === MatchStatus.VALIDATED;
 
@@ -276,6 +311,20 @@ export class TrainingScoreService {
                 `Invalid participant code for match ${matchId} of session ${sessionCode}`,
             );
             throw new BadRequestException('Code participant invalide pour ce match.');
+        }
+
+        // Removed from the session by the admin: the player page already says so, the API must
+        // agree. The match is then the admin's to finish.
+        const acting = [...(match.teamA.members ?? []), ...(match.teamB?.members ?? [])].find(
+            (m) => m.participant.code === participantCode,
+        )?.participant;
+        if (acting?.status === TrainingParticipantStatus.LEFT) {
+            this.logger.warn(
+                `Match action refused: participant left session ${sessionCode} (match ${matchId})`,
+            );
+            throw new BadRequestException(
+                "Vous avez été retiré(e) de la séance : ce match est désormais géré par l'organisateur.",
+            );
         }
 
         return { match, session };

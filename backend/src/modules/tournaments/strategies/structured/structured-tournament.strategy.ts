@@ -40,6 +40,23 @@ const TABLE_STANDING_ORDER: Record<MatchGroupKey, number> = {
 };
 const POOL_ONLY_ORDER = 5;
 
+/**
+ * The 3rd-place match belongs to the principal bracket, right under the final: its players are
+ * the semi-final losers, ahead of every earlier exit of the bracket. Ranked as a table of its own
+ * (after the whole principal bracket), it put the quarter-final losers 3rd to 6th when there is no
+ * consolation table to send them to.
+ */
+function standingTable(exit: EliminationExit): number {
+    return exit.table === MatchGroupKey.THIRD_PLACE_MATCH
+        ? TABLE_STANDING_ORDER[MatchGroupKey.PRINCIPALE]
+        : TABLE_STANDING_ORDER[exit.table];
+}
+
+/** Just under the final (played in the same round): finalists first, then the 3rd-place match. */
+function standingDepth(exit: EliminationExit): number {
+    return exit.table === MatchGroupKey.THIRD_PLACE_MATCH ? exit.session - 0.5 : exit.session;
+}
+
 export class StructuredTournamentStrategy extends TournamentStrategy {
     private readonly logger = new Logger(StructuredTournamentStrategy.name);
 
@@ -168,12 +185,12 @@ export class StructuredTournamentStrategy extends TournamentStrategy {
         a: { exit?: EliminationExit; seed: number },
         b: { exit?: EliminationExit; seed: number },
     ): number {
-        const tableA = a.exit ? TABLE_STANDING_ORDER[a.exit.table] : POOL_ONLY_ORDER;
-        const tableB = b.exit ? TABLE_STANDING_ORDER[b.exit.table] : POOL_ONLY_ORDER;
+        const tableA = a.exit ? standingTable(a.exit) : POOL_ONLY_ORDER;
+        const tableB = b.exit ? standingTable(b.exit) : POOL_ONLY_ORDER;
         if (tableA !== tableB) return tableA - tableB;
         // Same table: deeper round first, winner before loser, higher score first.
-        const depthA = a.exit?.session ?? 0;
-        const depthB = b.exit?.session ?? 0;
+        const depthA = a.exit ? standingDepth(a.exit) : 0;
+        const depthB = b.exit ? standingDepth(b.exit) : 0;
         if (depthA !== depthB) return depthB - depthA;
         const wonA = a.exit?.won ? 1 : 0;
         const wonB = b.exit?.won ? 1 : 0;

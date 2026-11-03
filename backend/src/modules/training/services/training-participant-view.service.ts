@@ -81,7 +81,7 @@ export class TrainingParticipantViewService {
         const participant = session.participants.find((p) => p.code === participantCode);
         if (!participant) {
             this.logger.warn(`Invalid participant code for training session ${sessionCode}`);
-            throw new NotFoundException('Code participant invalide pour cette session.');
+            throw new NotFoundException('Code participant invalide pour cette séance.');
         }
         return { session, participant };
     }

@@ -9,7 +9,11 @@ import {
   loadTrainingParticipantCurrentMatchSuccess,
   resetTraining,
 } from './training.actions';
-import { checkinTrainingParticipantSuccess } from './training.session.actions';
+import { wsTrainingSessionUpdated } from '../realtime/realtime.actions';
+import {
+  checkinTrainingParticipant,
+  checkinTrainingParticipantSuccess,
+} from './training.session.actions';
 import {
   TrainingCurrentMatchDto,
   TrainingParticipantAdminDto,
@@ -80,6 +84,31 @@ describe('trainingReducer', () => {
       );
 
       expect(state.lastCheckedInParticipant).toEqual(JEAN);
+    });
+
+    // The websocket broadcast of the newcomer usually lands before the HTTP answer: the newcomer is
+    // found against the participants of the moment the check-in was sent.
+    it('désigne le participant même quand le websocket arrive avant la réponse', () => {
+      const before = {
+        ...initialTrainingState,
+        currentSession: { data: buildSession([]), isLoading: false, error: null },
+      };
+
+      const sent = trainingReducer(
+        before,
+        checkinTrainingParticipant({ sessionCode: 'S', name: 'Jean' }),
+      );
+      const broadcast = trainingReducer(
+        sent,
+        wsTrainingSessionUpdated({ session: buildSession([JEAN]) }),
+      );
+      const state = trainingReducer(
+        broadcast,
+        checkinTrainingParticipantSuccess({ session: buildSession([JEAN]) }),
+      );
+
+      expect(state.lastCheckedInParticipant).toEqual(JEAN);
+      expect(state.checkinBaseline).toBeNull();
     });
 
     it('ne désigne personne quand la séance revient inchangée', () => {

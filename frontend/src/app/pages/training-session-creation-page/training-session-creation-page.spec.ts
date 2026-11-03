@@ -223,7 +223,7 @@ describe('TrainingSessionCreationPage', () => {
         configuration: {
           date: new Date('2026-03-12'),
           playersPerTeam: 2,
-          allowedTeamSizes: [1, 2, 3],
+          allowedTeamSizes: [2, 3],
           preferTargetTeamSize: false,
           plateCount: 10,
           teamComposition: 'RANDOM',

@@ -74,13 +74,28 @@ export class UpDownTournamentConfig extends SpecificTournamentConfig {
     lastRoundByRanking?: boolean;
 }
 
+@ValidatorConstraint({ name: 'differentFromHomeClub', async: false })
+class DifferentFromHomeClubConstraint implements ValidatorConstraintInterface {
+    validate(value: unknown, args: ValidationArguments): boolean {
+        const { homeClub } = args.object as ChampionshipTournamentConfig;
+        if (typeof value !== 'string' || typeof homeClub !== 'string') return true;
+        return value.trim().toLowerCase() !== homeClub.trim().toLowerCase();
+    }
+
+    defaultMessage(): string {
+        return "Le club à domicile et le club à l'extérieur doivent être différents.";
+    }
+}
+
 export class ChampionshipTournamentConfig extends SpecificTournamentConfig {
     @IsString()
     @IsNotEmpty()
     homeClub!: string;
 
+    // Same club on both sides: teams could only pick that club and the start always failed.
     @IsString()
     @IsNotEmpty()
+    @Validate(DifferentFromHomeClubConstraint)
     awayClub!: string;
 }
 

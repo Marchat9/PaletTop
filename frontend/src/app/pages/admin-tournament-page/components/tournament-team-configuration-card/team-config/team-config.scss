@@ -19,7 +19,10 @@
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+  // A share of the row like the creation column: otherwise a long team name squeezed the form.
+  flex: 1 1 48%;
   min-width: 0;
+  overflow-wrap: anywhere;
 
   .team-list-header {
     display: flex;

@@ -72,14 +72,14 @@ export class SessionService {
 
         // Build then return and emit tournament status info.
         const statusAfterStart = await this.buildTournamentStatus(strategy, tournamentWithMatches);
-        const tournamentWithStatusInfo = toAdminTournamentDto(
-            tournamentWithMatches,
-            statusAfterStart,
+        // The general room is public (spectators): no team codes in what is broadcast there.
+        this.gateway.emitTournamentUpdated(
+            tournamentCode,
+            toTournamentMetaDto(tournamentWithMatches, statusAfterStart),
         );
-        this.gateway.emitTournamentUpdated(tournamentCode, tournamentWithStatusInfo);
         // ====================
 
-        return tournamentWithStatusInfo;
+        return toAdminTournamentDto(tournamentWithMatches, statusAfterStart);
     }
 
     /**
@@ -138,7 +138,7 @@ export class SessionService {
 
         if (tournament.status !== TournamentStatus.ACTIVE) {
             throw new BadRequestException(
-                `Impossible de générer la prochaine session pour un tournoi en statut "${tournament.status}".`,
+                `Impossible de générer le prochain round pour un tournoi en statut "${tournament.status}".`,
             );
         }
 
@@ -153,7 +153,14 @@ export class SessionService {
         // Strategy step: Check if next session could be started.
         if (!currentSession || !strategy.canStartNextSession(currentSession)) {
             throw new BadRequestException(
-                'Tous les matchs de la session en cours doivent être validés avant de lancer la suivante.',
+                'Tous les matchs du round en cours doivent être validés avant de lancer le suivant.',
+            );
+        }
+        // Phase limits (rounds count, final reached) were only enforced by the UI buttons.
+        const statusBeforeNext = await this.computePhaseStatus(strategy, tournament);
+        if (!statusBeforeNext.canGenerateNewSession) {
+            throw new BadRequestException(
+                "Aucun round supplémentaire n'est prévu : le tournoi peut être clôturé.",
             );
         }
 
@@ -247,7 +254,13 @@ export class SessionService {
         // Strategy step: Check if tournament could be completed.
         if (!openSession || !strategy.canCompleteTournament(tournament)) {
             throw new BadRequestException(
-                `Le tournoi et une session doivent être ACTIVE pour clôturer le tournoi. Statut actuel : "${tournament.status}".`,
+                `Le tournoi et un round doivent être en cours pour clôturer le tournoi. Statut actuel : "${tournament.status}".`,
+            );
+        }
+        const statusBeforeCompletion = await this.computePhaseStatus(strategy, tournament);
+        if (!statusBeforeCompletion.canFinishTournament) {
+            throw new BadRequestException(
+                "Le tournoi ne peut pas encore être clôturé : toutes ses phases n'ont pas été jouées.",
             );
         }
         this.logger.log(
@@ -318,8 +331,17 @@ export class SessionService {
             tournament.id,
             sessionNumber,
         );
-        if (!session) throw new NotFoundException('Session introuvable');
+        if (!session) throw new NotFoundException('Round introuvable');
         return toSessionResponseDto(session);
+    }
+
+    /** Status from the persisted sessions, with their matches: what the admin buttons rely on. */
+    private async computePhaseStatus(
+        strategy: TournamentStrategy,
+        tournament: Tournament,
+    ): Promise<TournamentStatusInfo> {
+        const sessions = await this.sessionRepo.findAllByTournament(tournament.id);
+        return strategy.computeTournamentStatus(tournament, sessions);
     }
 
     public async buildTournamentStatus(

@@ -73,6 +73,33 @@ describe('StructuredTournamentStrategy.computeStandings', () => {
         ]);
     });
 
+    // Without a consolante, the quarter-final losers exit in the principal table: they must still
+    // rank below the 3rd-place match players (the semi-final losers).
+    it('classe la petite finale juste sous la finale, au-dessus des perdants des quarts', () => {
+        const teams = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+        const matches = [
+            match(MatchGroupKey.PRINCIPALE, 1, 'A', 13, 'E', 5), // quarter-finals
+            match(MatchGroupKey.PRINCIPALE, 1, 'B', 13, 'F', 6),
+            match(MatchGroupKey.PRINCIPALE, 1, 'C', 13, 'G', 7),
+            match(MatchGroupKey.PRINCIPALE, 1, 'D', 13, 'H', 8),
+            match(MatchGroupKey.PRINCIPALE, 2, 'A', 13, 'C', 4), // semi-finals
+            match(MatchGroupKey.PRINCIPALE, 2, 'B', 13, 'D', 3),
+            match(MatchGroupKey.PRINCIPALE, 3, 'A', 13, 'B', 9), // final
+            match(MatchGroupKey.THIRD_PLACE_MATCH, 3, 'D', 13, 'C', 1),
+        ];
+
+        expect(order(strategy.computeStandings(tournament(teams), matches))).toEqual([
+            'A',
+            'B',
+            'D',
+            'C',
+            'H',
+            'G',
+            'F',
+            'E',
+        ]);
+    });
+
     // A team knocked out later ranks above one knocked out earlier in the same table.
     it('classe une élimination plus tardive au-dessus dans un même tableau', () => {
         const teams = ['W', 'F', 'S'];

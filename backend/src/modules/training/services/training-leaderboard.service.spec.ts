@@ -33,6 +33,7 @@ function makeService(historyMatches: TrainingMatch[]) {
 
 const session = {
     id: 'S',
+    pointsPerGame: 13,
     training: { id: 'T' },
     participants: [
         { id: 'P1', member: { id: 'M1' } },
@@ -44,8 +45,13 @@ const session = {
 
 describe('TrainingLeaderboardService.getLevelByParticipant', () => {
     it('mêle la séance en cours et l’historique du membre, garde les invités sur la séance seule', async () => {
-        // History (previous session): M1 scored 7, M2 scored 9.
-        const history = [match([player('h1', 'M1')], 7, [player('h2', 'M2')], 9)];
+        // History (previous session, played in 11 points): M1 scored 11 (won), M2 scored 5.
+        const history = [
+            {
+                ...match([player('h1', 'M1')], 11, [player('h2', 'M2')], 5),
+                session: { pointsPerGame: 11 },
+            },
+        ] as TrainingMatch[];
         const { service, sessionRepo, matchRepo } = makeService(history);
 
         // Current session: P1 (M1) scored 13 against guest G who scored 5.
@@ -55,12 +61,13 @@ describe('TrainingLeaderboardService.getLevelByParticipant', () => {
 
         expect(sessionRepo.findRecentIdsByTraining).toHaveBeenCalledWith('T', 'S', 5);
         expect(matchRepo.findValidatedBySessions).toHaveBeenCalledWith(['prev-session']);
-        // P1: (13 current + 7 history) / 2 matches = 10
-        expect(levels['P1']).toBe(10);
-        // P2: only history via member M2 = 9 / 1
-        expect(levels['P2']).toBe(9);
-        // Guest G: current session only = 5 / 1
-        expect(levels['G']).toBe(5);
+        // Scores as a share of their session's target. P1: (13/13 + 11/11) / 2 = 1 - two wins weigh
+        // the same whatever the target.
+        expect(levels['P1']).toBe(1);
+        // P2: only history via member M2 = 5/11
+        expect(levels['P2']).toBeCloseTo(5 / 11);
+        // Guest G: current session only = 5/13
+        expect(levels['G']).toBeCloseTo(5 / 13);
         // P3: never played → unknown, absent from the map
         expect(levels['P3']).toBeUndefined();
     });
@@ -77,7 +84,8 @@ describe('TrainingLeaderboardService.getLevelByParticipant', () => {
         const levels = await serviceNoHistory.getLevelByParticipant(session, current, 0);
 
         expect(sessionRepo.findRecentIdsByTraining).toHaveBeenCalledWith('T', 'S', 0);
-        expect(levels['P1']).toBe(11);
-        expect(levels['G']).toBe(4);
+        // As a share of the session's 13-point target.
+        expect(levels['P1']).toBeCloseTo(11 / 13);
+        expect(levels['G']).toBeCloseTo(4 / 13);
     });
 });

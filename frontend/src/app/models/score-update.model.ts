@@ -9,4 +9,6 @@ export interface TeamScoreUpdate {
   teamCode: string;
   scoreA: number;
   scoreB: number;
+  /** Resent automatically after a network outage (not typed just now). */
+  fromOfflineQueue?: boolean;
 }

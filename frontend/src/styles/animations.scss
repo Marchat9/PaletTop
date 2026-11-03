@@ -98,3 +98,14 @@
     animation-delay: 0ms !important;
   }
 }
+
+// "Synchronisé" badge of the player match card: stays, then fades out.
+@keyframes palettop-sync-badge-fade {
+  0%,
+  75% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}

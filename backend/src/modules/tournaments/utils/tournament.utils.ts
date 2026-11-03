@@ -1,3 +1,5 @@
+import { Team } from 'src/entities/team.entity';
+import { TournamentMatch } from 'src/entities/tounament-match.entity';
 import { Tournament } from 'src/entities/tournament.entity';
 import { TournamentConfigurationDto } from '../dto/tournament-configuration.dto';
 import {
@@ -9,6 +11,28 @@ import {
 import { CompetitionMode } from 'src/enum/tounament.enum';
 import { TournamentConfiguration } from 'src/entities/tournament-configuration.entity';
 import { ConstraintConfig } from 'src/model/constraint.model';
+
+interface TeamWithMatches extends Team {
+    matches?: TournamentMatch[] | null;
+}
+
+/**
+ * Strips the team codes from every match of a tournament sent to a player. A match's teams are
+ * full entities, opponent included, and the opponent's code is the proof asked at validation.
+ */
+export function stripMatchTeamCodes(tournament: Tournament): Tournament {
+    const matches = [
+        ...(tournament.matches ?? []),
+        ...(tournament.matchsSessions ?? []).flatMap((session) => session.matches ?? []),
+        // The player's own team is sent with its matches attached (see the join endpoint).
+        ...(tournament.teams ?? []).flatMap((team) => (team as TeamWithMatches).matches ?? []),
+    ];
+    for (const match of matches) {
+        if (match.teamA) Reflect.deleteProperty(match.teamA, 'code');
+        if (match.teamB) Reflect.deleteProperty(match.teamB, 'code');
+    }
+    return tournament;
+}
 
 export function sanitizeTournament(tournament: Tournament): Tournament {
     const safeTournament = tournament as Tournament & { adminPassword?: string };

@@ -138,6 +138,7 @@ function simulate(
             partnerPairs: partnersOf(plan),
             opponentCanonicalPairs: opponentsOf(plan),
             fallbackParticipantIds: fallback,
+            restingParticipantIds: restingOf(plan),
         });
     }
 

@@ -49,7 +49,7 @@ export class TrainingSessionRepository {
         const session = await this.findByCode(code);
         if (!session) {
             this.logger.warn(`Training session not found with code: ${code}`);
-            throw new NotFoundException('Session introuvable.');
+            throw new NotFoundException('Séance introuvable.');
         }
         return session;
     }

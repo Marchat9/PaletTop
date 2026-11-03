@@ -7,10 +7,9 @@ import { MatchStatusComponent } from 'src/app/shared/match-status/match-status';
 import { MatchTimerComponent } from 'src/app/shared/match-timer/match-timer';
 import { StaggerDirective } from 'src/app/shared/stagger/stagger.directive';
 import { matchStatusTone } from 'src/app/shared/status-pill/match-status-tone';
-import { StatusPill, StatusPillTone } from 'src/app/shared/status-pill/status-pill';
+import { StatusPill } from 'src/app/shared/status-pill/status-pill';
 import {
   TrainingMatchDto,
-  TrainingMatchStatus,
   TrainingRoundDto,
   TrainingTeamDto,
 } from 'src/app/store/training/training.models';
@@ -45,10 +44,6 @@ export class RoundMatches {
    * "Awaiting validation" is still waiting for an action from the players: it carries the tone of a
    * draft, not that of a finished match.
    */
-  protected statusTone(status: TrainingMatchStatus): StatusPillTone {
-    return matchStatusTone(status);
-  }
-
   protected readonly editingMatchId = signal<string | null>(null);
   protected readonly draftScoreA = signal(0);
   protected readonly draftScoreB = signal(0);
@@ -57,21 +52,28 @@ export class RoundMatches {
   // jump as soon as a player rests in the middle of the round.
   protected readonly matchRows = computed(() => {
     let plateNumber = 0;
+    // Labels and tone computed here rather than by method calls in the template.
     return this.round().matches.map((match) => ({
       match,
       plateNumber: match.isBye ? null : ++plateNumber,
+      teamALabel: teamLabel(match.teamA),
+      teamBLabel: teamLabel(match.teamB),
+      statusTone: matchStatusTone(match.status),
     }));
   });
 
-  protected teamLabel(team: TrainingTeamDto | null): string {
-    if (!team) {
-      return '—';
+  /** Shown under the edited row: the draft stays open instead of being lost to a server error. */
+  protected readonly editError = computed(() => {
+    const max = this.pointsPerGame();
+    const [a, b] = [this.draftScoreA(), this.draftScoreB()];
+    if (a > max || b > max) {
+      return `Un score ne peut pas dépasser ${max} points.`;
     }
-    if (team.name) {
-      return team.name;
+    if (a === max && b === max) {
+      return `Les deux équipes ne peuvent pas avoir ${max} points.`;
     }
-    return team.members.map((member) => member.name).join(' · ');
-  }
+    return null;
+  });
 
   protected startEdit(match: TrainingMatchDto): void {
     this.editingMatchId.set(match.id);
@@ -84,6 +86,9 @@ export class RoundMatches {
   }
 
   protected saveEdit(matchId: string): void {
+    if (this.editError()) {
+      return;
+    }
     this.updateScore.emit({
       matchId,
       scoreA: this.draftScoreA(),
@@ -91,4 +96,14 @@ export class RoundMatches {
     });
     this.editingMatchId.set(null);
   }
+}
+
+function teamLabel(team: TrainingTeamDto | null): string {
+  if (!team) {
+    return '—';
+  }
+  if (team.name) {
+    return team.name;
+  }
+  return team.members.map((member) => member.name).join(' · ');
 }

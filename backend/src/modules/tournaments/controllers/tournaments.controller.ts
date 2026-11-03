@@ -22,6 +22,8 @@ import { AdminQualifyingDto } from '../dto/admin-qualifying.dto';
 import { CreateTournamentDto } from '../dto/create-tournament.dto';
 import { JoinTournamentDto } from '../dto/join-tournament.dto';
 import { UpdateTournamentConfigurationDto } from '../dto/update-tournament-configuration.dto';
+import { runGuarded } from 'src/utils/run-guarded.util';
+import { stripMatchTeamCodes } from '../utils/tournament.utils';
 import { AdminTournamentDto, toAdminTournamentDto } from '../responses/admin-tournament.dto';
 import { GlobalRankingEntry } from '../responses/ranking.dto';
 import { SpectatorTournamentDto } from '../responses/spectator-tournament.dto';
@@ -154,7 +156,7 @@ export class TournamentsController {
                 null,
                 tournament,
             );
-            return { ...tournament, tournamentStatus };
+            return { ...stripMatchTeamCodes(tournament), tournamentStatus };
         } catch (error: unknown) {
             if (error instanceof HttpException) {
                 throw error;
@@ -173,17 +175,16 @@ export class TournamentsController {
         @Param('code') code: string,
         @Body() dto: AdminQualifyingDto,
     ): Promise<AdminTournamentDto> {
-        try {
-            return await this.sessionService.startTournament(code, dto.password);
-        } catch (error) {
-            if (error instanceof HttpException) {
-                throw error;
-            }
-
-            this.logger.error(`Tournament start failed`, error);
-
-            throw new InternalServerErrorException('Erreur lors du démarrage du tournoi.');
-        }
+        return runGuarded(
+            this.logger,
+            'Erreur lors du démarrage du tournoi.',
+            () => this.sessionService.startTournament(code, dto.password),
+            {
+                // Net against two concurrent starts (double click): the loser of the unique
+                // (tournament, session number) constraint gets a clean 409.
+                pgErrorMessages: { '23505': 'Le tournoi est déjà en cours de démarrage.' },
+            },
+        );
     }
 
     @Post(':code/complete')
@@ -209,19 +210,16 @@ export class TournamentsController {
         @Param('code') code: string,
         @Body() dto: AdminQualifyingDto,
     ): Promise<AdminTournamentDto> {
-        try {
-            return await this.sessionService.nextSession(code, dto.password);
-        } catch (error) {
-            if (error instanceof HttpException) {
-                throw error;
-            }
-
-            this.logger.error(`Tournament next-session failed`, error);
-
-            throw new InternalServerErrorException(
-                'Erreur lors de la génération de la session suivante.',
-            );
-        }
+        return runGuarded(
+            this.logger,
+            'Erreur lors de la génération du round suivant.',
+            () => this.sessionService.nextSession(code, dto.password),
+            {
+                pgErrorMessages: {
+                    '23505': 'Le round suivant est déjà en cours de génération.',
+                },
+            },
+        );
     }
 
     @Get('spectator/:code')

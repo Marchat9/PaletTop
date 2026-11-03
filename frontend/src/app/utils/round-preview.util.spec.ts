@@ -72,6 +72,14 @@ describe('describeRoundPreview', () => {
     );
   });
 
+  it('prévient quand le manque de plaques fait disparaître la taille visée', () => {
+    const limited = settings({ allowedTeamSizes: [3], plateCount: 2 });
+    expect(describeRoundPreview(13, limited, 'present')).toContain(
+      "Faute de plaques, aucune équipe n'est de 2",
+    );
+    expect(describeRoundPreview(8, limited, 'present')).not.toContain('Faute de plaques');
+  });
+
   it('explique pourquoi aucun match n’est possible', () => {
     expect(describeRoundPreview(3, settings(), 'present')).toContain("aucun match n'est possible");
   });

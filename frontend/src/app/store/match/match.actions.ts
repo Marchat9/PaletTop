@@ -35,8 +35,10 @@ export const updateScore = createAction(
 export const updateScoreSuccess = createAction('[Tournament Match] Update Score Success');
 export const updateScoreFailure = createAction(
   '[Tournament Match] Update Score Failure',
-  props<{ error: string }>(),
+  props<{ error: string; request: TeamScoreUpdate; offline: boolean }>(),
 );
+/** The "Synchronisé" badge has been shown long enough. */
+export const scoreSyncBadgeExpired = createAction('[Tournament Match] Score Sync Badge Expired');
 // ------------------------------------
 
 // --------- Validate Match (player) ---------

@@ -1,0 +1,71 @@
+@if (isDraft()) {
+  <app-card>
+    <section class="next-step" aria-label="Prochaine étape">
+      <span class="eyebrow">Prochaine étape</span>
+
+      @if (!teamsReady()) {
+        <div class="step is-current">
+          <span class="step-badge">1</span>
+          <div class="step-text">
+            <span class="step-title">Ajouter des équipes</span>
+            <span class="step-detail">{{ teamCount() }} / {{ capacity() }} équipes inscrites</span>
+          </div>
+        </div>
+        <app-button
+          title="Ajouter une équipe"
+          icon="group_add"
+          [large]="true"
+          (clicked)="addTeam.emit()"
+        />
+        <div class="step is-todo">
+          <span class="step-badge">2</span>
+          <div class="step-text">
+            <span class="step-title">Démarrer le tournoi</span>
+            <span class="step-detail">
+              Possible dès {{ minTeamsToStart }} équipes : les poules et le premier round seront
+              générés.
+            </span>
+          </div>
+        </div>
+      } @else {
+        <div class="step is-done">
+          <span class="step-badge"><app-icon name="check" [ariaHidden]="true" /></span>
+          <div class="step-text">
+            <span class="step-title">Équipes inscrites</span>
+            <span class="step-detail">
+              {{ teamCount() }} / {{ capacity() }} équipes
+              @if (!isFull()) {
+                ·
+                <button type="button" class="link" (click)="addTeam.emit()">
+                  ajouter une équipe
+                </button>
+              }
+            </span>
+          </div>
+        </div>
+        <div class="step is-current">
+          <span class="step-badge">2</span>
+          <div class="step-text">
+            <span class="step-title">Démarrer le tournoi</span>
+            @if (startBlocker()) {
+              <span class="step-detail is-blocked">{{ startBlocker() }}</span>
+            } @else {
+              <span class="step-detail">
+                Les poules et le premier round seront générés. Les équipes ne pourront plus être
+                modifiées.
+              </span>
+            }
+          </div>
+        </div>
+        <app-button
+          title="Démarrer le tournoi"
+          icon="play_arrow"
+          [large]="true"
+          [loading]="startLoading()"
+          [disabled]="!!startBlocker()"
+          (clicked)="startTournament.emit()"
+        />
+      }
+    </section>
+  </app-card>
+}
