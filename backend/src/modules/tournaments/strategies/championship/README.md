@@ -14,10 +14,10 @@ Every home team plays every away team once, in a rotation.
 
 ## Configuration
 
-| Field      | Description                  |
-| ---------- | ---------------------------- |
-| `homeClub` | Club name of the home teams  |
-| `awayClub` | Club name of the away teams  |
+| Field      | Description                 |
+| ---------- | --------------------------- |
+| `homeClub` | Club name of the home teams |
+| `awayClub` | Club name of the away teams |
 
 ## Session generation
 

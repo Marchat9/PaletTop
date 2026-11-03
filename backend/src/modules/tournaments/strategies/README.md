@@ -60,30 +60,30 @@ Shared helpers live in `../utils/` (`match.utils.ts`, `draw.utils.ts`, `bye.util
    `tournament-competition-configuration.entity.ts`, plus its DTO and a migration.
 3. **Strategy** — create `strategies/<mode>/<mode>-tournament.strategy.ts`:
 
-   ```typescript
-   export class MyModeTournamentStrategy extends TournamentStrategy {
-       override async assignTeamsToFirstPools(tournament: Tournament): Promise<TournamentPool[]> {
-           // ...
-       }
+    ```typescript
+    export class MyModeTournamentStrategy extends TournamentStrategy {
+        override async assignTeamsToFirstPools(tournament: Tournament): Promise<TournamentPool[]> {
+            // ...
+        }
 
-       override async generateSessionMatches(
-           tournament: Tournament,
-           session: MatchesSession,
-       ): Promise<TournamentMatch[]> {
-           // build, save and return the matches
-       }
+        override async generateSessionMatches(
+            tournament: Tournament,
+            session: MatchesSession,
+        ): Promise<TournamentMatch[]> {
+            // build, save and return the matches
+        }
 
-       override computeTournamentStatus(
-           tournament: Tournament,
-           sessions: MatchesSession[],
-       ): TournamentStatusInfo {
-           // ...
-       }
-   }
-   ```
+        override computeTournamentStatus(
+            tournament: Tournament,
+            sessions: MatchesSession[],
+        ): TournamentStatusInfo {
+            // ...
+        }
+    }
+    ```
 
-   Only override what differs from the default. Put pure logic (phase name, etc.) in a
-   `<mode>-session.utils.ts` file so it can be unit-tested.
+    Only override what differs from the default. Put pure logic (phase name, etc.) in a
+    `<mode>-session.utils.ts` file so it can be unit-tested.
 
 4. **Factory** — add a `case` in `tournament-strategy.factory.ts`. If the strategy needs a
    NestJS service, inject it in the factory constructor and pass it on.

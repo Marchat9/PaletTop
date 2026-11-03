@@ -12,7 +12,8 @@ import { MatchRepository } from '../repositories/match.repository';
 import { PoolRepository } from '../repositories/pool.repository';
 import { SessionRepository } from '../repositories/session.repository';
 import { TournamentStrategyFactory } from '../strategies/tournament-strategy.factory';
-import { ScoreUpdateResult } from '../responses/score.dto';
+import { RawScoreUpdateResult, ScoreUpdateResult } from '../responses/score.dto';
+import { PlayerMatchDto } from '../responses/player-match.dto';
 import { computeRanking } from '../utils/pool-ranking.utils';
 
 @Injectable()
@@ -30,7 +31,7 @@ export class ScoreService {
         private readonly strategyFactory: TournamentStrategyFactory,
     ) {}
 
-    async startMatch(code: string, matchId: string, teamCode: string): Promise<TournamentMatch> {
+    async startMatch(code: string, matchId: string, teamCode: string): Promise<PlayerMatchDto> {
         const { match } = await this.findMatchWithTeamAuth(code, matchId, teamCode);
 
         if (match.status !== MatchStatus.PENDING) {
@@ -52,7 +53,8 @@ export class ScoreService {
             updated.teamB?.code ?? null,
             toPlayerMatchDto(updated),
         );
-        return updated;
+        // The raw match carries the opponent's code, which is the proof asked at validation.
+        return toPlayerMatchDto(updated);
     }
 
     async updateScore(
@@ -93,7 +95,7 @@ export class ScoreService {
             result.match.teamB?.code ?? null,
             toPlayerMatchDto(result.match),
         );
-        return result;
+        return toScoreUpdateResult(result);
     }
 
     async validateMatch(
@@ -158,7 +160,7 @@ export class ScoreService {
             false,
             MatchStatus.VALIDATED,
         );
-        return result;
+        return toScoreUpdateResult(result);
     }
 
     async adminUpdateScore(
@@ -232,7 +234,7 @@ export class ScoreService {
             }
         }
 
-        return result;
+        return toScoreUpdateResult(result);
     }
 
     private async emitTournamentStatusOnValidationChange(
@@ -321,7 +323,7 @@ export class ScoreService {
         matchId: string,
         poolId: string | null | undefined,
         scoreCalculation: ScoreCalculation,
-    ): Promise<ScoreUpdateResult> {
+    ): Promise<RawScoreUpdateResult> {
         const match = await this.matchRepo.findByIdWithSession(matchId);
         if (!match) throw new NotFoundException('Match introuvable après mise à jour.');
 
@@ -334,4 +336,8 @@ export class ScoreService {
         const ranking = computeRanking(pool.teams, poolMatches, scoreCalculation);
         return { match, ranking };
     }
+}
+
+function toScoreUpdateResult(result: RawScoreUpdateResult): ScoreUpdateResult {
+    return { match: toPlayerMatchDto(result.match), ranking: result.ranking };
 }

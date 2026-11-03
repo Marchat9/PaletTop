@@ -22,6 +22,7 @@ import { AdminQualifyingDto } from '../dto/admin-qualifying.dto';
 import { CreateTournamentDto } from '../dto/create-tournament.dto';
 import { JoinTournamentDto } from '../dto/join-tournament.dto';
 import { UpdateTournamentConfigurationDto } from '../dto/update-tournament-configuration.dto';
+import { stripMatchTeamCodes } from '../utils/tournament.utils';
 import { AdminTournamentDto, toAdminTournamentDto } from '../responses/admin-tournament.dto';
 import { GlobalRankingEntry } from '../responses/ranking.dto';
 import { SpectatorTournamentDto } from '../responses/spectator-tournament.dto';
@@ -154,7 +155,7 @@ export class TournamentsController {
                 null,
                 tournament,
             );
-            return { ...tournament, tournamentStatus };
+            return { ...stripMatchTeamCodes(tournament), tournamentStatus };
         } catch (error: unknown) {
             if (error instanceof HttpException) {
                 throw error;
