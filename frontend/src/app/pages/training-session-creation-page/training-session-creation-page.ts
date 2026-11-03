@@ -87,7 +87,9 @@ export class TrainingSessionCreationPage implements OnInit {
   public readonly minDate = new Date();
   public readonly date = signal(this.toInputDate(this.minDate));
   public readonly playersPerTeam = signal(2);
-  public readonly allowedTeamSizes = signal<number[]>([1, 3]);
+  // Trios only by default: a size-1 fallback produces lone-player-vs-pair matches (11 players gave
+  // 2v2 ×2 and 2v1 instead of three trios and a pair).
+  public readonly allowedTeamSizes = signal<number[]>([3]);
   public readonly preferTargetTeamSize = signal(false);
   public readonly plateCount = signal(10);
   public readonly teamComposition = signal<TrainingTeamComposition>('RANDOM');
