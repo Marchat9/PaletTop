@@ -23,6 +23,7 @@
           icon="sports_esports"
           variant="secondary"
           [large]="true"
+          [disabled]="playMyMatchesDisabled()"
           (clicked)="playMyMatches.emit()"
         />
       }

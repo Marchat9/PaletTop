@@ -24,6 +24,8 @@ export class SessionActions {
   public readonly closeLoading = input<boolean>(false);
   /** The group admin also plays and is checked in to this session. */
   public readonly canPlayMyMatches = input<boolean>(false);
+  /** No round generated yet: the admin has no match to play. */
+  public readonly playMyMatchesDisabled = input<boolean>(false);
 
   public readonly openCheckin = output<void>();
   public readonly generateRound = output<void>();

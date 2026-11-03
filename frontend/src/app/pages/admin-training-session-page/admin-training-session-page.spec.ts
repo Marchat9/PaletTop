@@ -147,6 +147,28 @@ describe('AdminTrainingSessionPage', () => {
     expect(routerMock.navigate).toHaveBeenCalledWith(['/player/training/1234/4821']);
   });
 
+  it('grise « Jouer mes matchs » tant qu’aucun round n’est généré', () => {
+    const { fixture, store } = setup();
+    const playButton = () =>
+      [
+        ...(fixture.nativeElement as HTMLElement).querySelectorAll('app-session-actions .button'),
+      ].find((button) => button.textContent?.includes('Jouer mes matchs'));
+
+    store.overrideSelector(selectCurrentTrainingData, { ...buildTraining(), adminMemberId: 'm1' });
+    store.refreshState();
+    fixture.detectChanges();
+
+    expect(playButton()?.getAttribute('aria-disabled')).toBe('true');
+
+    store.overrideSelector(selectTrainingRounds, [
+      { id: 'r1', roundNumber: 1, status: 'OPEN' as const, matches: [] },
+    ]);
+    store.refreshState();
+    fixture.detectChanges();
+
+    expect(playButton()?.getAttribute('aria-disabled')).toBe('false');
+  });
+
   it('ne propose pas « Jouer mes matchs » sans admin joueur présent à la séance', () => {
     const { fixture, store } = setup();
 
