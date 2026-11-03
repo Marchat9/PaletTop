@@ -14,7 +14,7 @@
   <div class="field-group">
     <label class="field-label">Code de session</label>
     <app-code-number-input
-      [digitCount]="4"
+      [digitCount]="sessionCodeLength"
       [initialCode]="initialSessionCode"
       (codeChange)="onSessionCodeChange($event)"
       (completed)="participantCode.focus()"
@@ -22,7 +22,8 @@
     ></app-code-number-input>
     <p class="field-help">
       <app-icon name="info" [ariaHidden]="true" />
-      Identifiant numérique à 4 chiffres permettant d'identifier la session d'entraînement.
+      Identifiant numérique à {{ sessionCodeLength }} chiffres permettant d'identifier la session
+      d'entraînement.
     </p>
   </div>
 

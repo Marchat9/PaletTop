@@ -30,6 +30,9 @@ import { TrainingSessionAuthService } from './training-session-auth.service';
 import { TrainingRealtimeGateway } from '../training-realtime.gateway';
 
 const SESSION_CODE_ATTEMPTS = 50;
+// Session codes are global to the app: 6 digits (a million codes) instead of 4, so they neither
+// run out nor can be guessed easily. Sessions created before keep their 4-digit code.
+export const SESSION_CODE_LENGTH = 6;
 
 @Injectable()
 export class TrainingSessionsService {
@@ -268,7 +271,7 @@ export class TrainingSessionsService {
      */
     private async generateUniqueSessionCode(): Promise<string> {
         for (let attempt = 0; attempt < SESSION_CODE_ATTEMPTS; attempt++) {
-            const code = generateNumericCode([]);
+            const code = generateNumericCode([], SESSION_CODE_LENGTH);
             if (!(await this.trainingSessionRepo.codeExists(code))) {
                 return code;
             }

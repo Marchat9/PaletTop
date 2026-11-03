@@ -1,3 +1,4 @@
+import { isSessionCode } from 'src/app/utils/code-format.util';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -268,8 +269,9 @@ export class PlayerTrainingSessionPage implements OnInit, OnDestroy {
       const sessionCode = params.get('sessionCode');
       const participantCode = params.get('participantCode');
 
-      // Four-digit codes: without them, the page has nothing to show.
-      if (sessionCode?.length !== 4 || participantCode?.length !== 4) {
+      // Numeric codes (6-digit session, or 4 for the older ones; 4-digit participant): without
+      // them, the page has nothing to show.
+      if (!isSessionCode(sessionCode) || participantCode?.length !== 4) {
         this.router.navigate(['/player/training']);
         return;
       }

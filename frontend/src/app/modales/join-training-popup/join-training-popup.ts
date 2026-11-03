@@ -1,3 +1,4 @@
+import { isSessionCode, SESSION_CODE_LENGTH } from 'src/app/utils/code-format.util';
 import { DialogRef } from '@angular/cdk/dialog';
 import {
   ChangeDetectionStrategy,
@@ -42,12 +43,15 @@ export class JoinTrainingPopup {
 
   //------
   readonly sessionCode = signal(this.initialSessionCode);
+  readonly sessionCodeLength = SESSION_CODE_LENGTH;
   private readonly participantCode = signal(this.initialParticipantCode);
   //------
   readonly isUnknownSession = signal(false);
 
   readonly isCodeComplete = computed(() => this.participantCode().length === 4);
-  readonly canJoin = computed(() => this.sessionCode().trim().length > 0 && this.isCodeComplete());
+  readonly canJoin = computed(
+    () => isSessionCode(this.sessionCode().trim()) && this.isCodeComplete(),
+  );
 
   // Selectors for training participant view state
   readonly currentMatch = this.store.selectSignal(selectTrainingParticipantCurrentMatch);
