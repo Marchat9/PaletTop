@@ -350,15 +350,58 @@ export class DefaultMatchmakingStrategy implements MatchmakingPort {
     }
 
     /**
-     * Pairs the teams. In learning mode nearby strengths meet so the matches stay close; otherwise
-     * the order is drawn at random, avoiding recent opponents.
+     * Pairs the teams, same sizes first. In learning mode nearby strengths meet so the matches stay
+     * close; otherwise the order is drawn at random, avoiding recent opponents.
      */
     private pairTeams(
         input: GenerateRoundInput,
         teamRefs: TeamRef[],
     ): { teamRef: string; opponentRef: string | null }[] {
         const forbiddenOpponents = this.forbiddenPairs(input, 'opponent');
+        return this.splitBySize(input, teamRefs).flatMap((group) =>
+            this.pairGroup(input, group, forbiddenOpponents),
+        );
+    }
 
+    /**
+     * Teams of the same size meet first: two trios play each other rather than each facing a
+     * pair. Each size with an odd count gives up one team, and only those leftovers are mixed.
+     * With a single size, the teams go through untouched (no extra draw).
+     */
+    private splitBySize(input: GenerateRoundInput, teamRefs: TeamRef[]): TeamRef[][] {
+        const bySize = new Map<number, TeamRef[]>();
+        for (const team of teamRefs) {
+            const size = team.participantIds.length;
+            bySize.set(size, [...(bySize.get(size) ?? []), team]);
+        }
+        if (bySize.size <= 1) {
+            return [teamRefs];
+        }
+
+        const groups: TeamRef[][] = [];
+        const leftovers: TeamRef[] = [];
+        for (const group of bySize.values()) {
+            if (group.length % 2 === 0) {
+                groups.push(group);
+                continue;
+            }
+            // Learning mode: the weakest of the size is the one mixed, so it meets a team of its
+            // level among the leftovers. Otherwise the one mixed is drawn at random.
+            const ordered =
+                input.config.teamComposition === TrainingTeamComposition.LEARNING
+                    ? [...group].sort((x, y) => this.teamLevel(input, y) - this.teamLevel(input, x))
+                    : shuffleFisherYates(group, this.random);
+            leftovers.push(ordered[ordered.length - 1]);
+            if (ordered.length > 1) groups.push(ordered.slice(0, -1));
+        }
+        return leftovers.length > 0 ? [...groups, leftovers] : groups;
+    }
+
+    private pairGroup(
+        input: GenerateRoundInput,
+        teamRefs: TeamRef[],
+        forbiddenOpponents: Set<string>,
+    ): { teamRef: string; opponentRef: string | null }[] {
         if (input.config.teamComposition === TrainingTeamComposition.LEARNING) {
             const byStrength = [...teamRefs].sort(
                 (a, b) => this.teamLevel(input, b) - this.teamLevel(input, a),

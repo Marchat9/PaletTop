@@ -140,6 +140,29 @@ describe('DefaultMatchmakingStrategy', () => {
         expect(restingParticipants(plan)).toHaveLength(2);
     });
 
+    it.each([TrainingTeamComposition.RANDOM, TrainingTeamComposition.LEARNING])(
+        'oppose les équipes de même taille entre elles (%s)',
+        (teamComposition) => {
+            const strategy = new DefaultMatchmakingStrategy(Math.random);
+            const levelByParticipant = Object.fromEntries(solos(22).map((id, i) => [id, -i]));
+            // 22 players: 8 pairs and 2 trios. The two trios must meet, not each face a pair.
+            const plan = strategy.generateRound(
+                input({
+                    soloParticipantIds: solos(22),
+                    config: baseConfig({ allowedTeamSizes: [3], teamComposition }),
+                    levelByParticipant,
+                }),
+            );
+
+            const sizeByRef = new Map(
+                plan.ephemeralTeams.map((t) => [t.tempId, t.participantIds.length]),
+            );
+            for (const match of plan.matches.filter((m) => m.opponentRef !== null)) {
+                expect(sizeByRef.get(match.teamRef)).toBe(sizeByRef.get(match.opponentRef!));
+            }
+        },
+    );
+
     it('confie les équipes de repli à ceux qui y ont le moins joué', () => {
         const strategy = new DefaultMatchmakingStrategy(Math.random);
         // 10 players, teams of 2 or 3: two trios and two pairs, so 6 fallback slots.
