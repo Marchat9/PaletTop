@@ -27,6 +27,8 @@ import {
   renameTrainingMember,
   renameTrainingMemberFailure,
   renameTrainingMemberSuccess,
+  setTrainingAdminMember,
+  setTrainingAdminMemberFailure,
   setTrainingAdminMemberSuccess,
   updateTrainingAdministratorInformations,
   updateTrainingAdministratorInformationsFailure,
@@ -130,6 +132,7 @@ export const initialTrainingState: TrainingState = {
     updateTraining: { isLoading: false, error: null },
     addMember: { isLoading: false, error: null },
     renameMember: { isLoading: false, error: null },
+    setAdminMember: { isLoading: false, error: null },
     removeMember: { isLoading: false, error: null },
     createSession: { isLoading: false, error: null },
     closeSession: { isLoading: false, error: null },
@@ -402,9 +405,28 @@ export const trainingReducer = createReducer(
       removeMember: { isLoading: true, error: null },
     },
   })),
+  // Admin player
+  on(setTrainingAdminMember, (state) => ({
+    ...state,
+    requestStatus: {
+      ...state.requestStatus,
+      setAdminMember: { isLoading: true, error: null },
+    },
+  })),
   on(setTrainingAdminMemberSuccess, (state, { training }) => ({
     ...state,
     training: { ...state.training, data: training },
+    requestStatus: {
+      ...state.requestStatus,
+      setAdminMember: { isLoading: false, error: null },
+    },
+  })),
+  on(setTrainingAdminMemberFailure, (state, { error }) => ({
+    ...state,
+    requestStatus: {
+      ...state.requestStatus,
+      setAdminMember: { isLoading: false, error },
+    },
   })),
   on(removeTrainingMemberSuccess, (state, { training }) => ({
     ...state,

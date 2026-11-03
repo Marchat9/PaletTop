@@ -22,7 +22,6 @@ import {
   addTrainingMember,
   connectTrainingAdministrator,
   removeTrainingMember,
-  setTrainingAdminMember,
 } from 'src/app/store/training/training.admin.actions';
 import { loadTrainingSessions } from 'src/app/store/training/training.session.actions';
 import {
@@ -200,19 +199,8 @@ export class AdminTrainingPage implements OnInit {
       .closed.subscribe((result) => {
         if (result === 'remove') {
           this.removeMember(member);
-        } else if (result === 'toggle-admin-player') {
-          this.toggleAdminPlayer(member);
         }
       });
-  }
-
-  private toggleAdminPlayer(member: TrainingMemberDto): void {
-    const training = this.training();
-    if (!training) {
-      return;
-    }
-    const memberId = training.adminMemberId === member.id ? null : member.id;
-    this.store.dispatch(setTrainingAdminMember({ code: training.code, memberId }));
   }
 
   private removeMember(member: TrainingMemberDto): void {

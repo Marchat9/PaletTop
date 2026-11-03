@@ -9,10 +9,6 @@
     </button>
   </div>
 
-  <p class="popup-subtitle">
-    Le nouveau nom s'affiche aussi dans les séances déjà jouées. Ses statistiques sont conservées.
-  </p>
-
   <div class="field-group">
     <label class="field-label" for="edit-training-member-name">Prénom et nom</label>
     <app-input-text
@@ -23,6 +19,19 @@
       [autofocus]="true"
       (valueChange)="onNameChange($event)"
     ></app-input-text>
+    <p class="field-help">
+      <app-icon name="history" [ariaHidden]="true" />
+      Le nouveau nom s'affiche aussi dans les séances déjà jouées.
+    </p>
+  </div>
+
+  <div class="admin-player">
+    <app-icon name="admin_panel_settings" iconClass="admin-player-icon" [ariaHidden]="true" />
+    <div class="admin-player-text">
+      <strong>C’est moi</strong>
+      <span>Vous jouez aussi : vos séances proposent «&nbsp;Jouer mes matchs&nbsp;».</span>
+    </div>
+    <app-switch [checked]="isAdminPlayer()" (checkedChange)="onAdminPlayerChange($event)" />
   </div>
 
   @if (visibleError()) {
@@ -35,39 +44,23 @@
   }
 
   <div class="actions">
-    <app-button title="Annuler" variant="secondary" (clicked)="onCancel()"></app-button>
     <app-button
-      title="Enregistrer"
-      variant="primary"
-      icon="check"
-      [loading]="loading()"
-      [disabled]="!canSubmit()"
-      (clicked)="onSubmit()"
-    ></app-button>
-  </div>
-
-  <div class="admin-player-row">
-    <p class="admin-player-hint">
-      @if (isAdminPlayer) {
-        Ce membre est l'admin du groupe : ses séances proposent « Jouer mes matchs ».
-      } @else {
-        Vous administrez le groupe et jouez aussi ? Indiquez quel membre vous êtes.
-      }
-    </p>
-    <app-button
-      [title]="isAdminPlayer ? 'Ce n’est plus moi' : 'C’est moi'"
-      variant="secondary"
-      [icon]="isAdminPlayer ? 'person_off' : 'admin_panel_settings'"
-      (clicked)="onToggleAdminPlayer()"
-    ></app-button>
-  </div>
-
-  <div class="remove-row">
-    <app-button
+      class="remove"
       title="Retirer du club"
       variant="error"
       icon="person_remove"
       (clicked)="onRemove()"
     ></app-button>
+    <div class="main-actions">
+      <app-button title="Annuler" variant="secondary" (clicked)="onCancel()"></app-button>
+      <app-button
+        title="Enregistrer"
+        variant="primary"
+        icon="check"
+        [loading]="loading()"
+        [disabled]="!canSubmit()"
+        (clicked)="onSubmit()"
+      ></app-button>
+    </div>
   </div>
 </div>
