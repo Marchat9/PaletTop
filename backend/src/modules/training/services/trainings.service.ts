@@ -14,13 +14,8 @@ import { TrainingSessionRepository } from '../repositories/training-session.repo
 import { AdminTrainingDto, toAdminTrainingDto } from '../responses/admin-training.dto';
 import { TrainingRealtimeGateway } from '../training-realtime.gateway';
 import { TrainingAuthService } from './training-auth.service';
+import { sameName } from '../utils/same-name.utils';
 import { TrainingLeaderboardService } from './training-leaderboard.service';
-
-// Two members of a club must be told apart: names are compared regardless of case and of the
-// spaces around them.
-function sameName(a: string, b: string): boolean {
-    return a.trim().toLocaleLowerCase('fr') === b.trim().toLocaleLowerCase('fr');
-}
 
 @Injectable()
 export class TrainingsService {

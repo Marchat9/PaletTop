@@ -20,6 +20,7 @@ import {
     toTrainingSessionSummaryDto,
 } from '../responses/training-session.dto';
 import { generateNumericCode } from 'src/utils/numeric-code.util';
+import { sameName } from '../utils/same-name.utils';
 import { assertSessionOpen } from '../utils/session-guard.utils';
 import { TrainingParticipantStatus, TrainingSessionStatus } from 'src/enum/training.enum';
 import { TrainingMember } from 'src/entities/training-member.entity';
@@ -178,6 +179,22 @@ export class TrainingSessionsService {
                 await this.touchLastActivity(session.id);
                 this.logger.log(`'${back.name}' checked in again in session ${sessionCode}`);
                 return this.emitAndReturn(session);
+            }
+        }
+
+        // A guest named like someone already present: rounds would show "Alice · Alice" and nobody
+        // could tell them apart in the leaderboard. Ask for a distinguishing name instead.
+        if (!member) {
+            const homonym = session.participants.find(
+                (p) => p.status === TrainingParticipantStatus.PRESENT && sameName(p.name, name!),
+            );
+            if (homonym) {
+                this.logger.warn(
+                    `Check-in refused in session ${sessionCode}: '${homonym.name}' is already present`,
+                );
+                throw new ConflictException(
+                    `${homonym.name} est déjà présent(e) : ajoutez une initiale pour les distinguer.`,
+                );
             }
         }
 
