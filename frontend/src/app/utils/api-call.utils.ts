@@ -11,7 +11,7 @@ export function convertErrorToString(error: unknown): string {
       const listeWithFirstLetterUppercase = error.error.message.map(
         (message: string) => message.charAt(0).toUpperCase() + message.slice(1),
       );
-      return `Erreur: \n• ${listeWithFirstLetterUppercase.join('\n• ')}`;
+      return `• ${listeWithFirstLetterUppercase.join('\n• ')}`;
     } else if (!!error.error) {
       const statusCode = Number.isInteger(error.error.statusCode)
         ? error.error.statusCode
@@ -21,7 +21,7 @@ export function convertErrorToString(error: unknown): string {
         error.error.message ??
         error.message ??
         'Une erreur inconnue est survenue.';
-      return `Erreur: ${message}`;
+      return message;
     } else {
       return `Une erreur inconnue est survenue.`;
     }

@@ -165,7 +165,9 @@ export class AdminTournamentPageComponent implements OnInit {
   }
   private reconnectAsAdmin(): void {
     this.store.dispatch(disconnectTournamentAdministrator());
-    this.router.navigate(['/admin/tournament']);
+    // Opened from a link without an admin session: keep the code, only the password is missing.
+    const code = this.tournamentCode();
+    this.router.navigate(['/admin/tournament'], code ? { queryParams: { code } } : {});
   }
 
   public updateTournamentConfiguration(tournament: TournamentConfigurationDto): void {

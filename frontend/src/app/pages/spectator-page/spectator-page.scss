@@ -137,5 +137,12 @@
       font-size: 0.75rem;
       color: var(--color-on-surface-variant);
     }
+
+    .state-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 0.75rem;
+    }
   }
 }

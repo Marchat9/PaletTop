@@ -7,7 +7,10 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { Dialog } from '@angular/cdk/dialog';
+import { ActivatedRoute, Router } from '@angular/router';
+import { Button } from 'src/app/shared/button/button';
+import { SpectateTournamentPopupComponent } from 'src/app/modales/spectate-tournament-popup/spectate-tournament-popup';
 import { Store } from '@ngrx/store';
 import { environment } from 'src/environments/environment';
 import { AutoScrollDirective } from 'src/app/shared/auto-scroll/auto-scroll.directive';
@@ -32,7 +35,7 @@ import { TournamentStatus } from 'src/app/models/tournament-status.enum';
 
 @Component({
   selector: 'app-spectator-page',
-  imports: [SpectatorMatchListComponent, RankingCard, Switch, AutoScrollDirective, Icon],
+  imports: [SpectatorMatchListComponent, RankingCard, Switch, AutoScrollDirective, Icon, Button],
   templateUrl: './spectator-page.html',
   styleUrl: './spectator-page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -41,6 +44,8 @@ export class SpectatorPageComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly store = inject(Store);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly router = inject(Router);
+  private readonly dialog = inject(Dialog);
 
   private readonly tournamentCode = this.route.snapshot.paramMap.get('tournamentCode');
 
@@ -85,5 +90,26 @@ export class SpectatorPageComponent {
       window.addEventListener('resize', setMode);
       this.destroyRef.onDestroy(() => window.removeEventListener('resize', setMode));
     }
+  }
+
+  /** Wrong code: let the spectator type it again instead of leaving them on a dead end. */
+  public retypeCodes(): void {
+    this.dialog
+      .open<{ tournamentCode: string }>(SpectateTournamentPopupComponent, {
+        panelClass: 'dialog-panel',
+        backdropClass: 'dialog-backdrop',
+      })
+      .closed.subscribe((codes) => {
+        if (codes) {
+          // Same route with another code: go through the home page so the page is rebuilt.
+          void this.router
+            .navigateByUrl('/accueil', { skipLocationChange: true })
+            .then(() => this.router.navigate(['/spectateur', codes.tournamentCode]));
+        }
+      });
+  }
+
+  public goHome(): void {
+    void this.router.navigate(['/accueil']);
   }
 }

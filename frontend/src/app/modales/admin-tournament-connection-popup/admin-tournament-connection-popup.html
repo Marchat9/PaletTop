@@ -2,14 +2,14 @@
   <div class="header-row">
     <h2 class="title">
       <app-icon name="admin_panel_settings" iconClass="icon" [ariaHidden]="true" />
-      Connexion à un tournoi
+      Accès organisateur
     </h2>
     <button class="close-button" type="button" aria-label="Fermer" (click)="onCancel()">
       <app-icon name="close" />
     </button>
   </div>
 
-  <p class="subtitle">Saisissez vos identifiants pour vous connecter au tournoi.</p>
+  <p class="subtitle">Saisissez vos identifiants d'organisateur pour administrer le tournoi.</p>
 
   <div class="field-group">
     <label class="field-label" for="tournament-code">Code du tournoi</label>
@@ -19,17 +19,18 @@
       autocomplete="off"
       icon="label"
       [value]="tournamentCode()"
-      [autofocus]="true"
+      [autofocus]="!codeIsPrefilled"
       [uppercase]="true"
       (valueChange)="onTournamentCodeInput($event)"
     ></app-input-text>
   </div>
 
   <div class="field-group">
-    <label class="field-label">Mot de passe</label>
+    <label class="field-label" for="tournament-password">Mot de passe</label>
     <app-input-text
       id="tournament-password"
       placeholder="******"
+      [autofocus]="codeIsPrefilled"
       icon="key"
       [isPassword]="true"
       [value]="password()"
@@ -41,11 +42,10 @@
     <div class="error-container">
       <span class="message">
         <app-icon name="error" [ariaHidden]="true" />
-        Tournoi introuvable
+        Code du tournoi ou mot de passe incorrect
       </span>
       <span class="description">
-        Veuillez vérifier le code saisi ou contacter l'administrateur du tournoi pour plus
-        d'informations.
+        Vérifiez le code et le mot de passe saisis, ou contactez l'administrateur du tournoi.
       </span>
     </div>
   }

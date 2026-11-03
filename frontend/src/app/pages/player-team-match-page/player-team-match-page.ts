@@ -1,4 +1,6 @@
 import { Dialog } from '@angular/cdk/dialog';
+import { Button } from 'src/app/shared/button/button';
+import { JoinTournamentPopupComponent } from 'src/app/modales/join-tournament-popup/join-tournament-popup';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -62,6 +64,7 @@ export type TeamMatchStatus = 'NOT_STARTED' | 'CANCELLED' | 'FINISH';
     PlayerMatchHistory,
     PlayerMatchCard,
     Icon,
+    Button,
   ],
   templateUrl: './player-team-match-page.html',
   styleUrl: './player-team-match-page.scss',
@@ -297,5 +300,29 @@ export class PlayerTeamMatchPageComponent {
       backdropClass: 'dialog-backdrop-light',
       disableClose: false,
     });
+  }
+
+  /** Wrong link: let the player type their codes again instead of leaving them on a dead end. */
+  public retypeCodes(): void {
+    this.dialog
+      .open<{ tournamentCode: string; teamCode: string }>(JoinTournamentPopupComponent, {
+        panelClass: 'dialog-panel',
+        backdropClass: 'dialog-backdrop',
+      })
+      .closed.subscribe((codes) => {
+        if (codes) {
+          // Same route with other params: go through the home page so the page is rebuilt (it
+          // reads its codes once, from the route snapshot).
+          void this.router
+            .navigateByUrl('/accueil', { skipLocationChange: true })
+            .then(() =>
+              this.router.navigate(['/player/tournament', codes.tournamentCode, codes.teamCode]),
+            );
+        }
+      });
+  }
+
+  public goHome(): void {
+    void this.router.navigate(['/accueil']);
   }
 }
