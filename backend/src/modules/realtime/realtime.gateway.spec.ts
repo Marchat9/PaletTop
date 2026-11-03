@@ -3,7 +3,11 @@ import { describe, expect, it, vi } from 'vitest';
 import { Repository } from 'typeorm';
 import { Socket } from 'socket.io';
 import { Tournament } from 'src/entities/tournament.entity';
-import { RealtimeGateway, resolveConnectionTarget } from './realtime.gateway';
+import {
+    MAX_FAILED_JOINS_PER_SOCKET,
+    RealtimeGateway,
+    resolveConnectionTarget,
+} from './realtime.gateway';
 import { TournamentAuthService } from '../tournaments/services/tournament-auth.service';
 
 function makeGateway(tournament: Partial<Tournament> | null) {
@@ -111,5 +115,50 @@ describe('RealtimeGateway connection tracking', () => {
             "[WS] Disconnection (client-3) from training session '7599'. 0 current connections.",
         ]);
         debug.mockRestore();
+    });
+});
+
+describe('RealtimeGateway failed joins', () => {
+    function gatewayWithAdminAuth(tournament: Partial<Tournament> | null, authFails: boolean) {
+        const tournamentRepo = {
+            findOneBy: vi.fn().mockResolvedValue(tournament),
+        } as unknown as Repository<Tournament>;
+        const tournamentAuthService = {
+            findWithAdminAuth: authFails
+                ? vi.fn().mockRejectedValue(new Error('not found'))
+                : vi.fn().mockResolvedValue(tournament),
+        } as unknown as TournamentAuthService;
+        return new RealtimeGateway(tournamentRepo, tournamentAuthService);
+    }
+
+    it('answers a wrong admin password with a join-error instead of throwing', async () => {
+        const gateway = gatewayWithAdminAuth({ code: 'ABC', teams: [] } as never, true);
+        const client = { ...makeClient(), disconnect: vi.fn() } as unknown as Socket;
+
+        await gateway.handleJoinTournament({ tournamentCode: 'ABC', password: 'bad' }, client);
+
+        expect(client.emit).toHaveBeenCalledWith('join-error', expect.anything());
+        expect(client.join).not.toHaveBeenCalled();
+    });
+
+    it('refuses a join without tournament code', async () => {
+        const gateway = gatewayWithAdminAuth({ code: 'ANY', teams: [] } as never, false);
+        const client = makeClient();
+
+        await gateway.handleJoinTournament({} as never, client);
+
+        expect(client.emit).toHaveBeenCalledWith('join-error', expect.anything());
+        expect(client.join).not.toHaveBeenCalled();
+    });
+
+    it('disconnects a socket that keeps guessing team codes', async () => {
+        const gateway = gatewayWithAdminAuth({ code: 'ABC', teams: [] } as never, false);
+        const client = { ...makeClient(), disconnect: vi.fn() } as unknown as Socket;
+
+        for (let i = 0; i < MAX_FAILED_JOINS_PER_SOCKET; i++) {
+            await gateway.handleJoinTournament({ tournamentCode: 'ABC', teamCode: `${i}` }, client);
+        }
+
+        expect(client.disconnect).toHaveBeenCalledTimes(1);
     });
 });
