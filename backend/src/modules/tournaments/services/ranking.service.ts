@@ -31,11 +31,17 @@ export class RankingService {
         );
         const timer = setTimeout(async () => {
             this.rankingTimers.delete(tournamentCode);
-            const ranking = await this.getGlobalRanking(tournamentCode);
-            this.logger.log(
-                `Ranking emitted for tournament ${tournamentCode} (${ranking.length} teams)`,
-            );
-            this.gateway.emitRankingUpdated(tournamentCode, ranking);
+            // Nobody awaits this callback: an uncaught rejection here (tournament deleted in the
+            // meantime, database blip) would bring the whole process down.
+            try {
+                const ranking = await this.getGlobalRanking(tournamentCode);
+                this.logger.log(
+                    `Ranking emitted for tournament ${tournamentCode} (${ranking.length} teams)`,
+                );
+                this.gateway.emitRankingUpdated(tournamentCode, ranking);
+            } catch (error) {
+                this.logger.error(`Ranking update failed for tournament ${tournamentCode}`, error);
+            }
         }, delay);
 
         this.rankingTimers.set(tournamentCode, timer);
