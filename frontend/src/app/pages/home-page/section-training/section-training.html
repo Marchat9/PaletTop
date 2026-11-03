@@ -61,6 +61,7 @@
         <div class="action">
           <app-button
             title="Administrer un groupe d'entraînement"
+            [titleCanWrap]="true"
             icon="admin_panel_settings"
             variant="secondary"
             (clicked)="eventTrainingAdministration.emit()"

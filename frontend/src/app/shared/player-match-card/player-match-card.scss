@@ -24,6 +24,11 @@
     padding: 1.5rem 0.75rem;
     border-left-width: 0;
   }
+
+  @media (width < 375px) {
+    padding: 1rem 0.5rem;
+    border-left-width: 0;
+  }
 }
 
 .match-card {
@@ -52,6 +57,10 @@
     align-items: center;
     gap: 1rem;
     text-align: center;
+
+    @media (width < 375px) {
+      gap: 0.75rem;
+    }
   }
 
   &__vs,
@@ -130,6 +139,13 @@
     color: var(--color-on-surface);
     line-height: 1.2;
     word-break: break-word;
+  }
+
+  // "ADVERSAIRE" is a few pixels wider than its column on the smallest phones.
+  &__you {
+    @media (width < 360px) {
+      letter-spacing: 0.04em;
+    }
   }
 
   &--my .team-block__name {
