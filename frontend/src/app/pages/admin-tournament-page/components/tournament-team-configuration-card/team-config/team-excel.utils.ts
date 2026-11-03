@@ -20,7 +20,8 @@ export interface TeamImportLimits {
 
 const TEAM_NAME_COLUMN_INDEX = 0;
 const PLAYER_NAME_HEADER_REGEX = /^nom joueur\s*(\d+)$/i;
-const CLUB_HEADER_REGEX = /^club\s*(\d+)$/i;
+// The template writes "Nom Club N" (same wording as "Nom Joueur N"); a bare "Club N" is accepted too.
+const CLUB_HEADER_REGEX = /^(?:nom\s+)?club\s*(\d+)$/i;
 const HEADER_FILL: Fill = {
   type: 'pattern',
   pattern: 'solid',
