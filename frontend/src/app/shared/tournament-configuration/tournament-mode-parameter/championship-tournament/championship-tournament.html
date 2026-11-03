@@ -18,5 +18,8 @@
       placeholder="Ex: Club du Cochonnet Fringant"
       [formControl]="group().controls.awayTeam"
     ></app-input-text>
+    @if (group().controls.awayTeam.errors?.['sameClub']) {
+      <span class="field-error">Les deux clubs doivent être différents.</span>
+    }
   </div>
 </div>

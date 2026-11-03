@@ -8,6 +8,7 @@ import { Icon } from 'src/app/shared/icon/icon';
 import { TournamentDto } from 'src/app/store/tournament/tournament.models';
 import { SessionMatchesComponent } from './session-matches/session-matches';
 import { ScoreUpdate } from 'src/app/models/score-update.model';
+import { championshipStartBlocker } from 'src/app/utils/championship-start.util';
 
 @Component({
   selector: 'app-match-sessions-card',
@@ -37,6 +38,10 @@ export class MatchSessionsCardComponent {
   );
   public readonly isCancelled = computed(
     () => this.tournament()?.status === TournamentStatus.CANCELLED,
+  );
+
+  public readonly startBlocker = computed(() =>
+    championshipStartBlocker(this.tournament() ?? null),
   );
 
   public readonly canGenerateNewSession = computed(

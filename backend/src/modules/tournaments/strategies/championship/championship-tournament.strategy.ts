@@ -1,4 +1,4 @@
-import { Logger } from '@nestjs/common';
+import { BadRequestException, Logger } from '@nestjs/common';
 import { MatchesSession } from 'src/entities/matches-session.entity';
 import { Team } from 'src/entities/team.entity';
 import { TournamentMatch } from 'src/entities/tounament-match.entity';
@@ -35,17 +35,24 @@ export class ChampionshipTournamentStrategy extends TournamentStrategy {
     }
 
     override async prepareTournamentStart(tournament: Tournament): Promise<Tournament> {
+        // BadRequestException, not Error: a plain Error became a generic 500 and the admin never
+        // saw why the start was refused.
         if (tournament.teams.length !== this.nbTotalTeam) {
-            throw new Error(`Il faut exactement ${this.nbTotalTeam} équipes pour un championnats`);
+            throw new BadRequestException(
+                `Il faut exactement ${this.nbTotalTeam} équipes pour un championnat (${tournament.teams.length} inscrites).`,
+            );
         }
 
         const config = this.getConfig(tournament);
 
         const homeTeam = tournament.teams.filter((t) => t.club === config.homeClub);
         const awayTeam = tournament.teams.filter((t) => t.club === config.awayClub);
-        // Si il n'y a pas le même nombre d'equipe ou que ce n'est pas pair
-        if (homeTeam.length !== awayTeam.length) {
-            throw new Error(`Il n'y a pas le même nombre d'équipe dans les deux clubs`);
+        // 4 against 4: equal counts are not enough when some teams belong to neither club.
+        const teamsPerClub = this.nbTotalTeam / 2;
+        if (homeTeam.length !== teamsPerClub || awayTeam.length !== teamsPerClub) {
+            throw new BadRequestException(
+                `Il faut ${teamsPerClub} équipes par club : ${homeTeam.length} pour ${config.homeClub}, ${awayTeam.length} pour ${config.awayClub}.`,
+            );
         }
 
         return await this.tournamentRepo.save({

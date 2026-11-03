@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   Injector,
   OnInit,
   effect,
@@ -8,7 +9,7 @@ import {
   input,
   output,
 } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { environment } from '@environment';
 import { Nullable } from 'src/app/models/nullable.model';
@@ -25,7 +26,9 @@ import {
 } from './tournament-configuration-form.model';
 import {
   applyCompetitionModeSideEffects,
+  awayClubValidators,
   getInvalidFieldNames,
+  homeClubValidators,
   resetLastRoundByRankingIfNotAllowed,
 } from './tournament-configuration.utils';
 import { TournamentModeParameter } from './tournament-mode-parameter/tournament-mode-parameter';
@@ -65,6 +68,7 @@ export class TournamentConfiguration implements OnInit {
   private readonly teamCapacity = environment.tournamentConfiguration.maxTeamCapacity;
 
   private readonly injector = inject(Injector);
+  private readonly destroyRef = inject(DestroyRef);
 
   ngOnInit(): void {
     const tournament = this.tournament();
@@ -178,15 +182,23 @@ export class TournamentConfiguration implements OnInit {
           // (Subsequent mode changes are handled by applyCompetitionModeSideEffects below.)
           homeTeam: new FormControl(championShipConfig.homeClub ?? undefined, {
             nonNullable: true,
-            validators: initialCompetitionMode === 'championship' ? [Validators.required] : [],
+            validators: homeClubValidators(initialCompetitionMode),
           }),
           awayTeam: new FormControl(championShipConfig.awayClub ?? undefined, {
             nonNullable: true,
-            validators: initialCompetitionMode === 'championship' ? [Validators.required] : [],
+            validators: awayClubValidators(initialCompetitionMode),
           }),
         }),
       }),
     });
+
+    // The away club is compared to the home club: re-check it when the home club changes, before
+    // the form reports its invalid fields.
+    const championshipControls =
+      this.form.controls.modeParameter.controls.championshipMode.controls;
+    championshipControls.homeTeam.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => championshipControls.awayTeam.updateValueAndValidity({ emitEvent: false }));
 
     // Signals
     const formValues = toSignal(this.form.valueChanges, { injector: this.injector });

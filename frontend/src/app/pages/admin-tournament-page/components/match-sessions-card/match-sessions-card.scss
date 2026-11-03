@@ -59,6 +59,10 @@
     line-height: 1.5;
     color: var(--color-on-surface-variant);
     align-self: center;
+
+    &.blocker {
+      color: var(--color-error);
+    }
   }
 
   app-button {

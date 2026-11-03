@@ -1,4 +1,10 @@
-import { FormControl, FormGroup, Validators } from '@angular/forms';
+import {
+  AbstractControl,
+  FormControl,
+  FormGroup,
+  ValidationErrors,
+  Validators,
+} from '@angular/forms';
 import { CompetitionMode } from 'src/app/models/tournament-configuration-detail.model';
 import { FIELD_LABELS } from './tournament-configuration';
 import { TournamentConfigurationForm } from './tournament-configuration-form.model';
@@ -23,15 +29,36 @@ export function applyCompetitionModeSideEffects(
   teamCapacity: { max: number; maxChampionship: number },
 ): void {
   const championshipControls = form.controls.modeParameter.controls.championshipMode.controls;
-  const championshipValidators = mode === 'championship' ? [Validators.required] : [];
-  championshipControls.homeTeam.setValidators(championshipValidators);
+  championshipControls.homeTeam.setValidators(homeClubValidators(mode));
   championshipControls.homeTeam.updateValueAndValidity();
-  championshipControls.awayTeam.setValidators(championshipValidators);
+  championshipControls.awayTeam.setValidators(awayClubValidators(mode));
   championshipControls.awayTeam.updateValueAndValidity();
 
   form.controls.rules.controls.maxTeamCapacity.setValue(
     mode === 'championship' ? teamCapacity.maxChampionship : teamCapacity.max,
   );
+}
+
+export function homeClubValidators(mode: CompetitionMode) {
+  return mode === 'championship' ? [Validators.required] : [];
+}
+
+export function awayClubValidators(mode: CompetitionMode) {
+  return mode === 'championship' ? [Validators.required, differentFromHomeClub] : [];
+}
+
+// With the same club on both sides, teams can only pick that club and the championship can never
+// start. Read from the sibling control: re-run it when the home club changes.
+export function differentFromHomeClub(control: AbstractControl): ValidationErrors | null {
+  const homeClub = control.parent?.get('homeTeam')?.value;
+  const awayClub = control.value;
+  if (typeof homeClub !== 'string' || typeof awayClub !== 'string') {
+    return null;
+  }
+  const normalize = (club: string) => club.trim().toLowerCase();
+  return normalize(homeClub) && normalize(homeClub) === normalize(awayClub)
+    ? { sameClub: true }
+    : null;
 }
 
 // The ranking-based last round needs at least one drawn round before it, so at least 2 rounds.

@@ -56,6 +56,14 @@ describe('CreateTournamentDto', () => {
             'configuration.competitionConfiguration',
         ],
         ['an extra nested field', { evil: 1 }, 'configuration.evil'],
+        [
+            'the same club at home and away',
+            {
+                competitionMode: CompetitionMode.CHAMPIONSHIP,
+                competitionConfiguration: { homeClub: 'Club A', awayClub: ' club a ' },
+            },
+            'configuration.competitionConfiguration',
+        ],
     ])('rejects %s in the nested configuration', (_label, override, path) => {
         const body = { ...createBody, configuration: { ...configuration, ...override } };
         expect(validate(CreateTournamentDto, body)).toContain(path);
