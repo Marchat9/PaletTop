@@ -1,4 +1,5 @@
 import { normalizeCode } from 'src/app/utils/code-format.util';
+import { TournamentNextStep } from './components/tournament-next-step/tournament-next-step';
 import { Dialog } from '@angular/cdk/dialog';
 import { CommonModule } from '@angular/common';
 import {
@@ -10,6 +11,7 @@ import {
   OnInit,
   signal,
   DestroyRef,
+  viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -68,6 +70,7 @@ import { onResyncRequested } from 'src/app/utils/resync-on-reconnect.util';
     TournamentConfigurationCardComponent,
     TournamentTeamConfigurationCard,
     MatchSessionsCardComponent,
+    TournamentNextStep,
     RankingCard,
     AnimateOnChangeDirective,
   ],
@@ -270,6 +273,13 @@ export class AdminTournamentPageComponent implements OnInit {
           this.store.dispatch(startTournament());
         }
       });
+  }
+
+  private readonly teamCard = viewChild(TournamentTeamConfigurationCard);
+
+  /** From the next-step card: open the team creation (sheet on mobile, form on desktop). */
+  public addTeam(): void {
+    this.teamCard()?.startTeamCreation();
   }
 
   public nextSession(): void {

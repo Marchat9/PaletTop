@@ -3,7 +3,9 @@ import { ChangeDetectionStrategy, Component, computed, input, output } from '@an
 import { Nullable } from 'src/app/models/nullable.model';
 import { StructuredTournamentConfig } from 'src/app/models/tournament-configuration-detail.model';
 import { TournamentStatus } from 'src/app/models/tournament-status.enum';
+import { MatMenuModule } from '@angular/material/menu';
 import { Button } from 'src/app/shared/button/button';
+import { ButtonIcon } from 'src/app/shared/button-icon/button-icon';
 import { Card } from 'src/app/shared/card/card';
 import { Icon } from 'src/app/shared/icon/icon';
 import { RulePills } from 'src/app/shared/rule-pills/rule-pills';
@@ -21,7 +23,7 @@ const STATUS_PRESENTATION: Record<string, { label: string; tone: StatusPillTone 
 @Component({
   selector: 'app-tournament-header',
   standalone: true,
-  imports: [DatePipe, Card, Button, Icon, StatusPill, RulePills],
+  imports: [DatePipe, Card, Button, ButtonIcon, MatMenuModule, Icon, StatusPill, RulePills],
   templateUrl: './tournament-header.component.html',
   styleUrl: './tournament-header.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

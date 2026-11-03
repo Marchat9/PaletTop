@@ -1,0 +1,84 @@
+:host {
+  display: block;
+}
+
+.next-step {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+
+  .eyebrow {
+    font-family: var(--font-label);
+    font-size: 0.75rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--color-primary);
+  }
+
+  .step {
+    display: flex;
+    gap: 0.85rem;
+    align-items: flex-start;
+
+    .step-badge {
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 2rem;
+      height: 2rem;
+      border-radius: 999px;
+      font-family: var(--font-label);
+      font-weight: 700;
+      border: 1px solid var(--color-outline-variant);
+      color: var(--color-on-surface-variant);
+    }
+
+    .step-text {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .step-title {
+      font-weight: 700;
+      color: var(--color-on-surface);
+    }
+
+    .step-detail {
+      font-size: 0.875rem;
+      color: var(--color-on-surface-variant);
+
+      &.is-blocked {
+        color: var(--color-error);
+      }
+    }
+
+    .link {
+      padding: 0;
+      border: 0;
+      background: none;
+      color: var(--color-primary);
+      text-decoration: underline;
+      cursor: pointer;
+    }
+
+    &.is-current .step-badge {
+      border-color: transparent;
+      background: var(--color-primary);
+      color: var(--color-on-primary);
+    }
+
+    &.is-done .step-badge {
+      border-color: transparent;
+      background: color-mix(in srgb, var(--color-success) 20%, transparent);
+      color: var(--color-success);
+    }
+
+    &.is-todo {
+      opacity: 0.55;
+    }
+  }
+}

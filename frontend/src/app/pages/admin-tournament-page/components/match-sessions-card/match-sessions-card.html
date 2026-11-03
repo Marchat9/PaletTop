@@ -28,20 +28,9 @@
     @if (isDraft()) {
       <div class="info-section">
         <p class="message">
-          Le tournoi n'a pas encore démarré. En démarrant, les équipes seront réparties dans les
-          poules et les matchs du premier round seront générés.
+          Le tournoi n'a pas encore démarré : les rounds apparaîtront ici une fois lancé depuis la
+          carte « Prochaine étape ».
         </p>
-        @if (startBlocker()) {
-          <p class="message blocker">{{ startBlocker() }}</p>
-        }
-        <app-button
-          title="Démarrer le tournoi"
-          icon="play_arrow"
-          variant="primary"
-          [loading]="startLoading()"
-          [disabled]="!!startBlocker()"
-          (clicked)="startTournament.emit()"
-        />
       </div>
     }
 

@@ -13,13 +13,18 @@
       (disconnect)="disconnect()"
     />
 
+    <app-tournament-next-step
+      [tournament]="tournament() ?? null"
+      [startLoading]="startLoading()"
+      (addTeam)="addTeam()"
+      (startTournament)="startTournament()"
+    />
+
     <app-match-sessions-card
       [tournament]="tournament() ?? null"
       [sessions]="sessions()"
-      [startLoading]="startLoading()"
       [nextLoading]="nextLoading()"
       [scoreUpdateLoading]="scoreUpdateLoading()"
-      (startTournament)="startTournament()"
       (scoreUpdate)="adminScoreUpdate($event)"
       (nextSession)="nextSession()"
     />

@@ -5,20 +5,36 @@
         <span class="eyebrow">Pilotage du tournoi</span>
 
         <div class="info-header-action">
-          <app-button
-            title="Terminer le tournoi"
-            icon="flag"
-            [variant]="canFinishTournament() ? 'primary' : 'secondary'"
-            [loading]="completeLoading()"
-            [disabled]="!canFinishTournament()"
-            (clicked)="completeTournament.emit()"
+          <!-- Secondary actions live in the menu; "Terminer" also shows up as a button once it is
+               the thing to do. -->
+          @if (canFinishTournament()) {
+            <app-button
+              title="Terminer le tournoi"
+              icon="flag"
+              [loading]="completeLoading()"
+              (clicked)="completeTournament.emit()"
+            />
+          }
+          <app-button-icon
+            icon="more_vert"
+            aria-label="Actions du tournoi"
+            [matMenuTriggerFor]="headerMenu"
           />
-          <app-button
-            title="Se déconnecter"
-            icon="account_circle_off"
-            variant="error"
-            (clicked)="disconnect.emit()"
-          />
+          <mat-menu #headerMenu="matMenu" class="default-burger-menu-display" xPosition="before">
+            <button
+              mat-menu-item
+              class="menu-item"
+              [disabled]="!canFinishTournament()"
+              (click)="completeTournament.emit()"
+            >
+              <app-icon name="flag" [ariaHidden]="true" />
+              <span class="menu-label">Terminer le tournoi</span>
+            </button>
+            <button mat-menu-item class="menu-item danger" (click)="disconnect.emit()">
+              <app-icon name="account_circle_off" [ariaHidden]="true" />
+              <span class="menu-label">Se déconnecter</span>
+            </button>
+          </mat-menu>
         </div>
       </div>
       <div class="header">
