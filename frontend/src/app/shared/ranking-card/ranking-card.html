@@ -17,21 +17,30 @@
           @switch (scoreCalculation()) {
             @case ('score') {
               <tr>
-                <th class="col-rank">Rang</th>
+                <th class="col-rank" aria-label="Rang">
+                  <span class="rank-label" aria-hidden="true">Rang</span
+                  ><span class="rank-label-short" aria-hidden="true">#</span>
+                </th>
                 <th class="col-team">Équipe</th>
                 <th class="col-stat">Score</th>
               </tr>
             }
             @case ('tournament_score') {
               <tr>
-                <th class="col-rank">Rang</th>
+                <th class="col-rank" aria-label="Rang">
+                  <span class="rank-label" aria-hidden="true">Rang</span
+                  ><span class="rank-label-short" aria-hidden="true">#</span>
+                </th>
                 <th class="col-team">Équipe</th>
                 <th class="col-stat">Pts Tournoi</th>
               </tr>
             }
             @default {
               <tr>
-                <th class="col-rank">Rang</th>
+                <th class="col-rank" aria-label="Rang">
+                  <span class="rank-label" aria-hidden="true">Rang</span
+                  ><span class="rank-label-short" aria-hidden="true">#</span>
+                </th>
                 <th class="col-team">Équipe</th>
                 <th class="col-stat">V</th>
                 <th class="col-stat">Pts+</th>
