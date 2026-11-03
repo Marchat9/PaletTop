@@ -26,7 +26,7 @@
         @for (participant of present(); track participant.id) {
           <div class="person" [class.is-new]="participant.id === newParticipantId()">
             <app-avatar [name]="participant.name" />
-            <span class="name">{{ participant.name }}</span>
+            <span class="name max-two-lines">{{ participant.name }}</span>
             <span class="origin" [class.is-guest]="!participant.memberId">
               <app-icon
                 [name]="participant.memberId ? 'badge' : 'emoji_people'"
@@ -35,18 +35,29 @@
               />
               {{ participant.memberId ? 'Membre' : 'Invité' }}
             </span>
-            <span class="spacer"></span>
             <span class="participant-code">
               Code participant :
               <span class="code">{{ participant.code }}</span>
             </span>
             @if (isSessionOpen()) {
-              <app-button
-                title="Retirer"
-                icon="logout"
-                variant="error"
-                (clicked)="markLeft.emit(participant)"
-              ></app-button>
+              <!-- One compact menu per row instead of a full-width red button: less room taken,
+                   less risk of a mis-tap. The page still asks for confirmation. -->
+              <app-button-icon
+                class="person-menu"
+                icon="more_vert"
+                [matMenuTriggerFor]="personMenu"
+                [attr.aria-label]="'Actions pour ' + participant.name"
+              />
+              <mat-menu
+                #personMenu="matMenu"
+                class="default-burger-menu-display"
+                xPosition="before"
+              >
+                <button mat-menu-item class="menu-item danger" (click)="markLeft.emit(participant)">
+                  <app-icon name="logout" [ariaHidden]="true" />
+                  <span class="menu-label">Retirer de la séance</span>
+                </button>
+              </mat-menu>
             }
           </div>
         }
@@ -60,7 +71,7 @@
           @for (participant of left(); track participant.id) {
             <div class="person is-left">
               <app-avatar [name]="participant.name" />
-              <span class="name">{{ participant.name }}</span>
+              <span class="name max-two-lines">{{ participant.name }}</span>
               <span class="origin" [class.is-guest]="!participant.memberId">
                 <app-icon
                   [name]="participant.memberId ? 'badge' : 'waving_hand'"
@@ -69,8 +80,9 @@
                 />
                 {{ participant.memberId ? 'Membre' : 'Invité' }}
               </span>
-              <span class="spacer"></span>
-              <span class="code">{{ participant.code }}</span>
+              <span class="participant-code">
+                <span class="code">{{ participant.code }}</span>
+              </span>
             </div>
           }
         </div>

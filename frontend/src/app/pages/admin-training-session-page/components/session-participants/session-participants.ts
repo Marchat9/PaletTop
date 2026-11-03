@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import { Avatar } from 'src/app/shared/avatar/avatar';
-import { Button } from 'src/app/shared/button/button';
+import { MatMenuModule } from '@angular/material/menu';
+import { ButtonIcon } from 'src/app/shared/button-icon/button-icon';
 import { CardCollapsible } from 'src/app/shared/card-collapsible/card-collapsible';
 import { Icon } from 'src/app/shared/icon/icon';
 import { StaggerDirective } from 'src/app/shared/stagger/stagger.directive';
@@ -8,7 +9,7 @@ import { TrainingParticipantAdminDto } from 'src/app/store/training/training.mod
 
 @Component({
   selector: 'app-session-participants',
-  imports: [CardCollapsible, Icon, StaggerDirective, Button, Avatar],
+  imports: [CardCollapsible, Icon, StaggerDirective, ButtonIcon, MatMenuModule, Avatar],
   templateUrl: './session-participants.html',
   styleUrl: './session-participants.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

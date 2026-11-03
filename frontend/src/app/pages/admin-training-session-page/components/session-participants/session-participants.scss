@@ -48,23 +48,33 @@
   }
 
   .person {
-    display: flex;
+    // The name takes the free room (two lines at most), the badge, the code and the menu stay
+    // aligned on the right whatever the name length.
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto auto auto;
+    grid-template-areas: 'avatar name origin code menu';
     align-items: center;
-    // The name shrinks first; if room really runs out, the code and the button wrap rather than
-    // overflow.
-    flex-wrap: wrap;
-    gap: 0.5rem 1rem;
+    gap: 0.75rem 1rem;
     padding: 0.55rem 0.7rem;
     border-radius: 0.6rem;
     background: var(--color-hover-surface-soft);
     border: 1px solid var(--color-border-subtle);
 
+    // Phone: the code gets a row of its own under the name.
     @media (width < 768px) {
-      row-gap: 1.2rem;
+      grid-template-columns: auto minmax(0, 1fr) auto auto;
+      grid-template-areas:
+        'avatar name origin menu'
+        'code code code code';
+      column-gap: 0.6rem;
+    }
 
-      > * {
-        flex: 1 1 auto;
-      }
+    app-avatar {
+      grid-area: avatar;
+    }
+
+    .person-menu {
+      grid-area: menu;
     }
 
     &.is-new {
@@ -81,41 +91,33 @@
     }
 
     .name {
-      min-width: 0;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+      grid-area: name;
+      overflow-wrap: anywhere;
       font-weight: 500;
     }
 
-    .spacer {
-      flex: 1 1 auto;
-    }
-
     .origin {
+      grid-area: origin;
+      justify-self: end;
       display: inline-flex;
       align-items: center;
-      gap: 0.25rem;
-      flex: 0 0 auto;
-      padding: 0.15rem 0.5rem;
+      gap: 0.35rem;
+      padding: 0.35rem 0.7rem;
       border-radius: 10rem;
-      border: 1px solid var(--color-border-default);
-      background: var(--color-surface-container-high);
-      color: var(--color-secondary);
+      border: 1px solid var(--color-status-draft-border);
+      background: var(--color-status-draft-bg);
+      color: var(--color-status-draft-text);
       font-family: var(--font-label);
-      font-size: 0.62rem;
+      font-size: 0.66rem;
       font-weight: 700;
+      line-height: 1;
       letter-spacing: 0.1em;
       text-transform: uppercase;
       white-space: nowrap;
 
       ::ng-deep .origin-icon {
-        font-size: 0.85rem;
+        font-size: 0.9rem;
       }
-
-      border-color: var(--color-status-draft-border);
-      background: var(--color-status-draft-bg);
-      color: var(--color-status-draft-text);
 
       &.is-guest {
         border-color: var(--color-status-success-border);
@@ -125,25 +127,26 @@
     }
 
     .participant-code {
-      font-size: 0.82rem;
-      color: var(--color-secondary);
-
+      grid-area: code;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 0.2rem;
-      flex-wrap: nowrap;
+      gap: 0.5rem;
+      color: var(--color-on-surface-variant);
+      font-size: 0.82rem;
+      white-space: nowrap;
 
+      // The code is what the admin reads out to the player: it stands out from the row.
       .code {
-        padding: 0.15rem 0.5rem;
-        border-radius: 0.4rem;
-        background: var(--color-surface-container-high);
-        border: 1px solid var(--color-border-default);
+        padding: 0.25rem 0.65rem;
+        border-radius: 0.45rem;
+        border: 1px solid color-mix(in srgb, var(--color-primary) 45%, transparent);
+        background: color-mix(in srgb, var(--color-primary) 14%, transparent);
         color: var(--color-primary);
         font-family: var(--font-label);
+        font-size: 1.2rem;
         font-weight: 700;
-        font-size: 1rem;
-        letter-spacing: 0.18em;
+        letter-spacing: 0.2em;
         font-variant-numeric: tabular-nums;
       }
     }

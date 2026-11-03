@@ -1,3 +1,5 @@
+<!-- Same layout as the tournament session matches: team A, score, team B on one line, stacked
+     (name above score above name) on narrow screens. -->
 <div class="match-list" [appStagger]="round().id">
   @for (row of matchRows(); track row.match.id) {
     <div
@@ -6,50 +8,66 @@
       [class.is-editing]="editingMatchId() === row.match.id"
     >
       @if (editingMatchId() === row.match.id) {
-        <span class="plate">Plaque N°{{ row.plateNumber }}</span>
-        <span class="team">{{ teamLabel(row.match.teamA) }}</span>
-        <div class="edit-scores">
-          <app-input-number
-            [value]="draftScoreA()"
-            [min]="0"
-            [max]="pointsPerGame()"
-            (valueChange)="draftScoreA.set($event)"
-          />
-          <span class="vs">—</span>
-          <app-input-number
-            [value]="draftScoreB()"
-            [min]="0"
-            [max]="pointsPerGame()"
-            (valueChange)="draftScoreB.set($event)"
-          />
-        </div>
-        <span class="team team--b">{{ teamLabel(row.match.teamB) }}</span>
-        <div class="edit-actions">
-          <app-button
-            title="Enregistrer"
-            icon="check"
-            variant="primary"
-            [loading]="scoreLoading()"
-            (clicked)="saveEdit(row.match.id)"
-          />
-          <app-button title="Annuler" variant="secondary" (clicked)="cancelEdit()" />
+        <div class="edit-row">
+          <span class="plate">
+            <span class="plate-label">Plaque N°{{ row.plateNumber }}</span>
+          </span>
+          <div class="teams-and-score edit-mode">
+            <span class="team team-a">{{ row.teamALabel }}</span>
+            <div class="score-buttons">
+              <app-input-number
+                [value]="draftScoreA()"
+                [min]="0"
+                [max]="pointsPerGame()"
+                (valueChange)="draftScoreA.set($event)"
+              />
+              <span class="vs">—</span>
+              <app-input-number
+                [value]="draftScoreB()"
+                [min]="0"
+                [max]="pointsPerGame()"
+                (valueChange)="draftScoreB.set($event)"
+              />
+            </div>
+            <span class="team team-b">{{ row.teamBLabel }}</span>
+          </div>
+          <div class="edit-actions">
+            <app-button
+              title="Enregistrer"
+              icon="check"
+              variant="primary"
+              [loading]="scoreLoading()"
+              (clicked)="saveEdit(row.match.id)"
+            />
+            <app-button title="Annuler" variant="secondary" (clicked)="cancelEdit()" />
+          </div>
         </div>
       } @else if (row.match.isBye) {
-        <span class="team">{{ teamLabel(row.match.teamA) }}</span>
-        <span class="spacer"></span>
-        <app-status-pill tone="draft">Au repos ce round</app-status-pill>
+        <div class="teams-and-score">
+          <span class="team team-a">{{ row.teamALabel }}</span>
+        </div>
+        <div class="match-meta">
+          <app-status-pill tone="draft">Au repos ce round</app-status-pill>
+        </div>
       } @else {
-        <span class="plate">Plaque N°{{ row.plateNumber }}</span>
-        <span class="team">{{ teamLabel(row.match.teamA) }}</span>
-        <span class="score" [appAnimateOnChange]="row.match.scoreA + '-' + row.match.scoreB">
-          <strong>{{ row.match.scoreA }}</strong>
-          <span class="vs">—</span>
-          <strong>{{ row.match.scoreB }}</strong>
+        <span class="plate">
+          <span class="plate-label">Plaque N°{{ row.plateNumber }}</span>
         </span>
-        <span class="team team--b">{{ teamLabel(row.match.teamB) }}</span>
+        <div class="teams-and-score">
+          <span class="team team-a">{{ row.teamALabel }}</span>
+          <span
+            class="score-display"
+            [appAnimateOnChange]="row.match.scoreA + '-' + row.match.scoreB"
+          >
+            <strong>{{ row.match.scoreA }}</strong>
+            <span class="vs">—</span>
+            <strong>{{ row.match.scoreB }}</strong>
+          </span>
+          <span class="team team-b">{{ row.teamBLabel }}</span>
+        </div>
 
         <div class="match-meta">
-          <app-status-pill [tone]="statusTone(row.match.status)">
+          <app-status-pill [tone]="row.statusTone">
             <app-match-status [status]="row.match.status" />
           </app-status-pill>
           <app-match-timer

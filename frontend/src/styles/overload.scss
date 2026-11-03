@@ -164,6 +164,14 @@ span.highlight {
       color: var(--color-primary);
     }
   }
+
+  // Destructive action (e.g. removing a participant)
+  .menu-item.danger {
+    .menu-label,
+    .material-symbols-outlined {
+      color: var(--color-error);
+    }
+  }
 }
 
 .mat-mdc-menu-item-text {
