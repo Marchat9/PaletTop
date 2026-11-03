@@ -18,11 +18,28 @@ export const selectIsMatchFinished = createSelector(
   (s) => s.team1Score >= s.targetScore || s.team2Score >= s.targetScore,
 );
 
-export const selectWinner = createSelector(
+export type FriendlyMatchSide = 'team1' | 'team2';
+
+/**
+ * The winning side, decided by the scores. Comparing names failed with empty or identical names,
+ * and lowering the target below both scores used to crown team 1 even when it was behind.
+ */
+export const selectWinnerSide = createSelector(
   selectFriendlyMatchState,
   selectIsMatchFinished,
-  (s, isFinished) => {
-    if (!isFinished) return null;
-    return s.team1Score >= s.targetScore ? s.team1Name : s.team2Name;
+  (s, isFinished): FriendlyMatchSide | null => {
+    if (!isFinished || s.team1Score === s.team2Score) return null;
+    return s.team1Score > s.team2Score ? 'team1' : 'team2';
+  },
+);
+
+/** Name of the winning side, with the same default label as the score board. */
+export const selectWinner = createSelector(
+  selectFriendlyMatchState,
+  selectWinnerSide,
+  (s, side) => {
+    if (side === 'team1') return s.team1Name || 'Équipe 1';
+    if (side === 'team2') return s.team2Name || 'Équipe 2';
+    return null;
   },
 );

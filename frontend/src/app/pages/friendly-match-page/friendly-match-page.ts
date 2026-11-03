@@ -19,6 +19,7 @@ import {
   selectTeam2Name,
   selectTeam2Score,
   selectWinner,
+  selectWinnerSide,
 } from 'src/app/store/friendly-match/friendly-match.selectors';
 import { FriendlyMatchConfig } from './components/friendly-match-config/friendly-match-config';
 import { FriendlyMatchHistory } from './components/friendly-match-history/friendly-match-history';
@@ -42,6 +43,7 @@ export class FriendlyMatchPageComponent {
   readonly team2Score = this.store.selectSignal(selectTeam2Score);
   readonly isMatchFinished = this.store.selectSignal(selectIsMatchFinished);
   readonly winner = this.store.selectSignal(selectWinner);
+  readonly winnerSide = this.store.selectSignal(selectWinnerSide);
   readonly matchHistory = this.store.selectSignal(selectMatchHistory);
 
   readonly hasModifications = computed(() => {
