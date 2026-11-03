@@ -64,7 +64,7 @@ export const matchReducer = createReducer(
     ...state,
     data: {
       ...state.data,
-      data: match,
+      data: isCurrentOrNewerMatch(state.data.data, match) ? match : state.data.data,
     },
   })),
   on(startMatch, (state) => ({
@@ -117,3 +117,19 @@ export const matchReducer = createReducer(
   })),
   on(resetTournament, () => initialMatchState),
 );
+
+/**
+ * An admin correcting a match of a previous session broadcasts it to both teams: it must not take
+ * the place of the match they are playing. Only the same match, or one of a newer session (the
+ * next session's match), replaces the current one.
+ */
+export function isCurrentOrNewerMatch(
+  current: Nullable<PlayerMatchDto>,
+  incoming: PlayerMatchDto,
+): boolean {
+  return (
+    !current ||
+    current.id === incoming.id ||
+    incoming.session.sessionNumber > current.session.sessionNumber
+  );
+}
