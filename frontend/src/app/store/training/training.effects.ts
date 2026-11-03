@@ -537,7 +537,10 @@ export class TrainingEffects {
     this.actions$.pipe(
       ofType(updateTrainingScore),
       debounceTime(environment.apiConfiguration.delayToUpdateScore ?? 0),
-      switchMap(({ sessionCode, matchId, participantCode, scoreA, scoreB }) =>
+      // concatMap, not switchMap: cancelling an HTTP call does not stop the server from processing
+      // it, so two in-flight scores could be saved out of order. Sent one after the other, the
+      // last score typed is the last one saved.
+      concatMap(({ sessionCode, matchId, participantCode, scoreA, scoreB }) =>
         this.trainingService
           .updateScore(sessionCode, matchId, participantCode, scoreA, scoreB)
           .pipe(

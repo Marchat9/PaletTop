@@ -16,6 +16,8 @@ import { RawScoreUpdateResult, ScoreUpdateResult } from '../responses/score.dto'
 import { PlayerMatchDto } from '../responses/player-match.dto';
 import { computeRanking } from '../utils/pool-ranking.utils';
 
+const NOT_VALIDATED = [MatchStatus.PENDING, MatchStatus.ONGOING, MatchStatus.ENDED];
+
 @Injectable()
 export class ScoreService {
     private readonly logger = new Logger(ScoreService.name);
@@ -80,7 +82,7 @@ export class ScoreService {
         const isFinished = scoreA >= max || scoreB >= max;
 
         const now = new Date();
-        await this.matchRepo.update(matchId, {
+        const updated = await this.matchRepo.updateIfStatus(matchId, NOT_VALIDATED, {
             scoreA,
             scoreB,
             status: isFinished ? MatchStatus.ENDED : MatchStatus.ONGOING,
@@ -88,6 +90,12 @@ export class ScoreService {
             // Scored without being started first: it still needs a start date for its duration.
             ...(!match.startedAt && { startedAt: now }),
         });
+        // Validated by the other team while this score was on its way: it must not reopen it.
+        if (!updated) {
+            throw new BadRequestException(
+                "Le match vient d'être validé : le score ne peut plus changer.",
+            );
+        }
 
         const result = await this.buildScoreUpdateResult(
             matchId,
@@ -140,11 +148,18 @@ export class ScoreService {
             ? Math.round((finishedAt.getTime() - match.startedAt.getTime()) / 1000)
             : null;
 
-        await this.matchRepo.update(matchId, {
+        const validated = await this.matchRepo.updateIfStatus(matchId, [MatchStatus.ENDED], {
             status: MatchStatus.VALIDATED,
             finishedAt,
             duration,
         });
+        // Two validations at once (both teams, or a double tap): only the first one goes through,
+        // so the ranking is recomputed and broadcast once.
+        if (!validated) {
+            throw new BadRequestException(
+                'Le match a déjà été validé ou son score vient de changer.',
+            );
+        }
 
         const result = await this.buildScoreUpdateResult(
             matchId,

@@ -12,6 +12,8 @@ import { TrainingSessionAuthService } from './training-session-auth.service';
 import { TrainingLeaderboardService } from './training-leaderboard.service';
 import { TrainingRealtimeGateway } from '../training-realtime.gateway';
 
+const NOT_VALIDATED = [MatchStatus.PENDING, MatchStatus.ONGOING, MatchStatus.ENDED];
+
 @Injectable()
 export class TrainingScoreService {
     private readonly logger = new Logger(TrainingScoreService.name);
@@ -92,17 +94,27 @@ export class TrainingScoreService {
             match.startedAt = new Date();
         }
 
-        const [[saved]] = await Promise.all([
-            this.trainingMatchRepo.save([match]),
-            this.trainingSessionRepo.touchLastActivity(session.id),
-        ]);
+        const updated = await this.trainingMatchRepo.updateIfStatus(matchId, NOT_VALIDATED, {
+            scoreA: match.scoreA,
+            scoreB: match.scoreB,
+            status: match.status,
+            finishedAt: match.finishedAt,
+            startedAt: match.startedAt,
+        });
+        // Validated by the other team while this score was on its way: it must not reopen it.
+        if (!updated) {
+            throw new BadRequestException(
+                "Le match vient d'être validé : le score ne peut plus changer.",
+            );
+        }
+        await this.trainingSessionRepo.touchLastActivity(session.id);
         // Only the end of the match is logged: every point entered would flood the logs.
         if (isFinished && !wasEnded) {
             this.logger.log(
                 `Match ${matchId} ended ${scoreA}-${scoreB} (training session: ${sessionCode})`,
             );
         }
-        return this.emitMatchUpdate(sessionCode, session.id, saved);
+        return this.emitMatchUpdate(sessionCode, session.id, match);
     }
 
     async validateMatch(
@@ -137,14 +149,26 @@ export class TrainingScoreService {
         match.status = MatchStatus.VALIDATED;
         match.finishedAt = match.finishedAt ?? new Date();
 
-        const [[saved]] = await Promise.all([
-            this.trainingMatchRepo.save([match]),
-            this.trainingSessionRepo.touchLastActivity(session.id),
-        ]);
+        // Two validations at once: only the first one goes through, so the leaderboard is
+        // recomputed and broadcast once.
+        const validated = await this.trainingMatchRepo.updateIfStatus(
+            matchId,
+            [MatchStatus.ENDED],
+            {
+                status: match.status,
+                finishedAt: match.finishedAt,
+            },
+        );
+        if (!validated) {
+            throw new BadRequestException(
+                'Le match a déjà été validé ou son score vient de changer.',
+            );
+        }
+        await this.trainingSessionRepo.touchLastActivity(session.id);
         this.logger.log(
             `Match ${matchId} validated ${match.scoreA}-${match.scoreB} (training session: ${sessionCode})`,
         );
-        return this.emitMatchUpdate(sessionCode, session.id, saved);
+        return this.emitMatchUpdate(sessionCode, session.id, match);
     }
 
     async adminUpdateScore(

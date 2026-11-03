@@ -1,7 +1,16 @@
 import { inject, Injectable } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { Store } from '@ngrx/store';
-import { catchError, debounceTime, filter, map, of, switchMap, withLatestFrom } from 'rxjs';
+import {
+  catchError,
+  concatMap,
+  debounceTime,
+  filter,
+  map,
+  of,
+  switchMap,
+  withLatestFrom,
+} from 'rxjs';
 import { TournamentStatus } from 'src/app/models/tournament-status.enum';
 import { MatchService } from 'src/app/services/match.service';
 import { addNotification } from 'src/app/store/app-config/app-config.actions';
@@ -79,7 +88,10 @@ export class MatchEffects {
       ofType(updateScore),
       debounceTime(environment.apiConfiguration.delayToUpdateScore ?? 0),
       withLatestFrom(this.store.select(selectCurrentTournamentData)),
-      switchMap(([{ matchId, teamCode, scoreA, scoreB }, tournament]) =>
+      // concatMap, not switchMap: cancelling an HTTP call does not stop the server from processing
+      // it, so two in-flight scores could be saved out of order. Sent one after the other, the
+      // last score typed is the last one saved.
+      concatMap(([{ matchId, teamCode, scoreA, scoreB }, tournament]) =>
         this.matchService.updateScore(tournament!.code, matchId, teamCode, scoreA, scoreB).pipe(
           map(() => updateScoreSuccess()),
           catchError((error) => of(updateScoreFailure({ error: convertErrorToString(error) }))),
