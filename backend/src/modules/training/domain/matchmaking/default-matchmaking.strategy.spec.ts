@@ -113,6 +113,32 @@ describe('DefaultMatchmakingStrategy', () => {
         }
     });
 
+    it("fait jouer l'équipe fixe qui a le plus attendu quand les plaques manquent", () => {
+        const strategy = new DefaultMatchmakingStrategy(Math.random);
+        const fixedTeams = [
+            { id: 'fixed-1', participantIds: ['a1', 'a2'] },
+            { id: 'fixed-2', participantIds: ['b1', 'b2'] },
+            { id: 'fixed-3', participantIds: ['c1', 'c2'] },
+        ];
+
+        for (let i = 0; i < 20; i++) {
+            const plan = strategy.generateRound(
+                input({
+                    fixedTeams,
+                    soloParticipantIds: [],
+                    config: baseConfig({ plateCount: 1 }),
+                    // fixed-3 waited the last two rounds: it must play this time.
+                    history: baseHistory({ sitOutCountByParticipant: { c1: 2, c2: 2 } }),
+                }),
+            );
+            const waiting = plan.matches
+                .filter((m) => m.opponentRef === null)
+                .map((m) => m.teamRef);
+            expect(waiting).toHaveLength(1);
+            expect(waiting).not.toContain('fixed-3');
+        }
+    });
+
     it('ne dépasse pas le nombre de plaques et met les autres en attente', () => {
         const strategy = new DefaultMatchmakingStrategy(NO_SHUFFLE);
         const plan = strategy.generateRound(

@@ -67,9 +67,11 @@ export class DefaultMatchmakingStrategy implements MatchmakingPort {
             participantIds: [participantId],
         }));
 
-        // Fixed teams beyond the plate count wait for the next round.
-        const fixedPlaying = input.fixedTeams.slice(0, decomposition.fixedTeamsPlaying);
-        const fixedWaiting = input.fixedTeams.slice(decomposition.fixedTeamsPlaying);
+        // Fixed teams beyond the plate count wait for the next round: those that waited the most
+        // play first, otherwise the last team of the list would wait every round.
+        const fixedOrder = this.fixedTeamsByRest(input, decomposition.fixedTeamsPlaying);
+        const fixedPlaying = fixedOrder.slice(0, decomposition.fixedTeamsPlaying);
+        const fixedWaiting = fixedOrder.slice(decomposition.fixedTeamsPlaying);
 
         const teamRefs: TeamRef[] = [
             ...fixedPlaying.map((team) => ({
@@ -97,6 +99,25 @@ export class DefaultMatchmakingStrategy implements MatchmakingPort {
             ephemeralTeams: [...playingTeams, ...restingTeams],
             matches: [...matches, ...restingMatches],
         };
+    }
+
+    /** Most rested first (average over the members), ties drawn at random. */
+    private fixedTeamsByRest(
+        input: GenerateRoundInput,
+        playingCount: number,
+    ): GenerateRoundInput['fixedTeams'] {
+        if (playingCount >= input.fixedTeams.length) {
+            return input.fixedTeams;
+        }
+        const counts = input.history.sitOutCountByParticipant;
+        const restOf = (team: GenerateRoundInput['fixedTeams'][number]) =>
+            team.participantIds.length === 0
+                ? 0
+                : team.participantIds.reduce((sum, id) => sum + (counts[id] ?? 0), 0) /
+                  team.participantIds.length;
+        return shuffleFisherYates(input.fixedTeams, this.random).sort(
+            (a, b) => restOf(b) - restOf(a),
+        );
     }
 
     /** Nobody can play: everyone rests, the round still exists. */
