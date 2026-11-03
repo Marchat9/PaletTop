@@ -261,13 +261,18 @@ export class AdminTournamentPageComponent implements OnInit {
         disableClose: false,
       })
       .closed.subscribe((confirmed) => {
-        if (confirmed) {
+        if (confirmed && !this.startLoading()) {
           this.store.dispatch(startTournament());
         }
       });
   }
 
   public nextSession(): void {
+    // The button only re-renders as loading on the next change detection: a double click can
+    // land in between. The store signal is already up to date after the first dispatch.
+    if (this.nextLoading()) {
+      return;
+    }
     this.store.dispatch(nextSession());
   }
 

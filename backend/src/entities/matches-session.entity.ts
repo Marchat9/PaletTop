@@ -1,9 +1,19 @@
-import { Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import {
+    Column,
+    Entity,
+    JoinColumn,
+    ManyToOne,
+    OneToMany,
+    PrimaryGeneratedColumn,
+    Unique,
+} from 'typeorm';
 import { MatchesSessionStatus } from 'src/enum/status.enum';
 import { Tournament } from './tournament.entity';
 import { TournamentMatch } from './tounament-match.entity';
 
 @Entity('matches_session')
+// Two concurrent starts or next-session calls would otherwise both create the same session.
+@Unique('UQ_matches_session_tournament_number', ['tournament', 'sessionNumber'])
 export class MatchesSession {
     @PrimaryGeneratedColumn('uuid')
     id!: string;
