@@ -47,15 +47,15 @@ export class TeamController {
     }
 
     @Patch(':teamCode')
-    async updateTeam(@Body() dto: AdminUpdateTeam): Promise<TeamDto> {
+    async updateTeam(
+        @Param('code') tournamentCode: string,
+        @Param('teamCode') teamCode: string,
+        @Body() dto: AdminUpdateTeam,
+    ): Promise<TeamDto> {
         try {
-            const tournament = await this.tournamentsService.authenticateAdmin(
-                dto.code,
-                dto.password,
-            );
-            const currentTeam = await this.tournamentsService.getTeamById(
-                tournament.code,
-                dto.teamId,
+            const currentTeam = await this.tournamentsService.findEditableTeam(
+                { tournamentCode, teamCode },
+                dto,
             );
 
             const newTeam = await this.tournamentsService.updateTeamById(
@@ -78,15 +78,15 @@ export class TeamController {
     }
 
     @Delete(':teamCode')
-    async deleteTeam(@Body() dto: AdminDeleteTeam): Promise<void> {
+    async deleteTeam(
+        @Param('code') tournamentCode: string,
+        @Param('teamCode') teamCode: string,
+        @Body() dto: AdminDeleteTeam,
+    ): Promise<void> {
         try {
-            const tournament = await this.tournamentsService.authenticateAdmin(
-                dto.code,
-                dto.password,
-            );
-            const currentTeam = await this.tournamentsService.getTeamById(
-                tournament.code,
-                dto.teamId,
+            const currentTeam = await this.tournamentsService.findEditableTeam(
+                { tournamentCode, teamCode },
+                dto,
             );
 
             await this.tournamentsService.deleteTeamById(currentTeam.id);

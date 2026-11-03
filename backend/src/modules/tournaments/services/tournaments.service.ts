@@ -279,6 +279,36 @@ export class TournamentsService {
         return team;
     }
 
+    /**
+     * The team an admin is about to edit or delete. The URL and the body must name the same
+     * tournament and team (the URL used to be ignored), and teams only change while the
+     * tournament is a draft: afterwards their matches reference them.
+     */
+    async findEditableTeam(
+        route: { tournamentCode: string; teamCode: string },
+        dto: { code: string; password: string; teamId: string },
+    ): Promise<Team> {
+        if (route.tournamentCode.trim().toUpperCase() !== dto.code.trim().toUpperCase()) {
+            throw new BadRequestException("Le code du tournoi ne correspond pas à l'URL.");
+        }
+
+        const tournament = await this.tournamentAuthService.findWithAdminAuth(
+            { code: dto.code.trim().toUpperCase() },
+            dto.password,
+        );
+        if (tournament.status !== TournamentStatus.DRAFT) {
+            throw new BadRequestException(
+                "Les équipes ne peuvent être modifiées ou supprimées qu'en phase de configuration (statut Brouillon).",
+            );
+        }
+
+        const team = await this.getTeamById(tournament.code, dto.teamId);
+        if (team.code !== route.teamCode) {
+            throw new NotFoundException('Équipe introuvable.');
+        }
+        return team;
+    }
+
     async updateTeamById(teamId: string, teamData: TournamentTeamDto): Promise<Team> {
         const team = await this.teamRepo.findById(teamId);
         if (!team) {
