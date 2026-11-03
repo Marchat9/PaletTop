@@ -1,6 +1,6 @@
 <div class="button-icon" (click)="clicked.emit()">
   @if (icon()) {
-    <app-icon [name]="icon()!" />
+    <app-icon [name]="icon()!" [ariaHidden]="true" />
   } @else {
     <img class="image" [ngSrc]="imagePath() ?? ''" priority width="20" height="20" />
   }
