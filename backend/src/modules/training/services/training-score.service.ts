@@ -3,7 +3,7 @@ import { TrainingMatch } from 'src/entities/training-match.entity';
 import { TrainingSession } from 'src/entities/training-session.entity';
 import { TrainingTeam } from 'src/entities/training-team.entity';
 import { MatchStatus } from 'src/enum/status.enum';
-import { TrainingRoundStatus } from 'src/enum/training.enum';
+import { TrainingParticipantStatus, TrainingRoundStatus } from 'src/enum/training.enum';
 import { TrainingMatchRepository } from '../repositories/training-match.repository';
 import { TrainingSessionRepository } from '../repositories/training-session.repository';
 import { TrainingMatchDto, toTrainingMatchDto } from '../responses/training-round.dto';
@@ -287,6 +287,20 @@ export class TrainingScoreService {
                 `Invalid participant code for match ${matchId} of session ${sessionCode}`,
             );
             throw new BadRequestException('Code participant invalide pour ce match.');
+        }
+
+        // Removed from the session by the admin: the player page already says so, the API must
+        // agree. The match is then the admin's to finish.
+        const acting = [...(match.teamA.members ?? []), ...(match.teamB?.members ?? [])].find(
+            (m) => m.participant.code === participantCode,
+        )?.participant;
+        if (acting?.status === TrainingParticipantStatus.LEFT) {
+            this.logger.warn(
+                `Match action refused: participant left session ${sessionCode} (match ${matchId})`,
+            );
+            throw new BadRequestException(
+                "Vous avez été retiré(e) de la séance : ce match est désormais géré par l'organisateur.",
+            );
         }
 
         return { match, session };

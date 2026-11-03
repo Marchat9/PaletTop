@@ -128,6 +128,16 @@ export class TrainingRoundsService {
         };
 
         const plan = this.matchmaking.generateRound(input);
+        // A round made of rests only needs no validation: it could be generated again and again.
+        // The UI already explains it before the click; the API must refuse it too.
+        if (!plan.matches.some((match) => match.opponentRef !== null)) {
+            this.logger.warn(
+                `Round generation refused in session ${sessionCode}: no match possible with ${soloParticipantIds.length} solo player(s)`,
+            );
+            throw new BadRequestException(
+                "Aucun match n'est possible avec les joueurs présents et les tailles d'équipe autorisées.",
+            );
+        }
         const participantById = new Map<string, TrainingParticipant>(
             session.participants.map((p) => [p.id, p]),
         );
