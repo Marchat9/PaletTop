@@ -12,6 +12,8 @@ const FULL_TEAM_RELATIONS = {
 
 // Cross-session level needs each player's roster member to link their matches across sessions.
 const HISTORY_TEAM_RELATIONS = {
+    // The session's points target: levels compare scores as a share of it.
+    session: true,
     teamA: { members: { participant: { member: true } } },
     teamB: { members: { participant: { member: true } } },
 } as const;

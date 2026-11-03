@@ -58,7 +58,13 @@ export class TrainingLeaderboardService {
         currentMatches: TrainingMatch[],
         historyDepth: number,
     ): Promise<Record<string, number>> {
-        const current = this.pointsPlayed(currentMatches, (member) => member.participant.id);
+        // Scores are taken as a share of each session's target: 11 points out of 11 weigh as much
+        // as 15 out of 15. Raw points would make a player of the 15-point sessions look stronger.
+        const current = this.pointsPlayed(
+            currentMatches,
+            (member) => member.participant.id,
+            () => session.pointsPerGame,
+        );
 
         const historySessionIds = await this.trainingSessionRepo.findRecentIdsByTraining(
             session.training.id,
@@ -70,6 +76,7 @@ export class TrainingLeaderboardService {
         const history = this.pointsPlayed(
             historyMatches,
             (member) => member.participant.member?.id ?? null,
+            (match) => match.session?.pointsPerGame ?? session.pointsPerGame,
         );
 
         const levels: Record<string, number> = {};
@@ -93,12 +100,14 @@ export class TrainingLeaderboardService {
     }
 
     /**
-     * Points scored and matches played, grouped by the key each team member maps to (participant id
-     * within a session, member id across sessions). Byes and unfinished matches are ignored.
+     * Points scored (as a share of the match's target) and matches played, grouped by the key each
+     * team member maps to (participant id within a session, member id across sessions). Byes and
+     * unfinished matches are ignored.
      */
     private pointsPlayed(
         matches: TrainingMatch[],
         keyOf: (member: TrainingTeam['members'][number]) => string | null | undefined,
+        targetOf: (match: TrainingMatch) => number,
     ): Map<string, { points: number; played: number }> {
         const totals = new Map<string, { points: number; played: number }>();
         const credit = (team: TrainingTeam, score: number): void => {
@@ -116,8 +125,9 @@ export class TrainingLeaderboardService {
             if (match.isBye || !match.teamB || match.status !== MatchStatus.VALIDATED) {
                 continue;
             }
-            credit(match.teamA, match.scoreA);
-            credit(match.teamB, match.scoreB);
+            const target = targetOf(match) || 1;
+            credit(match.teamA, match.scoreA / target);
+            credit(match.teamB, match.scoreB / target);
         }
         return totals;
     }
