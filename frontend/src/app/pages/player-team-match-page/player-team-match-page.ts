@@ -1,3 +1,5 @@
+import { selectScoreSync } from 'src/app/store/match/match.selectors';
+import { withPendingScore } from 'src/app/utils/pending-score.util';
 import { Dialog } from '@angular/cdk/dialog';
 import { Button } from 'src/app/shared/button/button';
 import { JoinTournamentPopupComponent } from 'src/app/modales/join-tournament-popup/join-tournament-popup';
@@ -146,8 +148,10 @@ export class PlayerTeamMatchPageComponent {
     return this.matchView()!.status === 'PENDING' ? 'Prochain match' : 'Match en cours';
   });
 
+  public readonly scoreSync = this.store.selectSignal(selectScoreSync);
+
   public readonly matchView = computed(() => {
-    const match = this.currentMatch();
+    const match = withPendingScore(this.currentMatch(), this.scoreSync().pending);
     const teamId = this.team()?.id;
     return match && teamId ? toPlayerMatchView(match, teamId) : null;
   });

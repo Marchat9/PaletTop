@@ -43,3 +43,8 @@ function computeHumanTextError(statusCode: number): Nullable<string> {
       return null;
   }
 }
+
+/** No answer from the server at all (offline, network down): status 0 on an HTTP error. */
+export function isNetworkError(error: unknown): boolean {
+  return error instanceof HttpErrorResponse && error.status === 0;
+}
