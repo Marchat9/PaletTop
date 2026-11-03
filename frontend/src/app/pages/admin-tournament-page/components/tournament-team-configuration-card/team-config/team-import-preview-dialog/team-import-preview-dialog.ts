@@ -41,7 +41,7 @@ export class TeamImportPreviewDialog {
   });
 
   public displayName(row: ParsedTeamRow, index: number): string {
-    return row.name ?? `Equipe ${this.data.tournamentTeamCount + index + 1} (auto-généré)`;
+    return row.name ?? `Équipe ${this.data.tournamentTeamCount + index + 1} (auto-généré)`;
   }
 
   public onCancel(): void {

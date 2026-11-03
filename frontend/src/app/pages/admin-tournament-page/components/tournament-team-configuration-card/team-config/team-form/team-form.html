@@ -1,5 +1,5 @@
 <div class="field-group">
-  <label for="{{ formId }}-team-name">Nom de l'equipe (optionnel)</label>
+  <label for="{{ formId }}-team-name">Nom de l'équipe (optionnel)</label>
   <app-input-text
     id="{{ formId }}-team-name"
     icon="groups"
@@ -68,7 +68,7 @@
     <app-button title="Annuler" variant="tertiary" icon="close" (clicked)="onCancel()" />
   }
   <app-button
-    [title]="isEditMode() ? 'Enregistrer' : 'Creer l\'equipe'"
+    [title]="isEditMode() ? 'Enregistrer' : 'Créer l\'équipe'"
     [icon]="isEditMode() ? 'save' : 'group_add'"
     [disabled]="!canSubmit()"
     (clicked)="onSubmit()"

@@ -38,7 +38,7 @@ export async function generateTeamsExcelTemplate(maxPlayers: number): Promise<Bl
   const workbook = new ExcelJS.Workbook();
   const worksheet = workbook.addWorksheet('Équipes');
 
-  const columns: Partial<Column>[] = [{ header: 'Nom Equipe (optionnel)', key: 'team', width: 26 }];
+  const columns: Partial<Column>[] = [{ header: 'Nom Équipe (optionnel)', key: 'team', width: 26 }];
   for (let i = 1; i <= maxPlayers; i++) {
     columns.push({ header: `Nom Joueur ${i}`, key: `playerName${i}`, width: 22 });
     columns.push({ header: `Nom Club ${i}`, key: `playerClub${i}`, width: 20 });

@@ -43,7 +43,7 @@ export function generateBurgerMenuItem(
     {
       order: 3,
       icon: 'info',
-      name: 'A propos',
+      name: 'À propos',
       clickKey: 'ABOUT',
       disabled: disabledKeys.includes('ABOUT'),
       hidden: hiddenKeys.includes('ABOUT'),

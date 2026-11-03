@@ -38,7 +38,7 @@ function computeHumanTextError(statusCode: number): Nullable<string> {
   // Add more if possible
   switch (statusCode) {
     case 0:
-      return 'Connexion au server impossible.';
+      return 'Connexion au serveur impossible.';
     default:
       return null;
   }

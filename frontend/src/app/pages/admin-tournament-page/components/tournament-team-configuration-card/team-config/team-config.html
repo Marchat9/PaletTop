@@ -13,7 +13,7 @@
       <div class="section-header">
         <span class="eyebrow">Vue d'ensemble</span>
         <div class="title-row">
-          <span class="title">Equipes inscrites ({{ tournament()?.teams?.length ?? 0 }})</span>
+          <span class="title">Équipes inscrites ({{ tournament()?.teams?.length ?? 0 }})</span>
           <ng-content select="[actions]" />
         </div>
       </div>
@@ -22,7 +22,7 @@
         <app-input-text
           id="team-search"
           icon="search"
-          placeholder="Filtrer par equipe, code, joueur ou club"
+          placeholder="Filtrer par équipe, code, joueur ou club"
           [value]="teamSearch()"
           (valueChange)="updateSearch($event)"
         />
@@ -35,7 +35,7 @@
 
     @if ((tournament()?.teams?.length ?? 0) === 0) {
       <span class="team-config-empty">
-        Aucune equipe pour le moment. Creez la premiere equipe via le formulaire.
+        Aucune équipe pour le moment. Créez la première équipe via le formulaire.
       </span>
     } @else if (filteredTeams().length === 0) {
       <span class="team-config-empty">Aucune equipe ne correspond à ce filtre.</span>

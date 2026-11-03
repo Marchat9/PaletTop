@@ -186,7 +186,7 @@ export class TournamentsService {
             const code = generateNumericCode(existingTeamCodes, this.nbNumberInCode);
 
             const team = this.teamRepo.create({
-                name: teamDto.name || `Equipe ${existingTeamCount + index + 1}`,
+                name: teamDto.name || `Équipe ${existingTeamCount + index + 1}`,
                 club: teamDto.club || undefined,
                 code,
                 tournament,

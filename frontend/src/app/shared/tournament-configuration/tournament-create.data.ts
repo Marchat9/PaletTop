@@ -37,7 +37,7 @@ export const scoreCalculationOptions: {
     value: 'victory_ga',
     icon: 'calculate',
     label: 'Victoire & Goal Average',
-    description: 'Nombre de victoire puis Goal Average',
+    description: 'Nombre de victoires puis Goal Average',
   },
   {
     value: 'score',
@@ -89,7 +89,7 @@ export const eliminationTableauxOptions: {
   {
     value: 'challenge_principale',
     label: 'Challenge',
-    description: 'Pour les perdants du 2eme tour du tableau Principal',
+    description: 'Pour les perdants du 2e tour du tableau Principal',
   },
   {
     value: 'challenge_consolante',
