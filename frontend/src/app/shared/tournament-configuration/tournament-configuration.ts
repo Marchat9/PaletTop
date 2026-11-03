@@ -45,7 +45,7 @@ export const FIELD_LABELS: Record<string, string> = {
   'rules.pointsPerGame': 'Points par partie',
   'modeParameter.competitionMode': 'Mode de compétition',
   'modeParameter.championshipMode.homeTeam': 'Équipe à domicile',
-  'modeParameter.championshipMode.awayTeam': 'Équipe à l\'extérieur',
+  'modeParameter.championshipMode.awayTeam': "Équipe à l'extérieur",
 };
 
 @Component({
