@@ -27,8 +27,15 @@ export class TrainingSessionController {
         @Param('code') code: string,
         @Body() dto: CreateTrainingSessionDto,
     ): Promise<TrainingSessionAdminDto> {
-        return runGuarded(this.logger, 'Erreur lors de la création de la session.', () =>
-            this.sessionsService.create(code, dto),
+        return runGuarded(
+            this.logger,
+            'Erreur lors de la création de la session.',
+            () => this.sessionsService.create(code, dto),
+            {
+                // Two creations drawing the same free code at the same time: the loser of the
+                // unique code constraint gets a clean 409 and can simply retry.
+                pgErrorMessages: { '23505': 'Collision de code de session, merci de réessayer.' },
+            },
         );
     }
 

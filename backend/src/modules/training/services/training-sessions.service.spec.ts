@@ -119,3 +119,23 @@ describe('TrainingSessionsService.checkin', () => {
         expect(result.participants).toHaveLength(2);
     });
 });
+
+describe('TrainingSessionsService.create', () => {
+    it('gives up with a 409 instead of looping when no session code is free', async () => {
+        const sessionRepo = { codeExists: vi.fn(() => Promise.resolve(true)) };
+        const service = new TrainingSessionsService(
+            sessionRepo as never,
+            {} as never,
+            {} as never,
+            {} as never,
+            { findWithAdminAuth: vi.fn(() => Promise.resolve({ id: 't1', members: [] })) } as never,
+            {} as never,
+            {} as never,
+        );
+
+        await expect(service.create('CLUB', { password: 'pw' } as never)).rejects.toBeInstanceOf(
+            ConflictException,
+        );
+        expect(sessionRepo.codeExists).toHaveBeenCalledTimes(50);
+    });
+});
