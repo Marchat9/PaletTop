@@ -5,6 +5,7 @@
     icon="groups"
     [value]="teamName()"
     [placeholder]="suggestedTeamName()"
+    [maxLength]="50"
     (valueChange)="updateTeamName($event)"
   />
   @if (isChampionship()) {

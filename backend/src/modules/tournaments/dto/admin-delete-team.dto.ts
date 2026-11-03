@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsNotEmpty, IsString, IsUUID } from 'class-validator';
 
 export class AdminDeleteTeam {
     @IsString()
@@ -9,7 +9,6 @@ export class AdminDeleteTeam {
     @IsNotEmpty()
     password!: string;
 
-    @IsString()
-    @IsNotEmpty()
+    @IsUUID()
     teamId!: string;
 }

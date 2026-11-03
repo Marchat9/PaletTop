@@ -1,4 +1,13 @@
-import { ArrayMinSize, IsArray, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
+import { MAX_TEAM_NAME_LENGTH, maxLengthMessage } from 'src/utils/text-limits.util';
+import {
+    ArrayMinSize,
+    IsArray,
+    IsNotEmpty,
+    IsOptional,
+    IsString,
+    IsUUID,
+    MaxLength,
+} from 'class-validator';
 
 export class CreateFixedTeamDto {
     @IsString()
@@ -12,5 +21,8 @@ export class CreateFixedTeamDto {
 
     @IsString()
     @IsOptional()
+    @MaxLength(MAX_TEAM_NAME_LENGTH, {
+        message: maxLengthMessage("Nom de l'équipe", MAX_TEAM_NAME_LENGTH),
+    })
     name?: string;
 }

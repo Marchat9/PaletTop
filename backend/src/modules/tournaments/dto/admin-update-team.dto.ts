@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { IsNotEmpty, IsString, ValidateNested } from 'class-validator';
+import { IsNotEmpty, IsString, IsUUID, ValidateNested } from 'class-validator';
 import { TournamentTeamDto } from 'src/modules/tournaments/dto/team-tournament.dto';
 
 export class AdminUpdateTeam {
@@ -11,8 +11,7 @@ export class AdminUpdateTeam {
     @IsNotEmpty()
     password!: string;
 
-    @IsString()
-    @IsNotEmpty()
+    @IsUUID()
     teamId!: string;
 
     @IsNotEmpty()

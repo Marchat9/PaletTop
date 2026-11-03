@@ -53,6 +53,7 @@
           <app-input-text
             id="training-team-name"
             placeholder="Ex : Les Laitons"
+            [maxLength]="50"
             icon="label"
             [value]="teamName()"
             (valueChange)="onTeamNameChange($event)"
