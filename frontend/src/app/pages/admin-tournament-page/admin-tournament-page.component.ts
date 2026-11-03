@@ -1,3 +1,4 @@
+import { normalizeCode } from 'src/app/utils/code-format.util';
 import { Dialog } from '@angular/cdk/dialog';
 import { CommonModule } from '@angular/common';
 import {
@@ -147,7 +148,9 @@ export class AdminTournamentPageComponent implements OnInit {
     this.activatedRoute.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
       const code = params.get('tournamentCode');
       if (code) {
-        this.tournamentCode.set(code);
+        // Normalized like the stored code: otherwise "abc" never equals the loaded "ABC" and the
+        // connection effect fires again on every response.
+        this.tournamentCode.set(normalizeCode(code));
       } else {
         this.reconnectAsAdmin();
       }

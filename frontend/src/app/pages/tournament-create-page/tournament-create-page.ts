@@ -1,3 +1,4 @@
+import { normalizeCode } from 'src/app/utils/code-format.util';
 import { CommonModule, NgOptimizedImage } from '@angular/common';
 import { ChangeDetectionStrategy, Component, effect, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
@@ -44,7 +45,7 @@ export class TournamentCreatePageComponent {
         !this.creationError() &&
         !!tournamentCode
       ) {
-        this.router.navigate([`/admin/tournament/${tournamentCode}`]);
+        this.router.navigate([`/admin/tournament/${normalizeCode(tournamentCode)}`]);
       }
     });
   }

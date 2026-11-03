@@ -17,7 +17,7 @@ import {
   selectTrainingCreationError,
   selectTrainingCreationIsLoading,
 } from 'src/app/store/training/training.selectors';
-import { CODE_FORMAT_HINT, isValidCode } from 'src/app/utils/code-format.util';
+import { CODE_FORMAT_HINT, isValidCode, normalizeCode } from 'src/app/utils/code-format.util';
 
 @Component({
   selector: 'app-training-creation-page',
@@ -49,7 +49,7 @@ export class TrainingCreationPage {
 
   constructor() {
     effect(() => {
-      const trainingCode = this.code().trim();
+      const trainingCode = normalizeCode(this.code());
       if (
         this.userHasSubmitted() &&
         !this.isCreationLoading() &&
