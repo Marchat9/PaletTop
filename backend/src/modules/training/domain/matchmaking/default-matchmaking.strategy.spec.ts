@@ -219,6 +219,36 @@ describe('DefaultMatchmakingStrategy', () => {
         },
     );
 
+    it('à égalité de rotation, compose le trio sans reformer un binôme récent', () => {
+        const strategy = new DefaultMatchmakingStrategy(Math.random);
+        const lastRoundPairs: [string, string][] = [
+            ['p1', 'p2'],
+            ['p3', 'p4'],
+            ['p5', 'p6'],
+            ['p7', 'p8'],
+        ];
+        const forbidden = new Set(lastRoundPairs.map(([a, b]) => [a, b].sort().join('|')));
+
+        for (let i = 0; i < 20; i++) {
+            // 9 players, teams of 2 or 3: a single trio, everyone tied for it.
+            const plan = strategy.generateRound(
+                input({
+                    soloParticipantIds: solos(9),
+                    config: baseConfig({ allowedTeamSizes: [3] }),
+                    history: baseHistory({ recentRounds: [round(lastRoundPairs)] }),
+                }),
+            );
+            const trio = plan.ephemeralTeams.find((t) => t.participantIds.length === 3)!;
+            const ids = trio.participantIds;
+            const pairs = [
+                [ids[0], ids[1]],
+                [ids[0], ids[2]],
+                [ids[1], ids[2]],
+            ];
+            expect(pairs.some(([a, b]) => forbidden.has([a, b].sort().join('|')))).toBe(false);
+        }
+    });
+
     it('confie les équipes de repli à ceux qui y ont le moins joué', () => {
         const strategy = new DefaultMatchmakingStrategy(Math.random);
         // 10 players, teams of 2 or 3: two trios and two pairs, so 6 fallback slots.
