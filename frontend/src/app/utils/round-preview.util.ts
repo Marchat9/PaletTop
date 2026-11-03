@@ -100,7 +100,16 @@ export function describeRoundPreview(
   const detail = formatMatchups(preview.teamSizes);
   const rest = preview.sitOutCount === 0 ? 'personne au repos' : `${preview.sitOutCount} au repos`;
 
-  return `${who}, ces réglages donneraient ${matches} (${detail}) et ${rest}.`;
+  // "Everyone plays" with few plates: every team can end up at a fallback size, which surprises an
+  // admin who asked for the target size. Say it rather than let the round reveal it.
+  const platesForceFallback =
+    preview.matchCount === settings.plateCount &&
+    !preview.teamSizes.includes(settings.playersPerTeam);
+  const plateNote = platesForceFallback
+    ? ` Faute de plaques, aucune équipe n'est de ${settings.playersPerTeam} : ajoutez des plaques pour retrouver cette taille.`
+    : '';
+
+  return `${who}, ces réglages donneraient ${matches} (${detail}) et ${rest}.${plateNote}`;
 }
 
 /** "2v2, 1v1": teams are paired in the order in which they are built. */
