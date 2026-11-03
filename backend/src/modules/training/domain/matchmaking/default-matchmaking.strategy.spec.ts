@@ -33,8 +33,9 @@ function round(
     partnerPairs: [string, string][] = [],
     opponentCanonicalPairs: [string, string][] = [],
     fallbackParticipantIds: string[] = [],
+    restingParticipantIds: string[] = [],
 ) {
-    return { partnerPairs, opponentCanonicalPairs, fallbackParticipantIds };
+    return { partnerPairs, opponentCanonicalPairs, fallbackParticipantIds, restingParticipantIds };
 }
 
 function solos(count: number): string[] {
@@ -81,6 +82,35 @@ describe('DefaultMatchmakingStrategy', () => {
         expect(resting).toHaveLength(2);
         expect(resting).not.toContain('p1');
         expect(resting).not.toContain('p2');
+    });
+
+    it('à égalité de repos, ne remet pas au repos celui qui vient de se reposer', () => {
+        const strategy = new DefaultMatchmakingStrategy(Math.random);
+        // 7 players, teams of 2 kept: 3 rest each round. p1-p3 rested last round, p4-p6 the one
+        // before: with everyone at one rest, p7 and the oldest resters (p4-p6) go first.
+        const history = baseHistory({
+            recentRounds: [
+                round([], [], [], ['p1', 'p2', 'p3']),
+                round([], [], [], ['p4', 'p5', 'p6']),
+            ],
+            sitOutCountByParticipant: { p1: 1, p2: 1, p3: 1, p4: 1, p5: 1, p6: 1 },
+        });
+
+        for (let i = 0; i < 20; i++) {
+            const plan = strategy.generateRound(
+                input({
+                    soloParticipantIds: solos(7),
+                    config: baseConfig({ preferTargetTeamSize: true }),
+                    history,
+                }),
+            );
+            const resting = restingParticipants(plan);
+            expect(resting).toHaveLength(3);
+            expect(resting).toContain('p7');
+            for (const justRested of ['p1', 'p2', 'p3']) {
+                expect(resting).not.toContain(justRested);
+            }
+        }
     });
 
     it('ne dépasse pas le nombre de plaques et met les autres en attente', () => {

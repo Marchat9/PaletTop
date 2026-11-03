@@ -259,12 +259,14 @@ export class TrainingRoundsService {
             const partnerPairs: [string, string][] = [];
             const opponentCanonicalPairs: [string, string][] = [];
             const fallbackParticipantIds: string[] = [];
+            const restingParticipantIds: string[] = [];
 
             for (const match of round.matches ?? []) {
                 if (match.isBye) {
                     for (const participantId of this.activeMemberIds(match.teamA)) {
                         sitOutCountByParticipant[participantId] =
                             (sitOutCountByParticipant[participantId] ?? 0) + 1;
+                        restingParticipantIds.push(participantId);
                     }
                     continue;
                 }
@@ -289,7 +291,12 @@ export class TrainingRoundsService {
                 fallbackCountByParticipant[participantId] =
                     (fallbackCountByParticipant[participantId] ?? 0) + 1;
             }
-            recentRounds.unshift({ partnerPairs, opponentCanonicalPairs, fallbackParticipantIds });
+            recentRounds.unshift({
+                partnerPairs,
+                opponentCanonicalPairs,
+                fallbackParticipantIds,
+                restingParticipantIds,
+            });
         }
 
         return { recentRounds, sitOutCountByParticipant, fallbackCountByParticipant };

@@ -116,8 +116,9 @@ export class DefaultMatchmakingStrategy implements MatchmakingPort {
     }
 
     /**
-     * Who plays, who rests. Rest goes to those who have rested the least so far: over a whole
-     * session everyone waits about as much as the others.
+     * Who plays, who rests. Rest goes to those who have rested the least so far, then with the same
+     * tie-breaks as the fallback teams: over a whole session everyone waits about as much as the
+     * others, and nobody rests twice in a row while others rested long ago.
      */
     private splitPlayersAndRest(
         input: GenerateRoundInput,
@@ -127,9 +128,11 @@ export class DefaultMatchmakingStrategy implements MatchmakingPort {
             return { playing: [...input.soloParticipantIds], resting: [] };
         }
 
-        const counts = input.history.sitOutCountByParticipant;
-        const ordered = shuffleFisherYates(input.soloParticipantIds, this.random).sort(
-            (a, b) => (counts[a] ?? 0) - (counts[b] ?? 0),
+        const ordered = this.rotationOrder(
+            input,
+            input.soloParticipantIds,
+            input.history.sitOutCountByParticipant,
+            (round) => round.restingParticipantIds,
         );
 
         return {
@@ -211,29 +214,41 @@ export class DefaultMatchmakingStrategy implements MatchmakingPort {
             return [...playing];
         }
 
-        const counts = input.history.fallbackCountByParticipant;
-        const roundsAgo = new Map<string, number>();
-        input.history.recentRounds.forEach((round, index) => {
-            for (const participantId of round.fallbackParticipantIds) {
-                if (!roundsAgo.has(participantId)) roundsAgo.set(participantId, index);
-            }
-        });
-        const ago = (id: string) => roundsAgo.get(id) ?? Number.POSITIVE_INFINITY;
+        return this.rotationOrder(
+            input,
+            playing,
+            input.history.fallbackCountByParticipant,
+            (round) => round.fallbackParticipantIds,
+        ).slice(0, slots);
+    }
+
+    /**
+     * Whose turn it is for a chore (resting, a fallback team): first those who did it the fewest
+     * times, then those whose last time is the oldest, then those with the shortest current streak,
+     * then at random.
+     */
+    private rotationOrder(
+        input: GenerateRoundInput,
+        candidates: string[],
+        counts: Record<string, number>,
+        idsOfRound: (round: GenerateRoundInput['history']['recentRounds'][number]) => string[],
+    ): string[] {
+        const recent = input.history.recentRounds.map((round) => new Set(idsOfRound(round)));
+        const roundsAgo = (id: string) => {
+            const index = recent.findIndex((ids) => ids.has(id));
+            return index === -1 ? Number.POSITIVE_INFINITY : index;
+        };
         const streak = (id: string) => {
-            const index = input.history.recentRounds.findIndex(
-                (round) => !round.fallbackParticipantIds.includes(id),
-            );
-            return index === -1 ? input.history.recentRounds.length : index;
+            const index = recent.findIndex((ids) => !ids.has(id));
+            return index === -1 ? recent.length : index;
         };
 
-        return shuffleFisherYates(playing, this.random)
-            .sort(
-                (a, b) =>
-                    (counts[a] ?? 0) - (counts[b] ?? 0) ||
-                    compareDesc(ago(a), ago(b)) ||
-                    streak(a) - streak(b),
-            )
-            .slice(0, slots);
+        return shuffleFisherYates(candidates, this.random).sort(
+            (a, b) =>
+                (counts[a] ?? 0) - (counts[b] ?? 0) ||
+                compareDesc(roundsAgo(a), roundsAgo(b)) ||
+                streak(a) - streak(b),
+        );
     }
 
     /**

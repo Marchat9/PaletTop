@@ -37,6 +37,8 @@ export interface GenerateRoundInput {
             opponentCanonicalPairs: [string, string][];
             /** Participants who played in a team of a fallback size (other than the target). */
             fallbackParticipantIds: string[];
+            /** Participants who rested that round. */
+            restingParticipantIds: string[];
         }[];
         /** Number of rounds spent resting, per participant. Missing = never rested. */
         sitOutCountByParticipant: Record<string, number>;
