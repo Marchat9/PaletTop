@@ -22,6 +22,10 @@ export class TrainingMemberRepository {
         return this.repo.findOne({ where: { id }, relations: { training: true } });
     }
 
+    findByTraining(trainingId: string): Promise<TrainingMember[]> {
+        return this.repo.find({ where: { training: { id: trainingId } } });
+    }
+
     async remove(member: TrainingMember): Promise<void> {
         await this.repo.remove(member);
     }

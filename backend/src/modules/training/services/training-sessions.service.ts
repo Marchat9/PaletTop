@@ -185,18 +185,27 @@ export class TrainingSessionsService {
             }
         }
 
-        // A guest named like someone already present: rounds would show "Alice · Alice" and nobody
-        // could tell them apart in the leaderboard. Ask for a distinguishing name instead.
+        // Names already taken: every club member, even absent from this session (the member takes
+        // precedence over a guest, who would lose the history and the member profile), and the
+        // guests present. Two identical names would show "Alice · Alice" in the rounds and nobody
+        // could tell them apart in the leaderboard.
         if (!member) {
-            const homonym = session.participants.find(
-                (p) => p.status === TrainingParticipantStatus.PRESENT && sameName(p.name, name!),
-            );
+            const members = await this.trainingMemberRepo.findByTraining(session.training.id);
+            const homonym = [
+                ...members.map((m) => ({ name: m.name, isMember: true })),
+                ...session.participants
+                    .filter((p) => !p.member && p.status === TrainingParticipantStatus.PRESENT)
+                    .map((p) => ({ name: p.name, isMember: false })),
+            ].find((taken) => sameName(taken.name, name!));
+
             if (homonym) {
                 this.logger.warn(
-                    `Check-in refused in session ${sessionCode}: '${homonym.name}' is already present`,
+                    `Check-in refused in session ${sessionCode}: guest '${name}' matches ${homonym.isMember ? 'the member' : 'the guest'} '${homonym.name}'`,
                 );
                 throw new ConflictException(
-                    `${homonym.name} est déjà présent(e) : ajoutez une initiale pour les distinguer.`,
+                    homonym.isMember
+                        ? `${homonym.name} est membre du club : inscrivez ce membre depuis la liste des membres.`
+                        : `${homonym.name} est déjà présent(e) : ajoutez une initiale pour les distinguer.`,
                 );
             }
         }
