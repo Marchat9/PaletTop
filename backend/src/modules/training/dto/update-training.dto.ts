@@ -1,3 +1,5 @@
+import { trimmed } from 'src/utils/trim.transform';
+import { Transform } from 'class-transformer';
 import {
     MAX_DESCRIPTION_LENGTH,
     MAX_NAME_LENGTH,
@@ -10,8 +12,11 @@ export class UpdateTrainingDto {
     @IsNotEmpty()
     password!: string;
 
+    // Optional, but when sent it must not blank the name.
+    @Transform(trimmed)
     @IsString()
     @IsOptional()
+    @IsNotEmpty()
     @MaxLength(MAX_NAME_LENGTH, { message: maxLengthMessage('Nom', MAX_NAME_LENGTH) })
     name?: string;
 

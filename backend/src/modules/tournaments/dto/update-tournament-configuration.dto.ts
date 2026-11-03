@@ -1,3 +1,4 @@
+import { trimmed } from 'src/utils/trim.transform';
 import {
     MAX_DESCRIPTION_LENGTH,
     MAX_NAME_LENGTH,
@@ -29,6 +30,7 @@ export class UpdateTournamentConfigurationDto {
     @IsNotEmpty()
     password!: string;
 
+    @Transform(trimmed)
     @IsString()
     @IsNotEmpty()
     @MaxLength(MAX_NAME_LENGTH, { message: maxLengthMessage('Nom', MAX_NAME_LENGTH) })

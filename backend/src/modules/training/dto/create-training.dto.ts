@@ -1,3 +1,4 @@
+import { trimmed } from 'src/utils/trim.transform';
 import {
     MAX_DESCRIPTION_LENGTH,
     MAX_NAME_LENGTH,
@@ -15,6 +16,7 @@ export class CreateTrainingDto {
     @MaxLength(MAX_NAME_LENGTH, { message: maxLengthMessage('Code', MAX_NAME_LENGTH) })
     code!: string;
 
+    @Transform(trimmed)
     @IsString()
     @IsNotEmpty()
     @MaxLength(MAX_NAME_LENGTH, { message: maxLengthMessage('Nom', MAX_NAME_LENGTH) })
@@ -29,6 +31,7 @@ export class CreateTrainingDto {
 
     @IsString()
     @IsNotEmpty()
+    @Matches(/\S/, { message: 'Le mot de passe ne peut pas être vide.' })
     @MaxLength(MAX_NAME_LENGTH, { message: maxLengthMessage('Mot de passe', MAX_NAME_LENGTH) })
     adminPassword!: string;
 }

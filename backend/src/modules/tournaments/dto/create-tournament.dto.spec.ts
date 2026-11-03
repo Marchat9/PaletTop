@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { CompetitionMode, ScoreCalculation } from 'src/enum/tounament.enum';
 import { CreateTournamentDto } from './create-tournament.dto';
 import { UpdateTournamentConfigurationDto } from './update-tournament-configuration.dto';
+import { UpdateTrainingDto } from 'src/modules/training/dto/update-training.dto';
 
 function errorPaths(errors: ValidationError[], prefix = ''): string[] {
     return errors.flatMap((error) => {
@@ -87,5 +88,19 @@ describe('UpdateTournamentConfigurationDto', () => {
         expect(validate(UpdateTournamentConfigurationDto, body)).toEqual(
             expect.arrayContaining(['date', 'configuration.pointsPerGame']),
         );
+    });
+});
+
+describe('blank names and passwords', () => {
+    it('refuses a name or a password made of spaces only', () => {
+        expect(validate(CreateTournamentDto, { ...createBody, name: '   ' })).toContain('name');
+        expect(validate(CreateTournamentDto, { ...createBody, adminPassword: '   ' })).toContain(
+            'adminPassword',
+        );
+    });
+
+    it('refuses to blank a training name on update, but allows leaving it out', () => {
+        expect(validate(UpdateTrainingDto, { password: 'pw', name: '' })).toContain('name');
+        expect(validate(UpdateTrainingDto, { password: 'pw', description: 'x' })).toEqual([]);
     });
 });

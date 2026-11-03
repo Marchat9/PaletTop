@@ -1,3 +1,4 @@
+import { trimmed } from 'src/utils/trim.transform';
 import {
     MAX_DESCRIPTION_LENGTH,
     MAX_NAME_LENGTH,
@@ -18,6 +19,7 @@ import { CODE_FORMAT_MESSAGE, CODE_PATTERN, normalizedCode } from 'src/utils/cod
 import { TournamentConfigurationDto } from 'src/modules/tournaments/dto/tournament-configuration.dto';
 
 export class CreateTournamentDto {
+    @Transform(trimmed)
     @IsString()
     @IsNotEmpty()
     @MaxLength(MAX_NAME_LENGTH, { message: maxLengthMessage('Nom', MAX_NAME_LENGTH) })
@@ -32,6 +34,7 @@ export class CreateTournamentDto {
 
     @IsString()
     @IsNotEmpty()
+    @Matches(/\S/, { message: 'Le mot de passe ne peut pas être vide.' })
     @MaxLength(MAX_NAME_LENGTH, { message: maxLengthMessage('Mot de passe', MAX_NAME_LENGTH) })
     adminPassword!: string;
 
