@@ -147,6 +147,7 @@ export const initialTrainingState: TrainingState = {
   currentSession: { data: null, isLoading: false, error: null },
   previousSessionSettings: { data: null, isLoading: false, error: null },
   lastCheckedInParticipant: null,
+  checkinBaseline: null,
   rounds: { data: [], isLoading: false, error: null },
   currentRound: { data: null, isLoading: false, error: null },
   leaderboard: { data: [], isLoading: false, error: null },
@@ -206,12 +207,10 @@ function withParticipantMatchFromRound(
  * than getting a new one.
  */
 function findAddedParticipant(
-  previousSession: Nullable<TrainingSessionAdminDto | TrainingSessionPublicDto>,
+  previousParticipants: Pick<TrainingParticipantAdminDto, 'id' | 'status'>[],
   nextSession: TrainingSessionAdminDto,
 ): Nullable<TrainingParticipantAdminDto> {
-  const previousStatuses = new Map(
-    (previousSession?.participants ?? []).map((p) => [p.id, p.status]),
-  );
+  const previousStatuses = new Map(previousParticipants.map((p) => [p.id, p.status]));
 
   return (
     nextSession.participants.find(
@@ -545,6 +544,8 @@ export const trainingReducer = createReducer(
   // Checkin participant
   on(checkinTrainingParticipant, (state) => ({
     ...state,
+    checkinBaseline: (state.currentSession.data?.participants ??
+      []) as TrainingParticipantAdminDto[],
     requestStatus: {
       ...state.requestStatus,
       checkinParticipant: { isLoading: true, error: null },
@@ -553,7 +554,11 @@ export const trainingReducer = createReducer(
   on(checkinTrainingParticipantSuccess, (state, { session }) => ({
     ...state,
     currentSession: { ...state.currentSession, data: session },
-    lastCheckedInParticipant: findAddedParticipant(state.currentSession.data, session),
+    lastCheckedInParticipant: findAddedParticipant(
+      state.checkinBaseline ?? state.currentSession.data?.participants ?? [],
+      session,
+    ),
+    checkinBaseline: null,
     requestStatus: {
       ...state.requestStatus,
       checkinParticipant: { isLoading: false, error: null },
@@ -565,6 +570,7 @@ export const trainingReducer = createReducer(
   })),
   on(checkinTrainingParticipantFailure, (state, { error }) => ({
     ...state,
+    checkinBaseline: null,
     requestStatus: {
       ...state.requestStatus,
       checkinParticipant: { isLoading: false, error },

@@ -201,6 +201,12 @@ export interface TrainingState {
   // Participant just checked in: their code has to be given to them in person, the reducer derives
   // it by difference so that the page can show it large.
   lastCheckedInParticipant: Nullable<TrainingParticipantAdminDto>;
+  /**
+   * Participants as they were when the check-in was sent. The websocket broadcast of the new
+   * participant usually arrives before the HTTP answer: compared to the session in memory, the
+   * newcomer would already be there and never shown.
+   */
+  checkinBaseline: Nullable<TrainingParticipantAdminDto[]>;
   rounds: ApiCall<TrainingRoundDto[]>;
   currentRound: ApiCall<Nullable<TrainingRoundDto>>;
   leaderboard: ApiCall<TrainingLeaderboardEntryDto[]>;
