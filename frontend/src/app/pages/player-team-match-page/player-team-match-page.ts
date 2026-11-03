@@ -139,7 +139,11 @@ export class PlayerTeamMatchPageComponent {
     if (this.matchView()?.isBye) {
       return 'Au repos ce round';
     }
-    return this.matchView() ? 'Match en cours' : null;
+    if (!this.matchView()) {
+      return null;
+    }
+    // Not started yet: "en cours" would contradict the "En attente" status shown on the card.
+    return this.matchView()!.status === 'PENDING' ? 'Prochain match' : 'Match en cours';
   });
 
   public readonly matchView = computed(() => {

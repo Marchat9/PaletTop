@@ -193,7 +193,7 @@ export class PlayerTrainingSessionPage implements OnInit, OnDestroy {
     if (this.isSessionClosed()) {
       return this.cardMatch() ? 'Dernier match' : null;
     }
-    return 'Match en cours';
+    return this.matchView()?.status === 'PENDING' ? 'Prochain match' : 'Match en cours';
   });
 
   public readonly statTiles = computed<PlayerStatTile[]>(() => {
