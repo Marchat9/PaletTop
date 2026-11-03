@@ -79,11 +79,14 @@ export class ScoreService {
 
         const isFinished = scoreA >= max || scoreB >= max;
 
+        const now = new Date();
         await this.matchRepo.update(matchId, {
             scoreA,
             scoreB,
             status: isFinished ? MatchStatus.ENDED : MatchStatus.ONGOING,
-            finishedAt: isFinished ? new Date() : null,
+            finishedAt: isFinished ? now : null,
+            // Scored without being started first: it still needs a start date for its duration.
+            ...(!match.startedAt && { startedAt: now }),
         });
 
         const result = await this.buildScoreUpdateResult(
@@ -192,18 +195,19 @@ export class ScoreService {
                 ? Math.round((finishedAt.getTime() - match.startedAt.getTime()) / 1000)
                 : null;
 
-        const newStatus = isFinished
-            ? MatchStatus.VALIDATED
-            : match.status === MatchStatus.VALIDATED || match.status === MatchStatus.ENDED
-              ? MatchStatus.ONGOING
-              : match.status;
+        // A score below the target reopens a finished match, and starts a PENDING one: left PENDING
+        // with a score, spectators saw "7-3 en attente" while the players could still "start" it.
+        const newStatus = isFinished ? MatchStatus.VALIDATED : MatchStatus.ONGOING;
 
         await this.matchRepo.update(matchId, {
             scoreA,
             scoreB,
             status: newStatus,
-            finishedAt: finishedAt ?? undefined,
+            // null, not undefined: TypeORM skips undefined, so a reopened match kept its old end
+            // date and the next validation reused it. The duration is only overwritten when known.
+            finishedAt,
             ...(duration !== null && { duration }),
+            ...(!match.startedAt && { startedAt: isFinished ? finishedAt : new Date() }),
         });
 
         const result = await this.buildScoreUpdateResult(
