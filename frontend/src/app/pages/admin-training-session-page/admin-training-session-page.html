@@ -46,7 +46,7 @@
       (openCheckin)="openCheckin()"
       (generateRound)="generateRound()"
       [canPlayMyMatches]="!!adminParticipant()"
-      [playMyMatchesDisabled]="!currentRound()"
+      [playMyMatchesDisabled]="playMyMatchesDisabled()"
       (closeSession)="closeSession()"
       (playMyMatches)="playMyMatches()"
     />

@@ -8,7 +8,12 @@ import { of, Subject } from 'rxjs';
 import { describe, expect, it, vi } from 'vitest';
 import { resyncRequested } from 'src/app/store/realtime/realtime.actions';
 import { connectTrainingSessionAdministrator } from 'src/app/store/training/training.session.actions';
-import { AdminTrainingDto, TrainingSessionAdminDto } from 'src/app/store/training/training.models';
+import {
+  AdminTrainingDto,
+  TrainingMatchStatus,
+  TrainingRoundDto,
+  TrainingSessionAdminDto,
+} from 'src/app/store/training/training.models';
 import {
   selectAdminUpdateTrainingScoreLoading,
   selectCheckinTrainingParticipantLoading,
@@ -167,6 +172,43 @@ describe('AdminTrainingSessionPage', () => {
     fixture.detectChanges();
 
     expect(playButton()?.getAttribute('aria-disabled')).toBe('false');
+  });
+
+  it('grise « Jouer mes matchs » une fois le match de l’admin validé, jusqu’au round suivant', () => {
+    const { fixture, store } = setup();
+    const buildRound = (id: string, roundNumber: number, status: TrainingMatchStatus) => ({
+      id,
+      roundNumber,
+      status: 'OPEN' as const,
+      matches: [
+        {
+          id: `match-${id}`,
+          status,
+          isBye: false,
+          scoreA: 0,
+          scoreB: 0,
+          teamA: { id: 'tA', kind: 'EPHEMERAL' as const, members: [{ id: 'p3', name: 'Luc' }] },
+          teamB: { id: 'tB', kind: 'EPHEMERAL' as const, members: [{ id: 'p1', name: 'Jean' }] },
+        },
+      ],
+    });
+    const showRounds = (...rounds: TrainingRoundDto[]) => {
+      store.overrideSelector(selectTrainingRounds, rounds);
+      store.refreshState();
+      fixture.detectChanges();
+    };
+    const page = fixture.componentInstance;
+
+    store.overrideSelector(selectCurrentTrainingData, { ...buildTraining(), adminMemberId: 'm1' });
+
+    showRounds(buildRound('r1', 1, 'ENDED'));
+    expect(page.playMyMatchesDisabled()).toBe(false);
+
+    showRounds(buildRound('r1', 1, 'VALIDATED'));
+    expect(page.playMyMatchesDisabled()).toBe(true);
+
+    showRounds(buildRound('r1', 1, 'VALIDATED'), buildRound('r2', 2, 'PENDING'));
+    expect(page.playMyMatchesDisabled()).toBe(false);
   });
 
   it('ne propose pas « Jouer mes matchs » sans admin joueur présent à la séance', () => {
