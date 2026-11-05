@@ -26,6 +26,7 @@ import {
   selectValidateTrainingMatchLoading,
 } from 'src/app/store/training/training.selectors';
 import { PlayerTrainingSessionPage } from './player-training-session-page';
+import { historyToResults } from './player-training-session-page.utils';
 
 const ME = { id: 'p1', name: 'Jean Dubois' };
 
@@ -128,6 +129,15 @@ function setup(
 
   return { fixture, store, routerMock };
 }
+
+describe('historyToResults', () => {
+  it('nomme toute mon équipe, coéquipiers compris', () => {
+    const [result] = historyToResults([buildCurrentMatch().match!], ME.id);
+
+    expect(result.myLabel).toBe('Jean Dubois · Marie Lefèvre');
+    expect(result.opponentLabel).toBe('Luc Béguin · Claire Ozanne');
+  });
+});
 
 describe('PlayerTrainingSessionPage', () => {
   it("identifie le camp du joueur par son appartenance à l'équipe", () => {

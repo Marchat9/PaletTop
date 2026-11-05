@@ -3,6 +3,7 @@ import { PlayerMatchResult } from 'src/app/models/player-match-view.model';
 import { MatchStatusComponent } from '../match-status/match-status';
 
 interface PlayerMatchResultRow extends PlayerMatchResult {
+  myLabel: string;
   isFinished: boolean;
   isOngoing: boolean;
   statusLabel: string;
@@ -31,6 +32,7 @@ export class PlayerMatchHistory {
 
       return {
         ...result,
+        myLabel: result.myLabel ?? this.myLabel(),
         isFinished,
         isOngoing: result.status === 'ONGOING',
         // ENDED means "waiting for the opponent's validation": a validated match keeps its status.
