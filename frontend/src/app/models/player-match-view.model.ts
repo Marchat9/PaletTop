@@ -56,6 +56,11 @@ export interface PlayerMatchResult {
   /** "Match 3" in a tournament, "Round 3" in a training session. */
   label: string;
   status: string;
+  /**
+   * Label of my side for this very match, when it changes from one match to the next (training
+   * partners). Without it, the history falls back to its page-wide label.
+   */
+  myLabel?: string;
   myScore: number;
   opponentLabel: string;
   opponentScore: number;

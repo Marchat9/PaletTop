@@ -8,18 +8,62 @@
   width: min(100vw - 2rem, 29rem);
   overflow: hidden;
 
-  .actions {
+  // Same row as the rules of the session creation page: what it does on the left, the switch on
+  // the right.
+  .admin-player {
     display: flex;
-    gap: 1rem;
-    width: 100%;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 0.9rem;
+    border-radius: 0.8rem;
+    background: var(--color-surface-container-low);
+    border: 1px solid var(--color-border-subtle);
 
-    app-button {
-      flex: 1;
+    ::ng-deep .admin-player-icon {
+      flex-shrink: 0;
+      color: var(--color-primary);
+    }
+
+    .admin-player-text {
+      display: flex;
+      flex: 1 1 auto;
+      flex-direction: column;
+      gap: 0.15rem;
+      min-width: 0;
+
+      span {
+        color: var(--color-on-surface-variant);
+        font-size: 0.8rem;
+      }
+    }
+
+    app-switch {
+      flex-shrink: 0;
     }
   }
 
-  .remove-row {
+  // Every action at the bottom: the destructive one apart on the left, cancel / save on the right.
+  .actions {
     display: flex;
-    justify-content: center;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--color-border-subtle);
+
+    .main-actions {
+      display: flex;
+      gap: 0.75rem;
+    }
+
+    // Phones: save first, full width, and the removal last, away from the thumb's natural target.
+    @media (width < 480px) {
+      flex-direction: column-reverse;
+      align-items: stretch;
+
+      .main-actions app-button {
+        flex: 1;
+      }
+    }
   }
 }

@@ -15,12 +15,12 @@
 
         @if (row.isBye) {
           <div class="scoreline scoreline--bye">
-            <span class="team current">{{ myLabel() }} <small>(vous)</small></span>
+            <span class="team current">{{ row.myLabel }} <small>(vous)</small></span>
             <span class="bye-text">Au repos ce round</span>
           </div>
         } @else {
           <div class="scoreline">
-            <span class="team current">{{ myLabel() }} <small>(vous)</small></span>
+            <span class="team current">{{ row.myLabel }} <small>(vous)</small></span>
             @if (row.isFinished) {
               <span class="score current bold">{{ row.myScore }}</span>
               <span class="separator">-</span>

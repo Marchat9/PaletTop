@@ -7,15 +7,26 @@ import {
 import {
   forgetTrainingParticipantCodes,
   loadTrainingParticipantCurrentMatchSuccess,
+  loadTrainingParticipantHistorySuccess,
   resetTraining,
 } from './training.actions';
-import { wsTrainingSessionUpdated } from '../realtime/realtime.actions';
+import {
+  wsTrainingMatchUpdated,
+  wsTrainingRoundGenerated,
+  wsTrainingSessionUpdated,
+} from '../realtime/realtime.actions';
 import {
   checkinTrainingParticipant,
   checkinTrainingParticipantSuccess,
 } from './training.session.actions';
 import {
+  renameTrainingMemberSuccess,
+  setTrainingAdminMemberSuccess,
+} from './training.admin.actions';
+import {
+  AdminTrainingDto,
   TrainingCurrentMatchDto,
+  TrainingMatchDto,
   TrainingParticipantAdminDto,
   TrainingSessionAdminDto,
 } from './training.models';
@@ -189,6 +200,142 @@ describe('trainingReducer', () => {
       const state = trainingReducer(before, forgetTrainingParticipantCodes());
 
       expect(state.participantInformations).toBeNull();
+    });
+  });
+
+  describe('renommage et admin joueur enregistrés ensemble', () => {
+    const before: AdminTrainingDto = {
+      id: 't1',
+      code: 'CLUB-1',
+      name: 'Club du jeudi',
+      createdAt: '2026-01-01T18:00:00.000Z',
+      members: [{ id: 'm1', name: 'Mathieu' }],
+      adminMemberId: null,
+    };
+    // Each response was built by the server before the other request was saved.
+    const renamed = renameTrainingMemberSuccess({
+      training: { ...before, members: [{ id: 'm1', name: 'Mathieu A.' }] },
+    });
+    const adminSet = setTrainingAdminMemberSuccess({
+      training: { ...before, adminMemberId: 'm1' },
+    });
+    const loaded = {
+      ...initialTrainingState,
+      training: { ...initialTrainingState.training, data: before },
+    };
+
+    it('garde les deux quand le renommage répond en dernier', () => {
+      const state = [adminSet, renamed].reduce(trainingReducer, loaded);
+
+      expect(state.training.data?.adminMemberId).toBe('m1');
+      expect(state.training.data?.members[0].name).toBe('Mathieu A.');
+    });
+
+    it('garde les deux quand l’admin joueur répond en dernier', () => {
+      const state = [renamed, adminSet].reduce(trainingReducer, loaded);
+
+      expect(state.training.data?.adminMemberId).toBe('m1');
+      expect(state.training.data?.members[0].name).toBe('Mathieu A.');
+    });
+  });
+
+  describe('historique du joueur en temps réel', () => {
+    function buildMatch(id: string, overrides: Partial<TrainingMatchDto> = {}): TrainingMatchDto {
+      return {
+        id,
+        status: 'PENDING',
+        teamA: {
+          id: `${id}-a`,
+          kind: 'EPHEMERAL',
+          members: [
+            { id: 'pA', name: 'A' },
+            { id: 'pB', name: 'B' },
+          ],
+        },
+        teamB: {
+          id: `${id}-b`,
+          kind: 'EPHEMERAL',
+          members: [
+            { id: 'pD', name: 'D' },
+            { id: 'pE', name: 'E' },
+          ],
+        },
+        isBye: false,
+        scoreA: 0,
+        scoreB: 0,
+        ...overrides,
+      };
+    }
+
+    // Player B opened the page during round 1, while their match was still pending.
+    function playerBState(match: TrainingMatchDto) {
+      const loaded = trainingReducer(
+        initialTrainingState,
+        loadTrainingParticipantCurrentMatchSuccess({
+          sessionCode: '123456',
+          participantCode: '1111',
+          currentMatch: {
+            participant: { id: 'pB', name: 'B' },
+            match,
+            roundNumber: 1,
+            sitOut: false,
+          },
+        }),
+      );
+      return trainingReducer(loaded, loadTrainingParticipantHistorySuccess({ history: [match] }));
+    }
+
+    it('updates the history when a team-mate validates the match', () => {
+      const validated = buildMatch('m1', { status: 'VALIDATED', scoreA: 11, scoreB: 4 });
+
+      const state = trainingReducer(
+        playerBState(buildMatch('m1')),
+        wsTrainingMatchUpdated({ match: validated }),
+      );
+
+      expect(state.participantHistory.data).toEqual([validated]);
+    });
+
+    it('adds the match of a newly generated round to the history', () => {
+      const first = buildMatch('m1', { status: 'VALIDATED' });
+      const second = buildMatch('m2');
+
+      const state = trainingReducer(
+        playerBState(first),
+        wsTrainingRoundGenerated({
+          round: { id: 'r2', roundNumber: 2, status: 'OPEN', matches: [second] },
+        }),
+      );
+
+      expect(state.participantHistory.data.map((match) => match.id)).toEqual(['m1', 'm2']);
+    });
+
+    it('does not duplicate a match already in the history', () => {
+      const match = buildMatch('m1');
+
+      const state = trainingReducer(
+        playerBState(match),
+        wsTrainingRoundGenerated({
+          round: { id: 'r1', roundNumber: 1, status: 'OPEN', matches: [match] },
+        }),
+      );
+
+      expect(state.participantHistory.data).toHaveLength(1);
+    });
+
+    it('ignores the matches the player is not part of', () => {
+      const initial = buildMatch('m1');
+      const other = buildMatch('m3', {
+        teamA: { id: 'x', kind: 'EPHEMERAL', members: [{ id: 'pC', name: 'C' }] },
+        teamB: { id: 'y', kind: 'EPHEMERAL', members: [{ id: 'pF', name: 'F' }] },
+      });
+
+      const state = trainingReducer(
+        playerBState(initial),
+        wsTrainingMatchUpdated({ match: other }),
+      );
+
+      expect(state.participantHistory.data).toEqual([initial]);
     });
   });
 });

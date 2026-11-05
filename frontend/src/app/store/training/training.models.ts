@@ -22,6 +22,8 @@ export interface AdminTrainingDto {
   description?: string;
   createdAt: string;
   members: TrainingMemberDto[];
+  // Member who runs the group and also plays: their sessions offer a "play my matches" shortcut.
+  adminMemberId: Nullable<string>;
 }
 
 export interface TrainingParticipantPublicDto {
@@ -170,6 +172,7 @@ export interface TrainingRequestStatus {
   updateTraining: ApiCallStatus;
   addMember: ApiCallStatus;
   renameMember: ApiCallStatus;
+  setAdminMember: ApiCallStatus;
   removeMember: ApiCallStatus;
   createSession: ApiCallStatus;
   closeSession: ApiCallStatus;

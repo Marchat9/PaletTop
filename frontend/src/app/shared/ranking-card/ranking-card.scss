@@ -121,6 +121,35 @@
     color: var(--color-on-surface-variant);
   }
 
+  .rank-label-short {
+    display: none;
+  }
+
+  // Small phones: numeric columns shrink to their content so the team name keeps ~150px.
+  @media (max-width: 480px) {
+    th,
+    td {
+      padding: 0.45rem 0.25rem;
+    }
+
+    .col-rank {
+      width: 1.6rem;
+      text-align: center;
+    }
+
+    .col-stat {
+      width: 2.3rem;
+    }
+
+    .rank-label {
+      display: none;
+    }
+
+    .rank-label-short {
+      display: inline;
+    }
+  }
+
   .ga--positive {
     color: var(--color-primary);
   }

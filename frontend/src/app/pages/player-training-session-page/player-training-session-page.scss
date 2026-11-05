@@ -10,6 +10,11 @@
     padding: 1.5rem 0.75rem 6.2rem;
   }
 
+  .admin-back {
+    display: flex;
+    justify-content: flex-start;
+  }
+
   .state {
     display: flex;
     flex-direction: column;

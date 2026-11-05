@@ -8,6 +8,7 @@ import {
   forgetTournamentPlayerCodes,
   loadTournamentInformationSuccess,
 } from './tournament.actions';
+import { connectTournamentAdministratorSuccess } from './tournament.admin.actions';
 import { TournamentDto } from './tournament.models';
 import { initialTournamentState, tournamentReducer } from './tournament.reducer';
 
@@ -54,6 +55,33 @@ describe('tournamentReducer', () => {
       const state = tournamentReducer(before, forgetTournamentPlayerCodes());
 
       expect(state.playerInformations).toBeNull();
+    });
+  });
+
+  describe('vue admin', () => {
+    const tournament = { code: 'LAITON-2026' } as TournamentDto;
+
+    it('est marquée après la connexion admin', () => {
+      const state = tournamentReducer(
+        initialTournamentState,
+        connectTournamentAdministratorSuccess({ tournament }),
+      );
+
+      expect(state.isAdminView).toBe(true);
+    });
+
+    it('est perdue quand le même tournoi est rejoint en joueur', () => {
+      const admin = tournamentReducer(
+        initialTournamentState,
+        connectTournamentAdministratorSuccess({ tournament }),
+      );
+
+      const state = tournamentReducer(
+        admin,
+        loadTournamentInformationSuccess({ tournament, teamCode: '4821' }),
+      );
+
+      expect(state.isAdminView).toBe(false);
     });
   });
 });

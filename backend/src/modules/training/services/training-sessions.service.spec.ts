@@ -44,7 +44,10 @@ function makeService(participants: TrainingParticipant[]) {
     const service = new TrainingSessionsService(
         { touchLastActivity: vi.fn() } as never,
         participantRepo as never,
-        { findById: vi.fn(() => Promise.resolve(MEMBER)) } as never,
+        {
+            findById: vi.fn(() => Promise.resolve(MEMBER)),
+            findByTraining: vi.fn(() => Promise.resolve([MEMBER])),
+        } as never,
         {} as never,
         {} as never,
         { findWithAdminAuth: vi.fn(() => Promise.resolve(session)) } as never,
@@ -117,6 +120,25 @@ describe('TrainingSessionsService.checkin', () => {
 
         expect(participantRepo.create).toHaveBeenCalled();
         expect(result.participants).toHaveLength(2);
+    });
+
+    it("refuse un invité qui porte le nom d'un membre du club, même absent de la séance", async () => {
+        const { service, participantRepo } = makeService([]);
+
+        await expect(
+            service.checkin('1234', { password: 'pwd', name: '  jean DUBOIS ' }),
+        ).rejects.toBeInstanceOf(ConflictException);
+        expect(participantRepo.create).not.toHaveBeenCalled();
+    });
+
+    it('refuse un invité homonyme d’un invité déjà présent', async () => {
+        const guest = participant({ id: 'guest-1', name: 'Visiteur', member: null });
+        const { service, participantRepo } = makeService([guest]);
+
+        await expect(
+            service.checkin('1234', { password: 'pwd', name: 'visiteur' }),
+        ).rejects.toBeInstanceOf(ConflictException);
+        expect(participantRepo.create).not.toHaveBeenCalled();
     });
 });
 

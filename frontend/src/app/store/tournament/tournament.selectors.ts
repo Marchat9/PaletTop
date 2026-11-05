@@ -24,6 +24,11 @@ export const selectCurrentTournamentError = createSelector(
 );
 
 // Select tournament admin informations
+export const selectCurrentTournamentIsAdminView = createSelector(
+  selectTournamentState,
+  (state) => state.isAdminView,
+);
+
 export const selectCurrentTournamentAdminInformations = createSelector(
   selectTournamentState,
   (state) => state.adminInformations,

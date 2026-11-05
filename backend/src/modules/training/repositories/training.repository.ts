@@ -46,6 +46,10 @@ export class TrainingRepository {
         return this.repo.save(training as Training);
     }
 
+    async setAdminMember(trainingId: string, memberId: string | null): Promise<void> {
+        await this.repo.update(trainingId, { adminMemberId: memberId });
+    }
+
     findByCode(code: string): Promise<Training | null> {
         return this.repo.findOneBy({ code });
     }

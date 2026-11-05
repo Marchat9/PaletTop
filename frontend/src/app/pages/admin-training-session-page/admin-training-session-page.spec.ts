@@ -8,7 +8,12 @@ import { of, Subject } from 'rxjs';
 import { describe, expect, it, vi } from 'vitest';
 import { resyncRequested } from 'src/app/store/realtime/realtime.actions';
 import { connectTrainingSessionAdministrator } from 'src/app/store/training/training.session.actions';
-import { AdminTrainingDto, TrainingSessionAdminDto } from 'src/app/store/training/training.models';
+import {
+  AdminTrainingDto,
+  TrainingMatchStatus,
+  TrainingRoundDto,
+  TrainingSessionAdminDto,
+} from 'src/app/store/training/training.models';
 import {
   selectAdminUpdateTrainingScoreLoading,
   selectCheckinTrainingParticipantLoading,
@@ -38,6 +43,7 @@ function buildTraining(): AdminTrainingDto {
       { id: 'm1', name: 'Jean Dubois' },
       { id: 'm2', name: 'Marie Lefèvre' },
     ],
+    adminMemberId: null,
   };
 }
 
@@ -133,6 +139,91 @@ describe('AdminTrainingSessionPage', () => {
     expect(dispatchSpy).toHaveBeenCalledWith(
       connectTrainingSessionAdministrator({ sessionCode: '1234' }),
     );
+  });
+
+  it('ouvre les matchs de l’admin joueur inscrit à la séance', () => {
+    const { fixture, store, routerMock } = setup();
+
+    store.overrideSelector(selectCurrentTrainingData, { ...buildTraining(), adminMemberId: 'm1' });
+    store.refreshState();
+    fixture.detectChanges();
+    fixture.componentInstance.playMyMatches();
+
+    expect(routerMock.navigate).toHaveBeenCalledWith(['/player/training/1234/4821'], {
+      queryParams: { adminTraining: 'LAITON-2026' },
+    });
+  });
+
+  it('grise « Jouer mes matchs » tant qu’aucun round n’est généré', () => {
+    const { fixture, store } = setup();
+    const playButton = () =>
+      [
+        ...(fixture.nativeElement as HTMLElement).querySelectorAll('app-session-actions .button'),
+      ].find((button) => button.textContent?.includes('Jouer mes matchs'));
+
+    store.overrideSelector(selectCurrentTrainingData, { ...buildTraining(), adminMemberId: 'm1' });
+    store.refreshState();
+    fixture.detectChanges();
+
+    expect(playButton()?.getAttribute('aria-disabled')).toBe('true');
+
+    store.overrideSelector(selectTrainingRounds, [
+      { id: 'r1', roundNumber: 1, status: 'OPEN' as const, matches: [] },
+    ]);
+    store.refreshState();
+    fixture.detectChanges();
+
+    expect(playButton()?.getAttribute('aria-disabled')).toBe('false');
+  });
+
+  it('grise « Jouer mes matchs » une fois le match de l’admin validé, jusqu’au round suivant', () => {
+    const { fixture, store } = setup();
+    const buildRound = (id: string, roundNumber: number, status: TrainingMatchStatus) => ({
+      id,
+      roundNumber,
+      status: 'OPEN' as const,
+      matches: [
+        {
+          id: `match-${id}`,
+          status,
+          isBye: false,
+          scoreA: 0,
+          scoreB: 0,
+          teamA: { id: 'tA', kind: 'EPHEMERAL' as const, members: [{ id: 'p3', name: 'Luc' }] },
+          teamB: { id: 'tB', kind: 'EPHEMERAL' as const, members: [{ id: 'p1', name: 'Jean' }] },
+        },
+      ],
+    });
+    const showRounds = (...rounds: TrainingRoundDto[]) => {
+      store.overrideSelector(selectTrainingRounds, rounds);
+      store.refreshState();
+      fixture.detectChanges();
+    };
+    const page = fixture.componentInstance;
+
+    store.overrideSelector(selectCurrentTrainingData, { ...buildTraining(), adminMemberId: 'm1' });
+
+    showRounds(buildRound('r1', 1, 'ENDED'));
+    expect(page.playMyMatchesDisabled()).toBe(false);
+
+    showRounds(buildRound('r1', 1, 'VALIDATED'));
+    expect(page.playMyMatchesDisabled()).toBe(true);
+
+    showRounds(buildRound('r1', 1, 'VALIDATED'), buildRound('r2', 2, 'PENDING'));
+    expect(page.playMyMatchesDisabled()).toBe(false);
+  });
+
+  it('ne propose pas « Jouer mes matchs » sans admin joueur présent à la séance', () => {
+    const { fixture, store } = setup();
+
+    expect(fixture.componentInstance.adminParticipant()).toBeNull();
+
+    // m2 is the admin player but has not checked in to this session.
+    store.overrideSelector(selectCurrentTrainingData, { ...buildTraining(), adminMemberId: 'm2' });
+    store.refreshState();
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.adminParticipant()).toBeNull();
   });
 
   it('ne compte que les participants présents', () => {

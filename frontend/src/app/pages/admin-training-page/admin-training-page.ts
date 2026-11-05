@@ -187,7 +187,11 @@ export class AdminTrainingPage implements OnInit {
 
     this.dialog
       .open<EditTrainingMemberPopupResult, EditTrainingMemberPopupData>(EditTrainingMemberPopup, {
-        data: { trainingCode, member },
+        data: {
+          trainingCode,
+          member,
+          isAdminPlayer: this.training()?.adminMemberId === member.id,
+        },
         panelClass: 'dialog-panel',
         backdropClass: 'dialog-backdrop-light',
         disableClose: false,

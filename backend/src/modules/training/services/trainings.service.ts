@@ -7,6 +7,7 @@ import { TrainingParticipant } from 'src/entities/training-participant.entity';
 import { AddTrainingMemberDto } from '../dto/add-training-member.dto';
 import { CreateTrainingDto } from '../dto/create-training.dto';
 import { RenameTrainingMemberDto } from '../dto/rename-training-member.dto';
+import { SetTrainingAdminMemberDto } from '../dto/set-training-admin-member.dto';
 import { UpdateTrainingDto } from '../dto/update-training.dto';
 import { TrainingMemberRepository } from '../repositories/training-member.repository';
 import { TrainingRepository } from '../repositories/training.repository';
@@ -110,7 +111,28 @@ export class TrainingsService {
         // so comparing .id afterwards no longer works (always undefined).
         training.members = training.members.filter((m) => m.id !== memberId);
         await this.trainingMemberRepo.remove(member);
+        // The database has cleared the link (ON DELETE SET NULL): same thing in the response.
+        if (training.adminMemberId === memberId) {
+            training.adminMemberId = null;
+        }
         this.logger.log(`Member '${member.name}' removed from training '${code}'`);
+        return toAdminTrainingDto(training);
+    }
+
+    async setAdminMember(code: string, dto: SetTrainingAdminMemberDto): Promise<AdminTrainingDto> {
+        const training = await this.trainingAuthService.findWithAdminAuth(code, dto.password, true);
+        const memberId = dto.memberId ?? null;
+        if (memberId) {
+            this.findMemberOrThrow(training, memberId);
+        }
+
+        await this.trainingRepo.setAdminMember(training.id, memberId);
+        training.adminMemberId = memberId;
+        this.logger.log(
+            memberId
+                ? `Member ${memberId} set as the admin player of training '${code}'`
+                : `Admin player cleared in training '${code}'`,
+        );
         return toAdminTrainingDto(training);
     }
 

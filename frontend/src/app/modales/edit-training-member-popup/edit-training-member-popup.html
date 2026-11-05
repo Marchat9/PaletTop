@@ -9,10 +9,6 @@
     </button>
   </div>
 
-  <p class="popup-subtitle">
-    Le nouveau nom s'affiche aussi dans les séances déjà jouées. Ses statistiques sont conservées.
-  </p>
-
   <div class="field-group">
     <label class="field-label" for="edit-training-member-name">Prénom et nom</label>
     <app-input-text
@@ -23,6 +19,19 @@
       [autofocus]="true"
       (valueChange)="onNameChange($event)"
     ></app-input-text>
+    <p class="field-help">
+      <app-icon name="history" [ariaHidden]="true" />
+      Le nouveau nom s'affiche aussi dans les séances déjà jouées.
+    </p>
+  </div>
+
+  <div class="admin-player">
+    <app-icon name="admin_panel_settings" iconClass="admin-player-icon" [ariaHidden]="true" />
+    <div class="admin-player-text">
+      <strong>C’est moi</strong>
+      <span>Vous jouez aussi : vos séances proposent «&nbsp;Jouer mes matchs&nbsp;».</span>
+    </div>
+    <app-switch [checked]="isAdminPlayer()" (checkedChange)="onAdminPlayerChange($event)" />
   </div>
 
   @if (visibleError()) {
@@ -35,23 +44,23 @@
   }
 
   <div class="actions">
-    <app-button title="Annuler" variant="secondary" (clicked)="onCancel()"></app-button>
     <app-button
-      title="Enregistrer"
-      variant="primary"
-      icon="check"
-      [loading]="loading()"
-      [disabled]="!canSubmit()"
-      (clicked)="onSubmit()"
-    ></app-button>
-  </div>
-
-  <div class="remove-row">
-    <app-button
+      class="remove"
       title="Retirer du club"
       variant="error"
       icon="person_remove"
       (clicked)="onRemove()"
     ></app-button>
+    <div class="main-actions">
+      <app-button title="Annuler" variant="secondary" (clicked)="onCancel()"></app-button>
+      <app-button
+        title="Enregistrer"
+        variant="primary"
+        icon="check"
+        [loading]="loading()"
+        [disabled]="!canSubmit()"
+        (clicked)="onSubmit()"
+      ></app-button>
+    </div>
   </div>
 </div>

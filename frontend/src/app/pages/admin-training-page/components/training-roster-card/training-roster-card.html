@@ -36,14 +36,23 @@
     } @else {
       <div class="members" [appStagger]="staggerKey()">
         @for (member of members(); track member.id) {
+          @let isAdmin = member.id === adminMemberId();
           <button
             type="button"
             class="member-chip"
-            [attr.aria-label]="'Modifier ou retirer ' + member.name"
+            [class.member-chip--admin]="isAdmin"
+            [attr.aria-label]="'Modifier ou retirer ' + member.name + (isAdmin ? ', admin' : '')"
             (click)="memberSelected.emit(member)"
           >
-            <app-icon name="person" iconClass="member-icon" [ariaHidden]="true" />
+            <app-icon
+              [name]="isAdmin ? 'admin_panel_settings' : 'person'"
+              iconClass="member-icon"
+              [ariaHidden]="true"
+            />
             {{ member.name }}
+            @if (isAdmin) {
+              <span class="admin-tag">Admin</span>
+            }
             <app-icon name="more_vert" iconClass="more-icon" [ariaHidden]="true" />
           </button>
         }

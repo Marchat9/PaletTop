@@ -30,4 +30,21 @@ describe('PlayerMatchHistory', () => {
       'En validation',
     ]);
   });
+
+  it("shows the row's own team label rather than the page-wide one", () => {
+    TestBed.configureTestingModule({ imports: [PlayerMatchHistory] });
+    const fixture = TestBed.createComponent(PlayerMatchHistory);
+    fixture.componentRef.setInput('myLabel', 'Team name');
+    fixture.componentRef.setInput('results', [
+      { ...result('1', 'VALIDATED'), myLabel: 'Alice · Bob · Chloé' },
+      result('2', 'VALIDATED'),
+    ]);
+    fixture.detectChanges();
+
+    const element = fixture.nativeElement as HTMLElement;
+    const labels = Array.from(element.querySelectorAll('.team.current')).map((team) =>
+      team.textContent!.trim(),
+    );
+    expect(labels).toEqual(['Alice · Bob · Chloé (vous)', 'Team name (vous)']);
+  });
 });

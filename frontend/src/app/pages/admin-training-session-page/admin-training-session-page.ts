@@ -68,6 +68,7 @@ import {
 import { describeRoundPreview, previewRound } from 'src/app/utils/round-preview.util';
 import { TrainingScoreUpdate, TrainingTeamCreation } from './admin-training-session-page.models';
 import { SessionActions } from './components/session-actions/session-actions';
+import { isInTeam } from '../player-training-session-page/player-training-session-page.utils';
 import { SessionHeader } from './components/session-header/session-header';
 import { SessionLeaderboard } from './components/session-leaderboard/session-leaderboard';
 import { SessionParticipants } from './components/session-participants/session-participants';
@@ -144,6 +145,14 @@ export class AdminTrainingSessionPage implements OnInit, OnDestroy {
     () => this.session()?.participants.filter((p) => p.status === 'PRESENT') ?? [],
   );
 
+  /** The group admin who also plays, once checked in to this session. */
+  public readonly adminParticipant = computed(() => {
+    const adminMemberId = this.training()?.adminMemberId;
+    return adminMemberId
+      ? (this.presentParticipants().find((p) => p.memberId === adminMemberId) ?? null)
+      : null;
+  });
+
   /** A player can only belong to one active fixed team. */
   public readonly participantsWithoutTeam = computed(() => {
     const takenIds = new Set(
@@ -159,6 +168,21 @@ export class AdminTrainingSessionPage implements OnInit, OnDestroy {
   );
   public readonly currentRound = computed(() => this.sortedRounds().at(-1) ?? null);
   public readonly previousRounds = computed(() => this.sortedRounds().slice(0, -1).reverse());
+
+  /** Nothing left to play for the admin: no round yet, or their match of this round is validated. */
+  public readonly playMyMatchesDisabled = computed(() => {
+    const round = this.currentRound();
+    if (!round) {
+      return true;
+    }
+    const participantId = this.adminParticipant()?.id;
+    const myMatch = round.matches.find(
+      (match) =>
+        !!participantId &&
+        (isInTeam(match.teamA, participantId) || isInTeam(match.teamB, participantId)),
+    );
+    return myMatch?.status === 'VALIDATED';
+  });
 
   public readonly ongoingMatchCount = computed(
     () =>
@@ -395,6 +419,18 @@ export class AdminTrainingSessionPage implements OnInit, OnDestroy {
   }
 
   // ========= Navigation =========
+
+  public playMyMatches(): void {
+    const sessionCode = this.session()?.code;
+    const participant = this.adminParticipant();
+    if (!sessionCode || !participant) {
+      return;
+    }
+    // The player page has no other way to link back: the public session hides its training code.
+    this.router.navigate([`/player/training/${sessionCode}/${participant.code}`], {
+      queryParams: { adminTraining: this.trainingCode() },
+    });
+  }
 
   public backToTraining(): void {
     this.router.navigate([`/admin/training/${this.trainingCode()}`]);

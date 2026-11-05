@@ -126,6 +126,37 @@
         row-gap: 0.3rem;
       }
     }
+
+    // Too narrow to share a line: the name gets the whole row, then one detail per line.
+    @media (max-width: 480px) {
+      &:not(.team-row-editing) {
+        grid-template-columns: 1fr auto;
+        grid-template-areas: 'name actions' 'code code' 'players players' 'clubs clubs';
+        row-gap: 0.15rem;
+      }
+
+      .cell-code,
+      .cell-players,
+      .cell-clubs {
+        padding-left: 1.45rem;
+      }
+
+      .row-toggle .name {
+        white-space: normal;
+      }
+
+      // Flex keeps wrapped club names aligned after the icon.
+      .cell-clubs {
+        display: flex;
+        align-items: flex-start;
+        white-space: normal;
+
+        ::ng-deep .club-icon {
+          flex-shrink: 0;
+          margin-left: 0;
+        }
+      }
+    }
   }
 
   .team-row-header {
@@ -210,6 +241,10 @@
         min-width: 0;
       }
     }
+
+    @media (max-width: 480px) {
+      display: contents;
+    }
   }
 
   .row-toggle {
@@ -290,6 +325,17 @@
         gap: 10px;
         color: var(--color-on-surface-variant);
         font-size: 0.85rem;
+      }
+
+      // The club goes under the player name instead of squeezing beside it.
+      @media (max-width: 480px) {
+        flex-wrap: wrap;
+        row-gap: 0.1rem;
+
+        .club {
+          flex-basis: 100%;
+          padding-left: 2.1rem;
+        }
       }
     }
 

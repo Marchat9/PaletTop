@@ -27,6 +27,9 @@ import {
   renameTrainingMember,
   renameTrainingMemberFailure,
   renameTrainingMemberSuccess,
+  setTrainingAdminMember,
+  setTrainingAdminMemberFailure,
+  setTrainingAdminMemberSuccess,
   updateTrainingAdministratorInformations,
   updateTrainingAdministratorInformationsFailure,
   updateTrainingAdministratorInformationsSuccess,
@@ -101,8 +104,6 @@ import {
   TrainingParticipantAdminDto,
   TrainingRoundDto,
   TrainingSessionAdminDto,
-  TrainingSessionPublicDto,
-  TrainingTeamDto,
   TrainingState,
 } from './training.models';
 import { Nullable } from 'src/app/models/nullable.model';
@@ -129,6 +130,7 @@ export const initialTrainingState: TrainingState = {
     updateTraining: { isLoading: false, error: null },
     addMember: { isLoading: false, error: null },
     renameMember: { isLoading: false, error: null },
+    setAdminMember: { isLoading: false, error: null },
     removeMember: { isLoading: false, error: null },
     createSession: { isLoading: false, error: null },
     closeSession: { isLoading: false, error: null },
@@ -172,6 +174,23 @@ function upsertRound(rounds: TrainingRoundDto[], round: TrainingRoundDto): Train
     : [...rounds, round];
 }
 
+function isInMatch(match: TrainingMatchDto, participantId: string): boolean {
+  return [match.teamA, match.teamB].some((team) =>
+    (team?.members ?? []).some((member) => member.id === participantId),
+  );
+}
+
+// The history is only fetched when the page opens: the broadcasts have to keep it up to date, as
+// they do for the card. A match first seen here belongs to a new round and goes last, in play order.
+function upsertHistoryMatch(
+  history: TrainingMatchDto[],
+  match: TrainingMatchDto,
+): TrainingMatchDto[] {
+  return history.some((existing) => existing.id === match.id)
+    ? history.map((existing) => (existing.id === match.id ? match : existing))
+    : [...history, match];
+}
+
 /**
  * Recomputes the "my match" view from a broadcast round: the side containing the participant is the
  * one being looked for. Absent from the round, they have just been checked in and will join the
@@ -185,10 +204,7 @@ function withParticipantMatchFromRound(
     return current;
   }
 
-  const participantId = current.participant.id;
-  const isMine = (team: Nullable<TrainingTeamDto>) =>
-    (team?.members ?? []).some((member) => member.id === participantId);
-  const match = round.matches.find((m) => isMine(m.teamA) || isMine(m.teamB)) ?? null;
+  const match = round.matches.find((m) => isInMatch(m, current.participant.id)) ?? null;
 
   return {
     ...current,
@@ -377,9 +393,15 @@ export const trainingReducer = createReducer(
       renameMember: { isLoading: true, error: null },
     },
   })),
+  // A rename and an admin player change can be saved together, and their responses come back in
+  // any order: each one only applies what it changed, otherwise the last response would undo the
+  // other with what it read before.
   on(renameTrainingMemberSuccess, (state, { training }) => ({
     ...state,
-    training: { ...state.training, data: training },
+    training: {
+      ...state.training,
+      data: state.training.data ? { ...state.training.data, members: training.members } : training,
+    },
     requestStatus: {
       ...state.requestStatus,
       renameMember: { isLoading: false, error: null },
@@ -399,6 +421,34 @@ export const trainingReducer = createReducer(
     requestStatus: {
       ...state.requestStatus,
       removeMember: { isLoading: true, error: null },
+    },
+  })),
+  // Admin player
+  on(setTrainingAdminMember, (state) => ({
+    ...state,
+    requestStatus: {
+      ...state.requestStatus,
+      setAdminMember: { isLoading: true, error: null },
+    },
+  })),
+  on(setTrainingAdminMemberSuccess, (state, { training }) => ({
+    ...state,
+    training: {
+      ...state.training,
+      data: state.training.data
+        ? { ...state.training.data, adminMemberId: training.adminMemberId }
+        : training,
+    },
+    requestStatus: {
+      ...state.requestStatus,
+      setAdminMember: { isLoading: false, error: null },
+    },
+  })),
+  on(setTrainingAdminMemberFailure, (state, { error }) => ({
+    ...state,
+    requestStatus: {
+      ...state.requestStatus,
+      setAdminMember: { isLoading: false, error },
     },
   })),
   on(removeTrainingMemberSuccess, (state, { training }) => ({
@@ -859,20 +909,38 @@ export const trainingReducer = createReducer(
       ? { ...state, currentSession: { ...state.currentSession, data: session } }
       : state,
   ),
-  on(wsTrainingRoundGenerated, (state, { round }) => ({
-    ...state,
-    rounds: { ...state.rounds, data: upsertRound(state.rounds.data, round) },
-    currentRound: { data: round, isLoading: false, error: null },
+  on(wsTrainingRoundGenerated, (state, { round }) => {
     // On the player side, the broadcast round already contains their next match: it is found by its
     // identity rather than by another call to the server.
-    participantCurrentMatch: {
-      ...state.participantCurrentMatch,
-      data: withParticipantMatchFromRound(state.participantCurrentMatch.data, round),
-    },
-  })),
+    const participantView = withParticipantMatchFromRound(
+      state.participantCurrentMatch.data,
+      round,
+    );
+    return {
+      ...state,
+      rounds: { ...state.rounds, data: upsertRound(state.rounds.data, round) },
+      currentRound: { data: round, isLoading: false, error: null },
+      participantCurrentMatch: { ...state.participantCurrentMatch, data: participantView },
+      participantHistory: participantView?.match
+        ? {
+            ...state.participantHistory,
+            data: upsertHistoryMatch(state.participantHistory.data, participantView.match),
+          }
+        : state.participantHistory,
+    };
+  }),
   on(wsTrainingMatchUpdated, (state, { match }) => ({
     ...state,
     rounds: { ...state.rounds, data: state.rounds.data.map((r) => replaceMatchInRound(r, match)) },
+    // A match validated by a team-mate or by the admin moves on in my history too.
+    participantHistory:
+      state.participantCurrentMatch.data &&
+      isInMatch(match, state.participantCurrentMatch.data.participant.id)
+        ? {
+            ...state.participantHistory,
+            data: upsertHistoryMatch(state.participantHistory.data, match),
+          }
+        : state.participantHistory,
     currentRound: {
       ...state.currentRound,
       data: state.currentRound.data ? replaceMatchInRound(state.currentRound.data, match) : null,

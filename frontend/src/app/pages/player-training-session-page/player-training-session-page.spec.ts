@@ -8,10 +8,12 @@ import { of, Subject } from 'rxjs';
 import { describe, expect, it, vi } from 'vitest';
 import { updateTrainingScore } from 'src/app/store/training/training.match.actions';
 import {
+  TrainingAdminSession,
   TrainingCurrentMatchDto,
   TrainingSessionPublicDto,
 } from 'src/app/store/training/training.models';
 import {
+  selectCurrentTrainingAdminInformations,
   selectCurrentTrainingSessionData,
   selectStartTrainingMatchError,
   selectStartTrainingMatchLoading,
@@ -26,6 +28,7 @@ import {
   selectValidateTrainingMatchLoading,
 } from 'src/app/store/training/training.selectors';
 import { PlayerTrainingSessionPage } from './player-training-session-page';
+import { historyToResults } from './player-training-session-page.utils';
 
 const ME = { id: 'p1', name: 'Jean Dubois' };
 
@@ -84,9 +87,12 @@ function buildCurrentMatch(): TrainingCurrentMatchDto {
 function setup(
   currentMatch: TrainingCurrentMatchDto | null = buildCurrentMatch(),
   session: TrainingSessionPublicDto = buildSession(),
+  queryParams: Record<string, string> = {},
+  adminInformations: TrainingAdminSession | null = null,
 ) {
   const activatedRoute = {
     paramMap: of(convertToParamMap({ sessionCode: '1234', participantCode: '4821' })),
+    queryParamMap: of(convertToParamMap(queryParams)),
   } as unknown as ActivatedRoute;
   const routerMock = { navigate: vi.fn() };
   const actions$ = new Subject<Action>();
@@ -117,6 +123,7 @@ function setup(
           { selector: selectValidateTrainingMatchLoading, value: false },
           { selector: selectValidateTrainingMatchError, value: null },
           { selector: selectTrainingScoreSync, value: INITIAL_SCORE_SYNC },
+          { selector: selectCurrentTrainingAdminInformations, value: adminInformations },
         ],
       }),
     ],
@@ -129,7 +136,54 @@ function setup(
   return { fixture, store, routerMock };
 }
 
+describe('historyToResults', () => {
+  it('nomme toute mon équipe, coéquipiers compris', () => {
+    const [result] = historyToResults([buildCurrentMatch().match!], ME.id);
+
+    expect(result.myLabel).toBe('Jean Dubois · Marie Lefèvre');
+    expect(result.opponentLabel).toBe('Luc Béguin · Claire Ozanne');
+  });
+});
+
 describe('PlayerTrainingSessionPage', () => {
+  describe("retour à l'administration", () => {
+    const ADMIN = { code: 'LAITON-2026', password: 'secret' };
+    const FROM_ADMIN = { adminTraining: 'LAITON-2026' };
+    const backButton = (element: HTMLElement) =>
+      [...element.querySelectorAll('.button')].find((button) =>
+        button.textContent?.includes("Retour à l'administration"),
+      );
+
+    it("ramène l'admin sur sa séance", () => {
+      const { fixture, routerMock } = setup(undefined, undefined, FROM_ADMIN, ADMIN);
+
+      expect(backButton(fixture.nativeElement)).toBeTruthy();
+
+      fixture.componentInstance.backToAdmin();
+
+      expect(routerMock.navigate).toHaveBeenCalledWith([
+        '/admin/training/LAITON-2026/session/1234',
+      ]);
+    });
+
+    it('reste caché pour un joueur arrivé par ses codes', () => {
+      const { fixture } = setup(undefined, undefined, {}, ADMIN);
+
+      expect(backButton(fixture.nativeElement)).toBeUndefined();
+    });
+
+    it("reste caché quand le lien est ouvert sans les accès admin de l'entraînement", () => {
+      const other = { code: 'AUTRE-2026', password: 'secret' };
+
+      for (const adminInformations of [null, other]) {
+        TestBed.resetTestingModule();
+        const { fixture } = setup(undefined, undefined, FROM_ADMIN, adminInformations);
+
+        expect(backButton(fixture.nativeElement)).toBeUndefined();
+      }
+    });
+  });
+
   it("identifie le camp du joueur par son appartenance à l'équipe", () => {
     const { fixture } = setup();
 

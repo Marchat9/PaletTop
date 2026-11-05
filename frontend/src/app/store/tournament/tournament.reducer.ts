@@ -50,6 +50,7 @@ import {
 
 export const initialTournamentState: TournamentState = {
   tournament: { data: null, isLoading: false, error: null },
+  isAdminView: false,
   adminInformations: null,
   playerInformations: null,
   adminRequest: {
@@ -105,6 +106,7 @@ export const tournamentReducer = createReducer(
       isLoading: false,
       error: null,
     },
+    isAdminView: true,
     adminInformations: {
       code: tournament.code,
       password,
@@ -168,6 +170,7 @@ export const tournamentReducer = createReducer(
       isLoading: false,
       error: null,
     },
+    isAdminView: true,
   })),
   on(connectTournamentAdministratorFailure, (state, { error }) => ({
     ...state,
@@ -194,6 +197,7 @@ export const tournamentReducer = createReducer(
       isLoading: false,
       error: null,
     },
+    isAdminView: false,
     playerInformations: { tournamentCode: tournament.code, teamCode },
   })),
   on(loadTournamentInformationFailure, (state, { error }) => ({
@@ -446,6 +450,7 @@ export const tournamentReducer = createReducer(
   on(resetTournament, (state) => ({
     ...state,
     tournament: initialTournamentState.tournament,
+    isAdminView: false,
   })),
   on(disconnectTournamentAdministrator, (state) => ({
     ...state,

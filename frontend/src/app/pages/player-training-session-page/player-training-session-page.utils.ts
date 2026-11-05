@@ -69,6 +69,8 @@ export function historyToResults(
       id: match.id,
       label: `Match ${index + 1}`,
       status: match.status,
+      // The partners change at every round: the page-wide label could only name the player.
+      myLabel: teamLabel(iAmTeamA ? match.teamA : match.teamB),
       myScore: iAmTeamA ? match.scoreA : match.scoreB,
       opponentLabel: teamLabel(iAmTeamA ? match.teamB : match.teamA),
       opponentScore: iAmTeamA ? match.scoreB : match.scoreA,
