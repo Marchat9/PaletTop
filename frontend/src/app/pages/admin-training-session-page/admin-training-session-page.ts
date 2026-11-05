@@ -426,7 +426,10 @@ export class AdminTrainingSessionPage implements OnInit, OnDestroy {
     if (!sessionCode || !participant) {
       return;
     }
-    this.router.navigate([`/player/training/${sessionCode}/${participant.code}`]);
+    // The player page has no other way to link back: the public session hides its training code.
+    this.router.navigate([`/player/training/${sessionCode}/${participant.code}`], {
+      queryParams: { adminTraining: this.trainingCode() },
+    });
   }
 
   public backToTraining(): void {

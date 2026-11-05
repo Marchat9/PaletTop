@@ -149,7 +149,9 @@ describe('AdminTrainingSessionPage', () => {
     fixture.detectChanges();
     fixture.componentInstance.playMyMatches();
 
-    expect(routerMock.navigate).toHaveBeenCalledWith(['/player/training/1234/4821']);
+    expect(routerMock.navigate).toHaveBeenCalledWith(['/player/training/1234/4821'], {
+      queryParams: { adminTraining: 'LAITON-2026' },
+    });
   });
 
   it('grise « Jouer mes matchs » tant qu’aucun round n’est généré', () => {

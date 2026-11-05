@@ -21,6 +21,7 @@ import {
   PlayerValidationCopy,
 } from 'src/app/models/player-match-view.model';
 import { AnimateOnChangeDirective } from 'src/app/shared/animate-on-change/animate-on-change.directive';
+import { Button } from 'src/app/shared/button/button';
 import { Icon } from 'src/app/shared/icon/icon';
 import { PlayerMatchCard } from 'src/app/shared/player-match-card/player-match-card';
 import { PlayerMatchHistory } from 'src/app/shared/player-match-history/player-match-history';
@@ -41,6 +42,7 @@ import {
   loadTrainingSessionPublic,
 } from 'src/app/store/training/training.session.actions';
 import {
+  selectCurrentTrainingAdminInformations,
   selectCurrentTrainingSessionData,
   selectStartTrainingMatchError,
   selectStartTrainingMatchLoading,
@@ -61,6 +63,7 @@ import { historyToResults, myTeam, toPlayerMatchView } from './player-training-s
 @Component({
   selector: 'app-player-training-session-page',
   imports: [
+    Button,
     Icon,
     AnimateOnChangeDirective,
     PlayerMatchCard,
@@ -82,6 +85,8 @@ export class PlayerTrainingSessionPage implements OnInit, OnDestroy {
 
   public readonly sessionCode = signal<string | null>(null);
   public readonly participantCode = signal<string | null>(null);
+  // Training whose admin page sent the player here, if any.
+  private readonly adminTrainingCode = signal<string | null>(null);
 
   // Plain non-reactive field: a guard held by a signal would re-run the effect.
   private loadedFor: string | null = null;
@@ -102,6 +107,16 @@ export class PlayerTrainingSessionPage implements OnInit, OnDestroy {
   public readonly scoreError = this.store.selectSignal(selectUpdateTrainingScoreError);
   public readonly validateLoading = this.store.selectSignal(selectValidateTrainingMatchLoading);
   public readonly validateError = this.store.selectSignal(selectValidateTrainingMatchError);
+
+  private readonly adminInformations = this.store.selectSignal(
+    selectCurrentTrainingAdminInformations,
+  );
+
+  /** The admin who plays: the link alone is not enough, it must match their saved access. */
+  public readonly canBackToAdmin = computed(() => {
+    const trainingCode = this.adminTrainingCode();
+    return !!trainingCode && this.adminInformations()?.code === trainingCode;
+  });
 
   // Player identity and state
   public readonly me = computed(() => this.currentMatchState()?.participant ?? null);
@@ -285,10 +300,22 @@ export class PlayerTrainingSessionPage implements OnInit, OnDestroy {
       this.sessionCode.set(sessionCode);
       this.participantCode.set(participantCode);
     });
+
+    this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
+      this.adminTrainingCode.set(params.get('adminTraining'));
+    });
   }
 
   ngOnDestroy(): void {
     this.store.dispatch(leaveTrainingSession());
+  }
+
+  // ========= Navigation =========
+
+  public backToAdmin(): void {
+    this.router.navigate([
+      `/admin/training/${this.adminTrainingCode()}/session/${this.sessionCode()}`,
+    ]);
   }
 
   // ========= Actions =========

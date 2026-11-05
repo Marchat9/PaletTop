@@ -1,4 +1,15 @@
 <section class="player-training-page">
+  @if (canBackToAdmin()) {
+    <div class="admin-back">
+      <app-button
+        title="Retour à l'administration"
+        icon="arrow_back"
+        variant="tertiary"
+        (clicked)="backToAdmin()"
+      />
+    </div>
+  }
+
   @if (isLoading() && !me()) {
     <section class="state">
       <app-icon name="progress_activity" />
