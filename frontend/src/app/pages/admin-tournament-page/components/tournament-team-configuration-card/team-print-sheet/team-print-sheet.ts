@@ -23,6 +23,9 @@ export class TeamPrintSheet {
   public readonly tournament = input<Nullable<TournamentDto>>(null);
 
   public readonly appUrl: string = window.location.origin;
+  public readonly spectatorUrl = computed(
+    () => `${this.appUrl}/spectateur/${this.tournament()?.code ?? ''}`,
+  );
   public readonly sortedTeams = computed<PrintableTeam[]>(() => {
     const tournamentCode = this.tournament()?.code ?? '';
 

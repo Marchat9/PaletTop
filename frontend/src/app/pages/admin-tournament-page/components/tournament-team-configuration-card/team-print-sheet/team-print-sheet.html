@@ -4,7 +4,20 @@
     <p class="print-tournament-code">
       Code du tournoi : <span class="code-value">{{ tournament()?.code }}</span>
     </p>
-    <app-qr-code [url]="appUrl" [size]="80" alt="Application QR code" />
+    <div class="print-qr-codes">
+      <figure class="print-qr">
+        <app-qr-code [url]="appUrl" [size]="100" alt="Application QR code" />
+        <figcaption>
+          <span class="qr-url">{{ appUrl }}</span>
+        </figcaption>
+      </figure>
+      <figure class="print-qr">
+        <app-qr-code [url]="spectatorUrl()" [size]="100" alt="QR code spectateur" />
+        <figcaption>
+          <span class="qr-label">Spectateur</span>
+        </figcaption>
+      </figure>
+    </div>
   </div>
   <table class="print-table">
     <thead>
