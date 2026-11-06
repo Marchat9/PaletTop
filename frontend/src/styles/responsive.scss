@@ -9,29 +9,34 @@
   }
 }
 
+// When a `.print-sheet` is mounted, only the sheet is printed, laid out in normal flow so the
+// browser can split it over as many pages as needed.
+// The previous approach (hide everything with `visibility`, absolutely position the sheet) kept
+// the whole app layout around the sheet: a `transform` left by an ancestor animation made that
+// ancestor the sheet's containing block, trapped inside the 100dvh `overflow: hidden` nav shell,
+// so only the first page of teams was printed.
 @media print {
-  body * {
-    visibility: hidden;
-  }
+  // Ancestors of the sheet: flatten them into plain unconstrained blocks.
+  :has(.print-sheet) {
+    display: block !important;
+    position: static !important;
+    overflow: visible !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    transform: none !important;
+    animation: none !important;
 
-  .print-sheet,
-  .print-sheet * {
-    visibility: visible;
+    // Everything beside the path leading to the sheet is dropped from the layout.
+    > :not(.print-sheet, :has(.print-sheet)) {
+      display: none !important;
+    }
   }
 
   .print-sheet {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-  }
-
-  .nav-shell {
-    height: auto;
-    overflow: visible;
-  }
-
-  .nav-main {
-    overflow: visible;
+    display: block;
+    position: static;
   }
 }
