@@ -1,15 +1,20 @@
-<label class="switch-option" [class.disabled]="disabled()">
+<label class="switch-option" [class.disabled]="isDisabled()">
   <input
     type="checkbox"
     role="switch"
     [checked]="internalValue()"
-    [disabled]="disabled()"
+    [disabled]="isDisabled()"
     (change)="onChange($any($event.target).checked)"
   />
   <span class="switch-track">
     <span class="switch-thumb"></span>
   </span>
   @if (label()) {
-    <span class="switch-label">{{ label() }}</span>
+    <div class="switch-text">
+      <span class="switch-label">{{ label() }}</span>
+      @if (description()) {
+        <span class="switch-description">{{ description() }}</span>
+      }
+    </div>
   }
 </label>

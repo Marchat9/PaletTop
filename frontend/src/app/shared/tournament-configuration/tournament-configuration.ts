@@ -29,7 +29,7 @@ import {
   awayClubValidators,
   getInvalidFieldNames,
   homeClubValidators,
-  resetLastRoundByRankingIfNotAllowed,
+  syncLastRoundByRankingAvailability,
 } from './tournament-configuration.utils';
 import { TournamentModeParameter } from './tournament-mode-parameter/tournament-mode-parameter';
 import { TournamentParameters } from './tournament-parameters/tournament-parameters';
@@ -217,11 +217,11 @@ export class TournamentConfiguration implements OnInit {
       { injector: this.injector },
     );
 
-    // effect to uncheck the ranking-based last round once fewer than 2 rounds are configured
+    // effect to grey out (and uncheck) the ranking-based last round while fewer than 2 rounds are configured
     effect(
       () => {
         formValues();
-        resetLastRoundByRankingIfNotAllowed(this.form);
+        syncLastRoundByRankingAvailability(this.form);
       },
       { injector: this.injector },
     );

@@ -3,7 +3,7 @@ import { TournamentConfigurationForm } from './tournament-configuration-form.mod
 import {
   differentFromHomeClub,
   isLastRoundByRankingAllowed,
-  resetLastRoundByRankingIfNotAllowed,
+  syncLastRoundByRankingAvailability,
 } from './tournament-configuration.utils';
 
 function upDownForm(numberOfRound: number | undefined, lastRoundByRanking: boolean) {
@@ -30,23 +30,33 @@ describe('isLastRoundByRankingAllowed', () => {
   });
 });
 
-describe('resetLastRoundByRankingIfNotAllowed', () => {
+describe('syncLastRoundByRankingAvailability', () => {
   it('décoche la case quand le nombre de parties passe sous 2', () => {
     const { form, upDownMode } = upDownForm(1, true);
-    resetLastRoundByRankingIfNotAllowed(form);
+    syncLastRoundByRankingAvailability(form);
     expect(upDownMode.controls.lastRoundByRanking.value).toBe(false);
   });
 
   it('décoche la case quand le nombre de parties est vidé', () => {
     const { form, upDownMode } = upDownForm(undefined, true);
-    resetLastRoundByRankingIfNotAllowed(form);
+    syncLastRoundByRankingAvailability(form);
     expect(upDownMode.controls.lastRoundByRanking.value).toBe(false);
   });
 
   it('laisse la case cochée avec au moins 2 parties', () => {
     const { form, upDownMode } = upDownForm(5, true);
-    resetLastRoundByRankingIfNotAllowed(form);
+    syncLastRoundByRankingAvailability(form);
     expect(upDownMode.controls.lastRoundByRanking.value).toBe(true);
+  });
+
+  it('désactive le champ sous 2 parties et le réactive ensuite', () => {
+    const { form, upDownMode } = upDownForm(1, false);
+    syncLastRoundByRankingAvailability(form);
+    expect(upDownMode.controls.lastRoundByRanking.disabled).toBe(true);
+
+    upDownMode.controls.numberOfRound.setValue(3);
+    syncLastRoundByRankingAvailability(form);
+    expect(upDownMode.controls.lastRoundByRanking.enabled).toBe(true);
   });
 });
 

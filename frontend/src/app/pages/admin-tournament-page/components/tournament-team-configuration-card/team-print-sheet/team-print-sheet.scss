@@ -18,6 +18,35 @@
   border-bottom: 2px solid #1a1a1a;
 }
 
+.print-qr-codes {
+  display: flex;
+  gap: 1.5rem;
+
+  .print-qr {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    margin: 0;
+
+    figcaption {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .qr-label {
+      font-weight: bold;
+    }
+
+    .qr-url {
+      font-family: monospace;
+      font-size: 0.75rem;
+      overflow-wrap: anywhere;
+    }
+  }
+}
+
 .print-title {
   margin: 0;
 }

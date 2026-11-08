@@ -72,6 +72,17 @@ describe('TeamPrintSheet', () => {
     expect(title).not.toBe(code);
   });
 
+  it('renders the site and spectator QR codes with their urls in the header', () => {
+    const fixture = TestBed.createComponent(TeamPrintSheet);
+    fixture.componentRef.setInput('tournament', buildTournament([]));
+    fixture.detectChanges();
+
+    const qrBlocks = fixture.nativeElement.querySelectorAll('.print-header .print-qr');
+    expect(qrBlocks.length).toBe(2);
+    expect(qrBlocks[0].querySelector('.qr-url').textContent).toBe(window.location.origin);
+    expect(qrBlocks[1].querySelector('.qr-label').textContent).toContain('Spectateur');
+  });
+
   it('renders no rows when the tournament has no teams', () => {
     const fixture = TestBed.createComponent(TeamPrintSheet);
     fixture.componentRef.setInput('tournament', buildTournament([]));
