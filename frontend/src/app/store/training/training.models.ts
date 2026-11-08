@@ -212,5 +212,10 @@ export interface TrainingState {
   leaderboard: ApiCall<TrainingLeaderboardEntryDto[]>;
 
   participantCurrentMatch: ApiCall<Nullable<TrainingCurrentMatchDto>>;
+  /**
+   * The app may have missed updates (back from the background, websocket reconnected): the score
+   * shown may be stale, so its entry is locked until the player's current match is reloaded.
+   */
+  participantAwaitingResync: boolean;
   participantHistory: ApiCall<TrainingMatchDto[]>;
 }

@@ -21,6 +21,7 @@ import { connectTournamentAdministratorSuccess } from 'src/app/store/tournament/
 import { selectCurrentTournamentAdminInformations } from 'src/app/store/tournament/tournament.selectors';
 import { TournamentDto } from 'src/app/store/tournament/tournament.models';
 import {
+  resyncPending,
   resyncRequested,
   wsHistoryUpdated,
   wsMatchUpdated,
@@ -61,6 +62,12 @@ export class RealtimeEffects {
     merge(this.wsService.reconnected$, this.appVisibility.resumed$).pipe(
       debounceTime(environment.apiConfiguration.mobileResyncDebounce),
       map(() => resyncRequested()),
+    ),
+  );
+
+  markResyncPending$ = createEffect(() =>
+    merge(this.wsService.reconnected$, this.appVisibility.resumed$).pipe(
+      map(() => resyncPending()),
     ),
   );
 

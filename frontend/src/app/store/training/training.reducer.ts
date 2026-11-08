@@ -106,6 +106,7 @@ import {
 } from './training.models';
 import { Nullable } from 'src/app/models/nullable.model';
 import {
+  resyncPending,
   wsTrainingLeaderboardUpdated,
   wsTrainingMatchUpdated,
   wsTrainingRoundGenerated,
@@ -153,6 +154,7 @@ export const initialTrainingState: TrainingState = {
   leaderboard: { data: [], isLoading: false, error: null },
   participantCurrentMatch: { data: null, isLoading: false, error: null },
   participantHistory: { data: [], isLoading: false, error: null },
+  participantAwaitingResync: false,
 };
 
 function replaceMatchInRound(round: TrainingRoundDto, match: TrainingMatchDto): TrainingRoundDto {
@@ -273,12 +275,16 @@ export const trainingReducer = createReducer(
       ...state,
       participantCurrentMatch: { data: currentMatch, isLoading: false, error: null },
       participantInformations: { sessionCode, participantCode },
+      participantAwaitingResync: false,
     }),
   ),
+  // A failed reload unlocks the entry too: better a possibly stale score than a frozen card.
   on(loadTrainingParticipantCurrentMatchFailure, (state, { error }) => ({
     ...state,
     participantCurrentMatch: { ...state.participantCurrentMatch, isLoading: false, error },
+    participantAwaitingResync: false,
   })),
+  on(resyncPending, (state) => ({ ...state, participantAwaitingResync: true })),
   on(forgetTrainingParticipantCodes, (state) => ({
     ...state,
     participantInformations: null,

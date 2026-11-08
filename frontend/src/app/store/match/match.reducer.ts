@@ -2,8 +2,11 @@ import { createReducer, on } from '@ngrx/store';
 import { ApiCall, ApiCallStatus } from 'src/app/models/api-call.model';
 import { Nullable } from 'src/app/models/nullable.model';
 import { PlayerMatchDto } from 'src/app/models/player-match.model';
-import { wsMatchUpdated } from 'src/app/store/realtime/realtime.actions';
-import { resetTournament } from 'src/app/store/tournament/tournament.actions';
+import { resyncPending, wsMatchUpdated } from 'src/app/store/realtime/realtime.actions';
+import {
+  loadTournamentInformationFailure,
+  resetTournament,
+} from 'src/app/store/tournament/tournament.actions';
 import {
   adminUpdateScore,
   adminUpdateScoreFailure,
@@ -32,6 +35,7 @@ export interface ScoreRequest {
 export interface MatchState {
   data: ApiCall<Nullable<PlayerMatchDto>>;
   scoreRequest: ScoreRequest;
+  awaitingResync: boolean;
 }
 
 const initialScoreRequest: ScoreRequest = {
@@ -44,6 +48,7 @@ const initialScoreRequest: ScoreRequest = {
 export const initialMatchState: MatchState = {
   data: { data: null, isLoading: false, error: null },
   scoreRequest: initialScoreRequest,
+  awaitingResync: false,
 };
 
 export const matchReducer = createReducer(
@@ -55,11 +60,16 @@ export const matchReducer = createReducer(
   on(loadCurrentMatchSuccess, (state, { match }) => ({
     ...state,
     data: { data: match, isLoading: false, error: null },
+    awaitingResync: false,
   })),
+  // A failed reload unlocks the entry too: better a possibly stale score than a frozen card.
   on(loadCurrentMatchFailure, (state, { error }) => ({
     ...state,
     data: { ...state.data, isLoading: false, error },
+    awaitingResync: false,
   })),
+  on(loadTournamentInformationFailure, (state) => ({ ...state, awaitingResync: false })),
+  on(resyncPending, (state) => ({ ...state, awaitingResync: true })),
   on(wsMatchUpdated, (state, { match }) => ({
     ...state,
     data: {

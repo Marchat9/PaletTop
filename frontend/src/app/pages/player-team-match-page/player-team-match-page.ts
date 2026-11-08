@@ -1,3 +1,4 @@
+import { selectMatchAwaitingResync } from 'src/app/store/match/match.selectors';
 import { Dialog } from '@angular/cdk/dialog';
 import { Button } from 'src/app/shared/button/button';
 import { JoinTournamentPopupComponent } from 'src/app/modales/join-tournament-popup/join-tournament-popup';
@@ -145,6 +146,8 @@ export class PlayerTeamMatchPageComponent {
     // Not started yet: "en cours" would contradict the "En attente" status shown on the card.
     return this.matchView()!.status === 'PENDING' ? 'Prochain match' : 'Match en cours';
   });
+
+  public readonly awaitingResync = this.store.selectSignal(selectMatchAwaitingResync);
 
   public readonly matchView = computed(() => {
     const match = this.currentMatch();

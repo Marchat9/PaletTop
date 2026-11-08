@@ -51,6 +51,12 @@
     gap: 1.25rem;
   }
 
+  &__headers {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
   &__teams {
     display: grid;
     grid-template-columns: 1fr auto 1fr;
@@ -208,10 +214,16 @@
   }
 }
 
-.error-hint {
+// The sync hint: score entry locked while the match is reloaded (back from the background).
+.error-hint,
+.sync-hint {
   font-size: 0.78rem;
   color: var(--color-error);
   text-align: center;
+}
+
+.sync-hint {
+  color: var(--color-on-surface-variant);
 }
 
 .bye-header {

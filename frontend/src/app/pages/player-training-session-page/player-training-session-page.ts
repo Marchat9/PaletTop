@@ -1,3 +1,4 @@
+import { selectTrainingParticipantAwaitingResync } from 'src/app/store/training/training.selectors';
 import { isSessionCode } from 'src/app/utils/code-format.util';
 import {
   ChangeDetectionStrategy,
@@ -120,6 +121,7 @@ export class PlayerTrainingSessionPage implements OnInit, OnDestroy {
   public readonly me = computed(() => this.currentMatchState()?.participant ?? null);
   public readonly roundNumber = computed(() => this.currentMatchState()?.roundNumber ?? null);
   public readonly isSittingOut = computed(() => this.currentMatchState()?.sitOut ?? false);
+  public readonly awaitingResync = this.store.selectSignal(selectTrainingParticipantAwaitingResync);
   private readonly match = computed(() => this.currentMatchState()?.match ?? null);
   public readonly isSessionClosed = computed(() => this.session()?.status === 'CLOSED');
   public readonly pointsPerGame = computed(() => this.session()?.pointsPerGame ?? 13);

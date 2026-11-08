@@ -6,7 +6,7 @@ import { EMPTY, Subject } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AppVisibilityService } from 'src/app/services/app-visibility.service';
 import { WebSocketService } from 'src/app/services/websocket.service';
-import { resyncRequested } from './realtime.actions';
+import { resyncPending, resyncRequested } from './realtime.actions';
 import { RealtimeEffects } from './realtime.effects';
 
 describe('RealtimeEffects - resyncOnReconnect$', () => {
@@ -68,5 +68,15 @@ describe('RealtimeEffects - resyncOnReconnect$', () => {
     vi.advanceTimersByTime(1_000);
 
     expect(emitted).toEqual([resyncRequested()]);
+  });
+
+  it('marks the resync pending right away, before the debounced resync', () => {
+    const effects = TestBed.inject(RealtimeEffects);
+    const emitted: Action[] = [];
+    effects.markResyncPending$.subscribe((action) => emitted.push(action));
+
+    resumed$.next();
+
+    expect(emitted).toEqual([resyncPending()]);
   });
 });

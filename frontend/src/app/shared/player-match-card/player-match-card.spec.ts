@@ -86,6 +86,24 @@ describe('PlayerMatchCard', () => {
     expect(emitted).not.toHaveBeenCalled();
   });
 
+  it('fige la saisie du score pendant la resynchronisation, puis la rend', () => {
+    const fixture = setup(buildMatch({ myScore: 2, opponentScore: 4 }), { syncing: true });
+    const emitted = vi.fn();
+    fixture.componentInstance.scoreChange.subscribe(emitted);
+
+    incrementMyScore(fixture);
+    expect(emitted).not.toHaveBeenCalled();
+    expect(element(fixture).querySelector('.sync-hint')).not.toBeNull();
+
+    fixture.componentRef.setInput('match', buildMatch({ myScore: 3, opponentScore: 4 }));
+    fixture.componentRef.setInput('syncing', false);
+    fixture.detectChanges();
+    incrementMyScore(fixture);
+
+    expect(emitted).toHaveBeenCalledWith({ myScore: 4, opponentScore: 4 });
+    expect(element(fixture).querySelector('.sync-hint')).toBeNull();
+  });
+
   it('laisse valider un score déjà enregistré même une fois l’épreuve close', () => {
     const fixture = setup(buildMatch({ status: 'ENDED', myScore: 13, opponentScore: 9 }), {
       scoringLocked: true,

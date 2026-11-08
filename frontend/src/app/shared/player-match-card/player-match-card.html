@@ -25,33 +25,42 @@
         <p class="bye-pending">{{ byeCopy().pendingLabel }}</p>
       }
     } @else {
-      <div class="match-card__teams">
-        <div class="team-block team-block--my">
-          <span class="team-block__name">{{ currentMatch.myLabel }}</span>
-          <span class="team-block__you me-badge">vous</span>
-        </div>
+      <div class="match-card__headers">
+        <div class="match-card__teams">
+          <div class="team-block team-block--my">
+            <span class="team-block__name">{{ currentMatch.myLabel }}</span>
+            <span class="team-block__you me-badge">vous</span>
+          </div>
 
-        <div class="match-card__vs">
-          <span class="vs-label">VS</span>
-          <div class="match-card__meta">
-            @if (currentMatch.subtitle) {
-              <span class="plate-label">{{ currentMatch.subtitle }}</span>
-            }
-            <app-status-pill [tone]="statusTone(currentMatch.status)">
-              <app-match-status [status]="currentMatch.status" />
-            </app-status-pill>
-            <app-match-timer
-              [startedAt]="currentMatch.startedAt"
-              [finishedAt]="currentMatch.finishedAt"
-              [status]="currentMatch.status"
-            />
+          <div class="match-card__vs">
+            <span class="vs-label">VS</span>
+            <div class="match-card__meta">
+              @if (currentMatch.subtitle) {
+                <span class="plate-label">{{ currentMatch.subtitle }}</span>
+              }
+              <app-status-pill [tone]="statusTone(currentMatch.status)">
+                <app-match-status [status]="currentMatch.status" />
+              </app-status-pill>
+              <app-match-timer
+                [startedAt]="currentMatch.startedAt"
+                [finishedAt]="currentMatch.finishedAt"
+                [status]="currentMatch.status"
+              />
+            </div>
+          </div>
+
+          <div class="team-block team-block--opponent">
+            <span class="team-block__name">{{ currentMatch.opponentLabel }}</span>
+            <span class="team-block__you">adversaire</span>
           </div>
         </div>
 
-        <div class="team-block team-block--opponent">
-          <span class="team-block__name">{{ currentMatch.opponentLabel }}</span>
-          <span class="team-block__you">adversaire</span>
-        </div>
+        @if (syncing() && !isValidated()) {
+          <p class="sync-hint" role="status">Mise à jour des informations du match…</p>
+        }
+        @if (scoreError()) {
+          <p class="error-hint">{{ scoreError() }}</p>
+        }
       </div>
 
       @if (!isPending()) {
@@ -63,7 +72,7 @@
               [colorRed]="currentMatch.iAmTeamA"
               [min]="0"
               [max]="pointsPerGame()"
-              [disabled]="isValidated() || scoringLocked()"
+              [disabled]="isValidated() || scoringLocked() || syncing()"
               (valueChange)="onMyScoreChange($event)"
             />
           </div>
@@ -75,15 +84,11 @@
               [colorRed]="!currentMatch.iAmTeamA"
               [min]="0"
               [max]="pointsPerGame()"
-              [disabled]="isValidated() || scoringLocked()"
+              [disabled]="isValidated() || scoringLocked() || syncing()"
               (valueChange)="onOpponentScoreChange($event)"
             />
           </div>
         </div>
-
-        @if (scoreError()) {
-          <p class="error-hint">{{ scoreError() }}</p>
-        }
       }
 
       @if (isPending() && !scoringLocked()) {

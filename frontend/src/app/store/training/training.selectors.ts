@@ -305,3 +305,9 @@ export const selectTrainingParticipantIsSittingOut = createSelector(
   selectTrainingState,
   (state) => state.participantCurrentMatch.data?.sitOut ?? false,
 );
+
+/** The player's current match is being reloaded after a possible missed update. */
+export const selectTrainingParticipantAwaitingResync = createSelector(
+  selectTrainingState,
+  (state) => state.participantAwaitingResync,
+);

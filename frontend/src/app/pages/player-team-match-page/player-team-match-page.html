@@ -51,6 +51,7 @@
           [validateError]="validateMatchError()"
           [startLoading]="startMatchLoading()"
           [validateLoading]="validateMatchLoading()"
+          [syncing]="awaitingResync()"
           [emptyTone]="teamMatchStatus() === 'FINISH' ? 'celebration' : 'neutral'"
           (startMatch)="startMatch()"
           (scoreChange)="updateScore($event)"

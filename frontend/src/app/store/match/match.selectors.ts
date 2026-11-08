@@ -47,3 +47,8 @@ export const selectAdminUpdateScoreError = createSelector(
   selectMatchState,
   (state) => state.scoreRequest.adminUpdateScore.error,
 );
+
+export const selectMatchAwaitingResync = createSelector(
+  selectMatchState,
+  (state) => state.awaitingResync,
+);

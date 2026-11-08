@@ -23,6 +23,7 @@ import {
   selectTrainingParticipantHistory,
   selectUpdateTrainingScoreError,
   selectValidateTrainingMatchError,
+  selectTrainingParticipantAwaitingResync,
   selectValidateTrainingMatchLoading,
 } from 'src/app/store/training/training.selectors';
 import { PlayerTrainingSessionPage } from './player-training-session-page';
@@ -120,6 +121,7 @@ function setup(
           { selector: selectUpdateTrainingScoreError, value: null },
           { selector: selectValidateTrainingMatchLoading, value: false },
           { selector: selectValidateTrainingMatchError, value: null },
+          { selector: selectTrainingParticipantAwaitingResync, value: false },
           { selector: selectCurrentTrainingAdminInformations, value: adminInformations },
         ],
       }),
