@@ -14,13 +14,17 @@
     ></app-input-number>
   </div>
 
-  @if (isLastRoundByRankingAllowed()) {
-    <div class="form-group">
-      <app-input-checkbox
-        label="Dernière partie au classement"
-        description="La dernière partie n'est pas tirée au sort : chaque équipe affronte son voisin de classement (1er contre 2e, 3e contre 4e...). Si le nombre d'équipes est impair, le dernier du classement est exempté, sans point."
-        [formControl]="group().controls.lastRoundByRanking"
-      ></app-input-checkbox>
-    </div>
-  }
+  <div class="form-group">
+    <app-switch
+      label="Dernière partie au classement"
+      description="La dernière partie n'est pas tirée au sort : chaque équipe affronte son voisin de classement (1er contre 2e, 3e contre 4e...). Si le nombre d'équipes est impair, le dernier du classement est exempté, sans point."
+      [formControl]="group().controls.lastRoundByRanking"
+    ></app-switch>
+    @if (!isLastRoundByRankingAllowed()) {
+      <p class="form-label-description padding-left">
+        Disponible à partir de 2 parties définies : au moins une partie tirée au sort est nécessaire
+        avant la partie au classement.
+      </p>
+    }
+  </div>
 </div>

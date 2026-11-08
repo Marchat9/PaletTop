@@ -1,6 +1,8 @@
 .switch-option {
+  // Containing block for the visually-hidden native input, so it does not extend the page scroll
+  position: relative;
   display: inline-flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.6rem;
   cursor: pointer;
   font-size: 0.9rem;
@@ -53,7 +55,18 @@
     }
   }
 
-  .switch-label {
-    color: var(--color-on-surface-variant);
+  .switch-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+
+    .switch-label {
+      color: var(--color-on-surface);
+    }
+
+    .switch-description {
+      font-size: 0.8rem;
+      color: var(--color-on-surface-variant);
+    }
   }
 }

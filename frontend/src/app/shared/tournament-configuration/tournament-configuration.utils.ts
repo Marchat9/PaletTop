@@ -66,15 +66,22 @@ export function isLastRoundByRankingAllowed(numberOfRound: number | undefined | 
   return !!numberOfRound && numberOfRound >= 2;
 }
 
-// Unchecks the ranking-based last round when the number of rounds no longer allows it, so a
-// hidden checkbox never sends `true`.
-export function resetLastRoundByRankingIfNotAllowed(form: TournamentConfigurationForm): void {
+// Disables (and unchecks) the ranking-based last round while the number of rounds does not allow
+// it, so a greyed-out switch never sends `true`; re-enables it otherwise.
+export function syncLastRoundByRankingAvailability(form: TournamentConfigurationForm): void {
   const upDownControls = form.controls.modeParameter.controls.upDownMode.controls;
-  if (
-    upDownControls.lastRoundByRanking.value &&
-    !isLastRoundByRankingAllowed(upDownControls.numberOfRound.value)
-  ) {
-    upDownControls.lastRoundByRanking.setValue(false);
+  const lastRoundByRanking = upDownControls.lastRoundByRanking;
+  if (isLastRoundByRankingAllowed(upDownControls.numberOfRound.value)) {
+    if (lastRoundByRanking.disabled) {
+      lastRoundByRanking.enable({ emitEvent: false });
+    }
+    return;
+  }
+  if (lastRoundByRanking.value) {
+    lastRoundByRanking.setValue(false, { emitEvent: false });
+  }
+  if (lastRoundByRanking.enabled) {
+    lastRoundByRanking.disable({ emitEvent: false });
   }
 }
 

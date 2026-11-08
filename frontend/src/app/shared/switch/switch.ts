@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   effect,
   forwardRef,
   input,
@@ -27,10 +28,13 @@ export class Switch implements ControlValueAccessor {
   readonly checked = input<boolean>(false);
   readonly disabled = input<boolean>(false);
   readonly label = input<string>('');
+  readonly description = input<string>('');
 
   readonly checkedChange = output<boolean>();
 
   protected readonly internalValue = signal(false);
+  private readonly disabledByForm = signal(false);
+  protected readonly isDisabled = computed(() => this.disabled() || this.disabledByForm());
   private isControlValueAccessorActive = false;
   private onChangeFn: (v: any) => void = () => {};
   private onTouchedFn: () => void = () => {};
@@ -54,6 +58,10 @@ export class Switch implements ControlValueAccessor {
 
   registerOnTouched(fn: () => void): void {
     this.onTouchedFn = fn;
+  }
+
+  setDisabledState(isDisabled: boolean): void {
+    this.disabledByForm.set(isDisabled);
   }
 
   onChange(checked: boolean): void {
