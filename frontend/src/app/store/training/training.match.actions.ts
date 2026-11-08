@@ -27,10 +27,8 @@ export const updateTrainingScoreSuccess = createAction(
 );
 export const updateTrainingScoreFailure = createAction(
   '[Training] Update Training Score Failure',
-  props<{ error: string; request: TrainingScoreUpdateRequest; offline: boolean }>(),
+  props<{ error: string }>(),
 );
-/** The "Synchronisé" badge has been shown long enough. */
-export const trainingScoreSyncBadgeExpired = createAction('[Training] Score Sync Badge Expired');
 // -------------------------------------------------------
 
 // --------- Validate match ---------

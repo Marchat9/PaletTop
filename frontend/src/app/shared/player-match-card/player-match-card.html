@@ -81,18 +81,6 @@
           </div>
         </div>
 
-        @if (syncStatus() === 'pending') {
-          <p class="sync-badge is-pending" role="status">
-            <app-icon name="cloud_off" [ariaHidden]="true" />
-            Non synchronisé · renvoi automatique au retour du réseau
-          </p>
-        } @else if (syncStatus() === 'synced') {
-          <p class="sync-badge is-synced" role="status">
-            <app-icon name="cloud_done" [ariaHidden]="true" />
-            Synchronisé
-          </p>
-        }
-
         @if (scoreError()) {
           <p class="error-hint">{{ scoreError() }}</p>
         }

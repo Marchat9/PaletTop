@@ -9,7 +9,6 @@ import {
   untracked,
 } from '@angular/core';
 import { Nullable } from 'src/app/models/nullable.model';
-import { ScoreSyncStatus } from 'src/app/models/score-sync.model';
 import {
   PlayerByeCopy,
   PlayerMatchEmptyTone,
@@ -82,8 +81,6 @@ export class PlayerMatchCard {
   public readonly validateError = input<Nullable<string>>(null);
   public readonly startLoading = input<boolean>(false);
   public readonly validateLoading = input<boolean>(false);
-  /** A score typed during a network outage: pending (resent automatically), then synced. */
-  public readonly syncStatus = input<ScoreSyncStatus>('idle');
 
   public readonly startMatch = output<void>();
   public readonly scoreChange = output<{ myScore: number; opponentScore: number }>();

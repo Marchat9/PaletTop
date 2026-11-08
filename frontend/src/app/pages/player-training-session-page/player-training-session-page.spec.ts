@@ -3,7 +3,6 @@ import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { Actions } from '@ngrx/effects';
 import { Action } from '@ngrx/store';
 import { MockStore, provideMockStore } from '@ngrx/store/testing';
-import { INITIAL_SCORE_SYNC } from 'src/app/models/score-sync.model';
 import { of, Subject } from 'rxjs';
 import { describe, expect, it, vi } from 'vitest';
 import { updateTrainingScore } from 'src/app/store/training/training.match.actions';
@@ -24,7 +23,6 @@ import {
   selectTrainingParticipantHistory,
   selectUpdateTrainingScoreError,
   selectValidateTrainingMatchError,
-  selectTrainingScoreSync,
   selectValidateTrainingMatchLoading,
 } from 'src/app/store/training/training.selectors';
 import { PlayerTrainingSessionPage } from './player-training-session-page';
@@ -122,7 +120,6 @@ function setup(
           { selector: selectUpdateTrainingScoreError, value: null },
           { selector: selectValidateTrainingMatchLoading, value: false },
           { selector: selectValidateTrainingMatchError, value: null },
-          { selector: selectTrainingScoreSync, value: INITIAL_SCORE_SYNC },
           { selector: selectCurrentTrainingAdminInformations, value: adminInformations },
         ],
       }),

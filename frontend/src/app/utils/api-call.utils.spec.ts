@@ -1,6 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { describe, expect, it } from 'vitest';
-import { convertErrorToString, GENERIC_ERROR_MESSAGE, isNetworkError } from './api-call.utils';
+import { convertErrorToString, GENERIC_ERROR_MESSAGE } from './api-call.utils';
 
 describe('convertErrorToString', () => {
   it('returns a string error as is', () => {
@@ -57,13 +57,5 @@ describe('convertErrorToString', () => {
     expect(convertErrorToString(new Error('boom'))).toBe(GENERIC_ERROR_MESSAGE);
     expect(convertErrorToString({ some: 'object' })).toBe(GENERIC_ERROR_MESSAGE);
     expect(convertErrorToString(undefined)).toBe(GENERIC_ERROR_MESSAGE);
-  });
-});
-
-describe('isNetworkError', () => {
-  it('is true only for a status 0 HTTP error', () => {
-    expect(isNetworkError(new HttpErrorResponse({ status: 0 }))).toBe(true);
-    expect(isNetworkError(new HttpErrorResponse({ status: 504 }))).toBe(false);
-    expect(isNetworkError('error')).toBe(false);
   });
 });
