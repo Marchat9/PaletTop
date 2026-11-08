@@ -2,9 +2,11 @@ import { createReducer, on } from '@ngrx/store';
 import { ApiCall, ApiCallStatus } from 'src/app/models/api-call.model';
 import { Nullable } from 'src/app/models/nullable.model';
 import { PlayerMatchDto } from 'src/app/models/player-match.model';
+import { TournamentStatus } from 'src/app/models/tournament-status.enum';
 import { resyncPending, wsMatchUpdated } from 'src/app/store/realtime/realtime.actions';
 import {
   loadTournamentInformationFailure,
+  loadTournamentInformationSuccess,
   resetTournament,
 } from 'src/app/store/tournament/tournament.actions';
 import {
@@ -69,6 +71,10 @@ export const matchReducer = createReducer(
     awaitingResync: false,
   })),
   on(loadTournamentInformationFailure, (state) => ({ ...state, awaitingResync: false })),
+  // A draft tournament has no match to reload: nothing else would unlock the entry.
+  on(loadTournamentInformationSuccess, (state, { tournament }) =>
+    tournament.status === TournamentStatus.DRAFT ? { ...state, awaitingResync: false } : state,
+  ),
   on(resyncPending, (state) => ({ ...state, awaitingResync: true })),
   on(wsMatchUpdated, (state, { match }) => ({
     ...state,

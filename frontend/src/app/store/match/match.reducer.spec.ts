@@ -1,6 +1,11 @@
 import { PlayerMatchDto } from 'src/app/models/player-match.model';
 import { resyncPending, wsMatchUpdated } from 'src/app/store/realtime/realtime.actions';
-import { loadTournamentInformationFailure } from 'src/app/store/tournament/tournament.actions';
+import {
+  loadTournamentInformationFailure,
+  loadTournamentInformationSuccess,
+} from 'src/app/store/tournament/tournament.actions';
+import { TournamentDto } from 'src/app/store/tournament/tournament.models';
+import { TournamentStatus } from 'src/app/models/tournament-status.enum';
 import { loadCurrentMatchFailure, loadCurrentMatchSuccess } from './match.actions';
 import { initialMatchState, matchReducer } from './match.reducer';
 
@@ -72,5 +77,29 @@ describe('matchReducer resync lock', () => {
     expect(
       matchReducer(locked, loadTournamentInformationFailure({ error: 'Erreur' })).awaitingResync,
     ).toBe(false);
+  });
+
+  it('unlocks it for a draft tournament, which has no match to reload', () => {
+    const locked = matchReducer(initialMatchState, resyncPending());
+    const tournament = (status: TournamentStatus) => ({ status }) as TournamentDto;
+
+    const draft = matchReducer(
+      locked,
+      loadTournamentInformationSuccess({
+        tournament: tournament(TournamentStatus.DRAFT),
+        teamCode: 'AB12',
+      }),
+    );
+    const active = matchReducer(
+      locked,
+      loadTournamentInformationSuccess({
+        tournament: tournament(TournamentStatus.ACTIVE),
+        teamCode: 'AB12',
+      }),
+    );
+
+    expect(draft.awaitingResync).toBe(false);
+    // Active: the current match reload that follows is what unlocks it.
+    expect(active.awaitingResync).toBe(true);
   });
 });

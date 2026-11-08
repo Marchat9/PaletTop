@@ -227,16 +227,24 @@ export class PlayerTeamMatchPageComponent {
       }
     });
 
-    onResyncRequested(() => {
-      if (!this.tournamentPathCode || !this.teamCode) return;
-      this.store.dispatch(
-        loadTournamentInformation({
-          tournamentCode: this.tournamentPathCode,
-          teamCode: this.teamCode,
-        }),
-      );
-      this.store.dispatch(loadSessions({ code: this.tournamentPathCode }));
-    });
+    onResyncRequested(() => this.resync());
+
+    // Resync signalled while the player was on another page: nobody reloaded the match, and the
+    // tournament already in the store is not reloaded on entry, so the score would stay locked.
+    if (this.awaitingResync()) {
+      this.resync();
+    }
+  }
+
+  private resync(): void {
+    if (!this.tournamentPathCode || !this.teamCode) return;
+    this.store.dispatch(
+      loadTournamentInformation({
+        tournamentCode: this.tournamentPathCode,
+        teamCode: this.teamCode,
+      }),
+    );
+    this.store.dispatch(loadSessions({ code: this.tournamentPathCode }));
   }
 
   public startMatch(): void {
