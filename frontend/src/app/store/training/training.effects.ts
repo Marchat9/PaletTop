@@ -5,6 +5,7 @@ import { Store } from '@ngrx/store';
 import { catchError, concatMap, debounceTime, map, of, switchMap, withLatestFrom } from 'rxjs';
 import { TrainingService } from 'src/app/services/training.service';
 import { convertErrorToString } from 'src/app/utils/api-call.utils';
+import { withTimeoutAndOneRetry } from 'src/app/utils/reload-retry.util';
 import {
   addNotification,
   removeLocalStorageData,
@@ -156,6 +157,7 @@ export class TrainingEffects {
       withLatestFrom(this.store.select(selectCurrentTrainingParticipantInformations)),
       switchMap(([{ sessionCode, participantCode }, savedCodes]) =>
         this.trainingService.getCurrentMatch(sessionCode, participantCode).pipe(
+          withTimeoutAndOneRetry(),
           switchMap((currentMatch) =>
             of(
               loadTrainingParticipantCurrentMatchSuccess({

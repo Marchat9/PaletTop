@@ -6,6 +6,7 @@ import { catchError, map, of, switchMap, withLatestFrom } from 'rxjs';
 import { TeamService } from 'src/app/services/team.service';
 import { TournamentService } from 'src/app/services/tournament.service';
 import { convertErrorToString } from 'src/app/utils/api-call.utils';
+import { withTimeoutAndOneRetry } from 'src/app/utils/reload-retry.util';
 import {
   addNotification,
   removeLocalStorageData,
@@ -76,6 +77,7 @@ export class TournamentEffects {
       withLatestFrom(this.store.select(selectCurrentTournamentPlayerInformations)),
       switchMap(([{ tournamentCode, teamCode }, savedCodes]) =>
         this.tournamentService.joinTournamentAsPlayer(tournamentCode, teamCode).pipe(
+          withTimeoutAndOneRetry(),
           switchMap((tournament) =>
             of(
               loadTournamentInformationSuccess({ tournament, teamCode }),

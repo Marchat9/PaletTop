@@ -13,6 +13,8 @@ export const environment = {
   apiConfiguration: {
     delayToUpdateScore: 500, // ms
     mobileResyncDebounce: 1_000, //ms
+    // A reload that unlocks the score entry is given up after this delay, then tried once more.
+    reloadTimeout: 15_000, // ms
   },
 
   pwa: {

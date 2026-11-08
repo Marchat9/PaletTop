@@ -278,11 +278,11 @@ export const trainingReducer = createReducer(
       participantAwaitingResync: false,
     }),
   ),
-  // A failed reload unlocks the entry too: better a possibly stale score than a frozen card.
+  // A failed reload (timeout and retry included) keeps the entry locked: the score shown may be
+  // stale. The next resync signal (network, foreground, websocket) tries again.
   on(loadTrainingParticipantCurrentMatchFailure, (state, { error }) => ({
     ...state,
     participantCurrentMatch: { ...state.participantCurrentMatch, isLoading: false, error },
-    participantAwaitingResync: false,
   })),
   on(resyncPending, (state) => ({ ...state, participantAwaitingResync: true })),
   on(forgetTrainingParticipantCodes, (state) => ({

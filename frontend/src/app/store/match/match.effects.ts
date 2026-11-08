@@ -20,6 +20,7 @@ import {
   selectCurrentTournamentData,
 } from 'src/app/store/tournament/tournament.selectors';
 import { convertErrorToString } from 'src/app/utils/api-call.utils';
+import { withTimeoutAndOneRetry } from 'src/app/utils/reload-retry.util';
 import {
   adminUpdateScore,
   adminUpdateScoreFailure,
@@ -61,6 +62,7 @@ export class MatchEffects {
       ofType(loadCurrentMatch),
       switchMap(({ tournamentCode, teamCode }) =>
         this.matchService.getCurrentMatch(tournamentCode, teamCode).pipe(
+          withTimeoutAndOneRetry(),
           map((match) => loadCurrentMatchSuccess({ match })),
           catchError((error) =>
             of(loadCurrentMatchFailure({ error: convertErrorToString(error) })),

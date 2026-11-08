@@ -69,14 +69,22 @@ describe('matchReducer resync lock', () => {
     expect(state.data.data?.scoreA).toBe(5);
   });
 
-  it('unlocks it when the reload fails, rather than freezing the card', () => {
+  it('keeps it locked when the reload fails: the score shown may be stale', () => {
     const locked = matchReducer(withCurrent(match('m3', 3)), resyncPending());
     expect(matchReducer(locked, loadCurrentMatchFailure({ error: 'Erreur' })).awaitingResync).toBe(
-      false,
+      true,
     );
     expect(
       matchReducer(locked, loadTournamentInformationFailure({ error: 'Erreur' })).awaitingResync,
-    ).toBe(false);
+    ).toBe(true);
+  });
+
+  it('does not lock anything when a load fails outside a resync', () => {
+    const state = matchReducer(
+      withCurrent(match('m3', 3)),
+      loadCurrentMatchFailure({ error: 'Erreur' }),
+    );
+    expect(state.awaitingResync).toBe(false);
   });
 
   it('unlocks it for a draft tournament, which has no match to reload', () => {

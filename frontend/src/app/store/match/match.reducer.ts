@@ -5,7 +5,6 @@ import { PlayerMatchDto } from 'src/app/models/player-match.model';
 import { TournamentStatus } from 'src/app/models/tournament-status.enum';
 import { resyncPending, wsMatchUpdated } from 'src/app/store/realtime/realtime.actions';
 import {
-  loadTournamentInformationFailure,
   loadTournamentInformationSuccess,
   resetTournament,
 } from 'src/app/store/tournament/tournament.actions';
@@ -64,13 +63,12 @@ export const matchReducer = createReducer(
     data: { data: match, isLoading: false, error: null },
     awaitingResync: false,
   })),
-  // A failed reload unlocks the entry too: better a possibly stale score than a frozen card.
+  // A failed reload (timeout and retry included) keeps the entry locked: the score shown may be
+  // stale. The next resync signal (network, foreground, websocket) tries again.
   on(loadCurrentMatchFailure, (state, { error }) => ({
     ...state,
     data: { ...state.data, isLoading: false, error },
-    awaitingResync: false,
   })),
-  on(loadTournamentInformationFailure, (state) => ({ ...state, awaitingResync: false })),
   // A draft tournament has no match to reload: nothing else would unlock the entry.
   on(loadTournamentInformationSuccess, (state, { tournament }) =>
     tournament.status === TournamentStatus.DRAFT ? { ...state, awaitingResync: false } : state,
