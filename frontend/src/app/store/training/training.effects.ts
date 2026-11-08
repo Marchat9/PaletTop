@@ -714,7 +714,6 @@ export class TrainingEffects {
         connectTrainingSessionAdministratorFailure,
         loadTrainingSessionsFailure,
         loadTrainingRoundsFailure,
-        loadTrainingLeaderboardFailure,
         updateTrainingAdministratorInformationsFailure,
         addTrainingMemberFailure,
         renameTrainingMemberFailure,
