@@ -8,6 +8,11 @@ import { convertErrorToString } from 'src/app/utils/api-call.utils';
 import { loadTournamentInformationSuccess } from 'src/app/store/tournament/tournament.actions';
 import { connectTournamentAdministratorSuccess } from 'src/app/store/tournament/tournament.admin.actions';
 import { selectCurrentTournamentAdminInformations } from 'src/app/store/tournament/tournament.selectors';
+import { adminUpdateScoreSuccess } from 'src/app/store/match/match.actions';
+import {
+  nextSessionSuccess,
+  startTournamentSuccess,
+} from 'src/app/store/tournament/tournament.match.actions';
 import { loadRanking, loadRankingFailure, loadRankingSuccess } from './ranking.actions';
 
 @Injectable()
@@ -21,6 +26,24 @@ export class RankingEffects {
       ofType(connectTournamentAdministratorSuccess),
       filter(({ tournament }) => tournament.status !== TournamentStatus.DRAFT),
       withLatestFrom(this.store.select(selectCurrentTournamentAdminInformations)),
+      map(([, adminInfo]) => loadRanking({ code: adminInfo!.code })),
+    ),
+  );
+
+  // Byes are won as soon as a round is created, and a correction moves the ranking: it is reloaded
+  // over HTTP rather than trusting the websocket alone, which may be down.
+  loadRankingAfterRoundCreated$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(startTournamentSuccess, nextSessionSuccess),
+      map(({ tournament }) => loadRanking({ code: tournament.code })),
+    ),
+  );
+
+  loadRankingAfterAdminCorrection$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(adminUpdateScoreSuccess),
+      withLatestFrom(this.store.select(selectCurrentTournamentAdminInformations)),
+      filter(([, adminInfo]) => !!adminInfo?.code),
       map(([, adminInfo]) => loadRanking({ code: adminInfo!.code })),
     ),
   );

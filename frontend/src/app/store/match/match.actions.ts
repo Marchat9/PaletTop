@@ -20,7 +20,10 @@ export const loadCurrentMatchFailure = createAction(
 
 // --------- Start Match (player) ---------
 export const startMatch = createAction('[Tournament Match] Start Match', props<StartMatch>());
-export const startMatchSuccess = createAction('[Tournament Match] Start Match Success');
+export const startMatchSuccess = createAction(
+  '[Tournament Match] Start Match Success',
+  props<{ match: PlayerMatchDto }>(),
+);
 export const startMatchFailure = createAction(
   '[Tournament Match] Start Match Failure',
   props<{ error: string }>(),
@@ -44,7 +47,10 @@ export const validateMatch = createAction(
   '[Tournament Match] Validate Match',
   props<ValidateMatch>(),
 );
-export const validateMatchSuccess = createAction('[Tournament Match] Validate Match Success');
+export const validateMatchSuccess = createAction(
+  '[Tournament Match] Validate Match Success',
+  props<{ match: PlayerMatchDto }>(),
+);
 export const validateMatchFailure = createAction(
   '[Tournament Match] Validate Match Failure',
   props<{ error: string }>(),
