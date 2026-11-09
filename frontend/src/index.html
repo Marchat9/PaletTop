@@ -2,7 +2,7 @@
 <html lang="fr">
   <head>
     <meta charset="utf-8" />
-    <title>PaletTop</title>
+    <title>PaletTop | L'art du Palet</title>
     <base href="/" />
     <meta
       name="description"
@@ -30,16 +30,27 @@
       rel="stylesheet"
     />
 
-    <script type="application/ld+json" id="schema-sitename"></script>
+    <!-- The SITE_URL placeholder below is replaced at container startup from the SITE_URL env
+         var (see docker-entrypoint.d/20-envsubst-runtime-config.sh). -->
+    <script type="application/ld+json" id="schema-sitename">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "PaletTop",
+        "alternateName": "Palet Top",
+        "url": "${SITE_URL}/"
+      }
+    </script>
     <script>
       (function () {
-        var schema = {
-          '@context': 'https://schema.org',
-          '@type': 'WebSite',
-          name: 'PaletTop',
-          url: window.location.origin + '/',
-        };
-        document.getElementById('schema-sitename').text = JSON.stringify(schema);
+        // Outside a Docker build the placeholder is left as-is: fall back to the current origin.
+        // ('$' + '{' rather than the placeholder itself, so the build never rewrites this test.)
+        var element = document.getElementById('schema-sitename');
+        var schema = JSON.parse(element.text);
+        if (schema.url.indexOf('$' + '{') === 0) {
+          schema.url = window.location.origin + '/';
+          element.text = JSON.stringify(schema);
+        }
       })();
     </script>
   </head>
