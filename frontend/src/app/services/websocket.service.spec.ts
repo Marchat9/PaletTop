@@ -1,9 +1,9 @@
 import { TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { io } from 'socket.io-client';
-import { WebSocketService } from './websocket.service';
+import { SOCKET_IO, WebSocketService } from './websocket.service';
 
 type ConnectHandler = () => void;
+type FakeSocket = ReturnType<typeof createFakeSocket>;
 
 function createFakeSocket() {
   const connectHandlers: ConnectHandler[] = [];
@@ -19,28 +19,35 @@ function createFakeSocket() {
   };
 }
 
-vi.mock('socket.io-client', () => ({
-  io: vi.fn(() => createFakeSocket()),
-}));
+// The fake sockets are handed through DI (SOCKET_IO), not by mocking the `socket.io-client`
+// module: once the specs are bundled, such a module mock is not always applied, and the real
+// io() then runs - the tests failed at random in the full suite and in CI.
+let sockets: FakeSocket[] = [];
 
-// Reads the socket straight from the mock's own call history instead of stashing it in an
-// outer `let` mutated by the mock factory — vi.mock() factories are hoisted above imports and
-// top-level declarations, so relying on a closure-captured variable there is fragile across
-// bundlers/environments (this test passed locally but failed in CI for exactly that reason).
-function getLastSocket(): ReturnType<typeof createFakeSocket> {
-  const results = vi.mocked(io).mock.results;
-  const last = results.at(-1);
-  if (!last || last.type !== 'return') {
-    throw new Error('io() was not called');
+function getLastSocket(): FakeSocket {
+  const last = sockets.at(-1);
+  if (!last) {
+    throw new Error('No socket was opened');
   }
-  // vi.mocked(io) types its return as the real socket.io Socket (inferred from the real
-  // import), but at runtime the mocked factory above always returns our fake socket.
-  return last.value as unknown as ReturnType<typeof createFakeSocket>;
+  return last;
 }
 
 describe('WebSocketService', () => {
   beforeEach(() => {
     TestBed.resetTestingModule();
+    sockets = [];
+    TestBed.configureTestingModule({
+      providers: [
+        {
+          provide: SOCKET_IO,
+          useValue: () => {
+            const socket = createFakeSocket();
+            sockets.push(socket);
+            return socket;
+          },
+        },
+      ],
+    });
   });
 
   it('does not emit reconnected$ on the initial connection', () => {

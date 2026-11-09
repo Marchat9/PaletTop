@@ -2,29 +2,10 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { Store } from '@ngrx/store';
-import {
-  catchError,
-  concatMap,
-  debounceTime,
-  filter,
-  fromEvent,
-  interval,
-  map,
-  merge,
-  of,
-  switchMap,
-  timer,
-  withLatestFrom,
-} from 'rxjs';
-import {
-  OFFLINE_SCORE_REJECTED_MESSAGE,
-  PENDING_SCORE_RETRY_MS,
-  SYNCED_BADGE_DURATION_MS,
-} from 'src/app/models/score-sync.model';
-import { resyncRequested } from 'src/app/store/realtime/realtime.actions';
-import { isNetworkError } from 'src/app/utils/api-call.utils';
+import { catchError, concatMap, debounceTime, map, of, switchMap, withLatestFrom } from 'rxjs';
 import { TrainingService } from 'src/app/services/training.service';
 import { convertErrorToString } from 'src/app/utils/api-call.utils';
+import { withTimeoutAndOneRetry } from 'src/app/utils/reload-retry.util';
 import {
   addNotification,
   removeLocalStorageData,
@@ -125,7 +106,6 @@ import {
   startTrainingMatch,
   startTrainingMatchFailure,
   startTrainingMatchSuccess,
-  trainingScoreSyncBadgeExpired,
   updateTrainingScore,
   updateTrainingScoreFailure,
   updateTrainingScoreSuccess,
@@ -136,9 +116,7 @@ import {
 import {
   selectCurrentTrainingAdminInformations,
   selectCurrentTrainingParticipantInformations,
-  selectTrainingScoreSync,
 } from './training.selectors';
-import { TrainingScoreUpdateRequest } from './training.models';
 import { newId } from 'src/app/utils/unique-id.util';
 import { environment } from '@environment';
 
@@ -179,6 +157,7 @@ export class TrainingEffects {
       withLatestFrom(this.store.select(selectCurrentTrainingParticipantInformations)),
       switchMap(([{ sessionCode, participantCode }, savedCodes]) =>
         this.trainingService.getCurrentMatch(sessionCode, participantCode).pipe(
+          withTimeoutAndOneRetry(),
           switchMap((currentMatch) =>
             of(
               loadTrainingParticipantCurrentMatchSuccess({
@@ -578,76 +557,7 @@ export class TrainingEffects {
           .pipe(
             switchMap((match) => of(updateTrainingScoreSuccess({ match }))),
             catchError((error) =>
-              of(
-                updateTrainingScoreFailure({
-                  error: convertErrorToString(error),
-                  request,
-                  offline: isNetworkError(error),
-                }),
-              ),
-            ),
-          ),
-      ),
-    ),
-  );
-
-  /** A pending score is resent when the network comes back, and regularly until it gets through. */
-  resendPendingTrainingScore$ = createEffect(() =>
-    merge(
-      this.actions$.pipe(ofType(resyncRequested)),
-      fromEvent(window, 'online'),
-      interval(PENDING_SCORE_RETRY_MS),
-    ).pipe(
-      withLatestFrom(this.store.select(selectTrainingScoreSync)),
-      map(([, sync]) => sync.pending),
-      filter((pending): pending is TrainingScoreUpdateRequest => !!pending),
-      map((pending) => updateTrainingScore({ ...pending, fromOfflineQueue: true })),
-    ),
-  );
-
-  hideTrainingSyncedBadge$ = createEffect(() =>
-    this.actions$.pipe(
-      ofType(updateTrainingScoreSuccess),
-      withLatestFrom(this.store.select(selectTrainingScoreSync)),
-      filter(([, sync]) => sync.status === 'synced'),
-      switchMap(() =>
-        timer(SYNCED_BADGE_DURATION_MS).pipe(map(() => trainingScoreSyncBadgeExpired())),
-      ),
-    ),
-  );
-
-  /**
-   * A score lost to the network is told by the badge, not by an error. A resent score refused by
-   * the server (match validated meanwhile) gets its own explanation.
-   */
-  updateTrainingScoreErrors$ = createEffect(() =>
-    this.actions$.pipe(
-      ofType(updateTrainingScoreFailure),
-      filter(({ offline }) => !offline),
-      map(({ error, request }) =>
-        addNotification({
-          notification: {
-            id: newId(),
-            message: request.fromOfflineQueue ? OFFLINE_SCORE_REJECTED_MESSAGE : error,
-            typeIcon: 'error',
-            type: 'error',
-            createdAt: Date.now(),
-          },
-        }),
-      ),
-    ),
-  );
-
-  validateTrainingMatch$ = createEffect(() =>
-    this.actions$.pipe(
-      ofType(validateTrainingMatch),
-      concatMap(({ sessionCode, matchId, participantCode, opponentParticipantCode }) =>
-        this.trainingService
-          .validateMatch(sessionCode, matchId, participantCode, opponentParticipantCode)
-          .pipe(
-            switchMap((match) => of(validateTrainingMatchSuccess({ match }))),
-            catchError((error) =>
-              of(validateTrainingMatchFailure({ error: convertErrorToString(error) })),
+              of(updateTrainingScoreFailure({ error: convertErrorToString(error) })),
             ),
           ),
       ),
@@ -727,6 +637,7 @@ export class TrainingEffects {
         dissolveTrainingTeamFailure,
         generateTrainingRoundFailure,
         startTrainingMatchFailure,
+        updateTrainingScoreFailure,
         validateTrainingMatchFailure,
         adminUpdateTrainingScoreFailure,
       ),

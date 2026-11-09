@@ -1,5 +1,4 @@
-import { selectScoreSync } from 'src/app/store/match/match.selectors';
-import { withPendingScore } from 'src/app/utils/pending-score.util';
+import { selectMatchAwaitingResync } from 'src/app/store/match/match.selectors';
 import { Dialog } from '@angular/cdk/dialog';
 import { Button } from 'src/app/shared/button/button';
 import { JoinTournamentPopupComponent } from 'src/app/modales/join-tournament-popup/join-tournament-popup';
@@ -148,10 +147,10 @@ export class PlayerTeamMatchPageComponent {
     return this.matchView()!.status === 'PENDING' ? 'Prochain match' : 'Match en cours';
   });
 
-  public readonly scoreSync = this.store.selectSignal(selectScoreSync);
+  public readonly awaitingResync = this.store.selectSignal(selectMatchAwaitingResync);
 
   public readonly matchView = computed(() => {
-    const match = withPendingScore(this.currentMatch(), this.scoreSync().pending);
+    const match = this.currentMatch();
     const teamId = this.team()?.id;
     return match && teamId ? toPlayerMatchView(match, teamId) : null;
   });
@@ -228,16 +227,24 @@ export class PlayerTeamMatchPageComponent {
       }
     });
 
-    onResyncRequested(() => {
-      if (!this.tournamentPathCode || !this.teamCode) return;
-      this.store.dispatch(
-        loadTournamentInformation({
-          tournamentCode: this.tournamentPathCode,
-          teamCode: this.teamCode,
-        }),
-      );
-      this.store.dispatch(loadSessions({ code: this.tournamentPathCode }));
-    });
+    onResyncRequested(() => this.resync());
+
+    // Resync signalled while the player was on another page: nobody reloaded the match, and the
+    // tournament already in the store is not reloaded on entry, so the score would stay locked.
+    if (this.awaitingResync()) {
+      this.resync();
+    }
+  }
+
+  private resync(): void {
+    if (!this.tournamentPathCode || !this.teamCode) return;
+    this.store.dispatch(
+      loadTournamentInformation({
+        tournamentCode: this.tournamentPathCode,
+        teamCode: this.teamCode,
+      }),
+    );
+    this.store.dispatch(loadSessions({ code: this.tournamentPathCode }));
   }
 
   public startMatch(): void {

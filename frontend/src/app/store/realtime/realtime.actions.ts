@@ -66,3 +66,7 @@ export const wsTrainingLeaderboardUpdated = createAction(
 // Generic signal that the app may have missed updates (websocket reconnected, or the
 // tab/app came back to the foreground) and consumers should resync their own data.
 export const resyncRequested = createAction('[Realtime] Resync Requested');
+
+// Same trigger as `resyncRequested`, but dispatched right away (the resync itself is debounced):
+// until the current match is reloaded, the score on screen may be stale and must not be edited.
+export const resyncPending = createAction('[Realtime] Resync Pending');

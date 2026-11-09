@@ -10,6 +10,7 @@ import { TournamentStatus } from 'src/app/models/tournament-status.enum';
 import { selectMatchHistory } from 'src/app/store/match-history/match-history.selectors';
 import {
   selectCurrentMatch,
+  selectMatchAwaitingResync,
   selectStartMatchError,
   selectStartMatchLoading,
   selectUpdateScoreError,
@@ -56,7 +57,7 @@ function buildTournament(): TournamentDto {
   };
 }
 
-function setup() {
+function setup(awaitingResync = false) {
   const activatedRoute = {
     snapshot: {
       paramMap: {
@@ -94,6 +95,7 @@ function setup() {
           { selector: selectValidateMatchError, value: null },
           { selector: selectUpdateScoreError, value: null },
           { selector: selectTeamError, value: null },
+          { selector: selectMatchAwaitingResync, value: awaitingResync },
         ],
       }),
     ],
@@ -116,5 +118,26 @@ describe('PlayerTeamMatchPageComponent', () => {
       loadTournamentInformation({ tournamentCode: 'ABCD', teamCode: 'AB12' }),
     );
     expect(dispatchSpy).toHaveBeenCalledWith(loadSessions({ code: 'ABCD' }));
+  });
+
+  it('reloads on entry when a resync was signalled while the player was on another page', () => {
+    const dispatchSpy = vi.spyOn(MockStore.prototype, 'dispatch');
+    setup(true);
+
+    expect(dispatchSpy).toHaveBeenCalledWith(
+      loadTournamentInformation({ tournamentCode: 'ABCD', teamCode: 'AB12' }),
+    );
+    expect(dispatchSpy).toHaveBeenCalledWith(loadSessions({ code: 'ABCD' }));
+    dispatchSpy.mockRestore();
+  });
+
+  it('does not reload on entry when no resync is pending', () => {
+    const dispatchSpy = vi.spyOn(MockStore.prototype, 'dispatch');
+    setup(false);
+
+    expect(dispatchSpy).not.toHaveBeenCalledWith(
+      loadTournamentInformation({ tournamentCode: 'ABCD', teamCode: 'AB12' }),
+    );
+    dispatchSpy.mockRestore();
   });
 });

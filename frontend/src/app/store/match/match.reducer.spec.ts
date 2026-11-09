@@ -1,6 +1,12 @@
 import { PlayerMatchDto } from 'src/app/models/player-match.model';
-import { wsMatchUpdated } from 'src/app/store/realtime/realtime.actions';
-import { scoreSyncBadgeExpired, updateScoreFailure, updateScoreSuccess } from './match.actions';
+import { resyncPending, wsMatchUpdated } from 'src/app/store/realtime/realtime.actions';
+import {
+  loadTournamentInformationFailure,
+  loadTournamentInformationSuccess,
+} from 'src/app/store/tournament/tournament.actions';
+import { TournamentDto } from 'src/app/store/tournament/tournament.models';
+import { TournamentStatus } from 'src/app/models/tournament-status.enum';
+import { loadCurrentMatchFailure, loadCurrentMatchSuccess } from './match.actions';
 import { initialMatchState, matchReducer } from './match.reducer';
 
 function match(id: string, sessionNumber: number, scoreA = 0): PlayerMatchDto {
@@ -50,39 +56,58 @@ describe('matchReducer wsMatchUpdated', () => {
   });
 });
 
-describe('matchReducer score sync', () => {
-  const request = { matchId: 'm3', teamCode: '1111', scoreA: 4, scoreB: 1 };
+describe('matchReducer resync lock', () => {
+  it('locks the score entry as soon as a resync is pending', () => {
+    const state = matchReducer(withCurrent(match('m3', 3)), resyncPending());
+    expect(state.awaitingResync).toBe(true);
+  });
 
-  it('keeps a score lost to the network as pending, without an error', () => {
+  it('unlocks it once the current match is reloaded', () => {
+    const locked = matchReducer(withCurrent(match('m3', 3)), resyncPending());
+    const state = matchReducer(locked, loadCurrentMatchSuccess({ match: match('m3', 3, 5) }));
+    expect(state.awaitingResync).toBe(false);
+    expect(state.data.data?.scoreA).toBe(5);
+  });
+
+  it('keeps it locked when the reload fails: the score shown may be stale', () => {
+    const locked = matchReducer(withCurrent(match('m3', 3)), resyncPending());
+    expect(matchReducer(locked, loadCurrentMatchFailure({ error: 'Erreur' })).awaitingResync).toBe(
+      true,
+    );
+    expect(
+      matchReducer(locked, loadTournamentInformationFailure({ error: 'Erreur' })).awaitingResync,
+    ).toBe(true);
+  });
+
+  it('does not lock anything when a load fails outside a resync', () => {
     const state = matchReducer(
       withCurrent(match('m3', 3)),
-      updateScoreFailure({ error: 'Connexion au serveur impossible.', request, offline: true }),
+      loadCurrentMatchFailure({ error: 'Erreur' }),
     );
-    expect(state.scoreSync).toEqual({ status: 'pending', pending: request });
-    expect(state.scoreRequest.updateScore.error).toBeNull();
+    expect(state.awaitingResync).toBe(false);
   });
 
-  it('marks it synced once resent, shows the resent score, then hides the badge', () => {
-    const pending = matchReducer(
-      withCurrent(match('m3', 3)),
-      updateScoreFailure({ error: '', request, offline: true }),
-    );
-    const synced = matchReducer(pending, updateScoreSuccess());
-    expect(synced.scoreSync.status).toBe('synced');
-    expect(synced.data.data?.scoreA).toBe(4);
+  it('unlocks it for a draft tournament, which has no match to reload', () => {
+    const locked = matchReducer(initialMatchState, resyncPending());
+    const tournament = (status: TournamentStatus) => ({ status }) as TournamentDto;
 
-    expect(matchReducer(synced, scoreSyncBadgeExpired()).scoreSync.status).toBe('idle');
-  });
+    const draft = matchReducer(
+      locked,
+      loadTournamentInformationSuccess({
+        tournament: tournament(TournamentStatus.DRAFT),
+        teamCode: 'AB12',
+      }),
+    );
+    const active = matchReducer(
+      locked,
+      loadTournamentInformationSuccess({
+        tournament: tournament(TournamentStatus.ACTIVE),
+        teamCode: 'AB12',
+      }),
+    );
 
-  it('drops the pending score when the server refuses it', () => {
-    const pending = matchReducer(
-      withCurrent(match('m3', 3)),
-      updateScoreFailure({ error: '', request, offline: true }),
-    );
-    const refused = matchReducer(
-      pending,
-      updateScoreFailure({ error: 'Match validé', request, offline: false }),
-    );
-    expect(refused.scoreSync).toEqual({ status: 'idle', pending: null });
+    expect(draft.awaitingResync).toBe(false);
+    // Active: the current match reload that follows is what unlocks it.
+    expect(active.awaitingResync).toBe(true);
   });
 });

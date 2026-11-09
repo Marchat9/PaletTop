@@ -1,4 +1,3 @@
-import { ScoreSync } from 'src/app/models/score-sync.model';
 import { ApiCall, ApiCallStatus } from 'src/app/models/api-call.model';
 import { Nullable } from 'src/app/models/nullable.model';
 
@@ -139,8 +138,6 @@ export interface TrainingScoreUpdateRequest {
   participantCode: string;
   scoreA: number;
   scoreB: number;
-  /** Resent automatically after a network outage (not typed just now). */
-  fromOfflineQueue?: boolean;
 }
 
 export interface TrainingCurrentMatchDto {
@@ -215,7 +212,10 @@ export interface TrainingState {
   leaderboard: ApiCall<TrainingLeaderboardEntryDto[]>;
 
   participantCurrentMatch: ApiCall<Nullable<TrainingCurrentMatchDto>>;
-  /** Score typed by the player during a network outage. */
-  scoreSync: ScoreSync<TrainingScoreUpdateRequest>;
+  /**
+   * The app may have missed updates (back from the background, websocket reconnected): the score
+   * shown may be stale, so its entry is locked until the player's current match is reloaded.
+   */
+  participantAwaitingResync: boolean;
   participantHistory: ApiCall<TrainingMatchDto[]>;
 }

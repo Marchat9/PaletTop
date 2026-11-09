@@ -3,9 +3,10 @@ import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { Actions } from '@ngrx/effects';
 import { Action } from '@ngrx/store';
 import { MockStore, provideMockStore } from '@ngrx/store/testing';
-import { INITIAL_SCORE_SYNC } from 'src/app/models/score-sync.model';
 import { of, Subject } from 'rxjs';
 import { describe, expect, it, vi } from 'vitest';
+import { loadTrainingParticipantCurrentMatch } from 'src/app/store/training/training.actions';
+import { resyncRequested } from 'src/app/store/realtime/realtime.actions';
 import { updateTrainingScore } from 'src/app/store/training/training.match.actions';
 import {
   TrainingAdminSession,
@@ -24,7 +25,7 @@ import {
   selectTrainingParticipantHistory,
   selectUpdateTrainingScoreError,
   selectValidateTrainingMatchError,
-  selectTrainingScoreSync,
+  selectTrainingParticipantAwaitingResync,
   selectValidateTrainingMatchLoading,
 } from 'src/app/store/training/training.selectors';
 import { PlayerTrainingSessionPage } from './player-training-session-page';
@@ -122,7 +123,7 @@ function setup(
           { selector: selectUpdateTrainingScoreError, value: null },
           { selector: selectValidateTrainingMatchLoading, value: false },
           { selector: selectValidateTrainingMatchError, value: null },
-          { selector: selectTrainingScoreSync, value: INITIAL_SCORE_SYNC },
+          { selector: selectTrainingParticipantAwaitingResync, value: false },
           { selector: selectCurrentTrainingAdminInformations, value: adminInformations },
         ],
       }),
@@ -133,7 +134,7 @@ function setup(
   const store = TestBed.inject(MockStore);
   fixture.detectChanges();
 
-  return { fixture, store, routerMock };
+  return { fixture, store, routerMock, actions$ };
 }
 
 describe('historyToResults', () => {
@@ -146,6 +147,34 @@ describe('historyToResults', () => {
 });
 
 describe('PlayerTrainingSessionPage', () => {
+  // The score entry lock is only released by a reload of the player's match: both the page entry
+  // and every resync must trigger one, or the card would stay locked.
+  describe('rechargement qui lève le verrou de saisie', () => {
+    it("recharge le match du joueur à l'ouverture de la page", () => {
+      const dispatchSpy = vi.spyOn(MockStore.prototype, 'dispatch');
+      setup();
+
+      expect(dispatchSpy).toHaveBeenCalledWith(
+        loadTrainingParticipantCurrentMatch({ sessionCode: '1234', participantCode: '4821' }),
+      );
+      dispatchSpy.mockRestore();
+    });
+
+    it('recharge le match du joueur à chaque resynchronisation', () => {
+      const { store, actions$ } = setup();
+      const dispatchSpy = vi.spyOn(store, 'dispatch');
+
+      actions$.next(resyncRequested());
+      actions$.next(resyncRequested());
+
+      const reloads = dispatchSpy.mock.calls.filter(
+        ([action]) =>
+          (action as unknown as Action).type === loadTrainingParticipantCurrentMatch.type,
+      );
+      expect(reloads).toHaveLength(2);
+    });
+  });
+
   describe("retour à l'administration", () => {
     const ADMIN = { code: 'LAITON-2026', password: 'secret' };
     const FROM_ADMIN = { adminTraining: 'LAITON-2026' };

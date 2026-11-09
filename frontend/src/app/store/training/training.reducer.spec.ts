@@ -6,11 +6,13 @@ import {
 } from '../app-config/app-config.effects';
 import {
   forgetTrainingParticipantCodes,
+  loadTrainingParticipantCurrentMatchFailure,
   loadTrainingParticipantCurrentMatchSuccess,
   loadTrainingParticipantHistorySuccess,
   resetTraining,
 } from './training.actions';
 import {
+  resyncPending,
   wsTrainingMatchUpdated,
   wsTrainingRoundGenerated,
   wsTrainingSessionUpdated,
@@ -155,6 +157,43 @@ describe('trainingReducer', () => {
     expect(state.currentSession.data).toBeNull();
     expect(state.leaderboard.data).toEqual([]);
     expect(state.rounds.data).toEqual([]);
+  });
+
+  describe('verrou de saisie pendant la resynchronisation', () => {
+    it('verrouille la saisie dès que la resynchronisation est signalée', () => {
+      const state = trainingReducer(initialTrainingState, resyncPending());
+      expect(state.participantAwaitingResync).toBe(true);
+    });
+
+    it('déverrouille une fois le match du joueur rechargé', () => {
+      const locked = trainingReducer(initialTrainingState, resyncPending());
+      const state = trainingReducer(
+        locked,
+        loadTrainingParticipantCurrentMatchSuccess({
+          sessionCode: '1234',
+          participantCode: '4821',
+          currentMatch: { participant: { id: 'p1', name: 'Jean' } } as TrainingCurrentMatchDto,
+        }),
+      );
+      expect(state.participantAwaitingResync).toBe(false);
+    });
+
+    it('garde la saisie verrouillée quand le rechargement échoue : le score peut être périmé', () => {
+      const locked = trainingReducer(initialTrainingState, resyncPending());
+      const state = trainingReducer(
+        locked,
+        loadTrainingParticipantCurrentMatchFailure({ error: 'Connexion au serveur impossible.' }),
+      );
+      expect(state.participantAwaitingResync).toBe(true);
+    });
+
+    it('ne verrouille rien quand un chargement échoue hors resynchronisation', () => {
+      const state = trainingReducer(
+        initialTrainingState,
+        loadTrainingParticipantCurrentMatchFailure({ error: 'Connexion au serveur impossible.' }),
+      );
+      expect(state.participantAwaitingResync).toBe(false);
+    });
   });
 
   describe('codes du joueur', () => {

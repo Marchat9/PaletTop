@@ -6,7 +6,7 @@ import { EMPTY, Subject } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AppVisibilityService } from 'src/app/services/app-visibility.service';
 import { WebSocketService } from 'src/app/services/websocket.service';
-import { resyncRequested } from './realtime.actions';
+import { resyncPending, resyncRequested } from './realtime.actions';
 import { RealtimeEffects } from './realtime.effects';
 
 describe('RealtimeEffects - resyncOnReconnect$', () => {
@@ -64,6 +64,44 @@ describe('RealtimeEffects - resyncOnReconnect$', () => {
     effects.resyncOnReconnect$.subscribe((action) => emitted.push(action));
 
     reconnected$.next();
+    resumed$.next();
+    vi.advanceTimersByTime(1_000);
+
+    expect(emitted).toEqual([resyncRequested()]);
+  });
+
+  it('marks the resync pending right away, before the debounced resync', () => {
+    const effects = TestBed.inject(RealtimeEffects);
+    const emitted: Action[] = [];
+    effects.markResyncPending$.subscribe((action) => emitted.push(action));
+
+    resumed$.next();
+
+    expect(emitted).toEqual([resyncPending()]);
+  });
+
+  it('marks the resync pending on every signal, websocket reconnection included', () => {
+    const effects = TestBed.inject(RealtimeEffects);
+    const emitted: Action[] = [];
+    effects.markResyncPending$.subscribe((action) => emitted.push(action));
+
+    reconnected$.next();
+    resumed$.next();
+
+    expect(emitted).toEqual([resyncPending(), resyncPending()]);
+  });
+
+  // Each pending mark must be followed by a resync: otherwise nothing would reload the match and
+  // the score entry would stay locked.
+  it('always follows a burst of signals with exactly one resync', () => {
+    const effects = TestBed.inject(RealtimeEffects);
+    const emitted: Action[] = [];
+    effects.resyncOnReconnect$.subscribe((action) => emitted.push(action));
+
+    resumed$.next();
+    vi.advanceTimersByTime(500);
+    reconnected$.next();
+    vi.advanceTimersByTime(500);
     resumed$.next();
     vi.advanceTimersByTime(1_000);
 

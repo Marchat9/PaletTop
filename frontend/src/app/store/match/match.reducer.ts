@@ -2,10 +2,12 @@ import { createReducer, on } from '@ngrx/store';
 import { ApiCall, ApiCallStatus } from 'src/app/models/api-call.model';
 import { Nullable } from 'src/app/models/nullable.model';
 import { PlayerMatchDto } from 'src/app/models/player-match.model';
-import { TeamScoreUpdate } from 'src/app/models/score-update.model';
-import { INITIAL_SCORE_SYNC, ScoreSync } from 'src/app/models/score-sync.model';
-import { wsMatchUpdated } from 'src/app/store/realtime/realtime.actions';
-import { resetTournament } from 'src/app/store/tournament/tournament.actions';
+import { TournamentStatus } from 'src/app/models/tournament-status.enum';
+import { resyncPending, wsMatchUpdated } from 'src/app/store/realtime/realtime.actions';
+import {
+  loadTournamentInformationSuccess,
+  resetTournament,
+} from 'src/app/store/tournament/tournament.actions';
 import {
   adminUpdateScore,
   adminUpdateScoreFailure,
@@ -17,7 +19,6 @@ import {
   startMatchFailure,
   startMatchSuccess,
   updateScore,
-  scoreSyncBadgeExpired,
   updateScoreFailure,
   updateScoreSuccess,
   validateMatch,
@@ -35,7 +36,7 @@ export interface ScoreRequest {
 export interface MatchState {
   data: ApiCall<Nullable<PlayerMatchDto>>;
   scoreRequest: ScoreRequest;
-  scoreSync: ScoreSync<TeamScoreUpdate>;
+  awaitingResync: boolean;
 }
 
 const initialScoreRequest: ScoreRequest = {
@@ -48,7 +49,7 @@ const initialScoreRequest: ScoreRequest = {
 export const initialMatchState: MatchState = {
   data: { data: null, isLoading: false, error: null },
   scoreRequest: initialScoreRequest,
-  scoreSync: INITIAL_SCORE_SYNC,
+  awaitingResync: false,
 };
 
 export const matchReducer = createReducer(
@@ -60,11 +61,19 @@ export const matchReducer = createReducer(
   on(loadCurrentMatchSuccess, (state, { match }) => ({
     ...state,
     data: { data: match, isLoading: false, error: null },
+    awaitingResync: false,
   })),
+  // A failed reload (timeout and retry included) keeps the entry locked: the score shown may be
+  // stale. The next resync signal (network, foreground, websocket) tries again.
   on(loadCurrentMatchFailure, (state, { error }) => ({
     ...state,
     data: { ...state.data, isLoading: false, error },
   })),
+  // A draft tournament has no match to reload: nothing else would unlock the entry.
+  on(loadTournamentInformationSuccess, (state, { tournament }) =>
+    tournament.status === TournamentStatus.DRAFT ? { ...state, awaitingResync: false } : state,
+  ),
+  on(resyncPending, (state) => ({ ...state, awaitingResync: true })),
   on(wsMatchUpdated, (state, { match }) => ({
     ...state,
     data: {
@@ -88,35 +97,13 @@ export const matchReducer = createReducer(
     ...state,
     scoreRequest: { ...state.scoreRequest, updateScore: { isLoading: true, error: null } },
   })),
-  on(updateScoreSuccess, (state) => {
-    const { pending } = state.scoreSync;
-    const current = state.data.data;
-    return {
-      ...state,
-      // The resent score is now the server's: shown in the card until the match update arrives,
-      // instead of flashing back to the score loaded during the outage.
-      data:
-        pending && current?.id === pending.matchId
-          ? { ...state.data, data: { ...current, scoreA: pending.scoreA, scoreB: pending.scoreB } }
-          : state.data,
-      scoreRequest: { ...state.scoreRequest, updateScore: { isLoading: false, error: null } },
-      scoreSync: pending ? { status: 'synced' as const, pending: null } : state.scoreSync,
-    };
-  }),
-  on(updateScoreFailure, (state, { error, request, offline }) => ({
+  on(updateScoreSuccess, (state) => ({
     ...state,
-    // No network: the score is kept and resent, the badge says so instead of an error.
-    scoreRequest: {
-      ...state.scoreRequest,
-      updateScore: { isLoading: false, error: offline ? null : error },
-    },
-    scoreSync: offline
-      ? { status: 'pending' as const, pending: request }
-      : { status: 'idle' as const, pending: null },
+    scoreRequest: { ...state.scoreRequest, updateScore: { isLoading: false, error: null } },
   })),
-  on(scoreSyncBadgeExpired, (state) => ({
+  on(updateScoreFailure, (state, { error }) => ({
     ...state,
-    scoreSync: state.scoreSync.status === 'synced' ? INITIAL_SCORE_SYNC : state.scoreSync,
+    scoreRequest: { ...state.scoreRequest, updateScore: { isLoading: false, error } },
   })),
   on(validateMatch, (state) => ({
     ...state,

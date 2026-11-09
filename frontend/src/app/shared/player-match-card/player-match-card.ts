@@ -9,7 +9,6 @@ import {
   untracked,
 } from '@angular/core';
 import { Nullable } from 'src/app/models/nullable.model';
-import { ScoreSyncStatus } from 'src/app/models/score-sync.model';
 import {
   PlayerByeCopy,
   PlayerMatchEmptyTone,
@@ -35,15 +34,6 @@ const DEFAULT_VALIDATION_COPY: PlayerValidationCopy = {
   placeholder: 'Code adverse',
 };
 
-/**
- * Card of the current match on the player side: start, entry of both scores, validation through the
- * opponent code.
- *
- * Shared between the tournament and the training session. It knows neither of them: it receives an
- * already projected `PlayerMatchView` and emits bare intents, which the page turns into actions.
- * Without a match it keeps the box and only hosts the content projected by the page - the "not
- * started yet", "finished" and "cancelled" states do not mean the same thing on both sides.
- */
 @Component({
   selector: 'app-player-match-card',
   imports: [
@@ -65,11 +55,7 @@ export class PlayerMatchCard {
   public readonly pointsPerGame = input<number>(13);
   public readonly byeCopy = input<PlayerByeCopy>(DEFAULT_BYE_COPY);
   public readonly validationCopy = input<PlayerValidationCopy>(DEFAULT_VALIDATION_COPY);
-  /**
-   * Closed event: starting a match and entering a score are no longer accepted, but the validation
-   * of a score already recorded stays open - otherwise a match finished just before the closing
-   * would be lost.
-   */
+
   public readonly scoringLocked = input<boolean>(false);
   /**
    * Look of the box shown when there is no match: neutral by default, festive for the end of an
@@ -82,8 +68,11 @@ export class PlayerMatchCard {
   public readonly validateError = input<Nullable<string>>(null);
   public readonly startLoading = input<boolean>(false);
   public readonly validateLoading = input<boolean>(false);
-  /** A score typed during a network outage: pending (resent automatically), then synced. */
-  public readonly syncStatus = input<ScoreSyncStatus>('idle');
+  /**
+   * The match is being reloaded after a possible missed update (back from the background,
+   * reconnection): the score shown may be stale, so it cannot be edited until then.
+   */
+  public readonly syncing = input<boolean>(false);
 
   public readonly startMatch = output<void>();
   public readonly scoreChange = output<{ myScore: number; opponentScore: number }>();

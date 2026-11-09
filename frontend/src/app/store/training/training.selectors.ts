@@ -306,8 +306,8 @@ export const selectTrainingParticipantIsSittingOut = createSelector(
   (state) => state.participantCurrentMatch.data?.sitOut ?? false,
 );
 
-/** Score typed during a network outage: pending, then briefly synced. */
-export const selectTrainingScoreSync = createSelector(
+/** The player's current match is being reloaded after a possible missed update. */
+export const selectTrainingParticipantAwaitingResync = createSelector(
   selectTrainingState,
-  (state) => state.scoreSync,
+  (state) => state.participantAwaitingResync,
 );

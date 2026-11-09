@@ -1,11 +1,21 @@
-import { Injectable, OnDestroy } from '@angular/core';
+import { inject, Injectable, InjectionToken, OnDestroy } from '@angular/core';
 import { Observable, Subject } from 'rxjs';
 import { io, Socket } from 'socket.io-client';
 import { Nullable } from 'src/app/models/nullable.model';
 import { environment } from 'src/environments/environment';
 
+/**
+ * Opens a socket.io connection. Injected rather than imported so that tests hand a fake socket
+ * through DI: mocking the `socket.io-client` module is unreliable once the specs are bundled.
+ */
+export const SOCKET_IO = new InjectionToken<typeof io>('SOCKET_IO', {
+  providedIn: 'root',
+  factory: () => io,
+});
+
 @Injectable({ providedIn: 'root' })
 export class WebSocketService implements OnDestroy {
+  private readonly openSocket = inject(SOCKET_IO);
   private socket: Nullable<Socket> = null;
   // Context, code and role: tournament and training have independent codes, and the server does not
   // put an admin and a player in the same room. Switching from one to the other must therefore
@@ -57,7 +67,7 @@ export class WebSocketService implements OnDestroy {
     this.disconnect();
     this.currentKey = key;
 
-    const socket = io(environment.backBaseApiUrl, {
+    const socket = this.openSocket(environment.backBaseApiUrl, {
       transports: ['websocket'],
       auth,
     });

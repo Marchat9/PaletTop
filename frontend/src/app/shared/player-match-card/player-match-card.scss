@@ -51,6 +51,12 @@
     gap: 1.25rem;
   }
 
+  &__headers {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
   &__teams {
     display: grid;
     grid-template-columns: 1fr auto 1fr;
@@ -208,36 +214,16 @@
   }
 }
 
-.error-hint {
+// The sync hint: score entry locked while the match is reloaded (back from the background).
+.error-hint,
+.sync-hint {
   font-size: 0.78rem;
   color: var(--color-error);
   text-align: center;
 }
 
-// Score typed offline: orange while waiting for the network, green once resent - the green one
-// fades out on its own (the store removes it at the end of the animation).
-.sync-badge {
-  --sync-color: #f0a020;
-
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  width: fit-content;
-  margin: 0.75rem auto 0;
-  padding: 0.45rem 0.8rem;
-  border-radius: 999px;
-  border: 1px solid color-mix(in srgb, var(--sync-color) 55%, transparent);
-  background: color-mix(in srgb, var(--sync-color) 14%, transparent);
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--sync-color);
-
-  &.is-synced {
-    --sync-color: var(--color-success);
-
-    // Keyframes in styles/animations.scss (shared, and keeps this sheet within its budget).
-    animation: palettop-sync-badge-fade 2.5s ease-in forwards;
-  }
+.sync-hint {
+  color: var(--color-on-surface-variant);
 }
 
 .bye-header {

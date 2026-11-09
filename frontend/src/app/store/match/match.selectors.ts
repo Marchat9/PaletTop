@@ -48,5 +48,7 @@ export const selectAdminUpdateScoreError = createSelector(
   (state) => state.scoreRequest.adminUpdateScore.error,
 );
 
-/** Score typed during a network outage: pending, then briefly synced. */
-export const selectScoreSync = createSelector(selectMatchState, (state) => state.scoreSync);
+export const selectMatchAwaitingResync = createSelector(
+  selectMatchState,
+  (state) => state.awaitingResync,
+);

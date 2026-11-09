@@ -1,4 +1,3 @@
-import { INITIAL_SCORE_SYNC } from 'src/app/models/score-sync.model';
 import { createReducer, on } from '@ngrx/store';
 import {
   createTraining,
@@ -91,7 +90,6 @@ import {
   startTrainingMatchFailure,
   startTrainingMatchSuccess,
   updateTrainingScore,
-  trainingScoreSyncBadgeExpired,
   updateTrainingScoreFailure,
   updateTrainingScoreSuccess,
   validateTrainingMatch,
@@ -108,6 +106,7 @@ import {
 } from './training.models';
 import { Nullable } from 'src/app/models/nullable.model';
 import {
+  resyncPending,
   wsTrainingLeaderboardUpdated,
   wsTrainingMatchUpdated,
   wsTrainingRoundGenerated,
@@ -155,7 +154,7 @@ export const initialTrainingState: TrainingState = {
   leaderboard: { data: [], isLoading: false, error: null },
   participantCurrentMatch: { data: null, isLoading: false, error: null },
   participantHistory: { data: [], isLoading: false, error: null },
-  scoreSync: INITIAL_SCORE_SYNC,
+  participantAwaitingResync: false,
 };
 
 function replaceMatchInRound(round: TrainingRoundDto, match: TrainingMatchDto): TrainingRoundDto {
@@ -276,12 +275,16 @@ export const trainingReducer = createReducer(
       ...state,
       participantCurrentMatch: { data: currentMatch, isLoading: false, error: null },
       participantInformations: { sessionCode, participantCode },
+      participantAwaitingResync: false,
     }),
   ),
+  // A failed reload (timeout and retry included) keeps the entry locked: the score shown may be
+  // stale. The next resync signal (network, foreground, websocket) tries again.
   on(loadTrainingParticipantCurrentMatchFailure, (state, { error }) => ({
     ...state,
     participantCurrentMatch: { ...state.participantCurrentMatch, isLoading: false, error },
   })),
+  on(resyncPending, (state) => ({ ...state, participantAwaitingResync: true })),
   on(forgetTrainingParticipantCodes, (state) => ({
     ...state,
     participantInformations: null,
@@ -814,8 +817,8 @@ export const trainingReducer = createReducer(
         ...state.currentRound,
         data: state.currentRound.data ? replaceMatchInRound(state.currentRound.data, match) : null,
       },
-      // The player's own card follows the saved score right away (after an outage, it would
-      // otherwise flash back to the score loaded meanwhile until the broadcast arrives).
+      // The player's own card follows the saved score right away, without waiting for the
+      // broadcast.
       participantCurrentMatch:
         participantView?.match?.id === match.id
           ? { ...state.participantCurrentMatch, data: { ...participantView, match } }
@@ -824,25 +827,14 @@ export const trainingReducer = createReducer(
         ...state.requestStatus,
         updateScore: { isLoading: false, error: null },
       },
-      scoreSync: state.scoreSync.pending
-        ? { status: 'synced' as const, pending: null }
-        : state.scoreSync,
     };
   }),
-  on(updateTrainingScoreFailure, (state, { error, request, offline }) => ({
+  on(updateTrainingScoreFailure, (state, { error }) => ({
     ...state,
-    // No network: the score is kept and resent, the badge says so instead of an error.
     requestStatus: {
       ...state.requestStatus,
-      updateScore: { isLoading: false, error: offline ? null : error },
+      updateScore: { isLoading: false, error },
     },
-    scoreSync: offline
-      ? { status: 'pending' as const, pending: request }
-      : { status: 'idle' as const, pending: null },
-  })),
-  on(trainingScoreSyncBadgeExpired, (state) => ({
-    ...state,
-    scoreSync: state.scoreSync.status === 'synced' ? INITIAL_SCORE_SYNC : state.scoreSync,
   })),
 
   // Validate match
