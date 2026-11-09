@@ -60,6 +60,8 @@ export const validateMatchFailure = createAction(
   '[Tournament Match] Validate Match Failure',
   props<{ error: string }>(),
 );
+// The score changed since the player last saw it: the match is reloaded instead of validated.
+export const validateMatchConflict = createAction('[Tournament Match] Validate Match Conflict');
 // ------------------------------------
 
 // --------- Admin Update Score ---------

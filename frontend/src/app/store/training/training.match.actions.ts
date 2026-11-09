@@ -53,6 +53,10 @@ export const validateTrainingMatchFailure = createAction(
   '[Training] Validate Training Match Failure',
   props<{ error: string }>(),
 );
+// The score changed since the player last saw it: the match is reloaded instead of validated.
+export const validateTrainingMatchConflict = createAction(
+  '[Training] Validate Training Match Conflict',
+);
 // -------------------------------------------------------
 
 // --------- Admin update score ---------

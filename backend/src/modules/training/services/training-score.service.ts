@@ -137,6 +137,7 @@ export class TrainingScoreService {
         matchId: string,
         participantCode: string,
         opponentParticipantCode: string,
+        expectedScore: ExpectedScore | null = null,
     ): Promise<TrainingMatchDto> {
         const { match, session } = await this.findMatchWithParticipantAuth(
             sessionCode,
@@ -160,6 +161,10 @@ export class TrainingScoreService {
             );
             throw new BadRequestException('Code participant adverse incorrect.');
         }
+        // The player validates the score on their screen: one they never saw is not confirmed.
+        if (expectedScore && !isSameScore(match, expectedScore)) {
+            throw staleScoreError(this.logger, matchId, 'validation');
+        }
 
         match.status = MatchStatus.VALIDATED;
         match.finishedAt = match.finishedAt ?? new Date();
@@ -173,8 +178,14 @@ export class TrainingScoreService {
                 status: match.status,
                 finishedAt: match.finishedAt,
             },
+            expectedScore,
         );
         if (!validated) {
+            // Not validated meanwhile: the other team changed the score after it was read.
+            const latest = await this.trainingMatchRepo.findByIdInSession(matchId, session.id);
+            if (expectedScore && latest && latest.status !== MatchStatus.VALIDATED) {
+                throw staleScoreError(this.logger, matchId, 'validation');
+            }
             throw new BadRequestException(
                 'Le match a déjà été validé ou son score vient de changer.',
             );

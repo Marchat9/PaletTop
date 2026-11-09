@@ -23,6 +23,7 @@ import {
   updateScoreSuccess,
   updateScoreConflict,
   validateMatch,
+  validateMatchConflict,
   validateMatchFailure,
   validateMatchSuccess,
 } from './match.actions';
@@ -126,6 +127,10 @@ export const matchReducer = createReducer(
   on(validateMatchSuccess, (state, { match }) => ({
     ...state,
     data: { ...state.data, data: withMatch(state.data.data, match) },
+    scoreRequest: { ...state.scoreRequest, validateMatch: { isLoading: false, error: null } },
+  })),
+  on(validateMatchConflict, (state) => ({
+    ...state,
     scoreRequest: { ...state.scoreRequest, validateMatch: { isLoading: false, error: null } },
   })),
   on(validateMatchFailure, (state, { error }) => ({

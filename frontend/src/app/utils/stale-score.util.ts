@@ -33,11 +33,16 @@ export function isStaleScoreError(error: unknown): boolean {
   return error instanceof HttpErrorResponse && error.status === 409;
 }
 
-export function staleScoreNotification() {
+export const STALE_SCORE_MESSAGE =
+  'Le score a été modifié depuis un autre appareil : il a été rechargé.';
+export const STALE_VALIDATION_MESSAGE =
+  'Le score a changé depuis un autre appareil : vérifiez-le avant de valider.';
+
+export function staleScoreNotification(message = STALE_SCORE_MESSAGE) {
   return addNotification({
     notification: {
       id: newId(),
-      message: 'Le score a été modifié depuis un autre appareil : il a été rechargé.',
+      message,
       typeIcon: 'warning',
       type: 'Score',
       createdAt: Date.now(),

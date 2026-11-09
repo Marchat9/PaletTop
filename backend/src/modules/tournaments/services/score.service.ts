@@ -131,6 +131,7 @@ export class ScoreService {
         matchId: string,
         teamCode: string,
         opponentTeamCode: string,
+        expectedScore: ExpectedScore | null = null,
     ): Promise<ScoreUpdateResult> {
         const tournament = await this.tournamentRepo.findByCode(tournamentCode);
         if (!tournament) throw new NotFoundException('Tournoi introuvable.');
@@ -157,20 +158,30 @@ export class ScoreService {
         if (opponentTeamCode !== expectedOpponent) {
             throw new BadRequestException('Code équipe adverse incorrect.');
         }
+        // The player validates the score on their screen: one they never saw is not confirmed.
+        if (expectedScore && !isSameScore(match, expectedScore)) {
+            throw staleScoreError(this.logger, matchId, 'validation');
+        }
 
         const finishedAt = match.finishedAt ?? new Date();
         const duration = match.startedAt
             ? Math.round((finishedAt.getTime() - match.startedAt.getTime()) / 1000)
             : null;
 
-        const validated = await this.matchRepo.updateIfStatus(matchId, [MatchStatus.ENDED], {
-            status: MatchStatus.VALIDATED,
-            finishedAt,
-            duration,
-        });
+        const validated = await this.matchRepo.updateIfStatus(
+            matchId,
+            [MatchStatus.ENDED],
+            { status: MatchStatus.VALIDATED, finishedAt, duration },
+            expectedScore,
+        );
         // Two validations at once (both teams, or a double tap): only the first one goes through,
         // so the ranking is recomputed and broadcast once.
         if (!validated) {
+            // Not validated meanwhile: the other team changed the score after it was read.
+            const latest = await this.matchRepo.findByIdWithSession(matchId);
+            if (expectedScore && latest && latest.status !== MatchStatus.VALIDATED) {
+                throw staleScoreError(this.logger, matchId, 'validation');
+            }
             throw new BadRequestException(
                 'Le match a déjà été validé ou son score vient de changer.',
             );

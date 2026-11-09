@@ -187,4 +187,53 @@ describe('TrainingScoreService.updateScore against a stale score', () => {
             null,
         );
     });
+
+    const endedMatch = () =>
+        match({
+            status: MatchStatus.ENDED,
+            scoreA: 13,
+            scoreB: 9,
+            teamA: { members: [{ participant: { code: '1111' } }] },
+            teamB: { members: [{ participant: { code: '2222' } }] },
+        } as unknown as Partial<TrainingMatch>);
+
+    it('refuses to validate a score the player never saw', async () => {
+        const { service, matchRepo } = setupPlayer(endedMatch(), true);
+
+        await expect(
+            service.validateMatch('1234', 'm1', '1111', '2222', { scoreA: 12, scoreB: 9 }),
+        ).rejects.toThrow(ConflictException);
+        expect(matchRepo.updateIfStatus).not.toHaveBeenCalled();
+    });
+
+    it('validates the score seen by the player, only if it is still the saved one', async () => {
+        const { service, matchRepo } = setupPlayer(endedMatch(), true);
+
+        await service.validateMatch('1234', 'm1', '1111', '2222', { scoreA: 13, scoreB: 9 });
+
+        expect(matchRepo.updateIfStatus).toHaveBeenCalledWith(
+            'm1',
+            [MatchStatus.ENDED],
+            expect.objectContaining({ status: MatchStatus.VALIDATED }),
+            { scoreA: 13, scoreB: 9 },
+        );
+    });
+
+    it('refuses as stale a validation whose score changes between the read and the write', async () => {
+        const changed = { ...endedMatch(), scoreB: 10 } as TrainingMatch;
+        const { service } = setupPlayer(endedMatch(), false, changed);
+
+        await expect(
+            service.validateMatch('1234', 'm1', '1111', '2222', { scoreA: 13, scoreB: 9 }),
+        ).rejects.toThrow(ConflictException);
+    });
+
+    it('keeps the already validated message when the other team validated first', async () => {
+        const validated = { ...endedMatch(), status: MatchStatus.VALIDATED } as TrainingMatch;
+        const { service } = setupPlayer(endedMatch(), false, validated);
+
+        await expect(
+            service.validateMatch('1234', 'm1', '1111', '2222', { scoreA: 13, scoreB: 9 }),
+        ).rejects.toThrow('Le match a déjà été validé');
+    });
 });

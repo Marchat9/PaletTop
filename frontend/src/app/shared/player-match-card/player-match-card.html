@@ -105,6 +105,13 @@
         </div>
       }
 
+      @if (isSavingFinalScore()) {
+        <p class="validate-hint match-card__saving">
+          <app-icon name="sync" />
+          Enregistrement du score…
+        </p>
+      }
+
       @if (isEnded()) {
         <div class="match-card__validate">
           <p class="validate-hint">

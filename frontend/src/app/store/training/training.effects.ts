@@ -19,6 +19,7 @@ import { withTimeoutAndOneRetry } from 'src/app/utils/reload-retry.util';
 import {
   expectedScoreOf,
   isStaleScoreError,
+  STALE_VALIDATION_MESSAGE,
   staleScoreNotification,
 } from 'src/app/utils/stale-score.util';
 import {
@@ -131,6 +132,7 @@ import {
   updateTrainingScoreFailure,
   updateTrainingScoreSuccess,
   validateTrainingMatch,
+  validateTrainingMatchConflict,
   validateTrainingMatchFailure,
   validateTrainingMatchSuccess,
 } from './training.match.actions';
@@ -637,15 +639,30 @@ export class TrainingEffects {
   validateTrainingMatch$ = createEffect(() =>
     this.actions$.pipe(
       ofType(validateTrainingMatch),
+      // The score on screen is sent with the validation: the server refuses it if it changed.
       concatMap(({ sessionCode, matchId, participantCode, opponentParticipantCode }) =>
-        this.trainingService
-          .validateMatch(sessionCode, matchId, participantCode, opponentParticipantCode)
-          .pipe(
-            switchMap((match) => of(validateTrainingMatchSuccess({ match }))),
-            catchError((error) =>
-              of(validateTrainingMatchFailure({ error: convertErrorToString(error) })),
+        this.store.select(selectTrainingParticipantCurrentMatch).pipe(
+          take(1),
+          switchMap((current) =>
+            this.trainingService.validateMatch(
+              sessionCode,
+              matchId,
+              participantCode,
+              opponentParticipantCode,
+              expectedScoreOf(current?.match, matchId),
             ),
           ),
+          map((match) => validateTrainingMatchSuccess({ match })),
+          catchError((error) =>
+            isStaleScoreError(error)
+              ? of(
+                  validateTrainingMatchConflict(),
+                  loadTrainingParticipantCurrentMatch({ sessionCode, participantCode }),
+                  staleScoreNotification(STALE_VALIDATION_MESSAGE),
+                )
+              : of(validateTrainingMatchFailure({ error: convertErrorToString(error) })),
+          ),
+        ),
       ),
     ),
   );

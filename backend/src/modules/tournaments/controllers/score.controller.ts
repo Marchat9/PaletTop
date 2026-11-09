@@ -81,6 +81,7 @@ export class ScoreController {
                 matchId,
                 dto.teamCode,
                 dto.opponentTeamCode,
+                toExpectedScore(dto.previousScoreA, dto.previousScoreB),
             );
         } catch (error) {
             if (error instanceof HttpException) {

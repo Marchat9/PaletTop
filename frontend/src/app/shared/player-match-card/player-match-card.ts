@@ -87,18 +87,15 @@ export class PlayerMatchCard {
   protected readonly statusTone = matchStatusTone;
   protected readonly isPending = computed(() => this.match()?.status === 'PENDING');
   protected readonly isValidated = computed(() => this.match()?.status === 'VALIDATED');
-  protected readonly isEnded = computed(() => {
+  // Validation opens once the server has the final score (status ENDED): opened from the local
+  // score, it was sent before the last point was saved and refused with "match not finished".
+  protected readonly isEnded = computed(() => this.match()?.status === 'ENDED');
+  /** The target score is reached on screen but not yet saved by the server. */
+  protected readonly isSavingFinalScore = computed(() => {
     const match = this.match();
-    if (!match) {
+    if (!match || match.status !== 'ONGOING') {
       return false;
     }
-    if (match.status === 'ENDED') {
-      return true;
-    }
-    if (this.isValidated() || this.isPending()) {
-      return false;
-    }
-    // The target score reached locally opens the validation without waiting for the server.
     const max = this.pointsPerGame();
     return this.localMyScore() >= max || this.localOpponentScore() >= max;
   });

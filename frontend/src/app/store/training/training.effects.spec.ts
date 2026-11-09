@@ -14,6 +14,7 @@ import {
   updateTrainingScoreConflict,
   updateTrainingScoreSuccess,
   validateTrainingMatch,
+  validateTrainingMatchConflict,
   validateTrainingMatchSuccess,
 } from './training.match.actions';
 import { loadTrainingParticipantCurrentMatch } from './training.actions';
@@ -25,34 +26,61 @@ import {
 } from './training.selectors';
 
 describe('TrainingEffects', () => {
-  it('sends the player validation of a match to the server', async () => {
-    const actions$ = new ReplaySubject<Action>(1);
-    const match = { id: 'm1' } as TrainingMatchDto;
-    const trainingService = { validateMatch: vi.fn(() => of(match)) };
-    TestBed.configureTestingModule({
-      providers: [
-        TrainingEffects,
-        provideMockActions(() => actions$),
-        provideMockStore(),
-        { provide: TrainingService, useValue: trainingService },
-      ],
+  describe('player validation', () => {
+    function setupValidation(validateMatch: () => unknown) {
+      const actions$ = new ReplaySubject<Action>(1);
+      const trainingService = { validateMatch: vi.fn(validateMatch) };
+      const current = {
+        participant: { id: 'p1', name: 'Jean' },
+        match: { id: 'm1', scoreA: 13, scoreB: 9 },
+      } as unknown as TrainingCurrentMatchDto;
+      TestBed.configureTestingModule({
+        providers: [
+          TrainingEffects,
+          provideMockActions(() => actions$),
+          provideMockStore({
+            selectors: [{ selector: selectTrainingParticipantCurrentMatch, value: current }],
+          }),
+          { provide: TrainingService, useValue: trainingService },
+        ],
+      });
+      const emitted: Action[] = [];
+      TestBed.inject(TrainingEffects).validateTrainingMatch$.subscribe((action) =>
+        emitted.push(action),
+      );
+      actions$.next(
+        validateTrainingMatch({
+          sessionCode: '123456',
+          matchId: 'm1',
+          participantCode: '1111',
+          opponentParticipantCode: '2222',
+        }),
+      );
+      return { trainingService, emitted };
+    }
+
+    it('sends the validation with the score shown to the player', () => {
+      const match = { id: 'm1' } as TrainingMatchDto;
+      const { trainingService, emitted } = setupValidation(() => of(match));
+
+      expect(trainingService.validateMatch).toHaveBeenCalledWith('123456', 'm1', '1111', '2222', {
+        scoreA: 13,
+        scoreB: 9,
+      });
+      expect(emitted).toEqual([validateTrainingMatchSuccess({ match })]);
     });
-    const effects = TestBed.inject(TrainingEffects);
-    const emitted: Action[] = [];
-    effects.validateTrainingMatch$.subscribe((action) => emitted.push(action));
 
-    actions$.next(
-      validateTrainingMatch({
-        sessionCode: '123456',
-        matchId: 'm1',
-        participantCode: '1111',
-        opponentParticipantCode: '2222',
-      }),
-    );
-    await Promise.resolve();
+    it('reloads the match instead of validating a score that changed meanwhile', () => {
+      const { emitted } = setupValidation(() =>
+        throwError(() => new HttpErrorResponse({ status: 409 })),
+      );
 
-    expect(trainingService.validateMatch).toHaveBeenCalledWith('123456', 'm1', '1111', '2222');
-    expect(emitted).toEqual([validateTrainingMatchSuccess({ match })]);
+      expect(emitted.map((action) => action.type)).toEqual([
+        validateTrainingMatchConflict.type,
+        loadTrainingParticipantCurrentMatch.type,
+        '[App Config] Add Notification',
+      ]);
+    });
   });
 
   describe('club leaderboard open in a popup', () => {

@@ -25,6 +25,7 @@ import { withTimeoutAndOneRetry } from 'src/app/utils/reload-retry.util';
 import {
   expectedScoreOf,
   isStaleScoreError,
+  STALE_VALIDATION_MESSAGE,
   staleScoreNotification,
 } from 'src/app/utils/stale-score.util';
 import { selectCurrentMatch } from './match.selectors';
@@ -43,6 +44,7 @@ import {
   updateScoreFailure,
   updateScoreSuccess,
   validateMatch,
+  validateMatchConflict,
   validateMatchFailure,
   validateMatchSuccess,
 } from './match.actions';
@@ -137,10 +139,29 @@ export class MatchEffects {
     this.actions$.pipe(
       ofType(validateMatch),
       withLatestFrom(this.store.select(selectCurrentTournamentData)),
+      // The score on screen is sent with the validation: the server refuses it if it changed.
       switchMap(([{ matchId, teamCode, opponentTeamCode }, tournament]) =>
-        this.matchService.validateMatch(tournament!.code, matchId, teamCode, opponentTeamCode).pipe(
+        this.store.select(selectCurrentMatch).pipe(
+          take(1),
+          switchMap((current) =>
+            this.matchService.validateMatch(
+              tournament!.code,
+              matchId,
+              teamCode,
+              opponentTeamCode,
+              expectedScoreOf(current, matchId),
+            ),
+          ),
           map(({ match }) => validateMatchSuccess({ match })),
-          catchError((error) => of(validateMatchFailure({ error: convertErrorToString(error) }))),
+          catchError((error) =>
+            isStaleScoreError(error)
+              ? of(
+                  validateMatchConflict(),
+                  loadCurrentMatch({ tournamentCode: tournament!.code, teamCode }),
+                  staleScoreNotification(STALE_VALIDATION_MESSAGE),
+                )
+              : of(validateMatchFailure({ error: convertErrorToString(error) })),
+          ),
         ),
       ),
     ),

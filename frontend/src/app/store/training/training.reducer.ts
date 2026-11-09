@@ -100,6 +100,7 @@ import {
   updateTrainingScoreConflict,
   updateTrainingScoreSuccess,
   validateTrainingMatch,
+  validateTrainingMatchConflict,
   validateTrainingMatchFailure,
   validateTrainingMatchSuccess,
 } from './training.match.actions';
@@ -903,13 +904,37 @@ export const trainingReducer = createReducer(
       validateMatch: { isLoading: true, error: null },
     },
   })),
-  on(validateTrainingMatchSuccess, (state, { match }) => ({
+  on(validateTrainingMatchSuccess, (state, { match }) => {
+    const participantView = state.participantCurrentMatch.data;
+    const isMyMatch = participantView?.match?.id === match.id;
+    return {
+      ...state,
+      rounds: {
+        ...state.rounds,
+        data: state.rounds.data.map((r) => replaceMatchInRound(r, match)),
+      },
+      currentRound: {
+        ...state.currentRound,
+        data: state.currentRound.data ? replaceMatchInRound(state.currentRound.data, match) : null,
+      },
+      // The player's card and history show the validation even when the broadcast is missed.
+      participantCurrentMatch: isMyMatch
+        ? { ...state.participantCurrentMatch, data: { ...participantView, match } }
+        : state.participantCurrentMatch,
+      participantHistory: isMyMatch
+        ? {
+            ...state.participantHistory,
+            data: upsertHistoryMatch(state.participantHistory.data, match),
+          }
+        : state.participantHistory,
+      requestStatus: {
+        ...state.requestStatus,
+        validateMatch: { isLoading: false, error: null },
+      },
+    };
+  }),
+  on(validateTrainingMatchConflict, (state) => ({
     ...state,
-    rounds: { ...state.rounds, data: state.rounds.data.map((r) => replaceMatchInRound(r, match)) },
-    currentRound: {
-      ...state.currentRound,
-      data: state.currentRound.data ? replaceMatchInRound(state.currentRound.data, match) : null,
-    },
     requestStatus: {
       ...state.requestStatus,
       validateMatch: { isLoading: false, error: null },

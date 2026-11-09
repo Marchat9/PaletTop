@@ -48,10 +48,11 @@ export class MatchService {
     matchId: string,
     teamCode: string,
     opponentTeamCode: string,
+    seen: Nullable<ExpectedScore> = null,
   ): Observable<{ match: PlayerMatchDto }> {
     return this.http.post<{ match: PlayerMatchDto }>(
       `${this.apiBaseUrl}/tournaments/${encodeURIComponent(code)}/matches/${matchId}/validate`,
-      { teamCode, opponentTeamCode },
+      { teamCode, opponentTeamCode, ...previousScoreBody(seen) },
     );
   }
 

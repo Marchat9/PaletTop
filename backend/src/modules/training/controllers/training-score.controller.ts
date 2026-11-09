@@ -56,6 +56,7 @@ export class TrainingScoreController {
                 matchId,
                 dto.participantCode,
                 dto.opponentParticipantCode,
+                toExpectedScore(dto.previousScoreA, dto.previousScoreB),
             ),
         );
     }

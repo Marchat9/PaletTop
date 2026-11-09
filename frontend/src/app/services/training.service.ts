@@ -278,10 +278,11 @@ export class TrainingService {
     matchId: string,
     participantCode: string,
     opponentParticipantCode: string,
+    seen: Nullable<ExpectedScore> = null,
   ): Observable<TrainingMatchDto> {
     return this.http.post<TrainingMatchDto>(
       `${this.apiBaseUrl}/trainings/sessions/${sessionCode}/matches/${matchId}/validate`,
-      { participantCode, opponentParticipantCode },
+      { participantCode, opponentParticipantCode, ...previousScoreBody(seen) },
     );
   }
 
