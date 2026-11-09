@@ -56,7 +56,7 @@ export const scoreCalculationOptions: {
         <span>3-5 = 1pt</span>
         <span>6-8 = 2pts</span>
         <span>9-10 = 3pts</span>
-        <span>11-12 = 5pts</span>
+        <span>11-12 = 4pts</span>
         <span>Victoire = 6pts</span>
       </div>
     `,
