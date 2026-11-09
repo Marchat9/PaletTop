@@ -230,6 +230,13 @@ export class ScoreService {
                 `Le round de ce match est clôturé : le score corrigé doit rester final (${max} points pour une équipe).`,
             );
         }
+        // The next rounds were built from this result (bracket, up-down tables): another winner
+        // would leave them as they are, with the loser still playing on.
+        if (wasSessionClosed && match.scoreA > match.scoreB !== scoreA > scoreB) {
+            throw new BadRequestException(
+                'Le round de ce match est clôturé : la correction ne peut pas changer le vainqueur.',
+            );
+        }
         const finishedAt = isFinished ? (match.finishedAt ?? new Date()) : null;
         const duration =
             isFinished && match.startedAt && finishedAt

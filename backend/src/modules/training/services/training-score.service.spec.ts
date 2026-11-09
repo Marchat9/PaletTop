@@ -6,11 +6,11 @@ import { MatchStatus } from 'src/enum/status.enum';
 import { TrainingRoundStatus, TrainingSessionStatus } from 'src/enum/training.enum';
 import { TrainingScoreService } from './training-score.service';
 
-function makeService(match: TrainingMatch) {
+function makeService(match: TrainingMatch, status = TrainingSessionStatus.OPEN) {
     const session = {
         id: 'session-1',
         code: '1234',
-        status: TrainingSessionStatus.OPEN,
+        status,
         pointsPerGame: 13,
     } as unknown as TrainingSession;
 
@@ -97,6 +97,20 @@ describe('TrainingScoreService.adminUpdateScore on a closed round', () => {
         await expect(
             corrected.service.adminUpdateScore('1234', 'm1', 'pw', 13, 7),
         ).resolves.toMatchObject({ scoreA: 13, scoreB: 7 });
+    });
+});
+
+describe('TrainingScoreService.adminUpdateScore on a closed session', () => {
+    it('refuses any correction: the results of a closed session are final', async () => {
+        const { service, gateway } = makeService(
+            match({ status: MatchStatus.VALIDATED, scoreA: 13, scoreB: 5 }),
+            TrainingSessionStatus.CLOSED,
+        );
+
+        await expect(service.adminUpdateScore('1234', 'm1', 'pw', 13, 7)).rejects.toThrow(
+            'Cette séance est clôturée.',
+        );
+        expect(gateway.emitMatchUpdated).not.toHaveBeenCalled();
     });
 });
 

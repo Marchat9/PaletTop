@@ -208,6 +208,7 @@ export class TrainingScoreService {
             sessionCode,
             password,
         );
+        assertSessionOpen(session, this.logger, 'Admin score correction');
         const match = await this.trainingMatchRepo.findByIdInSession(matchId, session.id);
         if (!match) {
             this.logger.warn(`Match ${matchId} not found in session ${sessionCode}`);
