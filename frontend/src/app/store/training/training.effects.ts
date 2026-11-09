@@ -741,7 +741,6 @@ export class TrainingEffects {
         removeTrainingMemberFailure,
         setTrainingAdminMemberFailure,
         createTrainingSessionFailure,
-        closeTrainingSessionFailure,
         checkinTrainingParticipantFailure,
         removeTrainingParticipantFailure,
         createTrainingTeamFailure,

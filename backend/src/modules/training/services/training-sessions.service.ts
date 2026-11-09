@@ -9,6 +9,7 @@ import { CheckinParticipantDto } from '../dto/checkin-participant.dto';
 import { CreateTrainingSessionDto } from '../dto/create-training-session.dto';
 import { TrainingMemberRepository } from '../repositories/training-member.repository';
 import { TrainingParticipantRepository } from '../repositories/training-participant.repository';
+import { TrainingRoundRepository } from '../repositories/training-round.repository';
 import { TrainingSessionRepository } from '../repositories/training-session.repository';
 import { TrainingTeamMemberRepository } from '../repositories/training-team-member.repository';
 import {
@@ -22,7 +23,12 @@ import {
 import { generateNumericCode } from 'src/utils/numeric-code.util';
 import { sameName } from '../utils/same-name.utils';
 import { assertSessionOpen } from '../utils/session-guard.utils';
-import { TrainingParticipantStatus, TrainingSessionStatus } from 'src/enum/training.enum';
+import { hasUnfinishedMatch } from '../utils/round-status.utils';
+import {
+    TrainingParticipantStatus,
+    TrainingRoundStatus,
+    TrainingSessionStatus,
+} from 'src/enum/training.enum';
 import { TrainingMember } from 'src/entities/training-member.entity';
 import { TrainingSession } from 'src/entities/training-session.entity';
 import { TrainingAuthService } from './training-auth.service';
@@ -46,6 +52,7 @@ export class TrainingSessionsService {
         private readonly trainingAuthService: TrainingAuthService,
         private readonly trainingSessionAuthService: TrainingSessionAuthService,
         private readonly trainingRealtimeGateway: TrainingRealtimeGateway,
+        private readonly trainingRoundRepo: TrainingRoundRepository,
     ) {}
 
     async create(
@@ -110,6 +117,7 @@ export class TrainingSessionsService {
         );
         // Idempotent: closing an already closed session must not overwrite its original closedAt.
         if (session.status !== TrainingSessionStatus.CLOSED) {
+            await this.closeCurrentRound(session);
             session.status = TrainingSessionStatus.CLOSED;
             session.closedAt = new Date();
             await this.trainingSessionRepo.closeSession(session.id, session.closedAt);
@@ -117,6 +125,29 @@ export class TrainingSessionsService {
             this.trainingRealtimeGateway.emitSessionUpdatedFrom(session);
         }
         return toTrainingSessionAdminDto(session);
+    }
+
+    /**
+     * The round in progress is closed with the session, provided all its matches are validated
+     * (byes aside): otherwise the closing is refused, a score would be left hanging.
+     */
+    private async closeCurrentRound(session: TrainingSession): Promise<void> {
+        const round = await this.trainingRoundRepo.findLatestBySession(session.id);
+        if (!round || round.status !== TrainingRoundStatus.OPEN) {
+            return;
+        }
+
+        if (hasUnfinishedMatch(round)) {
+            this.logger.warn(
+                `Closing refused for training session ${session.code}: round ${round.roundNumber} has unvalidated matches`,
+            );
+            throw new BadRequestException(
+                `Le round ${round.roundNumber} n'est pas terminé : tous ses matchs doivent être validés avant de clôturer la séance.`,
+            );
+        }
+
+        await this.trainingRoundRepo.closeRound(round.id);
+        this.logger.log(`Round ${round.roundNumber} of training session ${session.code} closed`);
     }
 
     async checkin(
