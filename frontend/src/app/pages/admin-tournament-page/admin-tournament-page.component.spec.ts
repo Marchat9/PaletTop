@@ -90,7 +90,9 @@ function setup({ isAdminView = true } = {}) {
   return { fixture, store, actions$ };
 }
 
-describe('AdminTournamentPageComponent', () => {
+// The first render of this large page takes about 1 s alone, but went past the default 5 s when
+// the whole suite runs in parallel.
+describe('AdminTournamentPageComponent', { timeout: 15_000 }, () => {
   it('re-fetches the tournament as admin when a resync is requested', () => {
     const { fixture, store, actions$ } = setup();
     fixture.detectChanges();
