@@ -69,6 +69,8 @@ services:
                 condition: service_healthy
         environment:
             API_BASE_URL: ${API_BASE_URL}
+            # Public URL of the site, written into index.html at startup (optional).
+            SITE_URL: ${SITE_URL:-}
         ports:
             - '0.0.0.0:8080:8080'
         networks:
