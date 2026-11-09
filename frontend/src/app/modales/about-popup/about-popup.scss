@@ -8,8 +8,13 @@
   background: var(--color-surface-container-high);
   box-shadow: 0 1rem 2.5rem var(--color-shadow-strong);
   overflow: hidden;
+  // Never taller than the screen: the header stays put, the body scrolls.
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100dvh - 2rem);
 
   .about-header {
+    flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -56,6 +61,8 @@
   }
 
   .about-body {
+    min-height: 0;
+    overflow-y: auto;
     padding: 1.25rem;
     display: flex;
     flex-direction: column;
