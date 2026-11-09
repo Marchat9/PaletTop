@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { provideMockActions } from '@ngrx/effects/testing';
 import { Action } from '@ngrx/store';
-import { provideMockStore } from '@ngrx/store/testing';
+import { MockStore, provideMockStore } from '@ngrx/store/testing';
 import { HttpErrorResponse } from '@angular/common/http';
 import { of, ReplaySubject, throwError } from 'rxjs';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -130,7 +130,7 @@ describe('TrainingEffects', () => {
   describe('score entry against a stale score', () => {
     afterEach(() => vi.useRealTimers());
 
-    function setup(updateScore: () => unknown) {
+    function setup(updateScore: () => unknown, beforeSend: (store: MockStore) => void = () => {}) {
       vi.useFakeTimers();
       const actions$ = new ReplaySubject<Action>(1);
       const trainingService = { updateScore: vi.fn(updateScore) };
@@ -161,6 +161,7 @@ describe('TrainingEffects', () => {
           scoreB: 3,
         }),
       );
+      beforeSend(TestBed.inject(MockStore));
       vi.runAllTimers();
       return { trainingService, emitted };
     }
@@ -174,6 +175,26 @@ describe('TrainingEffects', () => {
         scoreB: 2,
       });
       expect(emitted).toEqual([updateTrainingScoreSuccess({ match: saved })]);
+    });
+
+    // The opponent's point arrives during the grouping delay: the entry still started from 4-2,
+    // so the server must see that base and refuse, instead of erasing that point.
+    it('keeps the score of the click as base, even when the opponent scores before sending', () => {
+      const { trainingService } = setup(
+        () => of({ id: 'm1' } as TrainingMatchDto),
+        (store) => {
+          store.overrideSelector(selectTrainingParticipantCurrentMatch, {
+            participant: { id: 'p1', name: 'Jean' },
+            match: { id: 'm1', scoreA: 5, scoreB: 2 },
+          } as unknown as TrainingCurrentMatchDto);
+          store.refreshState();
+        },
+      );
+
+      expect(trainingService.updateScore).toHaveBeenCalledWith('123456', 'm1', '1111', 4, 3, {
+        scoreA: 4,
+        scoreB: 2,
+      });
     });
 
     it('reloads the match and warns the player when the score changed meanwhile', () => {

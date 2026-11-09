@@ -49,3 +49,48 @@ export function staleScoreNotification(message = STALE_SCORE_MESSAGE) {
     },
   });
 }
+
+interface ScoreEntry {
+  matchId: string;
+  scoreA: number;
+  scoreB: number;
+}
+
+/**
+ * Base of a player's score entry: the score on screen at the first click of a burst of clicks.
+ * Read when the grouped request leaves instead, it could already include the opponent's point
+ * received meanwhile, and the entry erased it without the server noticing.
+ */
+export class ScoreEntryBase {
+  /** Base of the burst being typed, kept for its later clicks. */
+  private burst: Nullable<{ matchId: string; base: Nullable<ExpectedScore> }> = null;
+  /** Last score sent and not answered yet: the next burst starts from it, not from the screen. */
+  private unanswered: Nullable<ScoreEntry> = null;
+
+  public atClick(matchId: string, onScreen: Nullable<ScoredMatch>): Nullable<ExpectedScore> {
+    if (this.burst?.matchId !== matchId) {
+      const base =
+        this.unanswered?.matchId === matchId
+          ? { scoreA: this.unanswered.scoreA, scoreB: this.unanswered.scoreB }
+          : expectedScoreOf(onScreen, matchId);
+      this.burst = { matchId, base };
+    }
+    return this.burst.base;
+  }
+
+  /** The burst is grouped into one request: the next click starts a new one. */
+  public sent(entry: ScoreEntry): void {
+    this.burst = null;
+    this.unanswered = { matchId: entry.matchId, scoreA: entry.scoreA, scoreB: entry.scoreB };
+  }
+
+  public answered(entry: ScoreEntry): void {
+    if (
+      this.unanswered?.matchId === entry.matchId &&
+      this.unanswered.scoreA === entry.scoreA &&
+      this.unanswered.scoreB === entry.scoreB
+    ) {
+      this.unanswered = null;
+    }
+  }
+}

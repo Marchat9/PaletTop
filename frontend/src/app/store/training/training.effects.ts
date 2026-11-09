@@ -9,8 +9,10 @@ import {
   filter,
   map,
   of,
+  finalize,
   switchMap,
   take,
+  tap,
   withLatestFrom,
 } from 'rxjs';
 import { TrainingService } from 'src/app/services/training.service';
@@ -19,6 +21,7 @@ import { withTimeoutAndOneRetry } from 'src/app/utils/reload-retry.util';
 import {
   expectedScoreOf,
   isStaleScoreError,
+  ScoreEntryBase,
   STALE_VALIDATION_MESSAGE,
   staleScoreNotification,
 } from 'src/app/utils/stale-score.util';
@@ -151,6 +154,7 @@ export class TrainingEffects {
   private readonly actions$ = inject(Actions);
   private readonly store = inject(Store);
   private readonly trainingService = inject(TrainingService);
+  private readonly scoreEntryBase = new ScoreEntryBase();
 
   // ---------------- Training creation / player join ----------------
 
@@ -600,38 +604,42 @@ export class TrainingEffects {
   updateTrainingScore$ = createEffect(() =>
     this.actions$.pipe(
       ofType(updateTrainingScore),
+      withLatestFrom(this.store.select(selectTrainingParticipantCurrentMatch)),
+      map(([request, onScreen]) => ({
+        request,
+        base: this.scoreEntryBase.atClick(request.matchId, onScreen?.match),
+      })),
       debounceTime(environment.apiConfiguration.delayToUpdateScore ?? 0),
+      tap(({ request }) => this.scoreEntryBase.sent(request)),
       // concatMap, not switchMap: cancelling an HTTP call does not stop the server from processing
       // it, so two in-flight scores could be saved out of order. Sent one after the other, the
       // last score typed is the last one saved.
-      // The base of the entry is read when the request leaves, after the previous one answered.
-      concatMap((request) =>
-        this.store.select(selectTrainingParticipantCurrentMatch).pipe(
-          take(1),
-          switchMap((current) =>
-            this.trainingService.updateScore(
-              request.sessionCode,
-              request.matchId,
-              request.participantCode,
-              request.scoreA,
-              request.scoreB,
-              expectedScoreOf(current?.match, request.matchId),
+      concatMap(({ request, base }) =>
+        this.trainingService
+          .updateScore(
+            request.sessionCode,
+            request.matchId,
+            request.participantCode,
+            request.scoreA,
+            request.scoreB,
+            base,
+          )
+          .pipe(
+            map((match) => updateTrainingScoreSuccess({ match })),
+            catchError((error) =>
+              isStaleScoreError(error)
+                ? of(
+                    updateTrainingScoreConflict(),
+                    loadTrainingParticipantCurrentMatch({
+                      sessionCode: request.sessionCode,
+                      participantCode: request.participantCode,
+                    }),
+                    staleScoreNotification(),
+                  )
+                : of(updateTrainingScoreFailure({ error: convertErrorToString(error) })),
             ),
+            finalize(() => this.scoreEntryBase.answered(request)),
           ),
-          map((match) => updateTrainingScoreSuccess({ match })),
-          catchError((error) =>
-            isStaleScoreError(error)
-              ? of(
-                  updateTrainingScoreConflict(),
-                  loadTrainingParticipantCurrentMatch({
-                    sessionCode: request.sessionCode,
-                    participantCode: request.participantCode,
-                  }),
-                  staleScoreNotification(),
-                )
-              : of(updateTrainingScoreFailure({ error: convertErrorToString(error) })),
-          ),
-        ),
       ),
     ),
   );

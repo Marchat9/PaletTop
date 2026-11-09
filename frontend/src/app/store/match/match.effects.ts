@@ -8,8 +8,10 @@ import {
   filter,
   map,
   of,
+  finalize,
   switchMap,
   take,
+  tap,
   withLatestFrom,
 } from 'rxjs';
 import { TournamentStatus } from 'src/app/models/tournament-status.enum';
@@ -25,6 +27,7 @@ import { withTimeoutAndOneRetry } from 'src/app/utils/reload-retry.util';
 import {
   expectedScoreOf,
   isStaleScoreError,
+  ScoreEntryBase,
   STALE_VALIDATION_MESSAGE,
   staleScoreNotification,
 } from 'src/app/utils/stale-score.util';
@@ -56,6 +59,7 @@ export class MatchEffects {
   private readonly actions$ = inject(Actions);
   private readonly store = inject(Store);
   private readonly matchService = inject(MatchService);
+  private readonly scoreEntryBase = new ScoreEntryBase();
 
   loadCurrentMatchOnPlayerConnect$ = createEffect(() =>
     this.actions$.pipe(
@@ -98,39 +102,43 @@ export class MatchEffects {
   updateScore$ = createEffect(() =>
     this.actions$.pipe(
       ofType(updateScore),
+      withLatestFrom(this.store.select(selectCurrentMatch)),
+      map(([request, onScreen]) => ({
+        request,
+        base: this.scoreEntryBase.atClick(request.matchId, onScreen),
+      })),
       debounceTime(environment.apiConfiguration.delayToUpdateScore ?? 0),
+      tap(({ request }) => this.scoreEntryBase.sent(request)),
       withLatestFrom(this.store.select(selectCurrentTournamentData)),
       // concatMap, not switchMap: cancelling an HTTP call does not stop the server from processing
       // it, so two in-flight scores could be saved out of order. Sent one after the other, the
       // last score typed is the last one saved.
-      // The base of the entry is read when the request leaves, after the previous one answered.
-      concatMap(([request, tournament]) =>
-        this.store.select(selectCurrentMatch).pipe(
-          take(1),
-          switchMap((current) =>
-            this.matchService.updateScore(
-              tournament!.code,
-              request.matchId,
-              request.teamCode,
-              request.scoreA,
-              request.scoreB,
-              expectedScoreOf(current, request.matchId),
+      concatMap(([{ request, base }, tournament]) =>
+        this.matchService
+          .updateScore(
+            tournament!.code,
+            request.matchId,
+            request.teamCode,
+            request.scoreA,
+            request.scoreB,
+            base,
+          )
+          .pipe(
+            map(({ match }) => updateScoreSuccess({ match })),
+            catchError((error) =>
+              isStaleScoreError(error)
+                ? of(
+                    updateScoreConflict(),
+                    loadCurrentMatch({
+                      tournamentCode: tournament!.code,
+                      teamCode: request.teamCode,
+                    }),
+                    staleScoreNotification(),
+                  )
+                : of(updateScoreFailure({ error: convertErrorToString(error) })),
             ),
+            finalize(() => this.scoreEntryBase.answered(request)),
           ),
-          map(({ match }) => updateScoreSuccess({ match })),
-          catchError((error) =>
-            isStaleScoreError(error)
-              ? of(
-                  updateScoreConflict(),
-                  loadCurrentMatch({
-                    tournamentCode: tournament!.code,
-                    teamCode: request.teamCode,
-                  }),
-                  staleScoreNotification(),
-                )
-              : of(updateScoreFailure({ error: convertErrorToString(error) })),
-          ),
-        ),
       ),
     ),
   );
