@@ -40,6 +40,7 @@ import {
   TrainingSessionAdminDto,
 } from './training.models';
 import { initialTrainingState, trainingReducer } from './training.reducer';
+import { updateTrainingScoreFailure } from './training.match.actions';
 
 function buildSession(participants: TrainingParticipantAdminDto[]): TrainingSessionAdminDto {
   return {
@@ -183,6 +184,22 @@ describe('trainingReducer', () => {
         }),
       );
       expect(state.participantAwaitingResync).toBe(false);
+    });
+
+    it("efface l'erreur d'envoi du score une fois le match rechargé", () => {
+      const failed = trainingReducer(
+        initialTrainingState,
+        updateTrainingScoreFailure({ error: 'Connexion au serveur impossible.' }),
+      );
+      const state = trainingReducer(
+        failed,
+        loadTrainingParticipantCurrentMatchSuccess({
+          sessionCode: '1234',
+          participantCode: '4821',
+          currentMatch: { participant: { id: 'p1', name: 'Jean' } } as TrainingCurrentMatchDto,
+        }),
+      );
+      expect(state.requestStatus.updateScore.error).toBeNull();
     });
 
     it('garde la saisie verrouillée quand le rechargement échoue : le score peut être périmé', () => {

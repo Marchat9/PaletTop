@@ -1,5 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
+import { ExpectedScore, previousScoreBody } from 'src/app/utils/stale-score.util';
 import { Observable } from 'rxjs';
 import { Nullable } from 'src/app/models/nullable.model';
 import { PlayerMatchDto } from 'src/app/models/player-match.model';
@@ -34,10 +35,11 @@ export class MatchService {
     teamCode: string,
     scoreA: number,
     scoreB: number,
-  ): Observable<void> {
-    return this.http.patch<void>(
+    previous: Nullable<ExpectedScore> = null,
+  ): Observable<{ match: PlayerMatchDto }> {
+    return this.http.patch<{ match: PlayerMatchDto }>(
       `${this.apiBaseUrl}/tournaments/${encodeURIComponent(code)}/matches/${matchId}/score`,
-      { teamCode, scoreA, scoreB },
+      { teamCode, scoreA, scoreB, ...previousScoreBody(previous) },
     );
   }
 

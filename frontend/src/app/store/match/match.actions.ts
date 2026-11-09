@@ -35,7 +35,12 @@ export const updateScore = createAction(
   '[Tournament Match] Update Score',
   props<TeamScoreUpdate>(),
 );
-export const updateScoreSuccess = createAction('[Tournament Match] Update Score Success');
+export const updateScoreSuccess = createAction(
+  '[Tournament Match] Update Score Success',
+  props<{ match: PlayerMatchDto }>(),
+);
+// The score changed since the player last saw it: the match is reloaded instead.
+export const updateScoreConflict = createAction('[Tournament Match] Update Score Conflict');
 export const updateScoreFailure = createAction(
   '[Tournament Match] Update Score Failure',
   props<{ error: string }>(),

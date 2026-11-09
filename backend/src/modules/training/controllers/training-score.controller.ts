@@ -1,4 +1,5 @@
 import { Body, Controller, Logger, Param, Patch, Post } from '@nestjs/common';
+import { toExpectedScore } from 'src/utils/score-conflict.util';
 import { runGuarded } from 'src/utils/run-guarded.util';
 import { UuidParam } from 'src/decorators/uuid-param.decorator';
 import { AdminUpdateTrainingScoreDto } from '../dto/admin-update-training-score.dto';
@@ -38,6 +39,7 @@ export class TrainingScoreController {
                 dto.participantCode,
                 dto.scoreA,
                 dto.scoreB,
+                toExpectedScore(dto.previousScoreA, dto.previousScoreB),
             ),
         );
     }

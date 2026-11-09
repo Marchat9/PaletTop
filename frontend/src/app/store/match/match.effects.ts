@@ -9,6 +9,7 @@ import {
   map,
   of,
   switchMap,
+  take,
   withLatestFrom,
 } from 'rxjs';
 import { TournamentStatus } from 'src/app/models/tournament-status.enum';
@@ -22,6 +23,12 @@ import {
 import { convertErrorToString } from 'src/app/utils/api-call.utils';
 import { withTimeoutAndOneRetry } from 'src/app/utils/reload-retry.util';
 import {
+  expectedScoreOf,
+  isStaleScoreError,
+  staleScoreNotification,
+} from 'src/app/utils/stale-score.util';
+import { selectCurrentMatch } from './match.selectors';
+import {
   adminUpdateScore,
   adminUpdateScoreFailure,
   adminUpdateScoreSuccess,
@@ -32,6 +39,7 @@ import {
   startMatchFailure,
   startMatchSuccess,
   updateScore,
+  updateScoreConflict,
   updateScoreFailure,
   updateScoreSuccess,
   validateMatch,
@@ -93,19 +101,34 @@ export class MatchEffects {
       // concatMap, not switchMap: cancelling an HTTP call does not stop the server from processing
       // it, so two in-flight scores could be saved out of order. Sent one after the other, the
       // last score typed is the last one saved.
+      // The base of the entry is read when the request leaves, after the previous one answered.
       concatMap(([request, tournament]) =>
-        this.matchService
-          .updateScore(
-            tournament!.code,
-            request.matchId,
-            request.teamCode,
-            request.scoreA,
-            request.scoreB,
-          )
-          .pipe(
-            map(() => updateScoreSuccess()),
-            catchError((error) => of(updateScoreFailure({ error: convertErrorToString(error) }))),
+        this.store.select(selectCurrentMatch).pipe(
+          take(1),
+          switchMap((current) =>
+            this.matchService.updateScore(
+              tournament!.code,
+              request.matchId,
+              request.teamCode,
+              request.scoreA,
+              request.scoreB,
+              expectedScoreOf(current, request.matchId),
+            ),
           ),
+          map(({ match }) => updateScoreSuccess({ match })),
+          catchError((error) =>
+            isStaleScoreError(error)
+              ? of(
+                  updateScoreConflict(),
+                  loadCurrentMatch({
+                    tournamentCode: tournament!.code,
+                    teamCode: request.teamCode,
+                  }),
+                  staleScoreNotification(),
+                )
+              : of(updateScoreFailure({ error: convertErrorToString(error) })),
+          ),
+        ),
       ),
     ),
   );

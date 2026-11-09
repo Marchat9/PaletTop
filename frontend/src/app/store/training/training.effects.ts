@@ -10,11 +10,17 @@ import {
   map,
   of,
   switchMap,
+  take,
   withLatestFrom,
 } from 'rxjs';
 import { TrainingService } from 'src/app/services/training.service';
 import { convertErrorToString } from 'src/app/utils/api-call.utils';
 import { withTimeoutAndOneRetry } from 'src/app/utils/reload-retry.util';
+import {
+  expectedScoreOf,
+  isStaleScoreError,
+  staleScoreNotification,
+} from 'src/app/utils/stale-score.util';
 import {
   addNotification,
   removeLocalStorageData,
@@ -121,6 +127,7 @@ import {
   startTrainingMatchFailure,
   startTrainingMatchSuccess,
   updateTrainingScore,
+  updateTrainingScoreConflict,
   updateTrainingScoreFailure,
   updateTrainingScoreSuccess,
   validateTrainingMatch,
@@ -131,6 +138,7 @@ import {
   selectCurrentTrainingAdminInformations,
   selectCurrentTrainingParticipantInformations,
   selectFollowedTrainingClubLeaderboardSession,
+  selectTrainingParticipantCurrentMatch,
 } from './training.selectors';
 import { wsTrainingLeaderboardUpdated } from '../realtime/realtime.actions';
 import { newId } from 'src/app/utils/unique-id.util';
@@ -594,21 +602,34 @@ export class TrainingEffects {
       // concatMap, not switchMap: cancelling an HTTP call does not stop the server from processing
       // it, so two in-flight scores could be saved out of order. Sent one after the other, the
       // last score typed is the last one saved.
+      // The base of the entry is read when the request leaves, after the previous one answered.
       concatMap((request) =>
-        this.trainingService
-          .updateScore(
-            request.sessionCode,
-            request.matchId,
-            request.participantCode,
-            request.scoreA,
-            request.scoreB,
-          )
-          .pipe(
-            switchMap((match) => of(updateTrainingScoreSuccess({ match }))),
-            catchError((error) =>
-              of(updateTrainingScoreFailure({ error: convertErrorToString(error) })),
+        this.store.select(selectTrainingParticipantCurrentMatch).pipe(
+          take(1),
+          switchMap((current) =>
+            this.trainingService.updateScore(
+              request.sessionCode,
+              request.matchId,
+              request.participantCode,
+              request.scoreA,
+              request.scoreB,
+              expectedScoreOf(current?.match, request.matchId),
             ),
           ),
+          map((match) => updateTrainingScoreSuccess({ match })),
+          catchError((error) =>
+            isStaleScoreError(error)
+              ? of(
+                  updateTrainingScoreConflict(),
+                  loadTrainingParticipantCurrentMatch({
+                    sessionCode: request.sessionCode,
+                    participantCode: request.participantCode,
+                  }),
+                  staleScoreNotification(),
+                )
+              : of(updateTrainingScoreFailure({ error: convertErrorToString(error) })),
+          ),
+        ),
       ),
     ),
   );

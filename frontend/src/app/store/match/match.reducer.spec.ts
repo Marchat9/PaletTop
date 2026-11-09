@@ -10,6 +10,7 @@ import {
   loadCurrentMatchFailure,
   loadCurrentMatchSuccess,
   startMatchSuccess,
+  updateScoreFailure,
   validateMatchSuccess,
 } from './match.actions';
 import { initialMatchState, matchReducer } from './match.reducer';
@@ -72,6 +73,15 @@ describe('matchReducer resync lock', () => {
     const state = matchReducer(locked, loadCurrentMatchSuccess({ match: match('m3', 3, 5) }));
     expect(state.awaitingResync).toBe(false);
     expect(state.data.data?.scoreA).toBe(5);
+  });
+
+  it('clears a score sending error once the current match is reloaded', () => {
+    const failed = matchReducer(
+      withCurrent(match('m3', 3)),
+      updateScoreFailure({ error: 'Connexion au serveur impossible.' }),
+    );
+    const state = matchReducer(failed, loadCurrentMatchSuccess({ match: match('m3', 3, 5) }));
+    expect(state.scoreRequest.updateScore.error).toBeNull();
   });
 
   it('keeps it locked when the reload fails: the score shown may be stale', () => {

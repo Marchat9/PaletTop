@@ -97,6 +97,7 @@ import {
   startTrainingMatchSuccess,
   updateTrainingScore,
   updateTrainingScoreFailure,
+  updateTrainingScoreConflict,
   updateTrainingScoreSuccess,
   validateTrainingMatch,
   validateTrainingMatchFailure,
@@ -284,6 +285,11 @@ export const trainingReducer = createReducer(
       participantCurrentMatch: { data: currentMatch, isLoading: false, error: null },
       participantInformations: { sessionCode, participantCode },
       participantAwaitingResync: false,
+      // The match is now the server's: a score that failed to go out before no longer matters.
+      requestStatus: {
+        ...state.requestStatus,
+        updateScore: { isLoading: false, error: null },
+      },
     }),
   ),
   // A failed reload (timeout and retry included) keeps the entry locked: the score shown may be
@@ -848,6 +854,13 @@ export const trainingReducer = createReducer(
     requestStatus: {
       ...state.requestStatus,
       updateScore: { isLoading: true, error: null },
+    },
+  })),
+  on(updateTrainingScoreConflict, (state) => ({
+    ...state,
+    requestStatus: {
+      ...state.requestStatus,
+      updateScore: { isLoading: false, error: null },
     },
   })),
   on(updateTrainingScoreSuccess, (state, { match }) => {

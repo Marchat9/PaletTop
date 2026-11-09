@@ -1,5 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
+import { ExpectedScore, previousScoreBody } from 'src/app/utils/stale-score.util';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { Nullable } from 'src/app/models/nullable.model';
@@ -264,10 +265,11 @@ export class TrainingService {
     participantCode: string,
     scoreA: number,
     scoreB: number,
+    previous: Nullable<ExpectedScore> = null,
   ): Observable<TrainingMatchDto> {
     return this.http.patch<TrainingMatchDto>(
       `${this.apiBaseUrl}/trainings/sessions/${sessionCode}/matches/${matchId}/score`,
-      { participantCode, scoreA, scoreB },
+      { participantCode, scoreA, scoreB, ...previousScoreBody(previous) },
     );
   }
 

@@ -9,6 +9,7 @@ import {
     Patch,
     Post,
 } from '@nestjs/common';
+import { toExpectedScore } from 'src/utils/score-conflict.util';
 import { AdminUpdateScoreDto } from '../dto/admin-update-score.dto';
 import { StartMatchDto } from '../dto/start-match.dto';
 import { UpdateScoreDto } from '../dto/update-score.dto';
@@ -55,6 +56,7 @@ export class ScoreController {
                 dto.teamCode,
                 dto.scoreA,
                 dto.scoreB,
+                toExpectedScore(dto.previousScoreA, dto.previousScoreB),
             );
         } catch (error) {
             if (error instanceof HttpException) {

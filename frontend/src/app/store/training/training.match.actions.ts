@@ -25,6 +25,10 @@ export const updateTrainingScoreSuccess = createAction(
   '[Training] Update Training Score Success',
   props<{ match: TrainingMatchDto }>(),
 );
+// The score changed since the player last saw it: the match is reloaded instead.
+export const updateTrainingScoreConflict = createAction(
+  '[Training] Update Training Score Conflict',
+);
 export const updateTrainingScoreFailure = createAction(
   '[Training] Update Training Score Failure',
   props<{ error: string }>(),

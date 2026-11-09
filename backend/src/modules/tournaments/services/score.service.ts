@@ -15,6 +15,7 @@ import { TournamentStrategyFactory } from '../strategies/tournament-strategy.fac
 import { RawScoreUpdateResult, ScoreUpdateResult } from '../responses/score.dto';
 import { PlayerMatchDto } from '../responses/player-match.dto';
 import { computeRanking } from '../utils/pool-ranking.utils';
+import { ExpectedScore, isSameScore, staleScoreError } from 'src/utils/score-conflict.util';
 
 const NOT_VALIDATED = [MatchStatus.PENDING, MatchStatus.ONGOING, MatchStatus.ENDED];
 
@@ -66,6 +67,7 @@ export class ScoreService {
         teamCode: string,
         scoreA: number,
         scoreB: number,
+        expectedScore: ExpectedScore | null = null,
     ): Promise<ScoreUpdateResult> {
         const { match, tournament } = await this.findMatchWithTeamAuth(code, matchId, teamCode);
         this.assertPlayableByTeam(tournament.status, match);
@@ -75,6 +77,9 @@ export class ScoreService {
                 "Le score d'un match validé ne peut pas être modifié par une équipe.",
             );
         }
+        if (expectedScore && !isSameScore(match, expectedScore)) {
+            throw staleScoreError(this.logger, matchId, `tournament ${code}`);
+        }
 
         const max = tournament.configuration.pointsPerGame;
         this.validateScores(scoreA, scoreB, max);
@@ -82,16 +87,26 @@ export class ScoreService {
         const isFinished = scoreA >= max || scoreB >= max;
 
         const now = new Date();
-        const updated = await this.matchRepo.updateIfStatus(matchId, NOT_VALIDATED, {
-            scoreA,
-            scoreB,
-            status: isFinished ? MatchStatus.ENDED : MatchStatus.ONGOING,
-            finishedAt: isFinished ? now : null,
-            // Scored without being started first: it still needs a start date for its duration.
-            ...(!match.startedAt && { startedAt: now }),
-        });
-        // Validated by the other team while this score was on its way: it must not reopen it.
+        const updated = await this.matchRepo.updateIfStatus(
+            matchId,
+            NOT_VALIDATED,
+            {
+                scoreA,
+                scoreB,
+                status: isFinished ? MatchStatus.ENDED : MatchStatus.ONGOING,
+                finishedAt: isFinished ? now : null,
+                // Scored without being started first: it still needs a start date for its duration.
+                ...(!match.startedAt && { startedAt: now }),
+            },
+            expectedScore,
+        );
         if (!updated) {
+            // Scored by the other team in the meantime, or validated by it: the latter must not
+            // be reopened.
+            const latest = await this.matchRepo.findByIdWithSession(matchId);
+            if (expectedScore && latest?.status !== MatchStatus.VALIDATED) {
+                throw staleScoreError(this.logger, matchId, `tournament ${code}`);
+            }
             throw new BadRequestException(
                 "Le match vient d'être validé : le score ne peut plus changer.",
             );
