@@ -1,4 +1,5 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { Transactional } from 'typeorm-transactional';
 import { ConfigService } from '@nestjs/config';
 import { SchedulerRegistry } from '@nestjs/schedule';
 import { registerIdleCron } from 'src/utils/register-idle-cron.util';
@@ -47,13 +48,18 @@ export class TrainingAutoCloseService implements OnModuleInit {
 
         const closable: TrainingSession[] = [];
         for (const session of expired) {
-            if (await this.closeFinishedRound(session)) {
-                closable.push(session);
+            try {
+                if (await this.closeIdleSession(session)) {
+                    closable.push(session);
+                }
+            } catch (error) {
+                // Rolled back alone: the other sessions are still closed, this one is retried on
+                // the next run.
+                this.logger.error(`Auto-close failed for training session ${session.code}`, error);
             }
         }
         if (!closable.length) return;
 
-        await this.trainingSessionRepo.closeMany(closable.map((s) => s.id));
         this.logger.log(
             `${closable.length} session(s) d'entraînement clôturée(s) automatiquement : [${closable
                 .map((s) => s.code)
@@ -66,6 +72,19 @@ export class TrainingAutoCloseService implements OnModuleInit {
         for (const session of reloaded) {
             this.trainingRealtimeGateway.emitSessionUpdatedFrom(session);
         }
+    }
+
+    /**
+     * The round and the session are closed together or not at all: a session left open with its
+     * round closed could no longer be scored, without anything saying why.
+     */
+    @Transactional()
+    private async closeIdleSession(session: TrainingSession): Promise<boolean> {
+        if (!(await this.closeFinishedRound(session))) {
+            return false;
+        }
+        await this.trainingSessionRepo.closeMany([session.id]);
+        return true;
     }
 
     /**

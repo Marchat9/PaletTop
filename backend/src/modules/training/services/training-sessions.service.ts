@@ -1,3 +1,4 @@
+import { Transactional } from 'typeorm-transactional';
 import {
     BadRequestException,
     ConflictException,
@@ -117,14 +118,24 @@ export class TrainingSessionsService {
         );
         // Idempotent: closing an already closed session must not overwrite its original closedAt.
         if (session.status !== TrainingSessionStatus.CLOSED) {
-            await this.closeCurrentRound(session);
-            session.status = TrainingSessionStatus.CLOSED;
-            session.closedAt = new Date();
-            await this.trainingSessionRepo.closeSession(session.id, session.closedAt);
+            await this.closeWithCurrentRound(session);
             this.logger.log(`Training session ${sessionCode} closed by the admin`);
             this.trainingRealtimeGateway.emitSessionUpdatedFrom(session);
         }
         return toTrainingSessionAdminDto(session);
+    }
+
+    /**
+     * The round and the session are closed together or not at all: a session left open with its
+     * round closed could no longer be scored, without anything saying why.
+     */
+    @Transactional()
+    private async closeWithCurrentRound(session: TrainingSession): Promise<void> {
+        await this.closeCurrentRound(session);
+        const closedAt = new Date();
+        await this.trainingSessionRepo.closeSession(session.id, closedAt);
+        session.status = TrainingSessionStatus.CLOSED;
+        session.closedAt = closedAt;
     }
 
     /**

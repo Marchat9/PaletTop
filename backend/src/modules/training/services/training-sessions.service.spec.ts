@@ -12,6 +12,11 @@ import {
 import { TrainingRound } from 'src/entities/training-round.entity';
 import { TrainingSessionsService } from './training-sessions.service';
 
+// The rollback itself is done by the database; here @Transactional() just runs the method.
+vi.mock('typeorm-transactional', () => ({
+    Transactional: () => () => undefined,
+}));
+
 const MEMBER = {
     id: 'member-1',
     name: 'Jean Dubois',

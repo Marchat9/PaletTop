@@ -4,6 +4,11 @@ import { MatchStatus } from 'src/enum/status.enum';
 import { TrainingRoundStatus } from 'src/enum/training.enum';
 import { TrainingAutoCloseService } from './training-auto-close.service';
 
+// The rollback itself is done by the database; here @Transactional() just runs the method.
+vi.mock('typeorm-transactional', () => ({
+    Transactional: () => () => undefined,
+}));
+
 function round(statuses: MatchStatus[], status = TrainingRoundStatus.OPEN): TrainingRound {
     return {
         id: 'round-1',
@@ -16,7 +21,7 @@ function round(statuses: MatchStatus[], status = TrainingRoundStatus.OPEN): Trai
 function makeService(latestRound: TrainingRound | null) {
     const sessionRepo = {
         findExpiredOpen: vi.fn(() => Promise.resolve([{ id: 's1', code: '123456' }])),
-        closeMany: vi.fn(() => Promise.resolve()),
+        closeMany: vi.fn((_ids: string[]) => Promise.resolve()),
         findAllByIdsWithRelations: vi.fn(() => Promise.resolve([])),
     };
     const roundRepo = {
@@ -76,5 +81,22 @@ describe('TrainingAutoCloseService', () => {
 
         expect(sessionRepo.closeMany).toHaveBeenCalledWith(['s1']);
         expect(roundRepo.closeRound).not.toHaveBeenCalled();
+    });
+
+    // Each session is closed in its own transaction: one failing is rolled back alone.
+    it('still closes the other sessions when one of them fails, and does not announce it', async () => {
+        const { service, sessionRepo } = makeService(null);
+        sessionRepo.findExpiredOpen.mockResolvedValue([
+            { id: 's1', code: '111111' },
+            { id: 's2', code: '222222' },
+        ]);
+        sessionRepo.closeMany.mockImplementation((ids: string[]) =>
+            ids[0] === 's1' ? Promise.reject(new Error('db down')) : Promise.resolve(),
+        );
+
+        await service.runAutoClose();
+
+        expect(sessionRepo.closeMany).toHaveBeenCalledWith(['s2']);
+        expect(sessionRepo.findAllByIdsWithRelations).toHaveBeenCalledWith(['s2']);
     });
 });
