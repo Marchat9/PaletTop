@@ -2,7 +2,8 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { Action, Store } from '@ngrx/store';
-import { catchError, map, of, switchMap, withLatestFrom } from 'rxjs';
+import { Router } from '@angular/router';
+import { catchError, from, map, of, switchMap, withLatestFrom } from 'rxjs';
 import { TeamService } from 'src/app/services/team.service';
 import { TournamentService } from 'src/app/services/tournament.service';
 import { convertErrorToString } from 'src/app/utils/api-call.utils';
@@ -70,6 +71,7 @@ export class TournamentEffects {
   private readonly store = inject(Store);
   private readonly tournamentService = inject(TournamentService);
   private readonly teamService = inject(TeamService);
+  private readonly router = inject(Router);
 
   getTournamentInformations$ = createEffect(() =>
     this.actions$.pipe(
@@ -179,14 +181,17 @@ export class TournamentEffects {
                 }),
               ];
 
-              const currentCode = localStorage.getItem(STORAGE_TOURNAMENT_CODE_KEY);
-              if (tournament.code !== (currentCode ?? '')) {
-                actions.push(
-                  setLocalStorageData({ key: STORAGE_TOURNAMENT_CODE_KEY, value: tournament.code }),
-                );
+              const password = adminInformation?.password;
+              if (!password || tournament.code === adminInformation?.code) {
+                return of(...actions);
               }
-
-              return of(...actions);
+              // The code changed: the admin session, the stored code and the websocket room all
+              // follow it. The URL is updated first, otherwise the page reconnects with the old
+              // code found in its route and loses the session.
+              actions.push(connectTournamentAdministrator({ code: tournament.code, password }));
+              return from(
+                this.router.navigate(['/admin/tournament', tournament.code], { replaceUrl: true }),
+              ).pipe(switchMap(() => of(...actions)));
             }),
             catchError((error) =>
               of(
