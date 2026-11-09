@@ -35,7 +35,7 @@ export class TrainingRound {
     })
     status!: TrainingRoundStatus;
 
-    @CreateDateColumn()
+    @CreateDateColumn({ type: 'timestamptz' })
     createdAt!: Date;
 
     @OneToMany(() => TrainingMatch, (match) => match.round)

@@ -56,10 +56,10 @@ export class TrainingMatch {
     @Column({ type: 'timestamptz', nullable: true })
     finishedAt!: Date | null;
 
-    @CreateDateColumn()
+    @CreateDateColumn({ type: 'timestamptz' })
     createdAt!: Date;
 
-    @UpdateDateColumn()
+    @UpdateDateColumn({ type: 'timestamptz' })
     updatedAt!: Date;
 
     @BeforeInsert()

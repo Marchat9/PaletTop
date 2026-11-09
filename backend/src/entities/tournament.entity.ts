@@ -48,7 +48,7 @@ export class Tournament {
     @OneToMany(() => MatchesSession, (session) => session.tournament)
     matchsSessions!: MatchesSession[];
 
-    @CreateDateColumn()
+    @CreateDateColumn({ type: 'timestamptz' })
     createdAt!: Date;
 
     @Column({ type: 'timestamptz', nullable: true })

@@ -27,7 +27,7 @@ export class Training {
     @Column({ select: false })
     adminPassword!: string;
 
-    @CreateDateColumn()
+    @CreateDateColumn({ type: 'timestamptz' })
     createdAt!: Date;
 
     @OneToMany(() => TrainingMember, (member) => member.training)

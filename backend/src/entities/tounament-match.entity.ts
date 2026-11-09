@@ -69,10 +69,10 @@ export class TournamentMatch {
     @Column({ type: 'int', nullable: true })
     duration!: number | null;
 
-    @CreateDateColumn()
+    @CreateDateColumn({ type: 'timestamptz' })
     createdAt!: Date;
 
-    @UpdateDateColumn()
+    @UpdateDateColumn({ type: 'timestamptz' })
     updatedAt!: Date;
 
     @BeforeInsert()
