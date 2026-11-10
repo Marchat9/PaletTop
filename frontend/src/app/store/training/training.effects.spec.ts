@@ -44,7 +44,10 @@ describe('TrainingEffects', () => {
   });
 
   describe('club leaderboard open in a popup', () => {
-    function setup(followedSession: string | null) {
+    afterEach(() => vi.useRealTimers());
+
+    function setup(followedSession: string | null, validatedMatches = 1) {
+      vi.useFakeTimers();
       const actions$ = new ReplaySubject<Action>(1);
       TestBed.configureTestingModule({
         providers: [
@@ -62,12 +65,21 @@ describe('TrainingEffects', () => {
       TestBed.inject(TrainingEffects).refreshFollowedClubLeaderboard$.subscribe((action) =>
         emitted.push(action),
       );
-      actions$.next(wsTrainingLeaderboardUpdated({ leaderboard: [] }));
+      for (let i = 0; i < validatedMatches; i++) {
+        actions$.next(wsTrainingLeaderboardUpdated({ leaderboard: [] }));
+      }
+      vi.runAllTimers();
       return emitted;
     }
 
-    it('is refreshed on each validated match while the popup is open', () => {
+    it('is refreshed after a validated match while the popup is open', () => {
       expect(setup('123456')).toEqual([refreshTrainingClubLeaderboard({ sessionCode: '123456' })]);
+    });
+
+    it('is refreshed once for a burst of validated matches', () => {
+      expect(setup('123456', 5)).toEqual([
+        refreshTrainingClubLeaderboard({ sessionCode: '123456' }),
+      ]);
     });
 
     it('is left alone once the popup is closed', () => {

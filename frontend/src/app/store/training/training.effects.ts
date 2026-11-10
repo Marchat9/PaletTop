@@ -464,10 +464,13 @@ export class TrainingEffects {
     ),
   );
 
-  // A validated match changes the club leaderboard too: the open popup follows it.
+  // A validated match changes the club leaderboard too: the open popup follows it. The server
+  // recomputes it from the whole club history for every phone that has it open, so a burst of
+  // validations is grouped into one reload.
   refreshFollowedClubLeaderboard$ = createEffect(() =>
     this.actions$.pipe(
       ofType(wsTrainingLeaderboardUpdated),
+      debounceTime(environment.apiConfiguration.clubLeaderboardRefreshDebounce ?? 0),
       withLatestFrom(this.store.select(selectFollowedTrainingClubLeaderboardSession)),
       map(([, sessionCode]) => sessionCode),
       filter((sessionCode): sessionCode is string => !!sessionCode),
