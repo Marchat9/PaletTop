@@ -13,6 +13,7 @@ import {
   loadTrainingClubLeaderboard,
   loadTrainingLeaderboard,
   loadTrainingSessionPublic,
+  refreshTrainingClubLeaderboard,
   spectateTrainingSession,
 } from 'src/app/store/training/training.session.actions';
 import { TrainingRoundDto, TrainingSessionPublicDto } from 'src/app/store/training/training.models';
@@ -170,6 +171,23 @@ describe('SpectatorTrainingPage', () => {
     expect(element.querySelector('.column.ranking app-session-leaderboard')).not.toBeNull();
     expect(element.textContent).toContain('Séance terminée');
     expect(dispatchSpy).toHaveBeenCalledWith(
+      loadTrainingClubLeaderboard({ sessionCode: '123456' }),
+    );
+  });
+
+  it('rafraîchit le classement du club sans le vider à la resynchronisation', () => {
+    const { actions$, dispatchSpy } = setup({
+      session: session({ status: 'CLOSED' }),
+      rounds: [round(1)],
+    });
+    dispatchSpy.mockClear();
+
+    actions$.next(resyncRequested());
+
+    expect(dispatchSpy).toHaveBeenCalledWith(
+      refreshTrainingClubLeaderboard({ sessionCode: '123456' }),
+    );
+    expect(dispatchSpy).not.toHaveBeenCalledWith(
       loadTrainingClubLeaderboard({ sessionCode: '123456' }),
     );
   });

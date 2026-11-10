@@ -50,6 +50,8 @@ import {
   loadTrainingClubLeaderboard,
   loadTrainingClubLeaderboardFailure,
   loadTrainingClubLeaderboardSuccess,
+  followTrainingClubLeaderboard,
+  unfollowTrainingClubLeaderboard,
   loadTrainingLeaderboard,
   loadTrainingLeaderboardFailure,
   loadTrainingLeaderboardSuccess,
@@ -156,6 +158,7 @@ export const initialTrainingState: TrainingState = {
   currentRound: { data: null, isLoading: false, error: null },
   leaderboard: { data: [], isLoading: false, error: null },
   clubLeaderboard: { data: [], isLoading: false, error: null },
+  followedClubLeaderboardSession: null,
   participantCurrentMatch: { data: null, isLoading: false, error: null },
   participantHistory: { data: [], isLoading: false, error: null },
   participantAwaitingResync: false,
@@ -665,6 +668,15 @@ export const trainingReducer = createReducer(
     // Read from another session, the club leaderboard differs: the previous one is not shown.
     clubLeaderboard: { data: [], isLoading: true, error: null },
   })),
+  on(followTrainingClubLeaderboard, (state, { sessionCode }) => ({
+    ...state,
+    clubLeaderboard: { data: [], isLoading: true, error: null },
+    followedClubLeaderboardSession: sessionCode,
+  })),
+  on(unfollowTrainingClubLeaderboard, (state) => ({
+    ...state,
+    followedClubLeaderboardSession: null,
+  })),
   on(loadTrainingClubLeaderboardSuccess, (state, { clubLeaderboard }) => ({
     ...state,
     clubLeaderboard: { data: clubLeaderboard, isLoading: false, error: null },
@@ -983,6 +995,7 @@ export const trainingReducer = createReducer(
     currentRound: initialTrainingState.currentRound,
     leaderboard: initialTrainingState.leaderboard,
     clubLeaderboard: initialTrainingState.clubLeaderboard,
+    followedClubLeaderboardSession: null,
     lastCheckedInParticipant: null,
   })),
   on(disconnectTrainingAdministrator, (state) => ({

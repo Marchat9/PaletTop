@@ -169,4 +169,17 @@ export const loadTrainingClubLeaderboardFailure = createAction(
   '[Training] Load Training Club Leaderboard Failure',
   props<{ error: string }>(),
 );
+// Club leaderboard shown in a popup: loaded on opening, then refreshed on each validated match
+// until the popup is closed.
+export const followTrainingClubLeaderboard = createAction(
+  '[Training] Follow Training Club Leaderboard',
+  props<{ sessionCode: string }>(),
+);
+export const unfollowTrainingClubLeaderboard = createAction(
+  '[Training] Unfollow Training Club Leaderboard',
+);
+export const refreshTrainingClubLeaderboard = createAction(
+  '[Training] Refresh Training Club Leaderboard',
+  props<{ sessionCode: string }>(),
+);
 // -------------------------------------------------------

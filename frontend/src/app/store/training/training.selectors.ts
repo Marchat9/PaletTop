@@ -179,6 +179,10 @@ export const selectTrainingClubLeaderboardError = createSelector(
   selectTrainingState,
   (state) => state.clubLeaderboard.error,
 );
+export const selectFollowedTrainingClubLeaderboardSession = createSelector(
+  selectTrainingState,
+  (state) => state.followedClubLeaderboardSession,
+);
 
 export const selectTrainingLeaderboard = createSelector(
   selectTrainingState,

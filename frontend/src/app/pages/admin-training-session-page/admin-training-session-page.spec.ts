@@ -1,6 +1,9 @@
 import { Dialog } from '@angular/cdk/dialog';
 import { ClubLeaderboardPopup } from 'src/app/modales/club-leaderboard-popup/club-leaderboard-popup';
-import { loadTrainingClubLeaderboard } from 'src/app/store/training/training.session.actions';
+import {
+  followTrainingClubLeaderboard,
+  unfollowTrainingClubLeaderboard,
+} from 'src/app/store/training/training.session.actions';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { Actions } from '@ngrx/effects';
@@ -373,15 +376,20 @@ describe('AdminTrainingSessionPage', () => {
     expect(fixture.componentInstance.generateBlockedReason()).toContain('au moins un joueur');
   });
 
-  it('charge et ouvre le classement du club', () => {
+  it('suit le classement du club tant que sa popup est ouverte', () => {
     const { fixture, store, dialogMock } = setup();
+    const closed = new Subject<void>();
+    dialogMock.open.mockReturnValue({ closed });
     const dispatchSpy = vi.spyOn(store, 'dispatch');
 
     fixture.componentInstance.openClubLeaderboard();
 
     expect(dispatchSpy).toHaveBeenCalledWith(
-      loadTrainingClubLeaderboard({ sessionCode: fixture.componentInstance.sessionCode()! }),
+      followTrainingClubLeaderboard({ sessionCode: fixture.componentInstance.sessionCode()! }),
     );
     expect(dialogMock.open).toHaveBeenCalledWith(ClubLeaderboardPopup, expect.anything());
+
+    closed.next();
+    expect(dispatchSpy).toHaveBeenCalledWith(unfollowTrainingClubLeaderboard());
   });
 });

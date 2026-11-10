@@ -37,7 +37,8 @@ import {
 } from 'src/app/store/training/training.match.actions';
 import {
   leaveTrainingSession,
-  loadTrainingClubLeaderboard,
+  followTrainingClubLeaderboard,
+  unfollowTrainingClubLeaderboard,
   loadTrainingLeaderboard,
   loadTrainingSessionPublic,
 } from 'src/app/store/training/training.session.actions';
@@ -366,11 +367,13 @@ export class PlayerTrainingSessionPage implements OnInit, OnDestroy {
     if (!sessionCode) {
       return;
     }
-    this.store.dispatch(loadTrainingClubLeaderboard({ sessionCode }));
-    this.dialog.open(ClubLeaderboardPopup, {
-      panelClass: 'dialog-panel',
-      backdropClass: 'dialog-backdrop-light',
-    });
+    this.store.dispatch(followTrainingClubLeaderboard({ sessionCode }));
+    this.dialog
+      .open(ClubLeaderboardPopup, {
+        panelClass: 'dialog-panel',
+        backdropClass: 'dialog-backdrop-light',
+      })
+      .closed.subscribe(() => this.store.dispatch(unfollowTrainingClubLeaderboard()));
   }
 
   private reload(sessionCode: string, participantCode: string): void {

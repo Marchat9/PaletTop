@@ -31,7 +31,8 @@ import {
 } from 'src/app/store/training/training.round.actions';
 import {
   closeTrainingSession,
-  loadTrainingClubLeaderboard,
+  followTrainingClubLeaderboard,
+  unfollowTrainingClubLeaderboard,
   connectTrainingSessionAdministrator,
   leaveTrainingSession,
   loadTrainingLeaderboard,
@@ -555,11 +556,13 @@ export class AdminTrainingSessionPage implements OnInit, OnDestroy {
     if (!sessionCode) {
       return;
     }
-    this.store.dispatch(loadTrainingClubLeaderboard({ sessionCode }));
-    this.dialog.open(ClubLeaderboardPopup, {
-      panelClass: 'dialog-panel',
-      backdropClass: 'dialog-backdrop-light',
-    });
+    this.store.dispatch(followTrainingClubLeaderboard({ sessionCode }));
+    this.dialog
+      .open(ClubLeaderboardPopup, {
+        panelClass: 'dialog-panel',
+        backdropClass: 'dialog-backdrop-light',
+      })
+      .closed.subscribe(() => this.store.dispatch(unfollowTrainingClubLeaderboard()));
   }
 
   public closeSession(): void {

@@ -8,6 +8,9 @@ import { TrainingService } from 'src/app/services/training.service';
 import { TrainingEffects } from './training.effects';
 import { TrainingMatchDto } from './training.models';
 import { validateTrainingMatch, validateTrainingMatchSuccess } from './training.match.actions';
+import { wsTrainingLeaderboardUpdated } from '../realtime/realtime.actions';
+import { refreshTrainingClubLeaderboard } from './training.session.actions';
+import { selectFollowedTrainingClubLeaderboardSession } from './training.selectors';
 
 describe('TrainingEffects', () => {
   it('sends the player validation of a match to the server', async () => {
@@ -38,5 +41,37 @@ describe('TrainingEffects', () => {
 
     expect(trainingService.validateMatch).toHaveBeenCalledWith('123456', 'm1', '1111', '2222');
     expect(emitted).toEqual([validateTrainingMatchSuccess({ match })]);
+  });
+
+  describe('club leaderboard open in a popup', () => {
+    function setup(followedSession: string | null) {
+      const actions$ = new ReplaySubject<Action>(1);
+      TestBed.configureTestingModule({
+        providers: [
+          TrainingEffects,
+          provideMockActions(() => actions$),
+          provideMockStore({
+            selectors: [
+              { selector: selectFollowedTrainingClubLeaderboardSession, value: followedSession },
+            ],
+          }),
+          { provide: TrainingService, useValue: {} },
+        ],
+      });
+      const emitted: Action[] = [];
+      TestBed.inject(TrainingEffects).refreshFollowedClubLeaderboard$.subscribe((action) =>
+        emitted.push(action),
+      );
+      actions$.next(wsTrainingLeaderboardUpdated({ leaderboard: [] }));
+      return emitted;
+    }
+
+    it('is refreshed on each validated match while the popup is open', () => {
+      expect(setup('123456')).toEqual([refreshTrainingClubLeaderboard({ sessionCode: '123456' })]);
+    });
+
+    it('is left alone once the popup is closed', () => {
+      expect(setup(null)).toEqual([]);
+    });
   });
 });

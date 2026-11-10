@@ -222,6 +222,8 @@ export interface TrainingState {
   currentRound: ApiCall<Nullable<TrainingRoundDto>>;
   leaderboard: ApiCall<TrainingLeaderboardEntryDto[]>;
   clubLeaderboard: ApiCall<TrainingClubLeaderboardEntryDto[]>;
+  /** Session whose club leaderboard is open in a popup, refreshed live; null when closed. */
+  followedClubLeaderboardSession: Nullable<string>;
 
   participantCurrentMatch: ApiCall<Nullable<TrainingCurrentMatchDto>>;
   /**

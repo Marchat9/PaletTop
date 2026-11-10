@@ -25,6 +25,7 @@ import { loadTrainingRounds } from 'src/app/store/training/training.round.action
 import {
   leaveTrainingSession,
   loadTrainingClubLeaderboard,
+  refreshTrainingClubLeaderboard,
   loadTrainingLeaderboard,
   loadTrainingSessionPublic,
   spectateTrainingSession,
@@ -161,8 +162,9 @@ export class SpectatorTrainingPage {
     this.store.dispatch(loadTrainingSessionPublic({ sessionCode }));
     this.store.dispatch(loadTrainingRounds({ sessionCode }));
     this.store.dispatch(loadTrainingLeaderboard({ sessionCode }));
+    // Refreshed in place: loading it again blanked the table on every return to the foreground.
     if (this.isSessionClosed()) {
-      this.loadClubLeaderboard();
+      this.store.dispatch(refreshTrainingClubLeaderboard({ sessionCode }));
     }
   }
 
