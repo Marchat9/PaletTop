@@ -78,7 +78,7 @@ export class TrainingSession {
     @Column({ type: 'timestamptz', nullable: true })
     closedAt!: Date | null;
 
-    @CreateDateColumn()
+    @CreateDateColumn({ type: 'timestamptz' })
     createdAt!: Date;
 
     @OneToMany(() => TrainingParticipant, (participant) => participant.session)

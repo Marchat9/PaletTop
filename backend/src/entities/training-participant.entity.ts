@@ -46,6 +46,6 @@ export class TrainingParticipant {
     })
     status!: TrainingParticipantStatus;
 
-    @CreateDateColumn()
+    @CreateDateColumn({ type: 'timestamptz' })
     createdAt!: Date;
 }

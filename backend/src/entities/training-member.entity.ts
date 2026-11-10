@@ -23,6 +23,6 @@ export class TrainingMember {
     @Column({ length: 100 })
     name!: string;
 
-    @CreateDateColumn()
+    @CreateDateColumn({ type: 'timestamptz' })
     createdAt!: Date;
 }

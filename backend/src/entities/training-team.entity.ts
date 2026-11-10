@@ -35,7 +35,7 @@ export class TrainingTeam {
     @Column({ nullable: true })
     name?: string;
 
-    @CreateDateColumn()
+    @CreateDateColumn({ type: 'timestamptz' })
     createdAt!: Date;
 
     @OneToMany(() => TrainingTeamMember, (member) => member.team)
