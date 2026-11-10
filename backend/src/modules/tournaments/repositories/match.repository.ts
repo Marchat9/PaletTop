@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { ExpectedScore } from 'src/utils/score-conflict.util';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DeepPartial, In, Repository } from 'typeorm';
 import { MatchStatus } from 'src/enum/status.enum';
@@ -41,12 +42,17 @@ export class MatchRepository {
      * read then a write would let a concurrent validation slip in between. Returns whether the
      * match was updated.
      */
+    // With an expected score, the score must not have changed either (checked in the same query).
     async updateIfStatus(
         matchId: string,
         expected: MatchStatus[],
         data: Partial<TournamentMatch>,
+        expectedScore: ExpectedScore | null = null,
     ): Promise<boolean> {
-        const result = await this.repo.update({ id: matchId, status: In(expected) }, data);
+        const result = await this.repo.update(
+            { id: matchId, status: In(expected), ...expectedScore },
+            data,
+        );
         return (result.affected ?? 0) > 0;
     }
 

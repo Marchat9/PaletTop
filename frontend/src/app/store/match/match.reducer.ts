@@ -21,7 +21,9 @@ import {
   updateScore,
   updateScoreFailure,
   updateScoreSuccess,
+  updateScoreConflict,
   validateMatch,
+  validateMatchConflict,
   validateMatchFailure,
   validateMatchSuccess,
 } from './match.actions';
@@ -62,6 +64,8 @@ export const matchReducer = createReducer(
     ...state,
     data: { data: match, isLoading: false, error: null },
     awaitingResync: false,
+    // The match is now the server's: a score that failed to go out before no longer matters.
+    scoreRequest: { ...state.scoreRequest, updateScore: { isLoading: false, error: null } },
   })),
   // A failed reload (timeout and retry included) keeps the entry locked: the score shown may be
   // stale. The next resync signal (network, foreground, websocket) tries again.
@@ -99,13 +103,22 @@ export const matchReducer = createReducer(
     ...state,
     scoreRequest: { ...state.scoreRequest, updateScore: { isLoading: true, error: null } },
   })),
-  on(updateScoreSuccess, (state) => ({
+  // The saved score becomes the base of the next entry, without waiting for the broadcast.
+  on(updateScoreSuccess, (state, { match }) => ({
     ...state,
+    data: {
+      ...state.data,
+      data: isCurrentOrNewerMatch(state.data.data, match) ? match : state.data.data,
+    },
     scoreRequest: { ...state.scoreRequest, updateScore: { isLoading: false, error: null } },
   })),
   on(updateScoreFailure, (state, { error }) => ({
     ...state,
     scoreRequest: { ...state.scoreRequest, updateScore: { isLoading: false, error } },
+  })),
+  on(updateScoreConflict, (state) => ({
+    ...state,
+    scoreRequest: { ...state.scoreRequest, updateScore: { isLoading: false, error: null } },
   })),
   on(validateMatch, (state) => ({
     ...state,
@@ -114,6 +127,10 @@ export const matchReducer = createReducer(
   on(validateMatchSuccess, (state, { match }) => ({
     ...state,
     data: { ...state.data, data: withMatch(state.data.data, match) },
+    scoreRequest: { ...state.scoreRequest, validateMatch: { isLoading: false, error: null } },
+  })),
+  on(validateMatchConflict, (state) => ({
+    ...state,
     scoreRequest: { ...state.scoreRequest, validateMatch: { isLoading: false, error: null } },
   })),
   on(validateMatchFailure, (state, { error }) => ({

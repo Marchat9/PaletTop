@@ -97,8 +97,10 @@ import {
   startTrainingMatchSuccess,
   updateTrainingScore,
   updateTrainingScoreFailure,
+  updateTrainingScoreConflict,
   updateTrainingScoreSuccess,
   validateTrainingMatch,
+  validateTrainingMatchConflict,
   validateTrainingMatchFailure,
   validateTrainingMatchSuccess,
 } from './training.match.actions';
@@ -284,6 +286,11 @@ export const trainingReducer = createReducer(
       participantCurrentMatch: { data: currentMatch, isLoading: false, error: null },
       participantInformations: { sessionCode, participantCode },
       participantAwaitingResync: false,
+      // The match is now the server's: a score that failed to go out before no longer matters.
+      requestStatus: {
+        ...state.requestStatus,
+        updateScore: { isLoading: false, error: null },
+      },
     }),
   ),
   // A failed reload (timeout and retry included) keeps the entry locked: the score shown may be
@@ -850,6 +857,13 @@ export const trainingReducer = createReducer(
       updateScore: { isLoading: true, error: null },
     },
   })),
+  on(updateTrainingScoreConflict, (state) => ({
+    ...state,
+    requestStatus: {
+      ...state.requestStatus,
+      updateScore: { isLoading: false, error: null },
+    },
+  })),
   on(updateTrainingScoreSuccess, (state, { match }) => {
     const participantView = state.participantCurrentMatch.data;
     return {
@@ -890,13 +904,37 @@ export const trainingReducer = createReducer(
       validateMatch: { isLoading: true, error: null },
     },
   })),
-  on(validateTrainingMatchSuccess, (state, { match }) => ({
+  on(validateTrainingMatchSuccess, (state, { match }) => {
+    const participantView = state.participantCurrentMatch.data;
+    const isMyMatch = participantView?.match?.id === match.id;
+    return {
+      ...state,
+      rounds: {
+        ...state.rounds,
+        data: state.rounds.data.map((r) => replaceMatchInRound(r, match)),
+      },
+      currentRound: {
+        ...state.currentRound,
+        data: state.currentRound.data ? replaceMatchInRound(state.currentRound.data, match) : null,
+      },
+      // The player's card and history show the validation even when the broadcast is missed.
+      participantCurrentMatch: isMyMatch
+        ? { ...state.participantCurrentMatch, data: { ...participantView, match } }
+        : state.participantCurrentMatch,
+      participantHistory: isMyMatch
+        ? {
+            ...state.participantHistory,
+            data: upsertHistoryMatch(state.participantHistory.data, match),
+          }
+        : state.participantHistory,
+      requestStatus: {
+        ...state.requestStatus,
+        validateMatch: { isLoading: false, error: null },
+      },
+    };
+  }),
+  on(validateTrainingMatchConflict, (state) => ({
     ...state,
-    rounds: { ...state.rounds, data: state.rounds.data.map((r) => replaceMatchInRound(r, match)) },
-    currentRound: {
-      ...state.currentRound,
-      data: state.currentRound.data ? replaceMatchInRound(state.currentRound.data, match) : null,
-    },
     requestStatus: {
       ...state.requestStatus,
       validateMatch: { isLoading: false, error: null },

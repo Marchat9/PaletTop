@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { ConflictException } from '@nestjs/common';
 import { TrainingMatch } from 'src/entities/training-match.entity';
 import { TrainingSession } from 'src/entities/training-session.entity';
 import { MatchStatus } from 'src/enum/status.enum';
@@ -96,5 +97,143 @@ describe('TrainingScoreService.adminUpdateScore on a closed round', () => {
         await expect(
             corrected.service.adminUpdateScore('1234', 'm1', 'pw', 13, 7),
         ).resolves.toMatchObject({ scoreA: 13, scoreB: 7 });
+    });
+});
+
+describe('TrainingScoreService.updateScore against a stale score', () => {
+    function setupPlayer(found: TrainingMatch, updated: boolean, latest: TrainingMatch = found) {
+        const session = {
+            id: 'session-1',
+            code: '1234',
+            status: TrainingSessionStatus.OPEN,
+            pointsPerGame: 13,
+        } as unknown as TrainingSession;
+        const matchRepo = {
+            findByIdInSession: vi.fn().mockResolvedValueOnce(found).mockResolvedValue(latest),
+            updateIfStatus: vi.fn(() => Promise.resolve(updated)),
+        };
+        const service = new TrainingScoreService(
+            matchRepo as never,
+            {
+                findByCodeOrThrow: vi.fn(() => Promise.resolve(session)),
+                touchLastActivity: vi.fn(),
+            } as never,
+            {} as never,
+            { getLeaderboardBySessionId: vi.fn(() => Promise.resolve([])) } as never,
+            { emitMatchUpdated: vi.fn(), emitLeaderboardUpdated: vi.fn() } as never,
+        );
+        return { service, matchRepo };
+    }
+
+    const playerMatch = (scoreA: number, scoreB: number, status = MatchStatus.ONGOING) =>
+        match({
+            status,
+            scoreA,
+            scoreB,
+            teamA: { members: [{ participant: { code: '1111' } }] },
+        } as unknown as Partial<TrainingMatch>);
+
+    it('writes the score only if it is still the one the player started from', async () => {
+        const { service, matchRepo } = setupPlayer(playerMatch(4, 2), true);
+
+        await service.updateScore('1234', 'm1', '1111', 4, 3, { scoreA: 4, scoreB: 2 });
+
+        expect(matchRepo.updateIfStatus).toHaveBeenCalledWith(
+            'm1',
+            expect.anything(),
+            expect.objectContaining({ scoreA: 4, scoreB: 3 }),
+            { scoreA: 4, scoreB: 2 },
+        );
+    });
+
+    it("refuses a score based on an outdated one, without erasing the opponent's points", async () => {
+        const { service, matchRepo } = setupPlayer(playerMatch(7, 2), true);
+
+        await expect(
+            service.updateScore('1234', 'm1', '1111', 4, 3, { scoreA: 4, scoreB: 2 }),
+        ).rejects.toThrow(ConflictException);
+        expect(matchRepo.updateIfStatus).not.toHaveBeenCalled();
+    });
+
+    it('refuses it too when the opponent scores between the read and the write', async () => {
+        const { service } = setupPlayer(playerMatch(4, 2), false, playerMatch(5, 2));
+
+        await expect(
+            service.updateScore('1234', 'm1', '1111', 4, 3, { scoreA: 4, scoreB: 2 }),
+        ).rejects.toThrow(ConflictException);
+    });
+
+    it('keeps the validated message when the match was validated meanwhile', async () => {
+        const { service } = setupPlayer(
+            playerMatch(4, 2),
+            false,
+            playerMatch(13, 2, MatchStatus.VALIDATED),
+        );
+
+        await expect(
+            service.updateScore('1234', 'm1', '1111', 4, 3, { scoreA: 4, scoreB: 2 }),
+        ).rejects.toThrow("Le match vient d'être validé");
+    });
+
+    it('writes as before for a client that sends no previous score', async () => {
+        const { service, matchRepo } = setupPlayer(playerMatch(7, 2), true);
+
+        await service.updateScore('1234', 'm1', '1111', 4, 3);
+
+        expect(matchRepo.updateIfStatus).toHaveBeenCalledWith(
+            'm1',
+            expect.anything(),
+            expect.anything(),
+            null,
+        );
+    });
+
+    const endedMatch = () =>
+        match({
+            status: MatchStatus.ENDED,
+            scoreA: 13,
+            scoreB: 9,
+            teamA: { members: [{ participant: { code: '1111' } }] },
+            teamB: { members: [{ participant: { code: '2222' } }] },
+        } as unknown as Partial<TrainingMatch>);
+
+    it('refuses to validate a score the player never saw', async () => {
+        const { service, matchRepo } = setupPlayer(endedMatch(), true);
+
+        await expect(
+            service.validateMatch('1234', 'm1', '1111', '2222', { scoreA: 12, scoreB: 9 }),
+        ).rejects.toThrow(ConflictException);
+        expect(matchRepo.updateIfStatus).not.toHaveBeenCalled();
+    });
+
+    it('validates the score seen by the player, only if it is still the saved one', async () => {
+        const { service, matchRepo } = setupPlayer(endedMatch(), true);
+
+        await service.validateMatch('1234', 'm1', '1111', '2222', { scoreA: 13, scoreB: 9 });
+
+        expect(matchRepo.updateIfStatus).toHaveBeenCalledWith(
+            'm1',
+            [MatchStatus.ENDED],
+            expect.objectContaining({ status: MatchStatus.VALIDATED }),
+            { scoreA: 13, scoreB: 9 },
+        );
+    });
+
+    it('refuses as stale a validation whose score changes between the read and the write', async () => {
+        const changed = { ...endedMatch(), scoreB: 10 } as TrainingMatch;
+        const { service } = setupPlayer(endedMatch(), false, changed);
+
+        await expect(
+            service.validateMatch('1234', 'm1', '1111', '2222', { scoreA: 13, scoreB: 9 }),
+        ).rejects.toThrow(ConflictException);
+    });
+
+    it('keeps the already validated message when the other team validated first', async () => {
+        const validated = { ...endedMatch(), status: MatchStatus.VALIDATED } as TrainingMatch;
+        const { service } = setupPlayer(endedMatch(), false, validated);
+
+        await expect(
+            service.validateMatch('1234', 'm1', '1111', '2222', { scoreA: 13, scoreB: 9 }),
+        ).rejects.toThrow('Le match a déjà été validé');
     });
 });

@@ -50,14 +50,33 @@ describe('PlayerMatchCard', () => {
     expect(emitted).toHaveBeenCalledWith({ myScore: 5, opponentScore: 7 });
   });
 
-  it('ouvre la validation dès que le score cible est atteint, sans attendre le serveur', () => {
+  it('attend que le serveur ait enregistré le score final pour ouvrir la validation', () => {
     const fixture = setup(buildMatch({ myScore: 12, opponentScore: 9 }));
-
-    expect(element(fixture).querySelector('.match-card__validate')).toBeNull();
 
     incrementMyScore(fixture);
 
+    expect(element(fixture).querySelector('.match-card__validate')).toBeNull();
+    expect(element(fixture).querySelector('.match-card__saving')).not.toBeNull();
+
+    fixture.componentRef.setInput(
+      'match',
+      buildMatch({ status: 'ENDED', myScore: 13, opponentScore: 9 }),
+    );
+    fixture.detectChanges();
+
     expect(element(fixture).querySelector('.match-card__validate')).not.toBeNull();
+    expect(element(fixture).querySelector('.match-card__saving')).toBeNull();
+  });
+
+  it('ne reste pas sur « Enregistrement » quand le score final n’a pas pu être enregistré', () => {
+    const fixture = setup(buildMatch({ myScore: 12, opponentScore: 9 }));
+
+    incrementMyScore(fixture);
+    fixture.componentRef.setInput('scoreError', 'Erreur réseau');
+    fixture.detectChanges();
+
+    expect(element(fixture).querySelector('.match-card__saving')).toBeNull();
+    expect(element(fixture).querySelector('.error-hint')?.textContent).toContain('Erreur réseau');
   });
 
   it('propose de démarrer un match qui ne l’est pas encore', () => {

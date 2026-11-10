@@ -8,7 +8,10 @@ import {
   filter,
   map,
   of,
+  finalize,
   switchMap,
+  take,
+  tap,
   withLatestFrom,
 } from 'rxjs';
 import { TournamentStatus } from 'src/app/models/tournament-status.enum';
@@ -22,6 +25,14 @@ import {
 import { convertErrorToString } from 'src/app/utils/api-call.utils';
 import { withTimeoutAndOneRetry } from 'src/app/utils/reload-retry.util';
 import {
+  expectedScoreOf,
+  isStaleScoreError,
+  ScoreEntryBase,
+  STALE_VALIDATION_MESSAGE,
+  staleScoreNotification,
+} from 'src/app/utils/stale-score.util';
+import { selectCurrentMatch } from './match.selectors';
+import {
   adminUpdateScore,
   adminUpdateScoreFailure,
   adminUpdateScoreSuccess,
@@ -32,9 +43,11 @@ import {
   startMatchFailure,
   startMatchSuccess,
   updateScore,
+  updateScoreConflict,
   updateScoreFailure,
   updateScoreSuccess,
   validateMatch,
+  validateMatchConflict,
   validateMatchFailure,
   validateMatchSuccess,
 } from './match.actions';
@@ -46,6 +59,7 @@ export class MatchEffects {
   private readonly actions$ = inject(Actions);
   private readonly store = inject(Store);
   private readonly matchService = inject(MatchService);
+  private readonly scoreEntryBase = new ScoreEntryBase();
 
   loadCurrentMatchOnPlayerConnect$ = createEffect(() =>
     this.actions$.pipe(
@@ -88,12 +102,18 @@ export class MatchEffects {
   updateScore$ = createEffect(() =>
     this.actions$.pipe(
       ofType(updateScore),
+      withLatestFrom(this.store.select(selectCurrentMatch)),
+      map(([request, onScreen]) => ({
+        request,
+        base: this.scoreEntryBase.atClick(request.matchId, onScreen),
+      })),
       debounceTime(environment.apiConfiguration.delayToUpdateScore ?? 0),
+      tap(({ request }) => this.scoreEntryBase.sent(request)),
       withLatestFrom(this.store.select(selectCurrentTournamentData)),
       // concatMap, not switchMap: cancelling an HTTP call does not stop the server from processing
       // it, so two in-flight scores could be saved out of order. Sent one after the other, the
       // last score typed is the last one saved.
-      concatMap(([request, tournament]) =>
+      concatMap(([{ request, base }, tournament]) =>
         this.matchService
           .updateScore(
             tournament!.code,
@@ -101,10 +121,23 @@ export class MatchEffects {
             request.teamCode,
             request.scoreA,
             request.scoreB,
+            base,
           )
           .pipe(
-            map(() => updateScoreSuccess()),
-            catchError((error) => of(updateScoreFailure({ error: convertErrorToString(error) }))),
+            map(({ match }) => updateScoreSuccess({ match })),
+            catchError((error) =>
+              isStaleScoreError(error)
+                ? of(
+                    updateScoreConflict(),
+                    loadCurrentMatch({
+                      tournamentCode: tournament!.code,
+                      teamCode: request.teamCode,
+                    }),
+                    staleScoreNotification(),
+                  )
+                : of(updateScoreFailure({ error: convertErrorToString(error) })),
+            ),
+            finalize(() => this.scoreEntryBase.answered(request)),
           ),
       ),
     ),
@@ -114,10 +147,29 @@ export class MatchEffects {
     this.actions$.pipe(
       ofType(validateMatch),
       withLatestFrom(this.store.select(selectCurrentTournamentData)),
+      // The score on screen is sent with the validation: the server refuses it if it changed.
       switchMap(([{ matchId, teamCode, opponentTeamCode }, tournament]) =>
-        this.matchService.validateMatch(tournament!.code, matchId, teamCode, opponentTeamCode).pipe(
+        this.store.select(selectCurrentMatch).pipe(
+          take(1),
+          switchMap((current) =>
+            this.matchService.validateMatch(
+              tournament!.code,
+              matchId,
+              teamCode,
+              opponentTeamCode,
+              expectedScoreOf(current, matchId),
+            ),
+          ),
           map(({ match }) => validateMatchSuccess({ match })),
-          catchError((error) => of(validateMatchFailure({ error: convertErrorToString(error) }))),
+          catchError((error) =>
+            isStaleScoreError(error)
+              ? of(
+                  validateMatchConflict(),
+                  loadCurrentMatch({ tournamentCode: tournament!.code, teamCode }),
+                  staleScoreNotification(STALE_VALIDATION_MESSAGE),
+                )
+              : of(validateMatchFailure({ error: convertErrorToString(error) })),
+          ),
         ),
       ),
     ),

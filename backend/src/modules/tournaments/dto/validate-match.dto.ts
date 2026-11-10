@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsInt, IsNotEmpty, IsOptional, IsString, Min } from 'class-validator';
 
 export class ValidateMatchDto {
     @IsString()
@@ -8,4 +8,16 @@ export class ValidateMatchDto {
     @IsString()
     @IsNotEmpty()
     opponentTeamCode!: string;
+
+    // Score the player saw when validating: refused if it changed since (stale realtime).
+    // Optional, for the clients sent before this check existed.
+    @IsOptional()
+    @IsInt()
+    @Min(0)
+    previousScoreA?: number;
+
+    @IsOptional()
+    @IsInt()
+    @Min(0)
+    previousScoreB?: number;
 }

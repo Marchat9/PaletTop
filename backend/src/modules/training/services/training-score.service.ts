@@ -8,6 +8,7 @@ import { TrainingMatchRepository } from '../repositories/training-match.reposito
 import { TrainingSessionRepository } from '../repositories/training-session.repository';
 import { TrainingMatchDto, toTrainingMatchDto } from '../responses/training-round.dto';
 import { assertSessionOpen } from '../utils/session-guard.utils';
+import { ExpectedScore, isSameScore, staleScoreError } from 'src/utils/score-conflict.util';
 import { TrainingSessionAuthService } from './training-session-auth.service';
 import { TrainingLeaderboardService } from './training-leaderboard.service';
 import { TrainingRealtimeGateway } from '../training-realtime.gateway';
@@ -61,6 +62,7 @@ export class TrainingScoreService {
         participantCode: string,
         scoreA: number,
         scoreB: number,
+        expectedScore: ExpectedScore | null = null,
     ): Promise<TrainingMatchDto> {
         const { match, session } = await this.findMatchWithParticipantAuth(
             sessionCode,
@@ -78,6 +80,9 @@ export class TrainingScoreService {
                 "Le score d'un match validé ne peut pas être modifié par un joueur.",
             );
         }
+        if (expectedScore && !isSameScore(match, expectedScore)) {
+            throw staleScoreError(this.logger, matchId, `training session ${sessionCode}`);
+        }
 
         this.validateScores(scoreA, scoreB, session.pointsPerGame, matchId, sessionCode);
         const isFinished = this.isMatchFinished(scoreA, scoreB, session.pointsPerGame);
@@ -94,15 +99,25 @@ export class TrainingScoreService {
             match.startedAt = new Date();
         }
 
-        const updated = await this.trainingMatchRepo.updateIfStatus(matchId, NOT_VALIDATED, {
-            scoreA: match.scoreA,
-            scoreB: match.scoreB,
-            status: match.status,
-            finishedAt: match.finishedAt,
-            startedAt: match.startedAt,
-        });
-        // Validated by the other team while this score was on its way: it must not reopen it.
+        const updated = await this.trainingMatchRepo.updateIfStatus(
+            matchId,
+            NOT_VALIDATED,
+            {
+                scoreA: match.scoreA,
+                scoreB: match.scoreB,
+                status: match.status,
+                finishedAt: match.finishedAt,
+                startedAt: match.startedAt,
+            },
+            expectedScore,
+        );
         if (!updated) {
+            // Scored by the other team in the meantime, or validated by it: the latter must not
+            // be reopened.
+            const latest = await this.trainingMatchRepo.findByIdInSession(matchId, session.id);
+            if (expectedScore && latest?.status !== MatchStatus.VALIDATED) {
+                throw staleScoreError(this.logger, matchId, `training session ${sessionCode}`);
+            }
             throw new BadRequestException(
                 "Le match vient d'être validé : le score ne peut plus changer.",
             );
@@ -122,6 +137,7 @@ export class TrainingScoreService {
         matchId: string,
         participantCode: string,
         opponentParticipantCode: string,
+        expectedScore: ExpectedScore | null = null,
     ): Promise<TrainingMatchDto> {
         const { match, session } = await this.findMatchWithParticipantAuth(
             sessionCode,
@@ -145,6 +161,10 @@ export class TrainingScoreService {
             );
             throw new BadRequestException('Code participant adverse incorrect.');
         }
+        // The player validates the score on their screen: one they never saw is not confirmed.
+        if (expectedScore && !isSameScore(match, expectedScore)) {
+            throw staleScoreError(this.logger, matchId, 'validation');
+        }
 
         match.status = MatchStatus.VALIDATED;
         match.finishedAt = match.finishedAt ?? new Date();
@@ -158,8 +178,14 @@ export class TrainingScoreService {
                 status: match.status,
                 finishedAt: match.finishedAt,
             },
+            expectedScore,
         );
         if (!validated) {
+            // Not validated meanwhile: the other team changed the score after it was read.
+            const latest = await this.trainingMatchRepo.findByIdInSession(matchId, session.id);
+            if (expectedScore && latest && latest.status !== MatchStatus.VALIDATED) {
+                throw staleScoreError(this.logger, matchId, 'validation');
+            }
             throw new BadRequestException(
                 'Le match a déjà été validé ou son score vient de changer.',
             );

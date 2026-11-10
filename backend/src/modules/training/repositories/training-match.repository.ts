@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { ExpectedScore } from 'src/utils/score-conflict.util';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { TrainingMatch } from 'src/entities/training-match.entity';
@@ -44,8 +45,13 @@ export class TrainingMatchRepository {
         data: Partial<
             Pick<TrainingMatch, 'scoreA' | 'scoreB' | 'status' | 'startedAt' | 'finishedAt'>
         >,
+        // With an expected score, the score must not have changed either (same query).
+        expectedScore: ExpectedScore | null = null,
     ): Promise<boolean> {
-        const result = await this.repo.update({ id: matchId, status: In(expected) }, data);
+        const result = await this.repo.update(
+            { id: matchId, status: In(expected), ...expectedScore },
+            data,
+        );
         return (result.affected ?? 0) > 0;
     }
 
