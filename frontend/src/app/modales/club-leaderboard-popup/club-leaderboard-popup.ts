@@ -11,7 +11,7 @@ import {
 } from 'src/app/store/training/training.selectors';
 
 export interface ClubLeaderboardPopupData {
-  /** Club member reading the leaderboard, marked « vous » (null: nobody). */
+  /** Club member reading the leaderboard, highlighted (null: nobody). */
   myMemberId: Nullable<string>;
 }
 

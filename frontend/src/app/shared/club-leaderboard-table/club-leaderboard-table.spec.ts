@@ -27,7 +27,7 @@ describe('ClubLeaderboardTable', () => {
     ]);
   });
 
-  it('marque « vous » la ligne du membre qui lit le classement', () => {
+  it('met en surbrillance la ligne du membre qui lit le classement', () => {
     const element = setup({
       entries: [
         { memberId: 'M2', name: 'Marie', wins: 4, points: 52 },
@@ -39,8 +39,6 @@ describe('ClubLeaderboardTable', () => {
     const rows = element.querySelectorAll('tbody tr');
     expect(rows[0].classList).not.toContain('is-me');
     expect(rows[1].classList).toContain('is-me');
-    expect(element.querySelectorAll('.me-badge')).toHaveLength(1);
-    expect(rows[1].querySelector('.me-badge')?.textContent).toBe('vous');
   });
 
   it('ne marque personne sans membre lecteur (invité, admin non joueur)', () => {
@@ -49,7 +47,6 @@ describe('ClubLeaderboardTable', () => {
       myMemberId: null,
     });
 
-    expect(element.querySelector('.me-badge')).toBeNull();
     expect(element.querySelector('.is-me')).toBeNull();
   });
 

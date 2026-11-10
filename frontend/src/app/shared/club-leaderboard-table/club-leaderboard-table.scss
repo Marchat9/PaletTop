@@ -54,17 +54,6 @@
     font-weight: 700;
   }
 
-  .me-badge {
-    padding: 0.05rem 0.4rem;
-    border-radius: 10rem;
-    background: var(--color-primary);
-    color: var(--color-on-primary);
-    font-family: var(--font-label);
-    font-size: 0.6rem;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-  }
-
   .col-rank {
     width: 3rem;
     color: var(--color-primary);
@@ -72,16 +61,9 @@
     font-weight: 700;
   }
 
+  // A long name without spaces breaks anywhere instead of widening the table.
   .col-name {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 1rem;
-
-    .name {
-      min-width: 0;
-      overflow-wrap: anywhere;
-    }
+    overflow-wrap: anywhere;
   }
 
   .col-stat {

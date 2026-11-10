@@ -45,10 +45,10 @@ describe('ClubLeaderboardPopup', () => {
 
     element.querySelector<HTMLElement>('.popup-close')!.click();
     expect(dialogRef.close).toHaveBeenCalled();
-    expect(element.querySelector('.me-badge')).toBeNull();
+    expect(element.querySelector('.is-me')).toBeNull();
   });
 
-  it('marque « vous » le membre transmis à l’ouverture', () => {
+  it('met en surbrillance le membre transmis à l’ouverture', () => {
     const element = setup({ close: vi.fn() }, { myMemberId: 'M2' });
 
     expect(element.querySelector('.is-me')?.textContent).toContain('Marie');
