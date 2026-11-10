@@ -55,7 +55,6 @@
   }
 
   .me-badge {
-    margin-left: 0.4rem;
     padding: 0.05rem 0.4rem;
     border-radius: 10rem;
     background: var(--color-primary);
@@ -71,6 +70,18 @@
     color: var(--color-primary);
     font-family: var(--font-label);
     font-weight: 700;
+  }
+
+  .col-name {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1rem;
+
+    .name {
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
   }
 
   .col-stat {
