@@ -564,6 +564,22 @@ export class TrainingEffects {
     ),
   );
 
+  validateTrainingMatch$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(validateTrainingMatch),
+      concatMap(({ sessionCode, matchId, participantCode, opponentParticipantCode }) =>
+        this.trainingService
+          .validateMatch(sessionCode, matchId, participantCode, opponentParticipantCode)
+          .pipe(
+            switchMap((match) => of(validateTrainingMatchSuccess({ match }))),
+            catchError((error) =>
+              of(validateTrainingMatchFailure({ error: convertErrorToString(error) })),
+            ),
+          ),
+      ),
+    ),
+  );
+
   adminUpdateTrainingScore$ = createEffect(() =>
     this.actions$.pipe(
       ofType(adminUpdateTrainingScore),
