@@ -149,6 +149,14 @@ describe('SpectatorTrainingPage', () => {
     expect(element.textContent).toContain('Séance en cours');
   });
 
+  it('annonce une séance en configuration tant qu’aucun round n’est généré', () => {
+    const { fixture } = setup({ session: session(), rounds: [] });
+    const text = (fixture.nativeElement as HTMLElement).textContent;
+
+    expect(text).toContain('La séance est en cours de configuration');
+    expect(text).not.toContain('Inscrivez les joueurs présents');
+  });
+
   it('remplace les matchs par le classement du club une fois la séance clôturée', () => {
     const { fixture, dispatchSpy } = setup({
       session: session({ status: 'CLOSED' }),

@@ -19,6 +19,11 @@ export class SessionRound {
   public readonly isSessionOpen = input<boolean>(false);
   public readonly isLoading = input<boolean>(false);
   public readonly scoreLoading = input<boolean>(false);
+  // Empty state, addressed to the admin by default (the spectator page has its own wording).
+  public readonly emptyTitle = input<string>('Aucun round généré');
+  public readonly emptyMessage = input<string>(
+    'Inscrivez les joueurs présents, puis générez le premier round : les équipes seront formées automatiquement selon les réglages de la séance.',
+  );
 
   public readonly updateScore = output<TrainingScoreUpdate>();
 
