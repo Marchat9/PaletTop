@@ -1,0 +1,52 @@
+<div class="popup-container popup-surface" (keydown.enter)="onJoin()">
+  <div class="popup-header">
+    <h2 class="popup-title">
+      <app-icon name="visibility" iconClass="icon" [ariaHidden]="true" />
+      <span>Suivre une <span class="highlight">séance</span></span>
+    </h2>
+    <button class="popup-close" type="button" aria-label="Fermer" (click)="onCancel()">
+      <app-icon name="close" />
+    </button>
+  </div>
+
+  <p class="popup-subtitle">Saisissez le code de la séance d'entraînement à suivre.</p>
+
+  <div class="field-group">
+    <label class="field-label">Code de séance</label>
+    <app-code-number-input
+      [digitCount]="sessionCodeLength"
+      (codeChange)="onSessionCodeChange($event)"
+      (completed)="onJoin()"
+    ></app-code-number-input>
+    <p class="field-help">
+      <app-icon name="info" [ariaHidden]="true" />
+      Identifiant numérique à {{ sessionCodeLength }} chiffres, affiché par le référent de la
+      séance.
+    </p>
+  </div>
+
+  @if (isUnknownSession()) {
+    <div class="error-container">
+      <span class="message">
+        <app-icon name="error" [ariaHidden]="true" />
+        Séance introuvable
+      </span>
+      <span class="description">
+        Veuillez vérifier le code saisi ou contacter le référent d'entraînement pour plus
+        d'informations.
+      </span>
+    </div>
+  }
+
+  <div class="actions">
+    <app-button title="Annuler" variant="secondary" (clicked)="onCancel()"></app-button>
+    <app-button
+      title="Suivre"
+      variant="primary"
+      icon="visibility"
+      [loading]="sessionLoading()"
+      [disabled]="!canJoin()"
+      (clicked)="onJoin()"
+    ></app-button>
+  </div>
+</div>

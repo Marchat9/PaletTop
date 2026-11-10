@@ -1,5 +1,6 @@
 import { createAction, props } from '@ngrx/store';
 import {
+  TrainingClubLeaderboardEntryDto,
   TrainingLeaderboardEntryDto,
   TrainingSessionAdminDto,
   TrainingSessionConfigurationDto,
@@ -119,6 +120,12 @@ export const dismissTrainingCheckinHandoff = createAction(
 
 // Leaves the control page: closes the socket of the session.
 export const leaveTrainingSession = createAction('[Training] Leave Training Session');
+
+// Follows a session as a spectator: joins its public room, like a player, without any code.
+export const spectateTrainingSession = createAction(
+  '[Training] Spectate Training Session',
+  props<{ sessionCode: string }>(),
+);
 // -------------------------------------------------------
 
 // --------- Remove participant ---------
@@ -148,5 +155,31 @@ export const loadTrainingLeaderboardSuccess = createAction(
 export const loadTrainingLeaderboardFailure = createAction(
   '[Training] Load Training Leaderboard Failure',
   props<{ error: string }>(),
+);
+
+export const loadTrainingClubLeaderboard = createAction(
+  '[Training] Load Training Club Leaderboard',
+  props<{ sessionCode: string }>(),
+);
+export const loadTrainingClubLeaderboardSuccess = createAction(
+  '[Training] Load Training Club Leaderboard Success',
+  props<{ clubLeaderboard: TrainingClubLeaderboardEntryDto[] }>(),
+);
+export const loadTrainingClubLeaderboardFailure = createAction(
+  '[Training] Load Training Club Leaderboard Failure',
+  props<{ error: string }>(),
+);
+// Club leaderboard shown in a popup: loaded on opening, then refreshed on each validated match
+// until the popup is closed.
+export const followTrainingClubLeaderboard = createAction(
+  '[Training] Follow Training Club Leaderboard',
+  props<{ sessionCode: string }>(),
+);
+export const unfollowTrainingClubLeaderboard = createAction(
+  '[Training] Unfollow Training Club Leaderboard',
+);
+export const refreshTrainingClubLeaderboard = createAction(
+  '[Training] Refresh Training Club Leaderboard',
+  props<{ sessionCode: string }>(),
 );
 // -------------------------------------------------------

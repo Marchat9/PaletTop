@@ -18,7 +18,12 @@ const items: NavItem[] = [
   {
     key: 'training',
     label: 'Entraînement',
-    matchPrefixes: ['/player/training', '/admin/training', '/admin/training-creation'],
+    matchPrefixes: [
+      '/player/training',
+      '/admin/training',
+      '/admin/training-creation',
+      '/spectateur/training',
+    ],
     children: [{ label: 'Joueur', route: '/player/training', icon: 'person' }],
   },
   {
@@ -59,6 +64,11 @@ describe('navigation.utils', () => {
   describe('findActiveNavKey', () => {
     it('rattache le spectateur à l’univers tournoi', () => {
       expect(findActiveNavKey(items, '/spectateur/LAITON-2026')).toBe('tournament');
+    });
+
+    it('rattache le spectateur d’entraînement à l’univers entraînement', () => {
+      expect(findActiveNavKey(items, '/spectateur/training')).toBe('training');
+      expect(findActiveNavKey(items, '/spectateur/training/123456')).toBe('training');
     });
 
     it('rattache la séance et sa création à l’univers entraînement', () => {

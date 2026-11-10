@@ -2,13 +2,22 @@ import { Injectable } from '@nestjs/common';
 import { TrainingMatch } from 'src/entities/training-match.entity';
 import { TrainingSession } from 'src/entities/training-session.entity';
 import { TrainingTeam } from 'src/entities/training-team.entity';
+import { TrainingParticipant } from 'src/entities/training-participant.entity';
 import { MatchStatus } from 'src/enum/status.enum';
 import { TrainingMatchRepository } from '../repositories/training-match.repository';
 import { TrainingSessionRepository } from '../repositories/training-session.repository';
-import { TrainingLeaderboardEntryDto } from '../responses/training-leaderboard.dto';
+import {
+    TrainingClubLeaderboardEntryDto,
+    TrainingLeaderboardEntryDto,
+} from '../responses/training-leaderboard.dto';
 
-interface LeaderboardAccumulator {
+/** Who a leaderboard line is for: a session participant, or a club roster member. */
+interface RankedPlayer {
+    id: string;
     name: string;
+}
+
+interface RankedEntry extends RankedPlayer {
     wins: number;
     points: number;
 }
@@ -30,17 +39,27 @@ export class TrainingLeaderboardService {
     async getLeaderboardBySessionId(sessionId: string): Promise<TrainingLeaderboardEntryDto[]> {
         const matches = await this.trainingMatchRepo.findValidatedBySession(sessionId);
 
-        const totals = new Map<string, LeaderboardAccumulator>();
-        for (const match of matches) {
-            this.creditTeam(totals, match.teamA, match.scoreA, match.scoreA > match.scoreB);
-            if (match.teamB) {
-                this.creditTeam(totals, match.teamB, match.scoreB, match.scoreB > match.scoreA);
-            }
-        }
+        return this.rank(matches, (participant) => participant).map(({ id, ...entry }) => ({
+            participantId: id,
+            ...entry,
+        }));
+    }
 
-        return [...totals.entries()]
-            .map(([participantId, entry]) => ({ participantId, ...entry }))
-            .sort((a, b) => b.wins - a.wins || b.points - a.points);
+    /**
+     * Club leaderboard seen from a session: wins and points of every roster member added up over
+     * all the club's sessions up to this one (current one included, later ones left out). A guest,
+     * or a member since removed from the roster, does not appear.
+     */
+    async getClubLeaderboard(sessionCode: string): Promise<TrainingClubLeaderboardEntryDto[]> {
+        const session = await this.trainingSessionRepo.findByCodeOrThrow(sessionCode);
+        const sessionIds = await this.trainingSessionRepo.findIdsByTrainingUpTo(session);
+        const matches = await this.trainingMatchRepo.findValidatedBySessions(sessionIds);
+
+        // Credited to the roster member, so that their sessions add up; a guest has none.
+        return this.rank(matches, (participant) => participant.member).map(({ id, ...entry }) => ({
+            memberId: id,
+            ...entry,
+        }));
     }
 
     /**
@@ -132,24 +151,42 @@ export class TrainingLeaderboardService {
         return totals;
     }
 
-    // Aggregates over ALL members of the team as it was at match time (no leftAt filter): a fixed
-    // team dissolved after this match keeps that match in the credit history of its former members,
-    // per the "leaderboard by participant" product decision.
-    private creditTeam(
-        totals: Map<string, LeaderboardAccumulator>,
-        team: TrainingTeam,
-        score: number,
-        won: boolean,
-    ): void {
-        for (const member of team.members ?? []) {
-            const entry = totals.get(member.participant.id) ?? {
-                name: member.participant.name,
-                wins: 0,
-                points: 0,
-            };
-            entry.wins += won ? 1 : 0;
-            entry.points += score;
-            totals.set(member.participant.id, entry);
+    /**
+     * Wins and points of validated matches, credited to whoever `creditedTo` returns for each
+     * player (none: not ranked), sorted by wins then points.
+     *
+     * Aggregates over ALL members of the team as it was at match time (no leftAt filter): a fixed
+     * team dissolved after this match keeps that match in the credit history of its former members,
+     * per the "leaderboard by participant" product decision.
+     */
+    private rank(
+        matches: TrainingMatch[],
+        creditedTo: (participant: TrainingParticipant) => RankedPlayer | null | undefined,
+    ): RankedEntry[] {
+        const totals = new Map<string, RankedEntry>();
+        const creditTeam = (team: TrainingTeam, score: number, won: boolean) => {
+            for (const teamMember of team.members ?? []) {
+                const player = creditedTo(teamMember.participant);
+                if (!player) {
+                    continue;
+                }
+                const entry = totals.get(player.id) ?? {
+                    id: player.id,
+                    name: player.name,
+                    wins: 0,
+                    points: 0,
+                };
+                entry.wins += won ? 1 : 0;
+                entry.points += score;
+                totals.set(player.id, entry);
+            }
+        };
+        for (const match of matches) {
+            creditTeam(match.teamA, match.scoreA, match.scoreA > match.scoreB);
+            if (match.teamB) {
+                creditTeam(match.teamB, match.scoreB, match.scoreB > match.scoreA);
+            }
         }
+        return [...totals.values()].sort((a, b) => b.wins - a.wins || b.points - a.points);
     }
 }

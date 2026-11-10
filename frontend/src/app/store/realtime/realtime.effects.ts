@@ -40,6 +40,7 @@ import {
 import {
   connectTrainingSessionAdministratorSuccess,
   leaveTrainingSession,
+  spectateTrainingSession,
 } from 'src/app/store/training/training.session.actions';
 import { selectCurrentTrainingAdminInformations } from 'src/app/store/training/training.selectors';
 import {
@@ -117,26 +118,39 @@ export class RealtimeEffects {
     ),
   );
 
-  // The session admin joins the admin room: `session:updated` arrives there in its full version,
-  // participant codes included, so directly applicable to the store.
-  connectWebSocketTrainingAdmin$ = createEffect(() =>
-    this.actions$.pipe(
-      ofType(connectTrainingSessionAdministratorSuccess),
-      withLatestFrom(this.store.select(selectCurrentTrainingAdminInformations)),
-      switchMap(([{ session }, adminInfo]) => {
-        this.wsService.connectTrainingSession(session.code, adminInfo?.password);
-        return this.computeTrainingWsEvents$();
-      }),
-    ),
-  );
-
-  // The player joins the public room, without a password: they receive the same rounds, scores and
-  // leaderboards as the admin, but a session view stripped of the personal codes.
-  connectWebSocketTrainingPlayer$ = createEffect(() =>
-    this.actions$.pipe(
-      ofType(loadTrainingParticipantCurrentMatchSuccess),
-      switchMap(({ sessionCode }) => {
-        this.wsService.connectTrainingSession(sessionCode);
+  // One effect for the three training roles, so that one switchMap replaces the event streams of
+  // the previous role. Separate effects each kept their streams: spectator then player of the same
+  // session reuse the same public socket, and every event was dispatched twice.
+  connectWebSocketTraining$ = createEffect(() =>
+    merge(
+      // The session admin joins the admin room: `session:updated` arrives there in its full
+      // version, participant codes included, so directly applicable to the store.
+      this.actions$.pipe(
+        ofType(connectTrainingSessionAdministratorSuccess),
+        withLatestFrom(this.store.select(selectCurrentTrainingAdminInformations)),
+        map(([{ session }, adminInfo]) => ({
+          sessionCode: session.code,
+          password: adminInfo?.password,
+        })),
+      ),
+      // The player joins the public room, without a password: they receive the same rounds,
+      // scores and leaderboards as the admin, but a session view stripped of the personal codes.
+      this.actions$.pipe(
+        ofType(loadTrainingParticipantCurrentMatchSuccess),
+        map(({ sessionCode }) => ({ sessionCode, password: undefined })),
+      ),
+      // The spectator joins the public room too: the same events as a player.
+      this.actions$.pipe(
+        ofType(spectateTrainingSession),
+        map(({ sessionCode }) => ({ sessionCode, password: undefined })),
+      ),
+    ).pipe(
+      switchMap(({ sessionCode, password }) => {
+        if (password) {
+          this.wsService.connectTrainingSession(sessionCode, password);
+        } else {
+          this.wsService.connectTrainingSession(sessionCode);
+        }
         return this.computeTrainingWsEvents$();
       }),
     ),

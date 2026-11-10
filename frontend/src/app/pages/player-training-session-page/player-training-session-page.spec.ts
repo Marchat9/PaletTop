@@ -1,3 +1,4 @@
+import { Dialog } from '@angular/cdk/dialog';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { Actions } from '@ngrx/effects';
@@ -31,7 +32,7 @@ import {
 import { PlayerTrainingSessionPage } from './player-training-session-page';
 import { historyToResults } from './player-training-session-page.utils';
 
-const ME = { id: 'p1', name: 'Jean Dubois' };
+const ME = { id: 'p1', name: 'Jean Dubois', memberId: 'mb1' };
 
 function buildSession(): TrainingSessionPublicDto {
   return {
@@ -354,5 +355,19 @@ describe('PlayerTrainingSessionPage', () => {
 
     expect(fixture.componentInstance.matchView()).toBeNull();
     expect(fixture.componentInstance.isSittingOut()).toBe(true);
+  });
+
+  it('ouvre le classement du club en y marquant le joueur', () => {
+    const { fixture } = setup();
+    const openSpy = vi
+      .spyOn(TestBed.inject(Dialog), 'open')
+      .mockReturnValue({ closed: new Subject<void>() } as never);
+
+    fixture.componentInstance.openClubLeaderboard();
+
+    expect(openSpy).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ data: { myMemberId: 'mb1' } }),
+    );
   });
 });

@@ -21,6 +21,10 @@ import {
   checkinTrainingParticipant,
   checkinTrainingParticipantSuccess,
   createTrainingSessionSuccess,
+  loadTrainingClubLeaderboard,
+  loadTrainingClubLeaderboardFailure,
+  loadTrainingClubLeaderboardSuccess,
+  spectateTrainingSession,
 } from './training.session.actions';
 import { generateTrainingRoundSuccess } from './training.round.actions';
 import {
@@ -317,7 +321,7 @@ describe('trainingReducer', () => {
           sessionCode: '123456',
           participantCode: '1111',
           currentMatch: {
-            participant: { id: 'pB', name: 'B' },
+            participant: { id: 'pB', name: 'B', memberId: null },
             match,
             roundNumber: 1,
             sitOut: false,
@@ -378,6 +382,66 @@ describe('trainingReducer', () => {
       );
 
       expect(state.participantHistory.data).toEqual([initial]);
+    });
+  });
+
+  describe('classement du club', () => {
+    const entries = [{ memberId: 'M1', name: 'Jean', wins: 3, points: 39 }];
+
+    it('le charge, sans montrer celui lu depuis une autre séance', () => {
+      const loaded = trainingReducer(
+        initialTrainingState,
+        loadTrainingClubLeaderboardSuccess({ clubLeaderboard: entries }),
+      );
+      const reloading = trainingReducer(loaded, loadTrainingClubLeaderboard({ sessionCode: '1' }));
+
+      expect(loaded.clubLeaderboard.data).toEqual(entries);
+      expect(reloading.clubLeaderboard).toEqual({ data: [], isLoading: true, error: null });
+    });
+
+    it("garde l'erreur de chargement", () => {
+      const state = trainingReducer(
+        initialTrainingState,
+        loadTrainingClubLeaderboardFailure({ error: 'Séance introuvable.' }),
+      );
+
+      expect(state.clubLeaderboard.error).toBe('Séance introuvable.');
+    });
+
+    it('le vide quand on change d’entraînement', () => {
+      const loaded = trainingReducer(
+        initialTrainingState,
+        loadTrainingClubLeaderboardSuccess({ clubLeaderboard: entries }),
+      );
+
+      expect(trainingReducer(loaded, resetTraining()).clubLeaderboard.data).toEqual([]);
+    });
+  });
+
+  describe('spectateur', () => {
+    const followed = {
+      ...initialTrainingState,
+      currentSession: { data: buildSession([]), isLoading: false, error: null },
+      rounds: { data: [{ roundNumber: 4 } as TrainingRoundDto], isLoading: false, error: null },
+      leaderboard: {
+        data: [{ participantId: 'p1', name: 'Jean', wins: 2, points: 26 }],
+        isLoading: false,
+        error: null,
+      },
+    };
+
+    it('ne montre pas sous le code suivi les données d’une autre séance', () => {
+      const state = trainingReducer(followed, spectateTrainingSession({ sessionCode: '999999' }));
+
+      expect(state.currentSession.data).toBeNull();
+      expect(state.rounds.data).toEqual([]);
+      expect(state.leaderboard.data).toEqual([]);
+    });
+
+    it('garde les données de la séance suivie, rechargées en place', () => {
+      expect(trainingReducer(followed, spectateTrainingSession({ sessionCode: '1234' }))).toBe(
+        followed,
+      );
     });
   });
 

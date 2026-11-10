@@ -15,6 +15,9 @@ export const environment = {
     mobileResyncDebounce: 1_000, //ms
     // A reload that unlocks the score entry is given up after this delay, then tried once more.
     reloadTimeout: 15_000, // ms
+    // The club leaderboard popup waits for this calm after a validated match before reloading:
+    // the end of a round validates many matches within seconds, one reload covers them all.
+    clubLeaderboardRefreshDebounce: 2_000, // ms
   },
 
   pwa: {

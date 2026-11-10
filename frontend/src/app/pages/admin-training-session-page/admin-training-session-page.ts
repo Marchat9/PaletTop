@@ -1,5 +1,9 @@
 import { Dialog } from '@angular/cdk/dialog';
 import {
+  ClubLeaderboardPopup,
+  ClubLeaderboardPopupData,
+} from 'src/app/modales/club-leaderboard-popup/club-leaderboard-popup';
+import {
   ChangeDetectionStrategy,
   Component,
   computed,
@@ -30,6 +34,8 @@ import {
 } from 'src/app/store/training/training.round.actions';
 import {
   closeTrainingSession,
+  followTrainingClubLeaderboard,
+  unfollowTrainingClubLeaderboard,
   connectTrainingSessionAdministrator,
   leaveTrainingSession,
   loadTrainingLeaderboard,
@@ -546,6 +552,21 @@ export class AdminTrainingSessionPage implements OnInit, OnDestroy {
         scoreB: update.scoreB,
       }),
     );
+  }
+
+  public openClubLeaderboard(): void {
+    const sessionCode = this.sessionCode();
+    if (!sessionCode) {
+      return;
+    }
+    this.store.dispatch(followTrainingClubLeaderboard({ sessionCode }));
+    this.dialog
+      .open<void, ClubLeaderboardPopupData>(ClubLeaderboardPopup, {
+        data: { myMemberId: this.adminParticipant()?.memberId ?? null },
+        panelClass: 'dialog-panel',
+        backdropClass: 'dialog-backdrop-light',
+      })
+      .closed.subscribe(() => this.store.dispatch(unfollowTrainingClubLeaderboard()));
   }
 
   public closeSession(): void {

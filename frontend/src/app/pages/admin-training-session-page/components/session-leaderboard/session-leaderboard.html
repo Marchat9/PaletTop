@@ -10,6 +10,16 @@
   </div>
 
   <div content class="leaderboard-content">
+    @if (canOpenClubLeaderboard()) {
+      <app-button
+        class="club-button"
+        title="Classement du club"
+        icon="military_tech"
+        variant="tertiary"
+        (clicked)="openClubLeaderboard.emit()"
+      />
+    }
+
     @if (isLoading() && !hasData()) {
       <app-skeleton [rows]="4" height="2.2rem" />
     } @else if (!hasData()) {

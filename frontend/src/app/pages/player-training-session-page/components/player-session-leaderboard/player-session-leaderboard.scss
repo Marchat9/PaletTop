@@ -30,6 +30,10 @@
   flex-direction: column;
   gap: 0.5rem;
 
+  .club-button {
+    align-self: flex-end;
+  }
+
   .empty {
     margin: 0;
     color: var(--color-on-surface-variant);

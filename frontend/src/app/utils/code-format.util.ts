@@ -22,6 +22,13 @@ export function isSessionCode(code: string | null | undefined): boolean {
   return !!code && SESSION_CODE_PATTERN.test(code);
 }
 
+/** The spectator mode only opens with a current 6-digit session code, not the older 4-digit ones. */
+const SPECTATOR_SESSION_CODE_PATTERN = /^\d{6}$/;
+
+export function isSpectatorSessionCode(code: string | null | undefined): boolean {
+  return !!code && SPECTATOR_SESSION_CODE_PATTERN.test(code);
+}
+
 export function normalizeCode(code: string): string {
   return code.trim().toUpperCase();
 }

@@ -9,13 +9,34 @@ import { NavItem } from './nav-item.entity';
  * and Admin entries up.
  */
 export function isNavItemActive(item: NavItem, url: string): boolean {
-  const path = url.split(/[?#]/)[0];
-
-  return item.matchPrefixes.some((prefix) => path === prefix || path.startsWith(`${prefix}/`));
+  return longestMatchingPrefix(item, url) > 0;
 }
 
+/**
+ * The entry with the most precise prefix wins: `/spectateur/training` (training) over `/spectateur`
+ * (tournament), both matching a training spectator URL.
+ */
 export function findActiveNavKey(items: NavItem[], url: string): string | null {
-  return items.find((item) => isNavItemActive(item, url))?.key ?? null;
+  let activeKey: string | null = null;
+  let activeLength = 0;
+  for (const item of items) {
+    const length = longestMatchingPrefix(item, url);
+    if (length > activeLength) {
+      activeKey = item.key;
+      activeLength = length;
+    }
+  }
+  return activeKey;
+}
+
+function longestMatchingPrefix(item: NavItem, url: string): number {
+  const path = url.split(/[?#]/)[0];
+  return Math.max(
+    0,
+    ...item.matchPrefixes
+      .filter((prefix) => path === prefix || path.startsWith(`${prefix}/`))
+      .map((prefix) => prefix.length),
+  );
 }
 
 export function generateBurgerMenuItem(

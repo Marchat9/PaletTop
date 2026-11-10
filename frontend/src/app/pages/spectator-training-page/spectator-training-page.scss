@@ -1,0 +1,182 @@
+// Same layout as the tournament spectator page (pages/spectator-page).
+:host {
+  display: block;
+
+  /* On desktop the page fills the height the nav shell actually leaves below the
+     top bar, instead of demanding a literal 100dvh which would overflow it. */
+  @media (width >= 768px) {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+}
+
+.spectator-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+
+  @media (width >= 768px) {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+
+    @media (width <= 580px) {
+      flex-direction: column;
+    }
+
+    .session-name {
+      flex: 1;
+      margin: 0;
+      font-family: var(--font-headline);
+      font-size: 1.5rem;
+    }
+
+    .session-info {
+      flex: 1;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.5rem;
+
+      @media (width < 1024px) {
+        flex-wrap: wrap;
+      }
+
+      &.ended {
+        justify-content: center;
+      }
+
+      .badge {
+        font-size: 1rem;
+        font-weight: 600;
+        padding: 0.4rem 0.8rem;
+        border-radius: 999px;
+        background: var(--color-surface-container-high);
+        color: var(--color-on-surface-variant);
+        border: 1px solid var(--color-border-default);
+
+        @media (width >= 320px) {
+          text-wrap-mode: nowrap;
+        }
+
+        &.draft {
+          color: var(--color-status-draft-text);
+          background: var(--color-status-draft-bg);
+          border-color: var(--color-status-draft-border);
+        }
+        &.active {
+          color: var(--color-status-ongoing-text);
+          background: var(--color-status-ongoing-bg);
+          border-color: var(--color-status-ongoing-border);
+        }
+        &.completed {
+          color: var(--color-status-ended-text);
+          background: var(--color-status-ended-bg);
+          border-color: var(--color-status-ended-border);
+        }
+        &.cancelled {
+          color: var(--color-status-error-text);
+          background: var(--color-status-error-bg);
+          border-color: var(--color-status-error-border);
+        }
+      }
+
+      .code {
+        font-size: 1.1rem;
+        letter-spacing: 0.1rem;
+      }
+    }
+
+    .switch {
+      flex: 0.5;
+      display: flex;
+      justify-content: flex-end;
+    }
+  }
+
+  .content {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    min-height: 0;
+
+    @media (width >= 768px) {
+      flex-direction: row;
+      flex: 1 1 auto;
+    }
+
+    .column {
+      min-width: 0;
+
+      @media (width >= 768px) {
+        flex: 1 1 0;
+        overflow-y: auto;
+      }
+    }
+  }
+
+  .error-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+
+    .message {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-weight: 600;
+      color: var(--color-error);
+    }
+
+    .description {
+      font-size: 0.75rem;
+      color: var(--color-on-surface-variant);
+    }
+
+    .state-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 0.75rem;
+    }
+  }
+}
+
+// Header of the club leaderboard card: same look as the session leaderboard's.
+.club-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+
+  .club-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    ::ng-deep .icon {
+      color: var(--color-primary);
+      font-size: 1.35rem;
+    }
+
+    .title {
+      font-size: 1.05rem;
+      font-weight: 700;
+    }
+  }
+
+  .club-description {
+    color: var(--color-on-surface-variant);
+    font-size: 0.82rem;
+  }
+}

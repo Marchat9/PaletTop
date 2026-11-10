@@ -47,6 +47,11 @@ import {
   createTrainingSessionFailure,
   createTrainingSessionSuccess,
   dismissTrainingCheckinHandoff,
+  loadTrainingClubLeaderboard,
+  loadTrainingClubLeaderboardFailure,
+  loadTrainingClubLeaderboardSuccess,
+  followTrainingClubLeaderboard,
+  unfollowTrainingClubLeaderboard,
   loadTrainingLeaderboard,
   loadTrainingLeaderboardFailure,
   loadTrainingLeaderboardSuccess,
@@ -62,6 +67,7 @@ import {
   removeTrainingParticipant,
   removeTrainingParticipantFailure,
   removeTrainingParticipantSuccess,
+  spectateTrainingSession,
 } from './training.session.actions';
 import {
   createTrainingTeam,
@@ -152,6 +158,8 @@ export const initialTrainingState: TrainingState = {
   rounds: { data: [], isLoading: false, error: null },
   currentRound: { data: null, isLoading: false, error: null },
   leaderboard: { data: [], isLoading: false, error: null },
+  clubLeaderboard: { data: [], isLoading: false, error: null },
+  followedClubLeaderboardSession: null,
   participantCurrentMatch: { data: null, isLoading: false, error: null },
   participantHistory: { data: [], isLoading: false, error: null },
   participantAwaitingResync: false,
@@ -522,6 +530,20 @@ export const trainingReducer = createReducer(
   })),
 
   // Load session (public)
+  // Another session is followed: what the store holds (a session seen before, the player's own)
+  // must not be shown under its code while it loads, nor for ever if the load fails.
+  on(spectateTrainingSession, (state, { sessionCode }) =>
+    state.currentSession.data?.code === sessionCode
+      ? state
+      : {
+          ...state,
+          currentSession: initialTrainingState.currentSession,
+          rounds: initialTrainingState.rounds,
+          currentRound: initialTrainingState.currentRound,
+          leaderboard: initialTrainingState.leaderboard,
+          clubLeaderboard: initialTrainingState.clubLeaderboard,
+        },
+  ),
   on(loadTrainingSessionPublic, (state) => ({
     ...state,
     currentSession: { ...state.currentSession, isLoading: true, error: null },
@@ -656,6 +678,28 @@ export const trainingReducer = createReducer(
   })),
 
   // Leaderboard
+  on(loadTrainingClubLeaderboard, (state) => ({
+    ...state,
+    // Read from another session, the club leaderboard differs: the previous one is not shown.
+    clubLeaderboard: { data: [], isLoading: true, error: null },
+  })),
+  on(followTrainingClubLeaderboard, (state, { sessionCode }) => ({
+    ...state,
+    clubLeaderboard: { data: [], isLoading: true, error: null },
+    followedClubLeaderboardSession: sessionCode,
+  })),
+  on(unfollowTrainingClubLeaderboard, (state) => ({
+    ...state,
+    followedClubLeaderboardSession: null,
+  })),
+  on(loadTrainingClubLeaderboardSuccess, (state, { clubLeaderboard }) => ({
+    ...state,
+    clubLeaderboard: { data: clubLeaderboard, isLoading: false, error: null },
+  })),
+  on(loadTrainingClubLeaderboardFailure, (state, { error }) => ({
+    ...state,
+    clubLeaderboard: { ...state.clubLeaderboard, isLoading: false, error },
+  })),
   on(loadTrainingLeaderboard, (state) => ({
     ...state,
     leaderboard: { ...state.leaderboard, isLoading: true, error: null },
@@ -965,6 +1009,8 @@ export const trainingReducer = createReducer(
     rounds: initialTrainingState.rounds,
     currentRound: initialTrainingState.currentRound,
     leaderboard: initialTrainingState.leaderboard,
+    clubLeaderboard: initialTrainingState.clubLeaderboard,
+    followedClubLeaderboardSession: null,
     lastCheckedInParticipant: null,
   })),
   on(disconnectTrainingAdministrator, (state) => ({

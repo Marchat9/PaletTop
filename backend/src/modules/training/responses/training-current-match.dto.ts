@@ -8,6 +8,8 @@ import { TrainingMatchDto } from './training-round.dto';
 export interface TrainingParticipantIdentityDto {
     id: string;
     name: string;
+    // Club member behind the participant (null for a guest): finds them in the club leaderboard.
+    memberId: string | null;
 }
 
 export interface TrainingCurrentMatchDto {

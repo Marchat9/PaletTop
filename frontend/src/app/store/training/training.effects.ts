@@ -2,7 +2,16 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { Store } from '@ngrx/store';
-import { catchError, concatMap, debounceTime, map, of, switchMap, withLatestFrom } from 'rxjs';
+import {
+  catchError,
+  concatMap,
+  debounceTime,
+  filter,
+  map,
+  of,
+  switchMap,
+  withLatestFrom,
+} from 'rxjs';
 import { TrainingService } from 'src/app/services/training.service';
 import { convertErrorToString } from 'src/app/utils/api-call.utils';
 import { withTimeoutAndOneRetry } from 'src/app/utils/reload-retry.util';
@@ -64,6 +73,11 @@ import {
   createTrainingSession,
   createTrainingSessionFailure,
   createTrainingSessionSuccess,
+  followTrainingClubLeaderboard,
+  loadTrainingClubLeaderboard,
+  loadTrainingClubLeaderboardFailure,
+  loadTrainingClubLeaderboardSuccess,
+  refreshTrainingClubLeaderboard,
   loadTrainingLeaderboard,
   loadTrainingLeaderboardFailure,
   loadTrainingLeaderboardSuccess,
@@ -116,7 +130,9 @@ import {
 import {
   selectCurrentTrainingAdminInformations,
   selectCurrentTrainingParticipantInformations,
+  selectFollowedTrainingClubLeaderboardSession,
 } from './training.selectors';
+import { wsTrainingLeaderboardUpdated } from '../realtime/realtime.actions';
 import { newId } from 'src/app/utils/unique-id.util';
 import { environment } from '@environment';
 
@@ -426,6 +442,39 @@ export class TrainingEffects {
             ),
           ),
       ),
+    ),
+  );
+
+  loadTrainingClubLeaderboard$ = createEffect(() =>
+    this.actions$.pipe(
+      // A refresh keeps the leaderboard on screen while it is reloaded.
+      ofType(
+        loadTrainingClubLeaderboard,
+        followTrainingClubLeaderboard,
+        refreshTrainingClubLeaderboard,
+      ),
+      switchMap(({ sessionCode }) =>
+        this.trainingService.getClubLeaderboard(sessionCode).pipe(
+          map((clubLeaderboard) => loadTrainingClubLeaderboardSuccess({ clubLeaderboard })),
+          catchError((error) =>
+            of(loadTrainingClubLeaderboardFailure({ error: convertErrorToString(error) })),
+          ),
+        ),
+      ),
+    ),
+  );
+
+  // A validated match changes the club leaderboard too: the open popup follows it. The server
+  // recomputes it from the whole club history for every phone that has it open, so a burst of
+  // validations is grouped into one reload.
+  refreshFollowedClubLeaderboard$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(wsTrainingLeaderboardUpdated),
+      debounceTime(environment.apiConfiguration.clubLeaderboardRefreshDebounce ?? 0),
+      withLatestFrom(this.store.select(selectFollowedTrainingClubLeaderboardSession)),
+      map(([, sessionCode]) => sessionCode),
+      filter((sessionCode): sessionCode is string => !!sessionCode),
+      map((sessionCode) => refreshTrainingClubLeaderboard({ sessionCode })),
     ),
   );
 

@@ -6,6 +6,7 @@ import { Nullable } from 'src/app/models/nullable.model';
 import {
   AdminTrainingDto,
   TrainingCurrentMatchDto,
+  TrainingClubLeaderboardEntryDto,
   TrainingLeaderboardEntryDto,
   TrainingMatchDto,
   TrainingRoundDto,
@@ -170,6 +171,12 @@ export class TrainingService {
     return this.http.delete<TrainingSessionAdminDto>(
       `${this.apiBaseUrl}/trainings/sessions/${sessionCode}/participants/${participantId}`,
       { body: { password } },
+    );
+  }
+
+  public getClubLeaderboard(sessionCode: string): Observable<TrainingClubLeaderboardEntryDto[]> {
+    return this.http.get<TrainingClubLeaderboardEntryDto[]>(
+      `${this.apiBaseUrl}/trainings/sessions/${sessionCode}/club-leaderboard`,
     );
   }
 

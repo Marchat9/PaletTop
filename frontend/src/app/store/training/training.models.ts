@@ -129,6 +129,8 @@ export interface TrainingRoundDto {
 export interface TrainingParticipantIdentityDto {
   id: string;
   name: string;
+  /** Club member behind the participant (null for a guest). */
+  memberId: Nullable<string>;
 }
 
 /** A score entered by a player. */
@@ -149,6 +151,17 @@ export interface TrainingCurrentMatchDto {
 
 export interface TrainingLeaderboardEntryDto {
   participantId: string;
+  name: string;
+  wins: number;
+  points: number;
+}
+
+/**
+ * Club leaderboard: wins and points of each roster member, added up over all the club's sessions up
+ * to the one it is read from. Guests are left out.
+ */
+export interface TrainingClubLeaderboardEntryDto {
+  memberId: string;
   name: string;
   wins: number;
   points: number;
@@ -210,6 +223,9 @@ export interface TrainingState {
   rounds: ApiCall<TrainingRoundDto[]>;
   currentRound: ApiCall<Nullable<TrainingRoundDto>>;
   leaderboard: ApiCall<TrainingLeaderboardEntryDto[]>;
+  clubLeaderboard: ApiCall<TrainingClubLeaderboardEntryDto[]>;
+  /** Session whose club leaderboard is open in a popup, refreshed live; null when closed. */
+  followedClubLeaderboardSession: Nullable<string>;
 
   participantCurrentMatch: ApiCall<Nullable<TrainingCurrentMatchDto>>;
   /**

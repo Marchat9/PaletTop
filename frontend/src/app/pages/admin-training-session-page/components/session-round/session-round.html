@@ -7,11 +7,8 @@
   } @else if (!round()) {
     <div class="empty-state">
       <app-icon name="sports_score" iconClass="empty-icon" [ariaHidden]="true" />
-      <h2>Aucun round généré</h2>
-      <p>
-        Inscrivez les joueurs présents, puis générez le premier round : les équipes seront formées
-        automatiquement selon les réglages de la séance.
-      </p>
+      <h2>{{ emptyTitle() }}</h2>
+      <p>{{ emptyMessage() }}</p>
     </div>
   } @else {
     <div class="head">

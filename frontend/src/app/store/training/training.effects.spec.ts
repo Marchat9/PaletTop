@@ -8,6 +8,9 @@ import { TrainingService } from 'src/app/services/training.service';
 import { TrainingEffects } from './training.effects';
 import { TrainingMatchDto } from './training.models';
 import { validateTrainingMatch, validateTrainingMatchSuccess } from './training.match.actions';
+import { wsTrainingLeaderboardUpdated } from '../realtime/realtime.actions';
+import { refreshTrainingClubLeaderboard } from './training.session.actions';
+import { selectFollowedTrainingClubLeaderboardSession } from './training.selectors';
 
 describe('TrainingEffects', () => {
   it('sends the player validation of a match to the server', async () => {
@@ -38,5 +41,49 @@ describe('TrainingEffects', () => {
 
     expect(trainingService.validateMatch).toHaveBeenCalledWith('123456', 'm1', '1111', '2222');
     expect(emitted).toEqual([validateTrainingMatchSuccess({ match })]);
+  });
+
+  describe('club leaderboard open in a popup', () => {
+    afterEach(() => vi.useRealTimers());
+
+    function setup(followedSession: string | null, validatedMatches = 1) {
+      vi.useFakeTimers();
+      const actions$ = new ReplaySubject<Action>(1);
+      TestBed.configureTestingModule({
+        providers: [
+          TrainingEffects,
+          provideMockActions(() => actions$),
+          provideMockStore({
+            selectors: [
+              { selector: selectFollowedTrainingClubLeaderboardSession, value: followedSession },
+            ],
+          }),
+          { provide: TrainingService, useValue: {} },
+        ],
+      });
+      const emitted: Action[] = [];
+      TestBed.inject(TrainingEffects).refreshFollowedClubLeaderboard$.subscribe((action) =>
+        emitted.push(action),
+      );
+      for (let i = 0; i < validatedMatches; i++) {
+        actions$.next(wsTrainingLeaderboardUpdated({ leaderboard: [] }));
+      }
+      vi.runAllTimers();
+      return emitted;
+    }
+
+    it('is refreshed after a validated match while the popup is open', () => {
+      expect(setup('123456')).toEqual([refreshTrainingClubLeaderboard({ sessionCode: '123456' })]);
+    });
+
+    it('is refreshed once for a burst of validated matches', () => {
+      expect(setup('123456', 5)).toEqual([
+        refreshTrainingClubLeaderboard({ sessionCode: '123456' }),
+      ]);
+    });
+
+    it('is left alone once the popup is closed', () => {
+      expect(setup(null)).toEqual([]);
+    });
   });
 });

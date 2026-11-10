@@ -163,6 +163,29 @@ export class TrainingSessionRepository {
             .getMany();
     }
 
+    /**
+     * Sessions of the club up to the given one, included: the later ones are left out, so that the
+     * club leaderboard read from a past session stays as it was then.
+     */
+    async findIdsByTrainingUpTo(session: TrainingSession): Promise<string[]> {
+        const rows = await this.repo
+            .createQueryBuilder('session')
+            .select('session.id', 'id')
+            .where('session.training_id = :trainingId', { trainingId: session.training.id })
+            .andWhere(
+                new Brackets((query) =>
+                    query
+                        .where('session.date < :date', { date: session.date })
+                        .orWhere('session.date = :date AND session.createdAt <= :createdAt', {
+                            createdAt: session.createdAt,
+                        })
+                        .orWhere('session.id = :sessionId', { sessionId: session.id }),
+                ),
+            )
+            .getRawMany<{ id: string }>();
+        return rows.map((row) => row.id);
+    }
+
     /** Ids of the most recent sessions of a training (most recent first), excluding one. */
     async findRecentIdsByTraining(
         trainingId: string,

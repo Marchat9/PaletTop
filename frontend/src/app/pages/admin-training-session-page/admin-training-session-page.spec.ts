@@ -1,4 +1,9 @@
 import { Dialog } from '@angular/cdk/dialog';
+import { ClubLeaderboardPopup } from 'src/app/modales/club-leaderboard-popup/club-leaderboard-popup';
+import {
+  followTrainingClubLeaderboard,
+  unfollowTrainingClubLeaderboard,
+} from 'src/app/store/training/training.session.actions';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { Actions } from '@ngrx/effects';
@@ -369,5 +374,48 @@ describe('AdminTrainingSessionPage', () => {
 
     expect(fixture.componentInstance.canGenerateRound()).toBe(false);
     expect(fixture.componentInstance.generateBlockedReason()).toContain('au moins un joueur');
+  });
+
+  it('suit le classement du club tant que sa popup est ouverte', () => {
+    const { fixture, store, dialogMock } = setup();
+    const closed = new Subject<void>();
+    dialogMock.open.mockReturnValue({ closed });
+    const dispatchSpy = vi.spyOn(store, 'dispatch');
+
+    fixture.componentInstance.openClubLeaderboard();
+
+    expect(dispatchSpy).toHaveBeenCalledWith(
+      followTrainingClubLeaderboard({ sessionCode: fixture.componentInstance.sessionCode()! }),
+    );
+    expect(dialogMock.open).toHaveBeenCalledWith(ClubLeaderboardPopup, expect.anything());
+
+    closed.next();
+    expect(dispatchSpy).toHaveBeenCalledWith(unfollowTrainingClubLeaderboard());
+  });
+
+  it('marque l’admin dans le classement du club quand il joue la séance', () => {
+    const { fixture, store, dialogMock } = setup();
+    dialogMock.open.mockReturnValue({ closed: new Subject<void>() });
+    store.overrideSelector(selectCurrentTrainingData, { ...buildTraining(), adminMemberId: 'm1' });
+    store.refreshState();
+
+    fixture.componentInstance.openClubLeaderboard();
+
+    expect(dialogMock.open).toHaveBeenCalledWith(
+      ClubLeaderboardPopup,
+      expect.objectContaining({ data: { myMemberId: 'm1' } }),
+    );
+  });
+
+  it('ne marque personne dans le classement du club quand l’admin ne joue pas', () => {
+    const { fixture, dialogMock } = setup();
+    dialogMock.open.mockReturnValue({ closed: new Subject<void>() });
+
+    fixture.componentInstance.openClubLeaderboard();
+
+    expect(dialogMock.open).toHaveBeenCalledWith(
+      ClubLeaderboardPopup,
+      expect.objectContaining({ data: { myMemberId: null } }),
+    );
   });
 });

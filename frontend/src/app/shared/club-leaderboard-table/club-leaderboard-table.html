@@ -1,0 +1,32 @@
+@if (isLoading() && !hasData()) {
+  <app-skeleton [rows]="4" height="2.2rem" />
+} @else if (error()) {
+  <p class="error">{{ error() }}</p>
+} @else if (!hasData()) {
+  <p class="empty">
+    Aucun membre du club n'a encore de match validé (les invités ne sont pas comptés).
+  </p>
+} @else {
+  <div class="table-scroll">
+    <table class="rank-table">
+      <thead>
+        <tr>
+          <th class="col-rank">Rang</th>
+          <th>Membre</th>
+          <th class="col-stat">V</th>
+          <th class="col-stat">Pts</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (entry of entries(); track entry.memberId; let index = $index) {
+          <tr [class.is-me]="entry.memberId === myMemberId()">
+            <td class="col-rank">{{ index + 1 }}</td>
+            <td class="col-name">{{ entry.name }}</td>
+            <td class="col-stat">{{ entry.wins }}</td>
+            <td class="col-stat">{{ entry.points }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}

@@ -1,0 +1,17 @@
+:host {
+  display: block;
+}
+
+// The shell (background, header, close button) comes from `.popup-surface`, in styles/dialog.scss.
+.popup-container {
+  width: min(100vw - 2rem, 29rem);
+  max-height: calc(100dvh - 2rem);
+  overflow: hidden;
+
+  // A big club makes a long list: it scrolls, the header stays.
+  .popup-body {
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+}
