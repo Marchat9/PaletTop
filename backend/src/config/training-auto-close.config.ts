@@ -1,20 +1,10 @@
 import { registerAs } from '@nestjs/config';
+import { parseBoolean, parseNumber } from 'src/config/config.utils';
 
 export interface TrainingAutoCloseConfig {
     enabled: boolean;
     cronExpression: string;
     idleHours: number;
-}
-
-function parseBoolean(value: string | undefined, defaultValue: boolean): boolean {
-    if (value === undefined) return defaultValue;
-    return value.toLowerCase() === 'true';
-}
-
-function parseNumber(value: string | undefined, defaultValue: number): number {
-    if (value === undefined) return defaultValue;
-    const parsed = Number(value);
-    return Number.isFinite(parsed) ? parsed : defaultValue;
 }
 
 /**
