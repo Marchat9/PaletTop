@@ -3,6 +3,9 @@ import { TrainingTeamComposition } from 'src/enum/training.enum';
 import { GenerateRoundInput, MatchmakingPort, RoundPlan } from './matchmaking.types';
 import { chooseDecomposition } from './team-decomposition';
 
+/** Pairs to avoid, with their weight: the more recent the round they played in, the heavier. */
+type ForbiddenPairs = Map<string, number>;
+
 interface TeamRef {
     ref: string;
     canonicalId: string;
@@ -14,7 +17,7 @@ interface FallbackPick {
     slots: number;
     fallbackTeamCount: number;
     targetTeamCount: number;
-    forbiddenPartners: Set<string>;
+    forbiddenPartners: ForbiddenPairs;
 }
 
 /** Players split into teams of the given sizes, independently of the other parts. */
@@ -181,7 +184,7 @@ export class DefaultMatchmakingStrategy implements MatchmakingPort {
         input: GenerateRoundInput,
         playing: string[],
         groupSizes: number[],
-        forbiddenPartners: Set<string>,
+        forbiddenPartners: ForbiddenPairs,
     ): string[][] {
         const target = input.config.playersPerTeam;
         const fallbackSizes = groupSizes.filter((size) => size !== target);
@@ -347,21 +350,25 @@ export class DefaultMatchmakingStrategy implements MatchmakingPort {
     private buildLearningGroups(
         input: GenerateRoundInput,
         parts: GroupPart[],
-        forbiddenPartners: Set<string>,
+        forbiddenPartners: ForbiddenPairs,
     ): string[][] {
         const banded = parts.map((part) => ({
             sizes: part.sizes,
             bands: this.levelBands(this.rankByLevel(input, part.players), part.sizes),
         }));
 
+        // Natural order first, then every rotation of the bands against each other (a valid one
+        // often exists, e.g. shifting partners by one), then random reshuffles: luck alone could
+        // miss an arrangement that exists.
+        const rotations = Math.max(0, ...banded.flatMap(({ bands }) => bands.map((b) => b.length)));
         let best: string[][] | null = null;
         let fewest = Number.POSITIVE_INFINITY;
-        for (let attempt = 0; attempt < PLACEMENT_ATTEMPTS; attempt++) {
+        for (let attempt = 0; attempt < rotations + PLACEMENT_ATTEMPTS; attempt++) {
             const candidate = banded.flatMap(({ sizes, bands }) =>
                 this.assembleBands(
                     sizes,
-                    attempt === 0
-                        ? bands
+                    attempt < rotations
+                        ? bands.map((band, slot) => rotate(band, attempt * slot))
                         : bands.map((band) => shuffleFisherYates(band, this.random)),
                 ),
             );
@@ -425,7 +432,7 @@ export class DefaultMatchmakingStrategy implements MatchmakingPort {
     private fillGroups(
         participantIds: string[],
         groupSizes: number[],
-        forbiddenPairs: Set<string>,
+        forbiddenPairs: ForbiddenPairs,
     ): string[][] {
         const remaining = [...participantIds];
         const groups: string[][] = [];
@@ -496,7 +503,7 @@ export class DefaultMatchmakingStrategy implements MatchmakingPort {
     private pairGroup(
         input: GenerateRoundInput,
         teamRefs: TeamRef[],
-        forbiddenOpponents: Set<string>,
+        forbiddenOpponents: ForbiddenPairs,
     ): { teamRef: string; opponentRef: string | null }[] {
         if (input.config.teamComposition === TrainingTeamComposition.LEARNING) {
             const byStrength = [...teamRefs].sort(
@@ -557,7 +564,7 @@ export class DefaultMatchmakingStrategy implements MatchmakingPort {
 
     private pairAvoidingOpponents(
         teamRefs: TeamRef[],
-        forbiddenOpponents: Set<string>,
+        forbiddenOpponents: ForbiddenPairs,
     ): { teamRef: string; opponentRef: string | null }[] {
         const remaining = [...teamRefs];
         const matches: { teamRef: string; opponentRef: string | null }[] = [];
@@ -586,23 +593,31 @@ export class DefaultMatchmakingStrategy implements MatchmakingPort {
      * rounds are taken into account, with four players the constraint would be impossible to keep,
      * so only the previous round counts.
      */
-    private forbiddenPairs(input: GenerateRoundInput, kind: 'partner' | 'opponent'): Set<string> {
+    private forbiddenPairs(
+        input: GenerateRoundInput,
+        kind: 'partner' | 'opponent',
+    ): ForbiddenPairs {
         const enabled =
             kind === 'partner'
                 ? input.config.avoidSamePartnerConsecutive
                 : input.config.avoidSameOpponentConsecutive;
         if (!enabled) {
-            return new Set();
+            return new Map();
         }
 
+        // When every arrangement repeats a pair, the one from the previous round must be the last
+        // resort: each round back weighs ten times less than the next one, so a single repeat
+        // from the previous round outweighs any number of older ones.
         const depth = this.rotationDepth(input);
-        const pairs = new Set<string>();
-        for (const round of input.history.recentRounds.slice(0, depth)) {
+        const pairs: ForbiddenPairs = new Map();
+        input.history.recentRounds.slice(0, depth).forEach((round, roundsBack) => {
+            const weight = 10 ** (depth - 1 - roundsBack);
             const list = kind === 'partner' ? round.partnerPairs : round.opponentCanonicalPairs;
             for (const [a, b] of list) {
-                pairs.add(pairKey(a, b));
+                const key = pairKey(a, b);
+                pairs.set(key, Math.max(pairs.get(key) ?? 0, weight));
             }
-        }
+        });
         return pairs;
     }
 
@@ -619,13 +634,20 @@ export class DefaultMatchmakingStrategy implements MatchmakingPort {
     }
 }
 
-/** Number of forbidden pairs found in a split. */
-function countForbiddenPairs(groups: string[][], forbiddenPairs: Set<string>): number {
+/** The band shifted by `offset` places, wrapping around. */
+function rotate<T>(band: T[], offset: number): T[] {
+    if (band.length === 0) return band;
+    const shift = offset % band.length;
+    return [...band.slice(shift), ...band.slice(0, shift)];
+}
+
+/** Weight of the forbidden pairs found in a split: 0 when none is rebuilt. */
+function countForbiddenPairs(groups: string[][], forbiddenPairs: ForbiddenPairs): number {
     let count = 0;
     for (const group of groups) {
         for (let i = 0; i < group.length; i++) {
             for (let j = i + 1; j < group.length; j++) {
-                if (forbiddenPairs.has(pairKey(group[i], group[j]))) count++;
+                count += forbiddenPairs.get(pairKey(group[i], group[j])) ?? 0;
             }
         }
     }

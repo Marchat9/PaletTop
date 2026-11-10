@@ -375,8 +375,38 @@ describe('DefaultMatchmakingStrategy', () => {
 
     // Learning mode must still honour avoidSamePartnerConsecutive: the natural band pairing
     // (p1+p5, p2+p6, ...) would repeat every round, so it reshuffles within each band.
+    // With 4 players every arrangement repeats a pair of the last two rounds: the one of the
+    // round before must be chosen, not the one just played.
+    it("reforme plutôt un binôme d'il y a deux rounds que celui du round précédent", () => {
+        const strategy = new DefaultMatchmakingStrategy(NO_SHUFFLE);
+        const plan = strategy.generateRound(
+            input({
+                soloParticipantIds: solos(4),
+                config: baseConfig({ teamComposition: TrainingTeamComposition.LEARNING }),
+                history: baseHistory({
+                    recentRounds: [
+                        round([
+                            ['p1', 'p3'],
+                            ['p2', 'p4'],
+                        ]),
+                        round([
+                            ['p1', 'p4'],
+                            ['p2', 'p3'],
+                        ]),
+                    ],
+                }),
+                levelByParticipant: { p1: 40, p2: 30, p3: 20, p4: 10 },
+            }),
+        );
+
+        const teams = plan.ephemeralTeams.map((t) => [...t.participantIds].sort().join('+'));
+        expect(teams.sort()).toEqual(['p1+p4', 'p2+p3']);
+    });
+
+    // Without any shuffle luck (every random reshuffle gives the same order back), a valid
+    // arrangement must still be found: it always exists here.
     it('évite de reformer le même binôme au round suivant en apprentissage', () => {
-        const strategy = new DefaultMatchmakingStrategy(Math.random);
+        const strategy = new DefaultMatchmakingStrategy(NO_SHUFFLE);
         const levelByParticipant = {
             p1: 80,
             p2: 70,
