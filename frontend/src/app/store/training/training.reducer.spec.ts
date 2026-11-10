@@ -20,6 +20,7 @@ import {
 import {
   checkinTrainingParticipant,
   checkinTrainingParticipantSuccess,
+  createTrainingSessionSuccess,
 } from './training.session.actions';
 import {
   renameTrainingMemberSuccess,
@@ -376,5 +377,30 @@ describe('trainingReducer', () => {
 
       expect(state.participantHistory.data).toEqual([initial]);
     });
+  });
+
+  it('liste la séance créée en premier, comme le serveur', () => {
+    const before = {
+      ...initialTrainingState,
+      sessions: {
+        data: [
+          {
+            code: 'old',
+            date: '2026-01-01T18:00:00.000Z',
+            status: 'CLOSED' as const,
+            participantsCount: 3,
+          },
+        ],
+        isLoading: false,
+        error: null,
+      },
+    };
+
+    const state = trainingReducer(
+      before,
+      createTrainingSessionSuccess({ session: buildSession([]) }),
+    );
+
+    expect(state.sessions.data.map((session) => session.code)).toEqual(['1234', 'old']);
   });
 });

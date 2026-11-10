@@ -76,8 +76,14 @@ export class AdminTrainingPage implements OnInit {
   // Compute
   public readonly trainingLoading = computed(() => !this.training() && this.trainingIsLoading());
   private readonly adminPassword = computed(() => this.adminSession()?.password ?? null);
-  // Sessions arrive from the oldest to the most recent: the last row is the most recent one.
-  public readonly lastSessionDate = computed(() => this.sessions().at(-1)?.date ?? null);
+  // Most recent date, whatever the order of the list (a session can be created for a past date).
+  public readonly lastSessionDate = computed(
+    () =>
+      this.sessions()
+        .map((session) => session.date)
+        .sort()
+        .at(-1) ?? null,
+  );
 
   constructor() {
     // Connects as soon as the code from the URL and the stored password are both known.

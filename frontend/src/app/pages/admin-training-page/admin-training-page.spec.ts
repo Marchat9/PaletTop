@@ -85,4 +85,15 @@ describe('AdminTrainingPage', () => {
       connectTrainingAdministrator({ code: 'ABCD', password: 'secret' }),
     );
   });
+
+  it('shows the most recent session date as the last one, whatever the list order', () => {
+    const { fixture, store } = setup();
+    store.overrideSelector(selectTrainingSessions, [
+      { code: '1', date: '2026-11-11T18:00:00.000Z', status: 'OPEN', participantsCount: 0 },
+      { code: '2', date: '2026-11-09T18:00:00.000Z', status: 'CLOSED', participantsCount: 0 },
+    ]);
+    store.refreshState();
+
+    expect(fixture.componentInstance.lastSessionDate()).toBe('2026-11-11T18:00:00.000Z');
+  });
 });

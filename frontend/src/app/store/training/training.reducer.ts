@@ -483,14 +483,15 @@ export const trainingReducer = createReducer(
     currentSession: { data: session, isLoading: false, error: null },
     sessions: {
       ...state.sessions,
+      // Listed most recent first, like the server sends them.
       data: [
-        ...state.sessions.data,
         {
           code: session.code,
           date: session.date,
           status: session.status,
           participantsCount: session.participants.length,
         },
+        ...state.sessions.data,
       ],
     },
     requestStatus: {
