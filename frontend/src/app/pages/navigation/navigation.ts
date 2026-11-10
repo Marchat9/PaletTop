@@ -77,11 +77,17 @@ export class Navigation {
       key: 'training',
       label: 'Entraînement',
       icon: 'school',
-      matchPrefixes: ['/player/training', '/admin/training', '/admin/training-creation'],
+      matchPrefixes: [
+        '/player/training',
+        '/admin/training',
+        '/admin/training-creation',
+        '/spectateur/training',
+      ],
       children: [
         { label: 'Rejoindre en joueur', route: '/player/training', icon: 'person' },
         { label: 'Administrer', route: '/admin/training', icon: 'admin_panel_settings' },
         { label: 'Créer un Club', route: '/admin/training-creation', icon: 'group_add' },
+        { label: 'Suivre en spectateur', route: '/spectateur/training', icon: 'visibility' },
       ],
     },
     {

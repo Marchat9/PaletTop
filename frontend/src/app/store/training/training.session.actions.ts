@@ -119,6 +119,12 @@ export const dismissTrainingCheckinHandoff = createAction(
 
 // Leaves the control page: closes the socket of the session.
 export const leaveTrainingSession = createAction('[Training] Leave Training Session');
+
+// Follows a session as a spectator: joins its public room, like a player, without any code.
+export const spectateTrainingSession = createAction(
+  '[Training] Spectate Training Session',
+  props<{ sessionCode: string }>(),
+);
 // -------------------------------------------------------
 
 // --------- Remove participant ---------

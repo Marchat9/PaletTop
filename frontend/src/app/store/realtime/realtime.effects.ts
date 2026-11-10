@@ -40,6 +40,7 @@ import {
 import {
   connectTrainingSessionAdministratorSuccess,
   leaveTrainingSession,
+  spectateTrainingSession,
 } from 'src/app/store/training/training.session.actions';
 import { selectCurrentTrainingAdminInformations } from 'src/app/store/training/training.selectors';
 import {
@@ -135,6 +136,17 @@ export class RealtimeEffects {
   connectWebSocketTrainingPlayer$ = createEffect(() =>
     this.actions$.pipe(
       ofType(loadTrainingParticipantCurrentMatchSuccess),
+      switchMap(({ sessionCode }) => {
+        this.wsService.connectTrainingSession(sessionCode);
+        return this.computeTrainingWsEvents$();
+      }),
+    ),
+  );
+
+  // The spectator joins the public room too: the same rounds, scores and leaderboards as a player.
+  connectWebSocketTrainingSpectator$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(spectateTrainingSession),
       switchMap(({ sessionCode }) => {
         this.wsService.connectTrainingSession(sessionCode);
         return this.computeTrainingWsEvents$();

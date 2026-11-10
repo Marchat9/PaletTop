@@ -65,7 +65,8 @@ docker compose up --build        # From the repo root: PostgreSQL + backend + fr
   - Training: `/admin/training-creation`, `/admin/training[/:trainingCode]`,
     `/admin/training/:trainingCode/session-creation`,
     `/admin/training/:trainingCode/session/:sessionCode`,
-    `/player/training[/:sessionCode/:participantCode]`
+    `/player/training[/:sessionCode/:participantCode]`, `/spectateur/training[/:sessionCode]`
+    (declared before the tournament routes, so that `/spectateur/:tournamentCode` does not catch it)
   - `/friendly-match`, `/super-admin`
 - Only page components read the store and dispatch actions; sub-components communicate through `input()`/`output()`
 - Shared UI components in `src/app/shared/`; modals in `src/app/modales/`

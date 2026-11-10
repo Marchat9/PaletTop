@@ -8,6 +8,7 @@ import { AppVisibilityService } from 'src/app/services/app-visibility.service';
 import { WebSocketService } from 'src/app/services/websocket.service';
 import { resyncPending, resyncRequested } from './realtime.actions';
 import { RealtimeEffects } from './realtime.effects';
+import { spectateTrainingSession } from 'src/app/store/training/training.session.actions';
 
 describe('RealtimeEffects - resyncOnReconnect$', () => {
   let reconnected$: Subject<void>;
@@ -106,5 +107,32 @@ describe('RealtimeEffects - resyncOnReconnect$', () => {
     vi.advanceTimersByTime(1_000);
 
     expect(emitted).toEqual([resyncRequested()]);
+  });
+});
+
+describe('RealtimeEffects - connectWebSocketTrainingSpectator$', () => {
+  it('joins the public room of the followed session', () => {
+    const actions$ = new Subject<Action>();
+    const connectTrainingSession = vi.fn();
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [
+        RealtimeEffects,
+        provideMockActions(() => actions$),
+        provideMockStore(),
+        {
+          provide: WebSocketService,
+          useValue: { reconnected$: EMPTY, on: () => EMPTY, connectTrainingSession },
+        },
+        { provide: AppVisibilityService, useValue: { resumed$: EMPTY } },
+      ],
+    });
+    const effects = TestBed.inject(RealtimeEffects);
+    effects.connectWebSocketTrainingSpectator$.subscribe();
+
+    actions$.next(spectateTrainingSession({ sessionCode: '123456' }));
+
+    // No password: the public room, the same one as the players.
+    expect(connectTrainingSession).toHaveBeenCalledWith('123456');
   });
 });

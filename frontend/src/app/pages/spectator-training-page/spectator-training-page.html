@@ -1,0 +1,69 @@
+<div class="spectator-page">
+  <div class="header">
+    <h1 class="session-name">
+      <span>Entraînement : </span>
+      {{ session() ? (session()!.date | date: 'EEEE d MMMM y') : '—' }}
+    </h1>
+    <div class="session-info" [class.ended]="isSessionClosed()">
+      @if (session()) {
+        @if (isSessionClosed()) {
+          <span class="badge completed">Séance terminée</span>
+        } @else {
+          <span class="badge active">Séance en cours</span>
+        }
+      }
+      @if (currentRound() && !isSessionClosed()) {
+        <span class="badge">Round : {{ currentRound()!.roundNumber }}</span>
+      }
+    </div>
+    @if (!isMobile()) {
+      <app-switch
+        class="switch"
+        [checked]="autoScrollOn()"
+        label="Défilement automatique"
+        (checkedChange)="autoScrollOn.set($event)"
+      />
+    }
+  </div>
+
+  @if (error()) {
+    <div class="error-container">
+      <span class="message">
+        <app-icon name="error" [ariaHidden]="true" />
+        Séance introuvable.
+      </span>
+      <span class="description">
+        Veuillez vérifier le code de la séance ou contacter le référent d'entraînement pour plus
+        d'informations.
+      </span>
+      <div class="state-actions">
+        <app-button title="Ressaisir le code" icon="edit" (clicked)="retypeCode()" />
+        <app-button
+          title="Retour à l'accueil"
+          icon="home"
+          variant="secondary"
+          (clicked)="goHome()"
+        />
+      </div>
+    </div>
+  } @else {
+    <div class="content">
+      @if (!isSessionClosed()) {
+        <div class="column matches" [appAutoScroll]="autoScrollOn() && !isMobile()">
+          <app-session-round
+            [round]="currentRound()"
+            [pointsPerGame]="pointsPerGame()"
+            [isSessionOpen]="false"
+            [isLoading]="roundsLoading() || isLoading()"
+          />
+        </div>
+      }
+      <div class="column ranking" [appAutoScroll]="autoScrollOn() && !isMobile()">
+        <app-session-leaderboard
+          [leaderboard]="leaderboard()"
+          [isLoading]="leaderboardLoading() || isLoading()"
+        />
+      </div>
+    </div>
+  }
+</div>

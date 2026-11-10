@@ -53,6 +53,20 @@ const tournamentRoutes: Routes = [
 
 const trainingRoutes: Routes = [
   {
+    path: 'spectateur/training',
+    loadComponent: () =>
+      import('./pages/connections/spectator-training-connection-page/spectator-training-connection-page').then(
+        (m) => m.SpectatorTrainingConnectionPage,
+      ),
+  },
+  {
+    path: 'spectateur/training/:sessionCode',
+    loadComponent: () =>
+      import('./pages/spectator-training-page/spectator-training-page').then(
+        (m) => m.SpectatorTrainingPage,
+      ),
+  },
+  {
     path: 'admin/training-creation',
     loadComponent: () =>
       import('./pages/training-creation-page/training-creation-page').then(
@@ -111,8 +125,9 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/home-page/home-page').then((m) => m.HomePageComponent),
   },
 
-  ...tournamentRoutes,
+  // Training first: `spectateur/training` must not be read as `spectateur/:tournamentCode`.
   ...trainingRoutes,
+  ...tournamentRoutes,
 
   {
     path: 'friendly-match',

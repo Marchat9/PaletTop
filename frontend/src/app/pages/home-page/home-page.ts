@@ -1,4 +1,5 @@
 import { Dialog } from '@angular/cdk/dialog';
+import { SpectateTrainingPopup } from 'src/app/modales/spectate-training-popup/spectate-training-popup';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -137,6 +138,20 @@ export class HomePageComponent implements OnInit {
             participantCode: string;
           };
           this.router.navigate([`/player/training/${sessionCode}/${participantCode}`]);
+        }
+      });
+  }
+
+  public openModaleTrainingSpectate(): void {
+    this.dialog
+      .open<{ sessionCode: string }>(SpectateTrainingPopup, {
+        panelClass: 'dialog-panel',
+        backdropClass: 'dialog-backdrop',
+        disableClose: false,
+      })
+      .closed.subscribe((codes) => {
+        if (codes) {
+          this.router.navigate(['/spectateur/training', codes.sessionCode]);
         }
       });
   }
