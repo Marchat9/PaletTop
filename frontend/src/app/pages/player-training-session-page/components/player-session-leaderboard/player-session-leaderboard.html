@@ -10,6 +10,14 @@
   </div>
 
   <div content class="leaderboard-content">
+    <app-button
+      class="club-button"
+      title="Classement du club"
+      icon="military_tech"
+      variant="tertiary"
+      (clicked)="openClubLeaderboard.emit()"
+    />
+
     @if (!hasData()) {
       <p class="empty">Aucun match validé pour l'instant.</p>
     } @else {
@@ -41,13 +49,5 @@
         </table>
       </div>
     }
-
-    <app-button
-      class="club-button"
-      title="Classement du club"
-      icon="military_tech"
-      variant="secondary"
-      (clicked)="openClubLeaderboard.emit()"
-    />
   </div>
 </app-card-collapsible>
