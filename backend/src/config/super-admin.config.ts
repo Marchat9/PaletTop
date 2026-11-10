@@ -1,5 +1,6 @@
 import { Logger } from '@nestjs/common';
 import { registerAs } from '@nestjs/config';
+import { parseNumber } from 'src/config/config.utils';
 
 export interface SuperAdminConfig {
     password: string;
@@ -11,12 +12,6 @@ export interface SuperAdminConfig {
 
 const DEFAULT_PASSWORD = 'PaletTopPassword';
 const logger = new Logger('SuperAdminConfig');
-
-function parseNumber(value: string | undefined, defaultValue: number): number {
-    if (!value?.trim()) return defaultValue;
-    const parsed = Number(value);
-    return Number.isFinite(parsed) && parsed > 0 ? parsed : defaultValue;
-}
 
 function resolvePassword(): string {
     const password = process.env.SUPER_ADMIN_PASSWORD;
@@ -41,8 +36,16 @@ function resolvePassword(): string {
  */
 export default registerAs('superAdmin', (): SuperAdminConfig => ({
     password: resolvePassword(),
-    maxAttempts: parseNumber(process.env.SUPER_ADMIN_MAX_ATTEMPTS, 3),
-    lockoutBaseDelaySeconds: parseNumber(process.env.SUPER_ADMIN_LOCKOUT_BASE_DELAY_SECONDS, 30),
-    lockoutMaxDelaySeconds: parseNumber(process.env.SUPER_ADMIN_LOCKOUT_MAX_DELAY_SECONDS, 1800),
-    maxPageSize: parseNumber(process.env.SUPER_ADMIN_MAX_PAGE_SIZE, 100),
+    maxAttempts: parseNumber(process.env.SUPER_ADMIN_MAX_ATTEMPTS, 3, true),
+    lockoutBaseDelaySeconds: parseNumber(
+        process.env.SUPER_ADMIN_LOCKOUT_BASE_DELAY_SECONDS,
+        30,
+        true,
+    ),
+    lockoutMaxDelaySeconds: parseNumber(
+        process.env.SUPER_ADMIN_LOCKOUT_MAX_DELAY_SECONDS,
+        1800,
+        true,
+    ),
+    maxPageSize: parseNumber(process.env.SUPER_ADMIN_MAX_PAGE_SIZE, 100, true),
 }));

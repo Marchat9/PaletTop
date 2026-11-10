@@ -1,4 +1,5 @@
 import { registerAs } from '@nestjs/config';
+import { parseBoolean, parseNumber } from 'src/config/config.utils';
 
 export interface CleanupRuleConfig {
     enabled: boolean;
@@ -15,17 +16,6 @@ export interface CleanupConfig {
     completed: CleanupRuleConfig;
     draft: CleanupDraftRuleConfig;
     active: CleanupRuleConfig;
-}
-
-function parseBoolean(value: string | undefined, defaultValue: boolean): boolean {
-    if (value === undefined) return defaultValue;
-    return value.toLowerCase() === 'true';
-}
-
-function parseNumber(value: string | undefined, defaultValue: number): number {
-    if (value === undefined) return defaultValue;
-    const parsed = Number(value);
-    return Number.isFinite(parsed) ? parsed : defaultValue;
 }
 
 /**

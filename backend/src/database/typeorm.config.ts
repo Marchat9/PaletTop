@@ -1,16 +1,11 @@
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { join } from 'path';
 import { DataSourceOptions } from 'typeorm';
+import { parseNumber } from 'src/config/config.utils';
 
 function isDevBddEnvironment(): boolean {
     const environment = process.env.APP_ENV ?? process.env.NODE_ENV ?? '';
     return environment === 'dev-bdd';
-}
-
-function parseNumber(value: string | undefined, defaultValue: number): number {
-    if (value === undefined) return defaultValue;
-    const parsed = Number(value);
-    return Number.isFinite(parsed) ? parsed : defaultValue;
 }
 
 /**
