@@ -181,6 +181,8 @@ export class SessionService {
         this.gateway.emitSessionUpdated(tournamentCode, toSessionResponseDto(newSessionMatches));
         // Common step: Emit match for every team in new session
         this.emitNewMatchForEachTeam(tournamentCode, newSessionMatches);
+        // A bye of the new session is validated straight away: its win changes the ranking.
+        this.rankingService.scheduleRankingUpdate(tournamentCode);
 
         // Common step: Emit new tournament information
         const tournamentStatusInfoForNextSession = await this.buildTournamentStatus(

@@ -85,8 +85,10 @@ export const matchReducer = createReducer(
     ...state,
     scoreRequest: { ...state.scoreRequest, startMatch: { isLoading: true, error: null } },
   })),
-  on(startMatchSuccess, (state) => ({
+  // The response shows the started match even when the websocket broadcast does not arrive.
+  on(startMatchSuccess, (state, { match }) => ({
     ...state,
+    data: { ...state.data, data: withMatch(state.data.data, match) },
     scoreRequest: { ...state.scoreRequest, startMatch: { isLoading: false, error: null } },
   })),
   on(startMatchFailure, (state, { error }) => ({
@@ -109,8 +111,9 @@ export const matchReducer = createReducer(
     ...state,
     scoreRequest: { ...state.scoreRequest, validateMatch: { isLoading: true, error: null } },
   })),
-  on(validateMatchSuccess, (state) => ({
+  on(validateMatchSuccess, (state, { match }) => ({
     ...state,
+    data: { ...state.data, data: withMatch(state.data.data, match) },
     scoreRequest: { ...state.scoreRequest, validateMatch: { isLoading: false, error: null } },
   })),
   on(validateMatchFailure, (state, { error }) => ({
@@ -137,6 +140,13 @@ export const matchReducer = createReducer(
  * the place of the match they are playing. Only the same match, or one of a newer session (the
  * next session's match), replaces the current one.
  */
+function withMatch(
+  current: Nullable<PlayerMatchDto>,
+  incoming: PlayerMatchDto,
+): Nullable<PlayerMatchDto> {
+  return isCurrentOrNewerMatch(current, incoming) ? incoming : current;
+}
+
 export function isCurrentOrNewerMatch(
   current: Nullable<PlayerMatchDto>,
   incoming: PlayerMatchDto,

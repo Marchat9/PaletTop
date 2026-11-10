@@ -57,11 +57,11 @@ function buildTournament(): TournamentDto {
   };
 }
 
-function setup(awaitingResync = false) {
+function setup(awaitingResync = false, pathCode = 'ABCD') {
   const activatedRoute = {
     snapshot: {
       paramMap: {
-        get: (key: string) => (key === 'teamCode' ? 'AB12' : 'ABCD'),
+        get: (key: string) => (key === 'teamCode' ? 'AB12' : pathCode),
       },
     },
   } as unknown as ActivatedRoute;
@@ -107,6 +107,19 @@ function setup(awaitingResync = false) {
 }
 
 describe('PlayerTeamMatchPageComponent', () => {
+  it('uses the tournament code in uppercase when the link has it in lowercase', () => {
+    const { fixture, store, actions$ } = setup(false, 'abcd');
+    fixture.detectChanges();
+    const dispatchSpy = vi.spyOn(store, 'dispatch');
+
+    actions$.next(resyncRequested());
+
+    expect(dispatchSpy).toHaveBeenCalledWith(
+      loadTournamentInformation({ tournamentCode: 'ABCD', teamCode: 'AB12' }),
+    );
+    expect(dispatchSpy).toHaveBeenCalledWith(loadSessions({ code: 'ABCD' }));
+  });
+
   it('reloads the tournament information and sessions when a resync is requested', () => {
     const { fixture, store, actions$ } = setup();
     fixture.detectChanges();

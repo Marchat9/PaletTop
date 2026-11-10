@@ -9,6 +9,11 @@ import { SessionService } from './session.service';
 vi.mock('typeorm-transactional', () => ({
     Transactional: () => () => undefined,
 }));
+// The tournament DTO mappers are out of the scope of these tests.
+vi.mock('../responses/admin-tournament.dto', () => ({
+    toAdminTournamentDto: vi.fn(() => ({})),
+    toTournamentMetaDto: vi.fn(() => ({})),
+}));
 
 function setup(prepareTournamentStart: () => Promise<Tournament>) {
     const tournament = {
@@ -89,15 +94,17 @@ function setupActive(status: { canGenerateNewSession: boolean; canFinishTourname
         canCompleteTournament: vi.fn(() => true),
         computeTournamentStatus: vi.fn(() => ({ currentSession: 1, phaseName: '', ...status })),
     };
+    const gateway = { emitSessionUpdated: vi.fn(), emitTournamentUpdated: vi.fn() };
+    const rankingService = { scheduleRankingUpdate: vi.fn() };
     const service = new SessionService(
         {} as never,
         sessionRepo as never,
         { findWithAdminAuth: vi.fn(async () => tournament) } as never,
-        {} as never,
-        {} as never,
+        gateway as never,
+        rankingService as never,
         { create: vi.fn(() => strategy) } as never,
     );
-    return { service, sessionRepo };
+    return { service, sessionRepo, tournament, validatedSession, rankingService };
 }
 
 describe('SessionService phase limits', () => {
@@ -119,5 +126,37 @@ describe('SessionService phase limits', () => {
 
         await expect(service.completeTournament('CODE', 'pw')).rejects.toThrow(BadRequestException);
         expect(sessionRepo.updateStatus).not.toHaveBeenCalled();
+    });
+});
+
+describe('SessionService.nextSession', () => {
+    // A bye of the new round is validated at once: its win must reach the ranking without waiting
+    // for the next score.
+    it('schedules a ranking update once the next round is created', async () => {
+        const { service, tournament, validatedSession, rankingService } = setupActive({
+            canGenerateNewSession: true,
+            canFinishTournament: false,
+        });
+        const newSession = {
+            id: 'S2',
+            sessionNumber: 2,
+            status: MatchesSessionStatus.OPEN,
+            matches: [],
+        };
+        const internals = service as unknown as Record<string, unknown>;
+        internals.writeNextSession = vi.fn(async () => ({
+            currentSessionClosed: { ...validatedSession, matches: [] },
+            newSession,
+            tournamentWithMatches: {
+                ...tournament,
+                matchsSessions: [validatedSession, newSession],
+            },
+        }));
+        internals.emitHistoryForSession = vi.fn(async () => undefined);
+        internals.emitNewMatchForEachTeam = vi.fn();
+
+        await service.nextSession('CODE', 'pw');
+
+        expect(rankingService.scheduleRankingUpdate).toHaveBeenCalledWith('CODE');
     });
 });

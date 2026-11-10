@@ -19,8 +19,8 @@ export class MatchService {
     );
   }
 
-  public startMatch(code: string, matchId: string, teamCode: string): Observable<void> {
-    return this.http.post<void>(
+  public startMatch(code: string, matchId: string, teamCode: string): Observable<PlayerMatchDto> {
+    return this.http.post<PlayerMatchDto>(
       `${this.apiBaseUrl}/tournaments/${encodeURIComponent(code)}/matches/${matchId}/start`,
       {
         teamCode,
@@ -46,8 +46,8 @@ export class MatchService {
     matchId: string,
     teamCode: string,
     opponentTeamCode: string,
-  ): Observable<void> {
-    return this.http.post<void>(
+  ): Observable<{ match: PlayerMatchDto }> {
+    return this.http.post<{ match: PlayerMatchDto }>(
       `${this.apiBaseUrl}/tournaments/${encodeURIComponent(code)}/matches/${matchId}/validate`,
       { teamCode, opponentTeamCode },
     );

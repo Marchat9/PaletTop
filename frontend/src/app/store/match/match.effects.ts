@@ -78,7 +78,7 @@ export class MatchEffects {
       withLatestFrom(this.store.select(selectCurrentTournamentData)),
       switchMap(([{ matchId, teamCode }, tournament]) =>
         this.matchService.startMatch(tournament!.code, matchId, teamCode).pipe(
-          map(() => startMatchSuccess()),
+          map((match) => startMatchSuccess({ match })),
           catchError((error) => of(startMatchFailure({ error: convertErrorToString(error) }))),
         ),
       ),
@@ -116,7 +116,7 @@ export class MatchEffects {
       withLatestFrom(this.store.select(selectCurrentTournamentData)),
       switchMap(([{ matchId, teamCode, opponentTeamCode }, tournament]) =>
         this.matchService.validateMatch(tournament!.code, matchId, teamCode, opponentTeamCode).pipe(
-          map(() => validateMatchSuccess()),
+          map(({ match }) => validateMatchSuccess({ match })),
           catchError((error) => of(validateMatchFailure({ error: convertErrorToString(error) }))),
         ),
       ),

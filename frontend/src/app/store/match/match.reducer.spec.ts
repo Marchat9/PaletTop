@@ -6,7 +6,12 @@ import {
 } from 'src/app/store/tournament/tournament.actions';
 import { TournamentDto } from 'src/app/store/tournament/tournament.models';
 import { TournamentStatus } from 'src/app/models/tournament-status.enum';
-import { loadCurrentMatchFailure, loadCurrentMatchSuccess } from './match.actions';
+import {
+  loadCurrentMatchFailure,
+  loadCurrentMatchSuccess,
+  startMatchSuccess,
+  validateMatchSuccess,
+} from './match.actions';
 import { initialMatchState, matchReducer } from './match.reducer';
 
 function match(id: string, sessionNumber: number, scoreA = 0): PlayerMatchDto {
@@ -109,5 +114,30 @@ describe('matchReducer resync lock', () => {
     expect(draft.awaitingResync).toBe(false);
     // Active: the current match reload that follows is what unlocks it.
     expect(active.awaitingResync).toBe(true);
+  });
+});
+
+describe('matchReducer without websocket', () => {
+  it('shows the started match from the response', () => {
+    const started = { ...match('m3', 3), startedAt: '2026-11-09T10:00:00Z' };
+    const state = matchReducer(withCurrent(match('m3', 3)), startMatchSuccess({ match: started }));
+    expect(state.data.data).toEqual(started);
+  });
+
+  it('shows the validated match from the response', () => {
+    const validated = { ...match('m3', 3, 13), status: 'VALIDATED' } as PlayerMatchDto;
+    const state = matchReducer(
+      withCurrent(match('m3', 3)),
+      validateMatchSuccess({ match: validated }),
+    );
+    expect(state.data.data?.status).toBe('VALIDATED');
+  });
+
+  it('keeps the next session match when the response of an older one arrives late', () => {
+    const state = matchReducer(
+      withCurrent(match('m4', 4)),
+      validateMatchSuccess({ match: match('m3', 3, 13) }),
+    );
+    expect(state.data.data?.id).toBe('m4');
   });
 });

@@ -1,3 +1,4 @@
+import { normalizeCode } from 'src/app/utils/code-format.util';
 import { selectMatchAwaitingResync } from 'src/app/store/match/match.selectors';
 import { Dialog } from '@angular/cdk/dialog';
 import { Button } from 'src/app/shared/button/button';
@@ -78,7 +79,11 @@ export class PlayerTeamMatchPageComponent {
   private readonly dialog = inject(Dialog);
 
   private readonly teamCode = this.route.snapshot.paramMap.get('teamCode');
-  private readonly tournamentPathCode = this.route.snapshot.paramMap.get('tournamentCode');
+  // Normalized like the codes stored by the server: typed in lowercase, some calls found nothing
+  // and the page announced the end of the tournament.
+  private readonly tournamentPathCode = normalizeOptionalCode(
+    this.route.snapshot.paramMap.get('tournamentCode'),
+  );
 
   private readonly tournamentState = this.store.selectSignal(selectCurrentTournament);
   private readonly tournamentData = this.store.selectSignal(selectCurrentTournamentData);
@@ -340,4 +345,8 @@ export class PlayerTeamMatchPageComponent {
   public goHome(): void {
     void this.router.navigate(['/accueil']);
   }
+}
+
+function normalizeOptionalCode(code: string | null): string | null {
+  return code ? normalizeCode(code) : null;
 }
