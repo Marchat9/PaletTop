@@ -91,10 +91,15 @@
           border-color: var(--color-status-error-border);
         }
       }
+
+      .code {
+        font-size: 1.1rem;
+        letter-spacing: 0.1rem;
+      }
     }
 
     .switch {
-      flex: 1;
+      flex: 0.5;
       display: flex;
       justify-content: flex-end;
     }

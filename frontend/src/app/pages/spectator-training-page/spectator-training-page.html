@@ -15,6 +15,11 @@
       @if (currentRound() && !isSessionClosed()) {
         <span class="badge">Round : {{ currentRound()!.roundNumber }}</span>
       }
+      @if (!!sessionCode) {
+        <span class="badge draft"
+          >Code session : <span class="code">{{ sessionCode }}</span></span
+        >
+      }
     </div>
     @if (!isMobile()) {
       <app-switch

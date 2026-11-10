@@ -75,7 +75,7 @@ export class SpectatorTrainingPage {
   private readonly router = inject(Router);
   private readonly dialog = inject(Dialog);
 
-  private readonly sessionCode = this.route.snapshot.paramMap.get('sessionCode');
+  readonly sessionCode = this.route.snapshot.paramMap.get('sessionCode');
 
   private readonly loadedSession = this.store.selectSignal(selectCurrentTrainingSessionData);
   // The store may still hold another session (the player's): only this one is shown.
