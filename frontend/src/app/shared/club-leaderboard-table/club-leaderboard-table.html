@@ -19,9 +19,14 @@
       </thead>
       <tbody>
         @for (entry of entries(); track entry.memberId; let index = $index) {
-          <tr>
+          <tr [class.is-me]="entry.memberId === myMemberId()">
             <td class="col-rank">{{ index + 1 }}</td>
-            <td>{{ entry.name }}</td>
+            <td>
+              {{ entry.name }}
+              @if (entry.memberId === myMemberId()) {
+                <span class="me-badge">vous</span>
+              }
+            </td>
             <td class="col-stat">{{ entry.wins }}</td>
             <td class="col-stat">{{ entry.points }}</td>
           </tr>

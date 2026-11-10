@@ -14,6 +14,11 @@
   </p>
 
   <div class="popup-body">
-    <app-club-leaderboard-table [entries]="entries()" [isLoading]="isLoading()" [error]="error()" />
+    <app-club-leaderboard-table
+      [entries]="entries()"
+      [isLoading]="isLoading()"
+      [error]="error()"
+      [myMemberId]="myMemberId"
+    />
   </div>
 </div>

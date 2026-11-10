@@ -129,6 +129,8 @@ export interface TrainingRoundDto {
 export interface TrainingParticipantIdentityDto {
   id: string;
   name: string;
+  /** Club member behind the participant (null for a guest). */
+  memberId: Nullable<string>;
 }
 
 /** A score entered by a player. */

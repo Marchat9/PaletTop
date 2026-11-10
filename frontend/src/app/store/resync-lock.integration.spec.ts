@@ -40,7 +40,7 @@ const TOURNAMENT_MATCH_URL = '/tournaments/ABCD/teams/AB12/match';
 
 function trainingCurrentMatch(scoreB: number): TrainingCurrentMatchDto {
   return {
-    participant: { id: 'p1', name: 'Jean Dubois' },
+    participant: { id: 'p1', name: 'Jean Dubois', memberId: null },
     roundNumber: 1,
     sitOut: false,
     match: {

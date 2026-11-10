@@ -27,6 +27,32 @@ describe('ClubLeaderboardTable', () => {
     ]);
   });
 
+  it('marque « vous » la ligne du membre qui lit le classement', () => {
+    const element = setup({
+      entries: [
+        { memberId: 'M2', name: 'Marie', wins: 4, points: 52 },
+        { memberId: 'M1', name: 'Jean', wins: 2, points: 40 },
+      ],
+      myMemberId: 'M1',
+    });
+
+    const rows = element.querySelectorAll('tbody tr');
+    expect(rows[0].classList).not.toContain('is-me');
+    expect(rows[1].classList).toContain('is-me');
+    expect(element.querySelectorAll('.me-badge')).toHaveLength(1);
+    expect(rows[1].querySelector('.me-badge')?.textContent).toBe('vous');
+  });
+
+  it('ne marque personne sans membre lecteur (invité, admin non joueur)', () => {
+    const element = setup({
+      entries: [{ memberId: 'M1', name: 'Jean', wins: 2, points: 40 }],
+      myMemberId: null,
+    });
+
+    expect(element.querySelector('.me-badge')).toBeNull();
+    expect(element.querySelector('.is-me')).toBeNull();
+  });
+
   it('indique qu’aucun membre n’a de match validé, les invités n’étant pas comptés', () => {
     expect(setup({ entries: [] }).textContent).toContain(
       "Aucun membre du club n'a encore de match validé (les invités ne sont pas comptés).",

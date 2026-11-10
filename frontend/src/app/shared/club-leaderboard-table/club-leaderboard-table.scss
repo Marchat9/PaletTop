@@ -49,6 +49,23 @@
     border-bottom: 0;
   }
 
+  .is-me td {
+    background: var(--color-status-draft-bg);
+    font-weight: 700;
+  }
+
+  .me-badge {
+    margin-left: 0.4rem;
+    padding: 0.05rem 0.4rem;
+    border-radius: 10rem;
+    background: var(--color-primary);
+    color: var(--color-on-primary);
+    font-family: var(--font-label);
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
   .col-rank {
     width: 3rem;
     color: var(--color-primary);

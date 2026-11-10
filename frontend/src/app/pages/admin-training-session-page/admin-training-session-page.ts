@@ -1,5 +1,8 @@
 import { Dialog } from '@angular/cdk/dialog';
-import { ClubLeaderboardPopup } from 'src/app/modales/club-leaderboard-popup/club-leaderboard-popup';
+import {
+  ClubLeaderboardPopup,
+  ClubLeaderboardPopupData,
+} from 'src/app/modales/club-leaderboard-popup/club-leaderboard-popup';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -558,7 +561,8 @@ export class AdminTrainingSessionPage implements OnInit, OnDestroy {
     }
     this.store.dispatch(followTrainingClubLeaderboard({ sessionCode }));
     this.dialog
-      .open(ClubLeaderboardPopup, {
+      .open<void, ClubLeaderboardPopupData>(ClubLeaderboardPopup, {
+        data: { myMemberId: this.adminParticipant()?.memberId ?? null },
         panelClass: 'dialog-panel',
         backdropClass: 'dialog-backdrop-light',
       })

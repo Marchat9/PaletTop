@@ -43,7 +43,10 @@ import {
   loadTrainingSessionPublic,
 } from 'src/app/store/training/training.session.actions';
 import { Dialog } from '@angular/cdk/dialog';
-import { ClubLeaderboardPopup } from 'src/app/modales/club-leaderboard-popup/club-leaderboard-popup';
+import {
+  ClubLeaderboardPopup,
+  ClubLeaderboardPopupData,
+} from 'src/app/modales/club-leaderboard-popup/club-leaderboard-popup';
 import {
   selectCurrentTrainingAdminInformations,
   selectCurrentTrainingSessionData,
@@ -369,7 +372,8 @@ export class PlayerTrainingSessionPage implements OnInit, OnDestroy {
     }
     this.store.dispatch(followTrainingClubLeaderboard({ sessionCode }));
     this.dialog
-      .open(ClubLeaderboardPopup, {
+      .open<void, ClubLeaderboardPopupData>(ClubLeaderboardPopup, {
+        data: { myMemberId: this.me()?.memberId ?? null },
         panelClass: 'dialog-panel',
         backdropClass: 'dialog-backdrop-light',
       })

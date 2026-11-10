@@ -27,7 +27,11 @@ export class TrainingParticipantViewService {
             participantCode,
         );
 
-        const identity = { id: participant.id, name: participant.name };
+        const identity = {
+            id: participant.id,
+            name: participant.name,
+            memberId: participant.member?.id ?? null,
+        };
 
         const latestRound = await this.trainingRoundRepo.findLatestBySession(session.id);
         if (!latestRound) {

@@ -15,6 +15,8 @@ export class ClubLeaderboardTable {
   public readonly entries = input<TrainingClubLeaderboardEntryDto[]>([]);
   public readonly isLoading = input<boolean>(false);
   public readonly error = input<Nullable<string>>(null);
+  /** Highlights the row of the member reading the leaderboard. */
+  public readonly myMemberId = input<Nullable<string>>(null);
 
   protected readonly hasData = computed(() => this.entries().length > 0);
 }

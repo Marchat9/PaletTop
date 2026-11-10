@@ -321,7 +321,7 @@ describe('trainingReducer', () => {
           sessionCode: '123456',
           participantCode: '1111',
           currentMatch: {
-            participant: { id: 'pB', name: 'B' },
+            participant: { id: 'pB', name: 'B', memberId: null },
             match,
             roundNumber: 1,
             sitOut: false,

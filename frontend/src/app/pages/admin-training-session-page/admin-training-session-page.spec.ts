@@ -392,4 +392,30 @@ describe('AdminTrainingSessionPage', () => {
     closed.next();
     expect(dispatchSpy).toHaveBeenCalledWith(unfollowTrainingClubLeaderboard());
   });
+
+  it('marque l’admin dans le classement du club quand il joue la séance', () => {
+    const { fixture, store, dialogMock } = setup();
+    dialogMock.open.mockReturnValue({ closed: new Subject<void>() });
+    store.overrideSelector(selectCurrentTrainingData, { ...buildTraining(), adminMemberId: 'm1' });
+    store.refreshState();
+
+    fixture.componentInstance.openClubLeaderboard();
+
+    expect(dialogMock.open).toHaveBeenCalledWith(
+      ClubLeaderboardPopup,
+      expect.objectContaining({ data: { myMemberId: 'm1' } }),
+    );
+  });
+
+  it('ne marque personne dans le classement du club quand l’admin ne joue pas', () => {
+    const { fixture, dialogMock } = setup();
+    dialogMock.open.mockReturnValue({ closed: new Subject<void>() });
+
+    fixture.componentInstance.openClubLeaderboard();
+
+    expect(dialogMock.open).toHaveBeenCalledWith(
+      ClubLeaderboardPopup,
+      expect.objectContaining({ data: { myMemberId: null } }),
+    );
+  });
 });
