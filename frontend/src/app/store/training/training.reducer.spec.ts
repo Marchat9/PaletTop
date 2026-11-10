@@ -405,4 +405,21 @@ describe('trainingReducer', () => {
 
     expect(state.sessions.data.map((session) => session.code)).toEqual(['1234', 'old']);
   });
+
+  it('lists a generated round once, whether the broadcast arrives before or after the response', () => {
+    const round = { id: 'r1', roundNumber: 1, status: 'OPEN', matches: [] } as TrainingRoundDto;
+
+    const broadcastFirst = [
+      wsTrainingRoundGenerated({ round }),
+      generateTrainingRoundSuccess({ round }),
+    ].reduce(trainingReducer, initialTrainingState);
+    const responseFirst = [
+      generateTrainingRoundSuccess({ round }),
+      wsTrainingRoundGenerated({ round }),
+    ].reduce(trainingReducer, initialTrainingState);
+
+    expect(broadcastFirst.rounds.data).toEqual([round]);
+    expect(responseFirst.rounds.data).toEqual([round]);
+    expect(responseFirst.requestStatus.generateRound.isLoading).toBe(false);
+  });
 });
