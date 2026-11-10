@@ -67,6 +67,7 @@ import {
   removeTrainingParticipant,
   removeTrainingParticipantFailure,
   removeTrainingParticipantSuccess,
+  spectateTrainingSession,
 } from './training.session.actions';
 import {
   createTrainingTeam,
@@ -529,6 +530,20 @@ export const trainingReducer = createReducer(
   })),
 
   // Load session (public)
+  // Another session is followed: what the store holds (a session seen before, the player's own)
+  // must not be shown under its code while it loads, nor for ever if the load fails.
+  on(spectateTrainingSession, (state, { sessionCode }) =>
+    state.currentSession.data?.code === sessionCode
+      ? state
+      : {
+          ...state,
+          currentSession: initialTrainingState.currentSession,
+          rounds: initialTrainingState.rounds,
+          currentRound: initialTrainingState.currentRound,
+          leaderboard: initialTrainingState.leaderboard,
+          clubLeaderboard: initialTrainingState.clubLeaderboard,
+        },
+  ),
   on(loadTrainingSessionPublic, (state) => ({
     ...state,
     currentSession: { ...state.currentSession, isLoading: true, error: null },
