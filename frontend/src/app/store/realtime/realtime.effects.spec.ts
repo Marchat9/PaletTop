@@ -8,7 +8,9 @@ import { AppVisibilityService } from 'src/app/services/app-visibility.service';
 import { WebSocketService } from 'src/app/services/websocket.service';
 import { resyncPending, resyncRequested } from './realtime.actions';
 import { RealtimeEffects } from './realtime.effects';
+import { selectCurrentTrainingAdminInformations } from 'src/app/store/training/training.selectors';
 import { spectateTrainingSession } from 'src/app/store/training/training.session.actions';
+import { loadTrainingParticipantCurrentMatchSuccess } from 'src/app/store/training/training.actions';
 
 describe('RealtimeEffects - resyncOnReconnect$', () => {
   let reconnected$: Subject<void>;
@@ -110,7 +112,13 @@ describe('RealtimeEffects - resyncOnReconnect$', () => {
   });
 });
 
-describe('RealtimeEffects - connectWebSocketTrainingSpectator$', () => {
+describe('RealtimeEffects - connectWebSocketTraining$', () => {
+  // The admin trigger reads the admin session as soon as the effect is subscribed: without a
+  // value, the selector runs on an empty mock state and throws.
+  const noAdmin = provideMockStore({
+    selectors: [{ selector: selectCurrentTrainingAdminInformations, value: null }],
+  });
+
   it('joins the public room of the followed session', () => {
     const actions$ = new Subject<Action>();
     const connectTrainingSession = vi.fn();
@@ -119,7 +127,7 @@ describe('RealtimeEffects - connectWebSocketTrainingSpectator$', () => {
       providers: [
         RealtimeEffects,
         provideMockActions(() => actions$),
-        provideMockStore(),
+        noAdmin,
         {
           provide: WebSocketService,
           useValue: { reconnected$: EMPTY, on: () => EMPTY, connectTrainingSession },
@@ -128,11 +136,47 @@ describe('RealtimeEffects - connectWebSocketTrainingSpectator$', () => {
       ],
     });
     const effects = TestBed.inject(RealtimeEffects);
-    effects.connectWebSocketTrainingSpectator$.subscribe();
+    effects.connectWebSocketTraining$.subscribe();
 
     actions$.next(spectateTrainingSession({ sessionCode: '123456' }));
 
     // No password: the public room, the same one as the players.
     expect(connectTrainingSession).toHaveBeenCalledWith('123456');
+  });
+
+  it('dispatches an event once after going from spectator to player of the same session', () => {
+    const actions$ = new Subject<Action>();
+    const matchUpdated$ = new Subject<unknown>();
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [
+        RealtimeEffects,
+        provideMockActions(() => actions$),
+        noAdmin,
+        {
+          provide: WebSocketService,
+          useValue: {
+            reconnected$: EMPTY,
+            on: (event: string) => (event === 'match:updated' ? matchUpdated$ : EMPTY),
+            connectTrainingSession: vi.fn(),
+          },
+        },
+        { provide: AppVisibilityService, useValue: { resumed$: EMPTY } },
+      ],
+    });
+    const emitted: Action[] = [];
+    TestBed.inject(RealtimeEffects).connectWebSocketTraining$.subscribe((action) =>
+      emitted.push(action),
+    );
+
+    actions$.next(spectateTrainingSession({ sessionCode: '123456' }));
+    actions$.next(
+      loadTrainingParticipantCurrentMatchSuccess({
+        sessionCode: '123456',
+      } as ReturnType<typeof loadTrainingParticipantCurrentMatchSuccess>),
+    );
+    matchUpdated$.next({ id: 'm1' });
+
+    expect(emitted).toHaveLength(1);
   });
 });
