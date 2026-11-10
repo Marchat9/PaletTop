@@ -144,6 +144,8 @@ export class TrainingScoreService {
             matchId,
             participantCode,
         );
+        // Like an admin correction: a closed session's leaderboards are final.
+        assertSessionOpen(session, this.logger, 'Match validation');
 
         this.rejectBye(match, sessionCode);
         if (match.status !== MatchStatus.ENDED) {

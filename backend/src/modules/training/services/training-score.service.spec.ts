@@ -115,11 +115,16 @@ describe('TrainingScoreService.adminUpdateScore on a closed session', () => {
 });
 
 describe('TrainingScoreService.updateScore against a stale score', () => {
-    function setupPlayer(found: TrainingMatch, updated: boolean, latest: TrainingMatch = found) {
+    function setupPlayer(
+        found: TrainingMatch,
+        updated: boolean,
+        latest: TrainingMatch = found,
+        status = TrainingSessionStatus.OPEN,
+    ) {
         const session = {
             id: 'session-1',
             code: '1234',
-            status: TrainingSessionStatus.OPEN,
+            status,
             pointsPerGame: 13,
         } as unknown as TrainingSession;
         const matchRepo = {
@@ -240,6 +245,21 @@ describe('TrainingScoreService.updateScore against a stale score', () => {
         await expect(
             service.validateMatch('1234', 'm1', '1111', '2222', { scoreA: 13, scoreB: 9 }),
         ).rejects.toThrow(ConflictException);
+    });
+
+    it('refuses a validation once the session is closed: its results are final', async () => {
+        const ended = endedMatch();
+        const { service, matchRepo } = setupPlayer(
+            ended,
+            true,
+            ended,
+            TrainingSessionStatus.CLOSED,
+        );
+
+        await expect(
+            service.validateMatch('1234', 'm1', '1111', '2222', { scoreA: 13, scoreB: 9 }),
+        ).rejects.toThrow('Cette séance est clôturée.');
+        expect(matchRepo.updateIfStatus).not.toHaveBeenCalled();
     });
 
     it('keeps the already validated message when the other team validated first', async () => {
