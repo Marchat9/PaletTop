@@ -1,5 +1,6 @@
 import { createAction, props } from '@ngrx/store';
 import {
+  TrainingClubLeaderboardEntryDto,
   TrainingLeaderboardEntryDto,
   TrainingSessionAdminDto,
   TrainingSessionConfigurationDto,
@@ -153,6 +154,19 @@ export const loadTrainingLeaderboardSuccess = createAction(
 );
 export const loadTrainingLeaderboardFailure = createAction(
   '[Training] Load Training Leaderboard Failure',
+  props<{ error: string }>(),
+);
+
+export const loadTrainingClubLeaderboard = createAction(
+  '[Training] Load Training Club Leaderboard',
+  props<{ sessionCode: string }>(),
+);
+export const loadTrainingClubLeaderboardSuccess = createAction(
+  '[Training] Load Training Club Leaderboard Success',
+  props<{ clubLeaderboard: TrainingClubLeaderboardEntryDto[] }>(),
+);
+export const loadTrainingClubLeaderboardFailure = createAction(
+  '[Training] Load Training Club Leaderboard Failure',
   props<{ error: string }>(),
 );
 // -------------------------------------------------------

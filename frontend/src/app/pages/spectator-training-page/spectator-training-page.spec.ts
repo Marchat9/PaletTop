@@ -10,6 +10,7 @@ import { resyncRequested } from 'src/app/store/realtime/realtime.actions';
 import { loadTrainingRounds } from 'src/app/store/training/training.round.actions';
 import {
   leaveTrainingSession,
+  loadTrainingClubLeaderboard,
   loadTrainingLeaderboard,
   loadTrainingSessionPublic,
   spectateTrainingSession,
@@ -19,6 +20,9 @@ import {
   selectCurrentTrainingSessionData,
   selectCurrentTrainingSessionError,
   selectCurrentTrainingSessionIsLoading,
+  selectTrainingClubLeaderboard,
+  selectTrainingClubLeaderboardError,
+  selectTrainingClubLeaderboardIsLoading,
   selectTrainingLeaderboard,
   selectTrainingLeaderboardIsLoading,
   selectTrainingRounds,
@@ -79,6 +83,12 @@ function setup(
           { selector: selectTrainingRoundsIsLoading, value: false },
           { selector: selectTrainingLeaderboard, value: [] },
           { selector: selectTrainingLeaderboardIsLoading, value: false },
+          {
+            selector: selectTrainingClubLeaderboard,
+            value: [{ memberId: 'M1', name: 'Jean Dubois', wins: 5, points: 61 }],
+          },
+          { selector: selectTrainingClubLeaderboardIsLoading, value: false },
+          { selector: selectTrainingClubLeaderboardError, value: null },
         ],
       }),
     ],
@@ -139,13 +149,29 @@ describe('SpectatorTrainingPage', () => {
     expect(element.textContent).toContain('Séance en cours');
   });
 
-  it('ne garde que le classement une fois la séance clôturée', () => {
-    const { fixture } = setup({ session: session({ status: 'CLOSED' }), rounds: [round(1)] });
+  it('remplace les matchs par le classement du club une fois la séance clôturée', () => {
+    const { fixture, dispatchSpy } = setup({
+      session: session({ status: 'CLOSED' }),
+      rounds: [round(1)],
+    });
     const element = fixture.nativeElement as HTMLElement;
 
     expect(element.querySelector('.column.matches')).toBeNull();
+    expect(element.querySelector('.column.club app-club-leaderboard-table')).not.toBeNull();
+    expect(element.querySelector('.column.club')?.textContent).toContain('Jean Dubois');
     expect(element.querySelector('.column.ranking app-session-leaderboard')).not.toBeNull();
     expect(element.textContent).toContain('Séance terminée');
+    expect(dispatchSpy).toHaveBeenCalledWith(
+      loadTrainingClubLeaderboard({ sessionCode: '123456' }),
+    );
+  });
+
+  it('ne charge pas le classement du club tant que la séance est ouverte', () => {
+    const { dispatchSpy } = setup({ session: session(), rounds: [round(1)] });
+
+    expect(dispatchSpy).not.toHaveBeenCalledWith(
+      expect.objectContaining({ type: loadTrainingClubLeaderboard.type }),
+    );
   });
 
   it("n'affiche pas une autre séance restée dans le store", () => {

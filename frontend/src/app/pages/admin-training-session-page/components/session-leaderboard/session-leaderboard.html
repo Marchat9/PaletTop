@@ -38,5 +38,15 @@
         </table>
       </div>
     }
+
+    @if (canOpenClubLeaderboard()) {
+      <app-button
+        class="club-button"
+        title="Classement du club"
+        icon="military_tech"
+        variant="secondary"
+        (clicked)="openClubLeaderboard.emit()"
+      />
+    }
   </div>
 </app-card-collapsible>

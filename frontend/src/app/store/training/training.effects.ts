@@ -64,6 +64,9 @@ import {
   createTrainingSession,
   createTrainingSessionFailure,
   createTrainingSessionSuccess,
+  loadTrainingClubLeaderboard,
+  loadTrainingClubLeaderboardFailure,
+  loadTrainingClubLeaderboardSuccess,
   loadTrainingLeaderboard,
   loadTrainingLeaderboardFailure,
   loadTrainingLeaderboardSuccess,
@@ -425,6 +428,20 @@ export class TrainingEffects {
               of(removeTrainingParticipantFailure({ error: convertErrorToString(error) })),
             ),
           ),
+      ),
+    ),
+  );
+
+  loadTrainingClubLeaderboard$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(loadTrainingClubLeaderboard),
+      switchMap(({ sessionCode }) =>
+        this.trainingService.getClubLeaderboard(sessionCode).pipe(
+          map((clubLeaderboard) => loadTrainingClubLeaderboardSuccess({ clubLeaderboard })),
+          catchError((error) =>
+            of(loadTrainingClubLeaderboardFailure({ error: convertErrorToString(error) })),
+          ),
+        ),
       ),
     ),
   );

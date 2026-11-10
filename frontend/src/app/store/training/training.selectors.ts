@@ -167,6 +167,19 @@ export const selectRemoveTrainingParticipantError = createSelector(
 );
 
 // ---------- Leaderboard ----------
+export const selectTrainingClubLeaderboard = createSelector(
+  selectTrainingState,
+  (state) => state.clubLeaderboard.data,
+);
+export const selectTrainingClubLeaderboardIsLoading = createSelector(
+  selectTrainingState,
+  (state) => state.clubLeaderboard.isLoading,
+);
+export const selectTrainingClubLeaderboardError = createSelector(
+  selectTrainingState,
+  (state) => state.clubLeaderboard.error,
+);
+
 export const selectTrainingLeaderboard = createSelector(
   selectTrainingState,
   (state) => state.leaderboard.data,

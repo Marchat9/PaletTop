@@ -1,4 +1,6 @@
 import { Dialog } from '@angular/cdk/dialog';
+import { ClubLeaderboardPopup } from 'src/app/modales/club-leaderboard-popup/club-leaderboard-popup';
+import { loadTrainingClubLeaderboard } from 'src/app/store/training/training.session.actions';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { Actions } from '@ngrx/effects';
@@ -369,5 +371,17 @@ describe('AdminTrainingSessionPage', () => {
 
     expect(fixture.componentInstance.canGenerateRound()).toBe(false);
     expect(fixture.componentInstance.generateBlockedReason()).toContain('au moins un joueur');
+  });
+
+  it('charge et ouvre le classement du club', () => {
+    const { fixture, store, dialogMock } = setup();
+    const dispatchSpy = vi.spyOn(store, 'dispatch');
+
+    fixture.componentInstance.openClubLeaderboard();
+
+    expect(dispatchSpy).toHaveBeenCalledWith(
+      loadTrainingClubLeaderboard({ sessionCode: fixture.componentInstance.sessionCode()! }),
+    );
+    expect(dialogMock.open).toHaveBeenCalledWith(ClubLeaderboardPopup, expect.anything());
   });
 });

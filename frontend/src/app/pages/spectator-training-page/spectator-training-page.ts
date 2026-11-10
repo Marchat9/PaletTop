@@ -5,8 +5,10 @@ import {
   Component,
   computed,
   DestroyRef,
+  effect,
   inject,
   signal,
+  untracked,
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Store } from '@ngrx/store';
@@ -15,11 +17,14 @@ import { SessionLeaderboard } from 'src/app/pages/admin-training-session-page/co
 import { SessionRound } from 'src/app/pages/admin-training-session-page/components/session-round/session-round';
 import { AutoScrollDirective } from 'src/app/shared/auto-scroll/auto-scroll.directive';
 import { Button } from 'src/app/shared/button/button';
+import { CardCollapsible } from 'src/app/shared/card-collapsible/card-collapsible';
+import { ClubLeaderboardTable } from 'src/app/shared/club-leaderboard-table/club-leaderboard-table';
 import { Icon } from 'src/app/shared/icon/icon';
 import { Switch } from 'src/app/shared/switch/switch';
 import { loadTrainingRounds } from 'src/app/store/training/training.round.actions';
 import {
   leaveTrainingSession,
+  loadTrainingClubLeaderboard,
   loadTrainingLeaderboard,
   loadTrainingSessionPublic,
   spectateTrainingSession,
@@ -28,6 +33,9 @@ import {
   selectCurrentTrainingSessionData,
   selectCurrentTrainingSessionError,
   selectCurrentTrainingSessionIsLoading,
+  selectTrainingClubLeaderboard,
+  selectTrainingClubLeaderboardError,
+  selectTrainingClubLeaderboardIsLoading,
   selectTrainingLeaderboard,
   selectTrainingLeaderboardIsLoading,
   selectTrainingRounds,
@@ -39,11 +47,22 @@ import { environment } from 'src/environments/environment';
 
 /**
  * Training session followed as a spectator, laid out like the tournament one: the matches of the
- * round in progress on one side, the session leaderboard on the other. Read only.
+ * round in progress on one side, the session leaderboard on the other. Once the session is closed,
+ * the club leaderboard as it stood at this session takes the place of the matches. Read only.
  */
 @Component({
   selector: 'app-spectator-training-page',
-  imports: [DatePipe, SessionRound, SessionLeaderboard, Switch, AutoScrollDirective, Icon, Button],
+  imports: [
+    DatePipe,
+    SessionRound,
+    SessionLeaderboard,
+    ClubLeaderboardTable,
+    CardCollapsible,
+    Switch,
+    AutoScrollDirective,
+    Icon,
+    Button,
+  ],
   templateUrl: './spectator-training-page.html',
   styleUrl: './spectator-training-page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -73,6 +92,13 @@ export class SpectatorTrainingPage {
   );
   public readonly leaderboard = this.store.selectSignal(selectTrainingLeaderboard);
   public readonly leaderboardLoading = this.store.selectSignal(selectTrainingLeaderboardIsLoading);
+  public readonly clubLeaderboard = this.store.selectSignal(selectTrainingClubLeaderboard);
+  public readonly clubLeaderboardLoading = this.store.selectSignal(
+    selectTrainingClubLeaderboardIsLoading,
+  );
+  public readonly clubLeaderboardError = this.store.selectSignal(
+    selectTrainingClubLeaderboardError,
+  );
 
   public readonly isSessionClosed = computed(() => this.session()?.status === 'CLOSED');
   public readonly pointsPerGame = computed(() => this.session()?.pointsPerGame ?? 13);
@@ -91,6 +117,13 @@ export class SpectatorTrainingPage {
 
     // Reconnection or return to the foreground: scores or a round may have been missed.
     onResyncRequested(() => this.reload());
+
+    // Closed while being followed, or already closed: the club leaderboard replaces the matches.
+    effect(() => {
+      if (this.isSessionClosed()) {
+        untracked(() => this.loadClubLeaderboard());
+      }
+    });
 
     this.destroyRef.onDestroy(() => this.store.dispatch(leaveTrainingSession()));
 
@@ -128,5 +161,12 @@ export class SpectatorTrainingPage {
     this.store.dispatch(loadTrainingSessionPublic({ sessionCode }));
     this.store.dispatch(loadTrainingRounds({ sessionCode }));
     this.store.dispatch(loadTrainingLeaderboard({ sessionCode }));
+    if (this.isSessionClosed()) {
+      this.loadClubLeaderboard();
+    }
+  }
+
+  private loadClubLeaderboard(): void {
+    this.store.dispatch(loadTrainingClubLeaderboard({ sessionCode: this.sessionCode! }));
   }
 }

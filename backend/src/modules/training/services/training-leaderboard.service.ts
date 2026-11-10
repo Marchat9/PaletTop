@@ -5,7 +5,10 @@ import { TrainingTeam } from 'src/entities/training-team.entity';
 import { MatchStatus } from 'src/enum/status.enum';
 import { TrainingMatchRepository } from '../repositories/training-match.repository';
 import { TrainingSessionRepository } from '../repositories/training-session.repository';
-import { TrainingLeaderboardEntryDto } from '../responses/training-leaderboard.dto';
+import {
+    TrainingClubLeaderboardEntryDto,
+    TrainingLeaderboardEntryDto,
+} from '../responses/training-leaderboard.dto';
 
 interface LeaderboardAccumulator {
     name: string;
@@ -40,6 +43,41 @@ export class TrainingLeaderboardService {
 
         return [...totals.entries()]
             .map(([participantId, entry]) => ({ participantId, ...entry }))
+            .sort((a, b) => b.wins - a.wins || b.points - a.points);
+    }
+
+    /**
+     * Club leaderboard seen from a session: wins and points of every roster member added up over
+     * all the club's sessions up to this one (current one included, later ones left out). A guest,
+     * or a member since removed from the roster, does not appear.
+     */
+    async getClubLeaderboard(sessionCode: string): Promise<TrainingClubLeaderboardEntryDto[]> {
+        const session = await this.trainingSessionRepo.findByCodeOrThrow(sessionCode);
+        const sessionIds = await this.trainingSessionRepo.findIdsByTrainingUpTo(session);
+        const matches = await this.trainingMatchRepo.findValidatedBySessions(sessionIds);
+
+        const totals = new Map<string, LeaderboardAccumulator>();
+        const credit = (team: TrainingTeam, score: number, won: boolean) => {
+            for (const teamMember of team.members ?? []) {
+                const member = teamMember.participant.member;
+                if (!member) {
+                    continue;
+                }
+                const entry = totals.get(member.id) ?? { name: member.name, wins: 0, points: 0 };
+                entry.wins += won ? 1 : 0;
+                entry.points += score;
+                totals.set(member.id, entry);
+            }
+        };
+        for (const match of matches) {
+            credit(match.teamA, match.scoreA, match.scoreA > match.scoreB);
+            if (match.teamB) {
+                credit(match.teamB, match.scoreB, match.scoreB > match.scoreA);
+            }
+        }
+
+        return [...totals.entries()]
+            .map(([memberId, entry]) => ({ memberId, ...entry }))
             .sort((a, b) => b.wins - a.wins || b.points - a.points);
     }
 

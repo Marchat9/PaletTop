@@ -37,9 +37,12 @@ import {
 } from 'src/app/store/training/training.match.actions';
 import {
   leaveTrainingSession,
+  loadTrainingClubLeaderboard,
   loadTrainingLeaderboard,
   loadTrainingSessionPublic,
 } from 'src/app/store/training/training.session.actions';
+import { Dialog } from '@angular/cdk/dialog';
+import { ClubLeaderboardPopup } from 'src/app/modales/club-leaderboard-popup/club-leaderboard-popup';
 import {
   selectCurrentTrainingAdminInformations,
   selectCurrentTrainingSessionData,
@@ -81,6 +84,7 @@ export class PlayerTrainingSessionPage implements OnInit, OnDestroy {
   private readonly destroyRef = inject(DestroyRef);
   private readonly router = inject(Router);
   private readonly store = inject(Store);
+  private readonly dialog = inject(Dialog);
 
   public readonly sessionCode = signal<string | null>(null);
   public readonly participantCode = signal<string | null>(null);
@@ -355,6 +359,18 @@ export class PlayerTrainingSessionPage implements OnInit, OnDestroy {
     this.store.dispatch(
       validateTrainingMatch({ sessionCode, matchId, participantCode, opponentParticipantCode }),
     );
+  }
+
+  public openClubLeaderboard(): void {
+    const sessionCode = this.sessionCode();
+    if (!sessionCode) {
+      return;
+    }
+    this.store.dispatch(loadTrainingClubLeaderboard({ sessionCode }));
+    this.dialog.open(ClubLeaderboardPopup, {
+      panelClass: 'dialog-panel',
+      backdropClass: 'dialog-backdrop-light',
+    });
   }
 
   private reload(sessionCode: string, participantCode: string): void {

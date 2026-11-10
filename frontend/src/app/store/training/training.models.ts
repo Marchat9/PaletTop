@@ -154,6 +154,17 @@ export interface TrainingLeaderboardEntryDto {
   points: number;
 }
 
+/**
+ * Club leaderboard: wins and points of each roster member, added up over all the club's sessions up
+ * to the one it is read from. Guests are left out.
+ */
+export interface TrainingClubLeaderboardEntryDto {
+  memberId: string;
+  name: string;
+  wins: number;
+  points: number;
+}
+
 export interface TrainingAdminSession {
   code: string;
   password: string;
@@ -210,6 +221,7 @@ export interface TrainingState {
   rounds: ApiCall<TrainingRoundDto[]>;
   currentRound: ApiCall<Nullable<TrainingRoundDto>>;
   leaderboard: ApiCall<TrainingLeaderboardEntryDto[]>;
+  clubLeaderboard: ApiCall<TrainingClubLeaderboardEntryDto[]>;
 
   participantCurrentMatch: ApiCall<Nullable<TrainingCurrentMatchDto>>;
   /**

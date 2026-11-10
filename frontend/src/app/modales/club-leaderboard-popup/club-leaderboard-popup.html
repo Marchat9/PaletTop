@@ -1,0 +1,19 @@
+<div class="popup-container popup-surface" role="dialog" aria-modal="true">
+  <div class="popup-header">
+    <h2 class="popup-title">
+      <app-icon name="military_tech" iconClass="icon" [ariaHidden]="true" />
+      <span>Classement du <span class="highlight">club</span></span>
+    </h2>
+    <button class="popup-close" type="button" aria-label="Fermer" (click)="onClose()">
+      <app-icon name="close" />
+    </button>
+  </div>
+
+  <p class="popup-subtitle">
+    Cumul de toutes les séances du club : victoires et points additionnés, invités non comptés.
+  </p>
+
+  <div class="popup-body">
+    <app-club-leaderboard-table [entries]="entries()" [isLoading]="isLoading()" [error]="error()" />
+  </div>
+</div>

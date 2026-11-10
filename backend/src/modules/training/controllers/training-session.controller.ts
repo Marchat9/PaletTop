@@ -4,7 +4,10 @@ import { UuidParam } from 'src/decorators/uuid-param.decorator';
 import { CheckinParticipantDto } from '../dto/checkin-participant.dto';
 import { CreateTrainingSessionDto } from '../dto/create-training-session.dto';
 import { TrainingPasswordDto } from '../dto/training-password.dto';
-import { TrainingLeaderboardEntryDto } from '../responses/training-leaderboard.dto';
+import {
+    TrainingClubLeaderboardEntryDto,
+    TrainingLeaderboardEntryDto,
+} from '../responses/training-leaderboard.dto';
 import {
     TrainingSessionAdminDto,
     TrainingSessionPublicDto,
@@ -106,6 +109,17 @@ export class TrainingSessionController {
     ): Promise<TrainingSessionAdminDto> {
         return runGuarded(this.logger, 'Erreur lors du retrait du participant.', () =>
             this.sessionsService.removeParticipant(sessionCode, participantId, dto.password),
+        );
+    }
+
+    @Get('sessions/:sessionCode/club-leaderboard')
+    getClubLeaderboard(
+        @Param('sessionCode') sessionCode: string,
+    ): Promise<TrainingClubLeaderboardEntryDto[]> {
+        return runGuarded(
+            this.logger,
+            'Erreur lors de la récupération du classement du club.',
+            () => this.leaderboardService.getClubLeaderboard(sessionCode),
         );
     }
 

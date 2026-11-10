@@ -147,3 +147,31 @@
     }
   }
 }
+
+// Header of the club leaderboard card: same look as the session leaderboard's.
+.club-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+
+  .club-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    ::ng-deep .icon {
+      color: var(--color-primary);
+      font-size: 1.35rem;
+    }
+
+    .title {
+      font-size: 1.05rem;
+      font-weight: 700;
+    }
+  }
+
+  .club-description {
+    color: var(--color-on-surface-variant);
+    font-size: 0.82rem;
+  }
+}

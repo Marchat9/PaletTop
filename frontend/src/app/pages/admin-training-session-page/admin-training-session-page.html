@@ -76,7 +76,12 @@
       (dissolveTeam)="dissolveTeam($event)"
     />
 
-    <app-session-leaderboard [leaderboard]="leaderboard()" [isLoading]="leaderboardLoading()" />
+    <app-session-leaderboard
+      [leaderboard]="leaderboard()"
+      [isLoading]="leaderboardLoading()"
+      [canOpenClubLeaderboard]="true"
+      (openClubLeaderboard)="openClubLeaderboard()"
+    />
 
     <app-session-rounds-history
       [rounds]="previousRounds()"
