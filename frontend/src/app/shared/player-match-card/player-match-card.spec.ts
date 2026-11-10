@@ -68,6 +68,17 @@ describe('PlayerMatchCard', () => {
     expect(element(fixture).querySelector('.match-card__saving')).toBeNull();
   });
 
+  it('ne reste pas sur « Enregistrement » quand le score final n’a pas pu être enregistré', () => {
+    const fixture = setup(buildMatch({ myScore: 12, opponentScore: 9 }));
+
+    incrementMyScore(fixture);
+    fixture.componentRef.setInput('scoreError', 'Erreur réseau');
+    fixture.detectChanges();
+
+    expect(element(fixture).querySelector('.match-card__saving')).toBeNull();
+    expect(element(fixture).querySelector('.error-hint')?.textContent).toContain('Erreur réseau');
+  });
+
   it('propose de démarrer un match qui ne l’est pas encore', () => {
     const fixture = setup(buildMatch({ status: 'PENDING' }));
     const started = vi.fn();

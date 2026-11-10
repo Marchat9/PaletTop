@@ -90,10 +90,13 @@ export class PlayerMatchCard {
   // Validation opens once the server has the final score (status ENDED): opened from the local
   // score, it was sent before the last point was saved and refused with "match not finished".
   protected readonly isEnded = computed(() => this.match()?.status === 'ENDED');
-  /** The target score is reached on screen but not yet saved by the server. */
+  /**
+   * The target score is reached on screen but not yet saved by the server. A failed save is not
+   * "saving": its error is shown instead, and the player types the point again.
+   */
   protected readonly isSavingFinalScore = computed(() => {
     const match = this.match();
-    if (!match || match.status !== 'ONGOING') {
+    if (!match || match.status !== 'ONGOING' || this.scoreError()) {
       return false;
     }
     const max = this.pointsPerGame();
