@@ -483,14 +483,15 @@ export const trainingReducer = createReducer(
     currentSession: { data: session, isLoading: false, error: null },
     sessions: {
       ...state.sessions,
+      // Listed most recent first, like the server sends them.
       data: [
-        ...state.sessions.data,
         {
           code: session.code,
           date: session.date,
           status: session.status,
           participantsCount: session.participants.length,
         },
+        ...state.sessions.data,
       ],
     },
     requestStatus: {
@@ -724,10 +725,10 @@ export const trainingReducer = createReducer(
       generateRound: { isLoading: true, error: null },
     },
   })),
-  on(generateTrainingRoundSuccess, (state, { round }) => ({
+  // The round itself arrives through the websocket broadcast (wsTrainingRoundGenerated): adding it
+  // here too listed it twice.
+  on(generateTrainingRoundSuccess, (state) => ({
     ...state,
-    currentRound: { data: round, isLoading: false, error: null },
-    rounds: { ...state.rounds, data: [...state.rounds.data, round] },
     requestStatus: {
       ...state.requestStatus,
       generateRound: { isLoading: false, error: null },

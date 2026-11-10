@@ -152,12 +152,14 @@ export class TrainingSessionRepository {
         return rows.map((row) => row.code);
     }
 
+    /** Most recent first; on the same day, the last one created first. */
     findAllByTraining(trainingId: string): Promise<TrainingSession[]> {
         return this.repo
             .createQueryBuilder('session')
             .leftJoinAndSelect('session.participants', 'participant')
             .where('session.training_id = :trainingId', { trainingId })
             .orderBy('session.date', 'DESC')
+            .addOrderBy('session.createdAt', 'DESC')
             .getMany();
     }
 

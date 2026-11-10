@@ -20,7 +20,9 @@ import {
 import {
   checkinTrainingParticipant,
   checkinTrainingParticipantSuccess,
+  createTrainingSessionSuccess,
 } from './training.session.actions';
+import { generateTrainingRoundSuccess } from './training.round.actions';
 import {
   renameTrainingMemberSuccess,
   setTrainingAdminMemberSuccess,
@@ -30,6 +32,7 @@ import {
   TrainingCurrentMatchDto,
   TrainingMatchDto,
   TrainingParticipantAdminDto,
+  TrainingRoundDto,
   TrainingSessionAdminDto,
 } from './training.models';
 import { initialTrainingState, trainingReducer } from './training.reducer';
@@ -376,5 +379,47 @@ describe('trainingReducer', () => {
 
       expect(state.participantHistory.data).toEqual([initial]);
     });
+  });
+
+  it('liste la séance créée en premier, comme le serveur', () => {
+    const before = {
+      ...initialTrainingState,
+      sessions: {
+        data: [
+          {
+            code: 'old',
+            date: '2026-01-01T18:00:00.000Z',
+            status: 'CLOSED' as const,
+            participantsCount: 3,
+          },
+        ],
+        isLoading: false,
+        error: null,
+      },
+    };
+
+    const state = trainingReducer(
+      before,
+      createTrainingSessionSuccess({ session: buildSession([]) }),
+    );
+
+    expect(state.sessions.data.map((session) => session.code)).toEqual(['1234', 'old']);
+  });
+
+  it('lists a generated round once, whether the broadcast arrives before or after the response', () => {
+    const round = { id: 'r1', roundNumber: 1, status: 'OPEN', matches: [] } as TrainingRoundDto;
+
+    const broadcastFirst = [
+      wsTrainingRoundGenerated({ round }),
+      generateTrainingRoundSuccess({ round }),
+    ].reduce(trainingReducer, initialTrainingState);
+    const responseFirst = [
+      generateTrainingRoundSuccess({ round }),
+      wsTrainingRoundGenerated({ round }),
+    ].reduce(trainingReducer, initialTrainingState);
+
+    expect(broadcastFirst.rounds.data).toEqual([round]);
+    expect(responseFirst.rounds.data).toEqual([round]);
+    expect(responseFirst.requestStatus.generateRound.isLoading).toBe(false);
   });
 });
