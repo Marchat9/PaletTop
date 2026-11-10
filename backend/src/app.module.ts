@@ -11,6 +11,7 @@ import { getTypeOrmConfig } from './database/typeorm.config';
 import cleanupConfig from './config/cleanup.config';
 import superAdminConfig from './config/super-admin.config';
 import trainingAutoCloseConfig from './config/training-auto-close.config';
+import trainingCleanupConfig from './config/training-cleanup.config';
 import { TournamentsModule } from './modules/tournaments/tournaments.module';
 import { RealtimeModule } from './modules/realtime/realtime.module';
 import { CleanupModule } from './modules/cleanup/cleanup.module';
@@ -22,7 +23,7 @@ import { TrainingModule } from './modules/training/training.module';
     imports: [
         ConfigModule.forRoot({
             isGlobal: true,
-            load: [cleanupConfig, superAdminConfig, trainingAutoCloseConfig],
+            load: [cleanupConfig, superAdminConfig, trainingAutoCloseConfig, trainingCleanupConfig],
         }),
         TypeOrmModule.forRootAsync({
             useFactory: getTypeOrmConfig,

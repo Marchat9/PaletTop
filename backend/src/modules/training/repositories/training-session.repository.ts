@@ -1,6 +1,6 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { LessThan, Repository, UpdateResult } from 'typeorm';
+import { Brackets, LessThan, Repository, UpdateResult } from 'typeorm';
 import { TrainingSession } from 'src/entities/training-session.entity';
 import { TrainingSessionStatus } from 'src/enum/training.enum';
 
@@ -91,6 +91,39 @@ export class TrainingSessionRepository {
     async closeMany(ids: string[]): Promise<void> {
         if (!ids.length) return;
         await this.repo.update(ids, { status: TrainingSessionStatus.CLOSED, closedAt: new Date() });
+    }
+
+    /**
+     * Closed sessions nobody played in: no participant at all (whatever their status), or no round
+     * ever generated - closed for at least `retentionDays`. Open sessions are never returned.
+     */
+    findClosedWithoutParticipantOrRound(retentionDays: number): Promise<TrainingSession[]> {
+        const threshold = new Date();
+        threshold.setDate(threshold.getDate() - retentionDays);
+        return this.repo
+            .createQueryBuilder('session')
+            .where('session.status = :status', { status: TrainingSessionStatus.CLOSED })
+            .andWhere('session.closedAt < :threshold', {
+                threshold,
+            })
+            .andWhere(
+                new Brackets((query) =>
+                    query
+                        .where(
+                            'NOT EXISTS (SELECT 1 FROM training_participant participant WHERE participant.session_id = session.id)',
+                        )
+                        .orWhere(
+                            'NOT EXISTS (SELECT 1 FROM training_round round WHERE round.session_id = session.id)',
+                        ),
+                ),
+            )
+            .getMany();
+    }
+
+    /** Participants, teams, rounds and matches go with their session (ON DELETE CASCADE). */
+    async deleteMany(ids: string[]): Promise<void> {
+        if (!ids.length) return;
+        await this.repo.delete(ids);
     }
 
     findAllByIdsWithRelations(ids: string[]): Promise<TrainingSession[]> {

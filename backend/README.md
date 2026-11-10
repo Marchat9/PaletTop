@@ -40,7 +40,8 @@ cp .env.example .env   # adjust DB_* values if not using the defaults below
 | `APP_ENV`     | *(unset)*   | Set to `dev-bdd` to drop & resync the schema on every boot instead of running migrations (see below) |
 
 `.env.example` also lists optional settings, with their defaults: automatic cleanup of old
-tournaments (`CLEANUP_*`), automatic closing of idle training sessions (`TRAINING_*`), and the
+tournaments (`CLEANUP_*`), automatic closing of idle training sessions (`TRAINING_AUTOCLOSE_*`),
+weekly deletion of closed training sessions left empty (`TRAINING_CLEANUP_*`), and the
 super-admin login (`SUPER_ADMIN_*`). `SUPER_ADMIN_PASSWORD` is required when `NODE_ENV=production`.
 
 ### Running
