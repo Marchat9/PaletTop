@@ -11,6 +11,7 @@ import { TournamentConfigurationDto } from 'src/app/models/tournament-configurat
 import {
   connectTournamentAdministrator,
   updateTournamentAdministratorConfiguration,
+  updateTournamentAdministratorConfigurationSuccess,
 } from './tournament.admin.actions';
 import { TournamentDto } from './tournament.models';
 import { TournamentEffects } from './tournament.effects';
@@ -57,15 +58,16 @@ async function configure(savedCode: string) {
 }
 
 describe('TournamentEffects configuration update', () => {
-  it('moves the admin session to the new code when the code changes', async () => {
+  it('moves the URL to the new code and leaves the reconnection to the page', async () => {
     const { router, emitted } = await configure('NEW-2');
 
     expect(router.navigate).toHaveBeenCalledWith(['/admin/tournament', 'NEW-2'], {
       replaceUrl: true,
     });
-    expect(emitted).toContainEqual(
-      connectTournamentAdministrator({ code: 'NEW-2', password: 'secret' }),
+    expect(emitted.map((action) => action.type)).toContain(
+      updateTournamentAdministratorConfigurationSuccess.type,
     );
+    expect(emitted.map((action) => action.type)).not.toContain(connectTournamentAdministrator.type);
   });
 
   it('keeps the session as is when the code does not change', async () => {

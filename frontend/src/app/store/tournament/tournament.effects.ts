@@ -181,14 +181,14 @@ export class TournamentEffects {
                 }),
               ];
 
-              const password = adminInformation?.password;
-              if (!password || tournament.code === adminInformation?.code) {
+              if (!adminInformation?.password || tournament.code === adminInformation.code) {
                 return of(...actions);
               }
-              // The code changed: the admin session, the stored code and the websocket room all
-              // follow it. The URL is updated first, otherwise the page reconnects with the old
-              // code found in its route and loses the session.
-              actions.push(connectTournamentAdministrator({ code: tournament.code, password }));
+              // The code changed: only the URL is moved here. The page sees its route code change
+              // and reconnects the admin with it, which moves the admin session, the stored code and
+              // the websocket room. Connecting here as well would connect twice. The URL goes first:
+              // the new tournament in the store under the old route, the page would reconnect with
+              // the old code and lose the session.
               return from(
                 this.router.navigate(['/admin/tournament', tournament.code], { replaceUrl: true }),
               ).pipe(switchMap(() => of(...actions)));
