@@ -1,10 +1,21 @@
-import { ConflictException } from '@nestjs/common';
+import { BadRequestException, ConflictException } from '@nestjs/common';
 import { describe, expect, it, vi } from 'vitest';
 import { TrainingMember } from 'src/entities/training-member.entity';
 import { TrainingParticipant } from 'src/entities/training-participant.entity';
 import { TrainingSession } from 'src/entities/training-session.entity';
-import { TrainingParticipantStatus, TrainingSessionStatus } from 'src/enum/training.enum';
+import { MatchStatus } from 'src/enum/status.enum';
+import {
+    TrainingParticipantStatus,
+    TrainingRoundStatus,
+    TrainingSessionStatus,
+} from 'src/enum/training.enum';
+import { TrainingRound } from 'src/entities/training-round.entity';
 import { TrainingSessionsService } from './training-sessions.service';
+
+// The rollback itself is done by the database; here @Transactional() just runs the method.
+vi.mock('typeorm-transactional', () => ({
+    Transactional: () => () => undefined,
+}));
 
 const MEMBER = {
     id: 'member-1',
@@ -24,7 +35,10 @@ function participant(overrides: Partial<TrainingParticipant>): TrainingParticipa
     } as TrainingParticipant;
 }
 
-function makeService(participants: TrainingParticipant[]) {
+function makeService(
+    participants: TrainingParticipant[],
+    latestRound: TrainingRound | null = null,
+) {
     const session = {
         id: 'session-1',
         code: '1234',
@@ -41,8 +55,16 @@ function makeService(participants: TrainingParticipant[]) {
         save: vi.fn((p: TrainingParticipant) => Promise.resolve(p)),
     };
 
+    const sessionRepo = {
+        touchLastActivity: vi.fn(),
+        closeSession: vi.fn(() => Promise.resolve()),
+    };
+    const roundRepo = {
+        findLatestBySession: vi.fn(() => Promise.resolve(latestRound)),
+        closeRound: vi.fn(() => Promise.resolve()),
+    };
     const service = new TrainingSessionsService(
-        { touchLastActivity: vi.fn() } as never,
+        sessionRepo as never,
         participantRepo as never,
         {
             findById: vi.fn(() => Promise.resolve(MEMBER)),
@@ -52,9 +74,10 @@ function makeService(participants: TrainingParticipant[]) {
         {} as never,
         { findWithAdminAuth: vi.fn(() => Promise.resolve(session)) } as never,
         { emitSessionUpdatedFrom: vi.fn() } as never,
+        roundRepo as never,
     );
 
-    return { service, session, participantRepo };
+    return { service, session, participantRepo, sessionRepo, roundRepo };
 }
 
 describe('TrainingSessionsService.checkin', () => {
@@ -153,6 +176,7 @@ describe('TrainingSessionsService.create', () => {
             { findWithAdminAuth: vi.fn(() => Promise.resolve({ id: 't1', members: [] })) } as never,
             {} as never,
             {} as never,
+            {} as never,
         );
 
         await expect(service.create('CLUB', { password: 'pw' } as never)).rejects.toBeInstanceOf(
@@ -174,5 +198,67 @@ describe('TrainingSessionsService.checkin of a guest', () => {
             } as never),
         ).rejects.toBeInstanceOf(ConflictException);
         expect(participantRepo.save).not.toHaveBeenCalled();
+    });
+});
+
+describe('TrainingSessionsService.close', () => {
+    function round(statuses: { status: MatchStatus; isBye?: boolean }[]): TrainingRound {
+        return {
+            id: 'round-2',
+            roundNumber: 2,
+            status: TrainingRoundStatus.OPEN,
+            matches: statuses.map((match) => ({ isBye: false, ...match })),
+        } as unknown as TrainingRound;
+    }
+
+    it('closes the round in progress with the session when all its matches are validated', async () => {
+        const { service, sessionRepo, roundRepo } = makeService(
+            [],
+            round([
+                { status: MatchStatus.VALIDATED },
+                // A bye needs no validation.
+                { status: MatchStatus.PENDING, isBye: true },
+            ]),
+        );
+
+        const closed = await service.close('1234', 'pw');
+
+        expect(roundRepo.closeRound).toHaveBeenCalledWith('round-2');
+        expect(sessionRepo.closeSession).toHaveBeenCalled();
+        expect(closed.status).toBe(TrainingSessionStatus.CLOSED);
+    });
+
+    it('refuses to close the session while a match of the round is not validated', async () => {
+        const { service, sessionRepo, roundRepo } = makeService(
+            [],
+            round([{ status: MatchStatus.VALIDATED }, { status: MatchStatus.ONGOING }]),
+        );
+
+        await expect(service.close('1234', 'pw')).rejects.toThrow(
+            new BadRequestException(
+                "Le round 2 n'est pas terminé : tous ses matchs doivent être validés avant de clôturer la séance.",
+            ),
+        );
+        expect(roundRepo.closeRound).not.toHaveBeenCalled();
+        expect(sessionRepo.closeSession).not.toHaveBeenCalled();
+    });
+
+    it('closes a session without any round', async () => {
+        const { service, sessionRepo, roundRepo } = makeService([]);
+
+        await service.close('1234', 'pw');
+
+        expect(roundRepo.closeRound).not.toHaveBeenCalled();
+        expect(sessionRepo.closeSession).toHaveBeenCalled();
+    });
+
+    it('leaves an already closed session untouched', async () => {
+        const { service, session, sessionRepo, roundRepo } = makeService([]);
+        session.status = TrainingSessionStatus.CLOSED;
+
+        await service.close('1234', 'pw');
+
+        expect(roundRepo.findLatestBySession).not.toHaveBeenCalled();
+        expect(sessionRepo.closeSession).not.toHaveBeenCalled();
     });
 });

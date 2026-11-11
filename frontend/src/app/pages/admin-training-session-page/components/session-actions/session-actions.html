@@ -44,6 +44,13 @@
       </p>
     }
 
+    @if (closeError(); as error) {
+      <p class="blocked blocked--alert" role="alert">
+        <app-icon name="warning" iconClass="blocked-icon" [ariaHidden]="true" />
+        {{ error }}
+      </p>
+    }
+
     @if (generateBlockedReason(); as reason) {
       <p
         class="blocked"

@@ -8,7 +8,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { TrainingService } from 'src/app/services/training.service';
 import { addNotification } from 'src/app/store/app-config/app-config.actions';
 import { TrainingEffects } from './training.effects';
-import { TrainingCurrentMatchDto, TrainingMatchDto } from './training.models';
+import { TrainingCurrentMatchDto, TrainingMatchDto, TrainingRoundDto } from './training.models';
 import {
   updateTrainingScore,
   updateTrainingScoreConflict,
@@ -19,10 +19,14 @@ import {
 } from './training.match.actions';
 import { loadTrainingParticipantCurrentMatch } from './training.actions';
 import { wsTrainingLeaderboardUpdated } from '../realtime/realtime.actions';
-import { refreshTrainingClubLeaderboard } from './training.session.actions';
+import {
+  closeTrainingSessionFailure,
+  refreshTrainingClubLeaderboard,
+} from './training.session.actions';
 import {
   selectFollowedTrainingClubLeaderboardSession,
   selectTrainingParticipantCurrentMatch,
+  selectTrainingRounds,
 } from './training.selectors';
 
 describe('TrainingEffects', () => {
@@ -80,6 +84,44 @@ describe('TrainingEffects', () => {
         loadTrainingParticipantCurrentMatch.type,
         '[App Config] Add Notification',
       ]);
+    });
+  });
+
+  describe('closing failure', () => {
+    function closeFailure(matchStatus: string) {
+      const actions$ = new ReplaySubject<Action>(1);
+      const rounds = [
+        {
+          id: 'r1',
+          roundNumber: 1,
+          status: 'OPEN',
+          matches: [{ isBye: false, status: matchStatus }],
+        },
+      ] as unknown as TrainingRoundDto[];
+      TestBed.configureTestingModule({
+        providers: [
+          TrainingEffects,
+          provideMockActions(() => actions$),
+          provideMockStore({ selectors: [{ selector: selectTrainingRounds, value: rounds }] }),
+          { provide: TrainingService, useValue: {} },
+        ],
+      });
+      const emitted: Action[] = [];
+      TestBed.inject(TrainingEffects).closeSessionErrors$.subscribe((action) =>
+        emitted.push(action),
+      );
+      actions$.next(closeTrainingSessionFailure({ error: 'Erreur réseau' }));
+      return emitted;
+    }
+
+    it('shows a message when every match is validated (network, server, password)', () => {
+      expect(closeFailure('VALIDATED').map((action) => action.type)).toEqual([
+        addNotification.type,
+      ]);
+    });
+
+    it('leaves the refusal for an unvalidated match to the page', () => {
+      expect(closeFailure('ONGOING')).toEqual([]);
     });
   });
 

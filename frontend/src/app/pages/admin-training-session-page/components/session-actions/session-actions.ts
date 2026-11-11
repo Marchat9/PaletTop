@@ -22,6 +22,8 @@ export class SessionActions {
   public readonly nextRoundPreview = input<Nullable<string>>(null);
   public readonly generateLoading = input<boolean>(false);
   public readonly closeLoading = input<boolean>(false);
+  /** Closing refused by the server (a round not finished yet): shown under the bar. */
+  public readonly closeError = input<Nullable<string>>(null);
   /** The group admin also plays and is checked in to this session. */
   public readonly canPlayMyMatches = input<boolean>(false);
   /** No round generated yet, or the admin's match of this round is validated: nothing to play. */

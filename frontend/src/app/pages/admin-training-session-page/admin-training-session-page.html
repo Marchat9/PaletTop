@@ -20,7 +20,7 @@
       />
       <app-metric-tile
         [value]="(currentRound()?.roundNumber ?? 0).toString()"
-        label="Round en cours"
+        [label]="roundTileLabel()"
         size="responsive"
       />
       <app-metric-tile
@@ -43,6 +43,7 @@
       [nextRoundPreview]="nextRoundPreview()"
       [generateLoading]="generateRoundLoading()"
       [closeLoading]="closeSessionLoading()"
+      [closeError]="closeSessionError()"
       (openCheckin)="openCheckin()"
       (generateRound)="generateRound()"
       [canPlayMyMatches]="!!adminParticipant()"

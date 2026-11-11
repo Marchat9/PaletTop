@@ -1,10 +1,15 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { Transactional } from 'typeorm-transactional';
 import { ConfigService } from '@nestjs/config';
 import { SchedulerRegistry } from '@nestjs/schedule';
 import { registerIdleCron } from 'src/utils/register-idle-cron.util';
 import { TrainingAutoCloseConfig } from 'src/config/training-auto-close.config';
 import { TrainingSessionRepository } from '../repositories/training-session.repository';
+import { TrainingRoundRepository } from '../repositories/training-round.repository';
+import { hasUnfinishedMatch } from '../utils/round-status.utils';
+import { TrainingRoundStatus } from 'src/enum/training.enum';
 import { TrainingRealtimeGateway } from '../training-realtime.gateway';
+import { TrainingSession } from 'src/entities/training-session.entity';
 
 @Injectable()
 export class TrainingAutoCloseService implements OnModuleInit {
@@ -16,6 +21,7 @@ export class TrainingAutoCloseService implements OnModuleInit {
         private readonly schedulerRegistry: SchedulerRegistry,
         private readonly trainingSessionRepo: TrainingSessionRepository,
         private readonly trainingRealtimeGateway: TrainingRealtimeGateway,
+        private readonly trainingRoundRepo: TrainingRoundRepository,
     ) {
         this.config = this.configService.getOrThrow<TrainingAutoCloseConfig>('trainingAutoClose');
     }
@@ -40,18 +46,65 @@ export class TrainingAutoCloseService implements OnModuleInit {
         const expired = await this.trainingSessionRepo.findExpiredOpen(this.config.idleHours);
         if (!expired.length) return;
 
-        await this.trainingSessionRepo.closeMany(expired.map((s) => s.id));
+        const closable: TrainingSession[] = [];
+        for (const session of expired) {
+            try {
+                if (await this.closeIdleSession(session)) {
+                    closable.push(session);
+                }
+            } catch (error) {
+                // Rolled back alone: the other sessions are still closed, this one is retried on
+                // the next run.
+                this.logger.error(`Auto-close failed for training session ${session.code}`, error);
+            }
+        }
+        if (!closable.length) return;
+
         this.logger.log(
-            `${expired.length} session(s) d'entraînement clôturée(s) automatiquement : [${expired
+            `${closable.length} session(s) d'entraînement clôturée(s) automatiquement : [${closable
                 .map((s) => s.code)
                 .join(', ')}]`,
         );
 
         const reloaded = await this.trainingSessionRepo.findAllByIdsWithRelations(
-            expired.map((s) => s.id),
+            closable.map((s) => s.id),
         );
         for (const session of reloaded) {
             this.trainingRealtimeGateway.emitSessionUpdatedFrom(session);
         }
+    }
+
+    /**
+     * The round and the session are closed together or not at all: a session left open with its
+     * round closed could no longer be scored, without anything saying why.
+     */
+    @Transactional()
+    private async closeIdleSession(session: TrainingSession): Promise<boolean> {
+        if (!(await this.closeFinishedRound(session))) {
+            return false;
+        }
+        await this.trainingSessionRepo.closeMany([session.id]);
+        return true;
+    }
+
+    /**
+     * Whether the idle session can be closed. With every round closed, it can. With a round in
+     * progress whose matches are all validated, that round is closed first. With a match still
+     * unvalidated, the round and the session are both left open.
+     */
+    private async closeFinishedRound(session: TrainingSession): Promise<boolean> {
+        const round = await this.trainingRoundRepo.findLatestBySession(session.id);
+        if (!round || round.status !== TrainingRoundStatus.OPEN) {
+            return true;
+        }
+        if (hasUnfinishedMatch(round)) {
+            this.logger.log(
+                `Session ${session.code} laissée ouverte : des matchs du round ${round.roundNumber} ne sont pas validés`,
+            );
+            return false;
+        }
+        await this.trainingRoundRepo.closeRound(round.id);
+        this.logger.log(`Round ${round.roundNumber} de la session ${session.code} clôturé`);
+        return true;
     }
 }

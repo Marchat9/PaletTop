@@ -57,6 +57,7 @@ import {
 } from 'src/app/store/training/training.models';
 import {
   selectCloseTrainingSessionLoading,
+  selectCloseTrainingSessionError,
   selectCreateTrainingTeamLoading,
   selectCurrentTrainingAdminInformations,
   selectCurrentTrainingData,
@@ -127,6 +128,9 @@ export class AdminTrainingSessionPage implements OnInit, OnDestroy {
     selectGenerateTrainingRoundLoading,
   );
   public readonly closeSessionLoading = this.store.selectSignal(selectCloseTrainingSessionLoading);
+  private readonly closeSessionRequestError = this.store.selectSignal(
+    selectCloseTrainingSessionError,
+  );
   public readonly scoreLoading = this.store.selectSignal(selectAdminUpdateTrainingScoreLoading);
   private readonly adminSession = this.store.selectSignal(selectCurrentTrainingAdminInformations);
   private readonly sessionError = this.store.selectSignal(selectCurrentTrainingSessionError);
@@ -194,6 +198,13 @@ export class AdminTrainingSessionPage implements OnInit, OnDestroy {
     () =>
       this.currentRound()?.matches.filter((match) => !match.isBye && match.status !== 'VALIDATED')
         .length ?? 0,
+  );
+  // A refused closing no longer applies once every match of the round is validated.
+  public readonly closeSessionError = computed(() =>
+    this.ongoingMatchCount() > 0 ? this.closeSessionRequestError() : null,
+  );
+  public readonly roundTileLabel = computed(() =>
+    this.isSessionOpen() ? 'Round en cours' : 'Rounds joués',
   );
   public readonly fixedTeamCount = computed(
     () => this.session()?.teams.filter((team) => team.kind === 'FIXED').length ?? 0,

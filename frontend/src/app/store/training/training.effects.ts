@@ -15,6 +15,8 @@ import {
   tap,
   withLatestFrom,
 } from 'rxjs';
+import { Nullable } from 'src/app/models/nullable.model';
+import { TrainingRoundDto } from './training.models';
 import { TrainingService } from 'src/app/services/training.service';
 import { convertErrorToString } from 'src/app/utils/api-call.utils';
 import { withTimeoutAndOneRetry } from 'src/app/utils/reload-retry.util';
@@ -144,6 +146,7 @@ import {
   selectCurrentTrainingParticipantInformations,
   selectFollowedTrainingClubLeaderboardSession,
   selectTrainingParticipantCurrentMatch,
+  selectTrainingRounds,
 } from './training.selectors';
 import { wsTrainingLeaderboardUpdated } from '../realtime/realtime.actions';
 import { newId } from 'src/app/utils/unique-id.util';
@@ -728,6 +731,27 @@ export class TrainingEffects {
     ),
   );
 
+  // The refusal for an unvalidated match is shown on the page, next to the close button. Any
+  // other failure (network, server, expired password) would leave no message at all.
+  closeSessionErrors$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(closeTrainingSessionFailure),
+      withLatestFrom(this.store.select(selectTrainingRounds)),
+      filter(([, rounds]) => !hasUnvalidatedMatchInLatestRound(rounds)),
+      map(([{ error }]) =>
+        addNotification({
+          notification: {
+            id: newId(),
+            message: error,
+            typeIcon: 'error',
+            type: 'error',
+            createdAt: Date.now(),
+          },
+        }),
+      ),
+    ),
+  );
+
   trainingActionErrors$ = createEffect(() =>
     this.actions$.pipe(
       ofType(
@@ -741,7 +765,6 @@ export class TrainingEffects {
         removeTrainingMemberFailure,
         setTrainingAdminMemberFailure,
         createTrainingSessionFailure,
-        closeTrainingSessionFailure,
         checkinTrainingParticipantFailure,
         removeTrainingParticipantFailure,
         createTrainingTeamFailure,
@@ -765,4 +788,12 @@ export class TrainingEffects {
       ),
     ),
   );
+}
+
+function hasUnvalidatedMatchInLatestRound(rounds: TrainingRoundDto[]): boolean {
+  const latest = rounds.reduce<Nullable<TrainingRoundDto>>(
+    (last, round) => (!last || round.roundNumber > last.roundNumber ? round : last),
+    null,
+  );
+  return !!latest?.matches.some((match) => !match.isBye && match.status !== 'VALIDATED');
 }
