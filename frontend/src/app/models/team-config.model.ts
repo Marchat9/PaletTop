@@ -38,3 +38,8 @@ export type TeamConfigEvent =
     }
   | { type: TeamConfigEventType.UPDATE_TEAM; payload: TeamConfigUpdateTeamPayload }
   | { type: TeamConfigEventType.REMOVE_TEAM; payload: TeamConfigRemoveTeamPayload };
+
+export interface TeamImportSummary {
+  importedCount: number;
+  ignoredCount: number;
+}

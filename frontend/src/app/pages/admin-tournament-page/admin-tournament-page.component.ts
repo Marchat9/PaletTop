@@ -222,7 +222,16 @@ export class AdminTournamentPageComponent implements OnInit {
         this.store.dispatch(updateTournamentAdministratorTeam({ code, teams: [event.payload] }));
         break;
       case TeamConfigEventType.IMPORT_TEAMS:
-        this.store.dispatch(updateTournamentAdministratorTeam({ code, teams: event.payload }));
+        this.store.dispatch(
+          updateTournamentAdministratorTeam({
+            code,
+            teams: event.payload,
+            importSummary: {
+              importedCount: event.payload.length,
+              ignoredCount: event.ignoredRows ?? 0,
+            },
+          }),
+        );
         break;
       case TeamConfigEventType.UPDATE_TEAM: {
         const team = this.tournament()?.teams.find((t) => t.id === event.payload.teamId);

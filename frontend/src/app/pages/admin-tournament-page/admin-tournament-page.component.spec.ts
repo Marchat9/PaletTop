@@ -6,12 +6,16 @@ import { Action } from '@ngrx/store';
 import { MockStore, provideMockStore } from '@ngrx/store/testing';
 import { of, Subject } from 'rxjs';
 import { describe, expect, it, vi } from 'vitest';
+import { TeamConfigEventType } from 'src/app/models/team-config.model';
 import { TournamentStatus } from 'src/app/models/tournament-status.enum';
 import { resyncRequested } from 'src/app/store/realtime/realtime.actions';
 import { selectAdminUpdateScoreLoading } from 'src/app/store/match/match.selectors';
 import { selectRanking, selectRankingIsLoading } from 'src/app/store/ranking/ranking.selectors';
 import { selectSessions } from 'src/app/store/session/session.selectors';
-import { connectTournamentAdministrator } from 'src/app/store/tournament/tournament.admin.actions';
+import {
+  connectTournamentAdministrator,
+  updateTournamentAdministratorTeam,
+} from 'src/app/store/tournament/tournament.admin.actions';
 import {
   selectCompleteTournamentLoading,
   selectCurrentTournamentAdminInformations,
@@ -23,9 +27,7 @@ import {
   selectTournamentUpdateConfigLoading,
 } from 'src/app/store/tournament/tournament.selectors';
 import { TournamentDto } from 'src/app/store/tournament/tournament.models';
-import {
-  searchTournamentClubs,
-} from 'src/app/store/tournament-club/tournament-club.actions';
+import { searchTournamentClubs } from 'src/app/store/tournament-club/tournament-club.actions';
 import { selectTournamentClubSuggestions } from 'src/app/store/tournament-club/tournament-club.selectors';
 import { AdminTournamentPageComponent } from './admin-tournament-page.component';
 import { GlobalRankingEntry } from 'src/app/models/global-ranking.model';
@@ -222,6 +224,29 @@ describe('AdminTournamentPageComponent', { timeout: 15_000 }, () => {
 
     fixture.componentInstance.searchClubs('Pal');
 
-    expect(dispatchSpy).toHaveBeenCalledWith(searchTournamentClubs({ code: 'ABCD', search: 'Pal' }));
+    expect(dispatchSpy).toHaveBeenCalledWith(
+      searchTournamentClubs({ code: 'ABCD', search: 'Pal' }),
+    );
+  });
+
+  it('passes the import summary on IMPORT_TEAMS', () => {
+    const { fixture, store } = setup();
+    fixture.detectChanges();
+    const dispatchSpy = vi.spyOn(store, 'dispatch');
+    const teams = [{ players: [{ name: 'A' }] }, { players: [{ name: 'B' }] }];
+
+    fixture.componentInstance.updateTournamentTeam({
+      type: TeamConfigEventType.IMPORT_TEAMS,
+      payload: teams,
+      ignoredRows: 3,
+    });
+
+    expect(dispatchSpy).toHaveBeenCalledWith(
+      updateTournamentAdministratorTeam({
+        code: 'ABCD',
+        teams,
+        importSummary: { importedCount: 2, ignoredCount: 3 },
+      }),
+    );
   });
 });

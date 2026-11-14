@@ -3,7 +3,7 @@ import { inject, Injectable } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { Action, Store } from '@ngrx/store';
 import { Router } from '@angular/router';
-import { catchError, from, map, of, switchMap, withLatestFrom } from 'rxjs';
+import { catchError, filter, from, map, of, switchMap, withLatestFrom } from 'rxjs';
 import { TeamService } from 'src/app/services/team.service';
 import { TournamentService } from 'src/app/services/tournament.service';
 import { convertErrorToString } from 'src/app/utils/api-call.utils';
@@ -63,6 +63,7 @@ import {
   selectCurrentTournamentAdminInformations,
   selectCurrentTournamentPlayerInformations,
 } from './tournament.selectors';
+import { buildImportSummaryMessage } from 'src/app/pages/admin-tournament-page/components/tournament-team-configuration-card/team-config/team-import.utils';
 import { newId } from 'src/app/utils/unique-id.util';
 
 @Injectable()
@@ -209,15 +210,38 @@ export class TournamentEffects {
     this.actions$.pipe(
       ofType(updateTournamentAdministratorTeam),
       withLatestFrom(this.store.select(selectCurrentTournamentAdminInformations)),
-      switchMap(([{ code, teams }, adminInformation]) =>
+      switchMap(([{ code, teams, importSummary }, adminInformation]) =>
         this.tournamentService
           .addTeamsToTournament(code, teams, adminInformation?.password ?? '')
           .pipe(
-            switchMap((tournament) => of(updateTournamentAdministratorTeamSuccess({ tournament }))),
+            switchMap((tournament) =>
+              of(updateTournamentAdministratorTeamSuccess({ tournament, importSummary })),
+            ),
             catchError((error) =>
               of(updateTournamentAdministratorTeamFailure({ error: convertErrorToString(error) })),
             ),
           ),
+      ),
+    ),
+  );
+
+  teamsImportedNotification$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(updateTournamentAdministratorTeamSuccess),
+      filter(({ importSummary }) => !!importSummary),
+      map(({ importSummary }) =>
+        addNotification({
+          notification: {
+            id: newId(),
+            message: buildImportSummaryMessage(
+              importSummary!.importedCount,
+              importSummary!.ignoredCount,
+            ),
+            typeIcon: 'success',
+            type: 'Import des équipes',
+            createdAt: Date.now(),
+          },
+        }),
       ),
     ),
   );
