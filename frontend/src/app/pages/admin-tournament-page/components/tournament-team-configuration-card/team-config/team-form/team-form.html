@@ -53,12 +53,14 @@
         (blurred)="markPlayerTouched($index)"
       />
       @if (!isChampionship()) {
-        <app-input-text
+        <app-input-autocomplete
           id="{{ formId }}-player-club-{{ $index }}"
           icon="location_city"
           placeholder="Club (optionnel)"
           [value]="player.club"
+          [options]="clubSuggestions()"
           (valueChange)="updatePlayerClub($index, $event)"
+          (search)="clubSearchRequested.emit($event)"
         />
       }
       <app-button

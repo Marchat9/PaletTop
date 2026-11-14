@@ -59,7 +59,9 @@ export class TeamCreationPanel {
   public readonly activeTab = signal<TeamCreationTab>('manual');
 
   public readonly tournament = input<Nullable<TournamentDto>>(null);
+  public readonly clubSuggestions = input<string[]>([]);
   public readonly teamUpdated = output<TeamConfigEvent>();
+  public readonly clubSearchRequested = output<string>();
 
   public readonly resolvedTournament = computed(
     () => this.dialogData?.tournament ?? this.tournament(),

@@ -35,6 +35,8 @@
         <app-team-form
           [tournament]="resolvedTournament()"
           [editingTeam]="editingTeam"
+          [clubSuggestions]="clubSuggestions()"
+          (clubSearchRequested)="clubSearchRequested.emit($event)"
           (submitted)="emitOrClose($event)"
           (cancelled)="closeSheet()"
         />

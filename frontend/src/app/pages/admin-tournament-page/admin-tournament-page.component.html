@@ -48,6 +48,8 @@
 
     <app-tournament-team-configuration-card
       [tournament]="tournament()"
+      [clubSuggestions]="clubSuggestions()"
+      (clubSearchRequested)="searchClubs($event)"
       (onTeamUpdate)="updateTournamentTeam($event)"
       (notification)="onNotification($event)"
     />

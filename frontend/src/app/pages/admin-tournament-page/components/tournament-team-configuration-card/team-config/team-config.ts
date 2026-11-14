@@ -1,10 +1,11 @@
-import { Dialog } from '@angular/cdk/dialog';
+import { Dialog, DialogRef } from '@angular/cdk/dialog';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { Overlay } from '@angular/cdk/overlay';
 import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
   ElementRef,
   inject,
   input,
@@ -51,7 +52,9 @@ export class TeamConfig {
 
   // ======= Input / Output =======
   public readonly tournament = input<Nullable<TournamentDto>>(null);
+  public readonly clubSuggestions = input<string[]>([]);
   public readonly teamUpdated = output<TeamConfigEvent>();
+  public readonly clubSearchRequested = output<string>();
   // ==============================
 
   // Drives which of the two creation UIs is actually in the DOM — not just CSS-hidden —
@@ -82,6 +85,17 @@ export class TeamConfig {
   });
 
   public readonly editingTeam = signal<Nullable<TeamEditFormValue>>(null);
+
+  // The open mobile sheet, if any: its panel is created by the Dialog service, not by this
+  // template, so suggestions are pushed into it and its search requests are re-emitted here.
+  private readonly openSheet = signal<Nullable<DialogRef<TeamConfigEvent | undefined, TeamCreationPanel>>>(null);
+
+  constructor() {
+    effect(() => {
+      const suggestions = this.clubSuggestions();
+      this.openSheet()?.componentRef?.setInput('clubSuggestions', suggestions);
+    });
+  }
 
   // ======= Actions =======
   public updateSearch(value: string): void {
@@ -129,18 +143,31 @@ export class TeamConfig {
   }
 
   private openTeamPanelSheet(data: TeamCreationPanelData): void {
-    this.dialog
-      .open<TeamConfigEvent | undefined, TeamCreationPanelData>(TeamCreationPanel, {
-        data,
-        positionStrategy: this.overlay.position().global().bottom('0').width('100%'),
-        panelClass: 'team-creation-sheet-panel',
-        backdropClass: 'dialog-backdrop-light',
-      })
-      .closed.subscribe((event) => {
-        if (event) {
-          this.teamUpdated.emit(event);
-        }
-      });
+    const ref = this.dialog.open<
+      TeamConfigEvent | undefined,
+      TeamCreationPanelData,
+      TeamCreationPanel
+    >(TeamCreationPanel, {
+      data,
+      positionStrategy: this.overlay.position().global().bottom('0').width('100%'),
+      panelClass: 'team-creation-sheet-panel',
+      backdropClass: 'dialog-backdrop-light',
+    });
+
+    const searchSubscription = ref.componentInstance?.clubSearchRequested.subscribe((search) =>
+      this.clubSearchRequested.emit(search),
+    );
+    this.openSheet.set(ref);
+
+    ref.closed.subscribe((event) => {
+      searchSubscription?.unsubscribe();
+      if (this.openSheet() === ref) {
+        this.openSheet.set(null);
+      }
+      if (event) {
+        this.teamUpdated.emit(event);
+      }
+    });
   }
 
   // ======= Team actions menu =======

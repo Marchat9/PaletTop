@@ -3,6 +3,8 @@
     <div class="creation-column">
       <app-team-creation-panel
         [tournament]="tournament()"
+        [clubSuggestions]="clubSuggestions()"
+        (clubSearchRequested)="clubSearchRequested.emit($event)"
         (teamUpdated)="teamUpdated.emit($event)"
       />
     </div>
@@ -56,6 +58,8 @@
                 <app-team-form
                   [tournament]="tournament()"
                   [editingTeam]="editingTeam()"
+                  [clubSuggestions]="clubSuggestions()"
+                  (clubSearchRequested)="clubSearchRequested.emit($event)"
                   (submitted)="onEditTeamSubmitted($event)"
                   (cancelled)="cancelEditTeam()"
                 />

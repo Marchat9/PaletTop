@@ -21,7 +21,12 @@
   </div>
 
   <div content class="config-content">
-    <app-team-config [tournament]="tournament()" (teamUpdated)="onTeamUpdate.emit($event)">
+    <app-team-config
+      [tournament]="tournament()"
+      [clubSuggestions]="clubSuggestions()"
+      (clubSearchRequested)="clubSearchRequested.emit($event)"
+      (teamUpdated)="onTeamUpdate.emit($event)"
+    >
       <app-button
         actions
         title="Télécharger la liste des équipes (PDF)"

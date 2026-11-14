@@ -1,5 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import type { TDocumentDefinitions } from 'pdfmake/interfaces';
+import { By } from '@angular/platform-browser';
+import { TeamConfig } from './team-config/team-config';
 import { TournamentTeamConfigurationCard } from './tournament-team-configuration-card';
 import { TounamentTeamDto, TournamentDto } from 'src/app/store/tournament/tournament.models';
 import { TournamentStatus } from 'src/app/models/tournament-status.enum';
@@ -116,5 +118,21 @@ describe('TournamentTeamConfigurationCard', () => {
     fixture.detectChanges();
 
     expect(fixture.componentInstance.hasTeams()).toBe(false);
+  });
+
+  it('forwards club suggestions and search requests', () => {
+    const fixture = TestBed.createComponent(TournamentTeamConfigurationCard);
+    fixture.componentRef.setInput('tournament', buildTournament([]));
+    fixture.componentRef.setInput('clubSuggestions', ['Palet Club']);
+    const searchSpy = vi.fn();
+    fixture.componentInstance.clubSearchRequested.subscribe(searchSpy);
+    fixture.detectChanges();
+
+    const teamConfig = fixture.debugElement.query(By.directive(TeamConfig))
+      .componentInstance as TeamConfig;
+    expect(teamConfig.clubSuggestions()).toEqual(['Palet Club']);
+
+    teamConfig.clubSearchRequested.emit('Pal');
+    expect(searchSpy).toHaveBeenCalledWith('Pal');
   });
 });

@@ -62,6 +62,8 @@ import { MatchSessionsCardComponent } from './components/match-sessions-card/mat
 import { TournamentConfigurationCardComponent } from './components/tournament-configuration-card/tournament-configuration-card.component';
 import { TournamentHeaderComponent } from './components/tournament-header/tournament-header.component';
 import { TournamentTeamConfigurationCard } from './components/tournament-team-configuration-card/tournament-team-configuration-card';
+import { searchTournamentClubs } from 'src/app/store/tournament-club/tournament-club.actions';
+import { selectTournamentClubSuggestions } from 'src/app/store/tournament-club/tournament-club.selectors';
 import { selectSessions } from 'src/app/store/session/session.selectors';
 import { selectAdminUpdateScoreLoading } from 'src/app/store/match/match.selectors';
 import { onResyncRequested } from 'src/app/utils/resync-on-reconnect.util';
@@ -99,6 +101,7 @@ export class AdminTournamentPageComponent implements OnInit {
   private readonly isAdminView = this.store.selectSignal(selectCurrentTournamentIsAdminView);
   public readonly sessions = this.store.selectSignal(selectSessions);
   public readonly ranking = this.store.selectSignal(selectRanking);
+  public readonly clubSuggestions = this.store.selectSignal(selectTournamentClubSuggestions);
 
   // Loadings
   public readonly tournamentLoading = computed(
@@ -199,6 +202,14 @@ export class AdminTournamentPageComponent implements OnInit {
     this.store.dispatch(
       updateTournamentAdministratorConfiguration({ idtournament: id, tournament }),
     );
+  }
+
+  public searchClubs(search: string): void {
+    const code = this.tournament()?.code;
+    if (!code) {
+      return;
+    }
+    this.store.dispatch(searchTournamentClubs({ code, search }));
   }
 
   public updateTournamentTeam(event: TeamConfigEvent): void {

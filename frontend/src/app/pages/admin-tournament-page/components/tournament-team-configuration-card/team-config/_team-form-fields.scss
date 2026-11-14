@@ -98,7 +98,8 @@
       gap: 0.55rem;
       align-items: center;
 
-      app-input-text {
+      app-input-text,
+      app-input-autocomplete {
         flex: 1 1 auto;
       }
 

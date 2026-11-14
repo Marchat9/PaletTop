@@ -11,6 +11,7 @@ import { Nullable } from 'src/app/models/nullable.model';
 import { TeamConfigEvent, TeamConfigEventType } from 'src/app/models/team-config.model';
 import { ChampionShipTournamentConfig } from 'src/app/models/tournament-configuration-detail.model';
 import { Button } from 'src/app/shared/button/button';
+import { InputAutocomplete } from 'src/app/shared/input-autocomplete/input-autocomplete';
 import { InputSelect } from 'src/app/shared/input-select/input-select';
 import { InputText } from 'src/app/shared/input-text/input-text';
 import { TournamentDto } from 'src/app/store/tournament/tournament.models';
@@ -23,7 +24,7 @@ import {
 
 @Component({
   selector: 'app-team-form',
-  imports: [Button, InputText, InputSelect],
+  imports: [Button, InputText, InputSelect, InputAutocomplete],
   templateUrl: './team-form.html',
   styleUrl: './team-form.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -37,8 +38,11 @@ export class TeamForm {
   public readonly tournament = input<Nullable<TournamentDto>>(null);
   public readonly editingTeam = input<Nullable<TeamEditFormValue>>();
 
+  public readonly clubSuggestions = input<string[]>([]);
+
   public readonly submitted = output<TeamConfigEvent>();
   public readonly cancelled = output<void>();
+  public readonly clubSearchRequested = output<string>();
 
   public readonly isEditMode = computed(() => !!this.editingTeam());
 

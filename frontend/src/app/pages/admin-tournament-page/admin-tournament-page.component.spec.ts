@@ -23,6 +23,10 @@ import {
   selectTournamentUpdateConfigLoading,
 } from 'src/app/store/tournament/tournament.selectors';
 import { TournamentDto } from 'src/app/store/tournament/tournament.models';
+import {
+  searchTournamentClubs,
+} from 'src/app/store/tournament-club/tournament-club.actions';
+import { selectTournamentClubSuggestions } from 'src/app/store/tournament-club/tournament-club.selectors';
 import { AdminTournamentPageComponent } from './admin-tournament-page.component';
 import { GlobalRankingEntry } from 'src/app/models/global-ranking.model';
 import type { TDocumentDefinitions } from 'pdfmake/interfaces';
@@ -113,6 +117,7 @@ function setup({
           { selector: selectRankingIsLoading, value: false },
           { selector: selectSessions, value: [] },
           { selector: selectRanking, value: ranking },
+          { selector: selectTournamentClubSuggestions, value: [] },
         ],
       }),
     ],
@@ -208,5 +213,15 @@ describe('AdminTournamentPageComponent', { timeout: 15_000 }, () => {
         }),
       }),
     );
+  });
+
+  it('dispatches searchTournamentClubs with the tournament code', () => {
+    const { fixture, store } = setup();
+    fixture.detectChanges();
+    const dispatchSpy = vi.spyOn(store, 'dispatch');
+
+    fixture.componentInstance.searchClubs('Pal');
+
+    expect(dispatchSpy).toHaveBeenCalledWith(searchTournamentClubs({ code: 'ABCD', search: 'Pal' }));
   });
 });
