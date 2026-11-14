@@ -137,7 +137,7 @@ describe('TeamCreationPanel', () => {
     expect(root.querySelector('.created-banner')).toBeNull();
 
     submitFromForm(CREATE_EVENT);
-    expect(root.querySelector('.created-banner-text')?.textContent?.trim()).toBe('Bravo créée');
+    expect(root.querySelector('.created-banner')).toBeNull();
 
     fixture.componentRef.setInput(
       'tournament',
@@ -148,6 +148,82 @@ describe('TeamCreationPanel', () => {
     expect(
       root.querySelector('.created-banner-text')?.textContent?.replace(/\s+/g, ' ').trim(),
     ).toBe('Bravo créée · 2222');
+  });
+
+  it('shows no banner before the live tournament contains the created team', () => {
+    const { fixture, root, submitFromForm } = renderSheet({ tournament: buildTournament([ALPHA]) });
+    submitFromForm(CREATE_EVENT);
+    expect(fixture.componentInstance.lastCreated()).toBeNull();
+    expect(root.textContent).not.toContain('créée');
+  });
+
+  it('shows no « créée » banner when the creation fails (the team never arrives)', () => {
+    const { fixture, root, submitFromForm } = renderSheet({ tournament: buildTournament([ALPHA]) });
+    submitFromForm(CREATE_EVENT);
+    // An unrelated refresh (e.g. an error round-trip) that does not contain the team.
+    fixture.componentRef.setInput('tournament', buildTournament([ALPHA]));
+    fixture.detectChanges();
+    expect(fixture.componentInstance.lastCreated()).toBeNull();
+    expect(root.querySelector('.created-banner')).toBeNull();
+  });
+
+  it('shows the matched team when two new teams appear', () => {
+    const { fixture, root, submitFromForm } = renderSheet({ tournament: buildTournament([ALPHA]) });
+    submitFromForm(CREATE_EVENT);
+    fixture.componentRef.setInput(
+      'tournament',
+      buildTournament([
+        ALPHA,
+        { id: 'team-x', code: '9999', name: 'Concurrent', players: [] },
+        { id: 'team-2', code: '2222', name: 'Bravo', players: [] },
+      ]),
+    );
+    fixture.detectChanges();
+    expect(fixture.componentInstance.lastCreated()).toEqual({ name: 'Bravo', code: '2222' });
+    expect(
+      root.querySelector('.created-banner-text')?.textContent?.replace(/\s+/g, ' ').trim(),
+    ).toBe('Bravo créée · 2222');
+  });
+
+  it('shows the auto-named team for a players-only creation', () => {
+    const { fixture, submitFromForm } = renderSheet({ tournament: buildTournament([ALPHA]) });
+    submitFromForm({
+      type: TeamConfigEventType.CREATE_TEAM,
+      payload: { players: [{ name: 'Bob' }] },
+    });
+    fixture.componentRef.setInput(
+      'tournament',
+      buildTournament([
+        ALPHA,
+        { id: 'team-x', code: '9999', name: 'Concurrent', players: [] },
+        { id: 'team-2', code: '2222', name: 'Équipe 2', players: [] },
+      ]),
+    );
+    fixture.detectChanges();
+    expect(fixture.componentInstance.lastCreated()).toEqual({ name: 'Équipe 2', code: '2222' });
+  });
+
+  it('a new submit replaces the previous banner', () => {
+    const { fixture, root, submitFromForm } = renderSheet({ tournament: buildTournament([ALPHA]) });
+    const bravo = { id: 'team-2', code: '2222', name: 'Bravo', players: [] };
+    submitFromForm(CREATE_EVENT);
+    fixture.componentRef.setInput('tournament', buildTournament([ALPHA, bravo]));
+    fixture.detectChanges();
+    expect(fixture.componentInstance.lastCreated()?.name).toBe('Bravo');
+
+    submitFromForm({
+      type: TeamConfigEventType.CREATE_TEAM,
+      payload: { name: 'Charlie', players: [{ name: 'Cy' }] },
+    });
+    expect(fixture.componentInstance.lastCreated()).toBeNull();
+    expect(root.querySelector('.created-banner')).toBeNull();
+
+    fixture.componentRef.setInput(
+      'tournament',
+      buildTournament([ALPHA, bravo, { id: 'team-3', code: '3333', name: 'Charlie', players: [] }]),
+    );
+    fixture.detectChanges();
+    expect(fixture.componentInstance.lastCreated()).toEqual({ name: 'Charlie', code: '3333' });
   });
 
   it('shows the max-capacity message once the live tournament is full', () => {

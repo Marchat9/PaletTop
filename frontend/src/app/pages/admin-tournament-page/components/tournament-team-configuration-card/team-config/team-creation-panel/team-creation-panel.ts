@@ -3,6 +3,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
   inject,
   input,
   output,
@@ -14,7 +15,7 @@ import { TeamConfigEvent, TeamConfigEventType } from 'src/app/models/team-config
 import { Button } from 'src/app/shared/button/button';
 import { Icon } from 'src/app/shared/icon/icon';
 import { TournamentDto } from 'src/app/store/tournament/tournament.models';
-import { findNewTeam, type TeamEditFormValue } from '../team-config.utils';
+import { findCreatedTeam, type TeamEditFormValue } from '../team-config.utils';
 import { TeamForm } from '../team-form/team-form';
 
 export interface TeamCreationPanelData {
@@ -29,7 +30,7 @@ export interface CreatedTeamBanner {
 
 // The creation sent from the sheet, waiting for the live tournament to contain it.
 interface PendingCreation {
-  name: string;
+  name: Nullable<string>;
   previousIds: ReadonlySet<string>;
 }
 
@@ -81,18 +82,36 @@ export class TeamCreationPanel {
       this.canCreateTeam(),
   );
 
+  // The banner only reflects a server-confirmed creation: nothing is shown while the creation is
+  // pending, so a failed request never displays « créée ».
   private readonly pendingCreation = signal<Nullable<PendingCreation>>(null);
+  private readonly confirmedTeamId = signal<Nullable<string>>(null);
 
   public readonly lastCreated = computed<Nullable<CreatedTeamBanner>>(() => {
-    const pending = this.pendingCreation();
-    if (!pending) {
-      return null;
-    }
-    const created = findNewTeam(pending.previousIds, this.resolvedTournament()?.teams ?? []);
-    return created
-      ? { name: created.name, code: created.code ?? null }
-      : { name: pending.name, code: null };
+    const teamId = this.confirmedTeamId();
+    const team = teamId
+      ? this.resolvedTournament()?.teams?.find((candidate) => candidate.id === teamId)
+      : null;
+    return team ? { name: team.name, code: team.code ?? null } : null;
   });
+
+  constructor() {
+    effect(() => {
+      const pending = this.pendingCreation();
+      if (!pending) {
+        return;
+      }
+      const created = findCreatedTeam(
+        pending.previousIds,
+        this.resolvedTournament()?.teams ?? [],
+        pending.name,
+      );
+      if (created) {
+        this.confirmedTeamId.set(created.id);
+        this.pendingCreation.set(null);
+      }
+    });
+  }
 
   // ======= Actions =======
   public emitOrClose(event: TeamConfigEvent): void {
@@ -101,8 +120,9 @@ export class TeamCreationPanel {
       return;
     }
     if (event.type === TeamConfigEventType.CREATE_TEAM) {
+      this.confirmedTeamId.set(null);
       this.pendingCreation.set({
-        name: event.payload.name ?? '',
+        name: event.payload.name,
         previousIds: new Set((this.resolvedTournament()?.teams ?? []).map((team) => team.id)),
       });
       this.teamUpdated.emit(event);
