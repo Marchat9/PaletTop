@@ -8,6 +8,8 @@ import {
   output,
   signal,
   DestroyRef,
+  ElementRef,
+  afterRenderEffect,
 } from '@angular/core';
 import { Nullable } from '../../models/nullable.model';
 import { InputText } from '../input-text/input-text';
@@ -68,10 +70,29 @@ export class InputAutocomplete {
     this.isOpen() && this.activeIndex() >= 0 ? this.optionId(this.activeIndex()) : null,
   );
 
+  /** Polite live-region text announcing the number of suggestions. */
+  protected readonly statusMessage = computed(() => {
+    const count = this.options().length;
+    if (!this.isOpen() || count === 0) {
+      return '';
+    }
+    return count === 1 ? '1 suggestion disponible' : `${count} suggestions disponibles`;
+  });
+
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor() {
     inject(DestroyRef).onDestroy(() => this.clearTimer());
+    afterRenderEffect(() => {
+      const index = this.activeIndex();
+      if (!this.isOpen() || index < 0) {
+        return;
+      }
+      this.host.nativeElement
+        .querySelectorAll<HTMLElement>('[role="option"]')
+        [index]?.scrollIntoView({ block: 'nearest' });
+    });
   }
 
   protected optionId(index: number): string {

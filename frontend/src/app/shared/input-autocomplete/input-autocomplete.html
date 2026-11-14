@@ -1,4 +1,8 @@
 <div class="input-autocomplete">
+  <div class="visually-hidden" role="status" aria-live="polite" aria-atomic="true">
+    {{ statusMessage() }}
+  </div>
+
   <app-input-text
     [id]="id()"
     [icon]="icon()"

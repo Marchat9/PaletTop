@@ -160,4 +160,46 @@ describe('InputAutocomplete', () => {
     fixture.detectChanges();
     expect(options().length).toBe(0);
   });
+
+  it('scrolls the active option into view on ArrowDown', () => {
+    const spy = vi.fn();
+    (HTMLElement.prototype as any).scrollIntoView = spy;
+    const { fixture, focus, key } = render({ options: ['A', 'B'] });
+    focus();
+    key('ArrowDown');
+    fixture.detectChanges();
+    expect(spy).toHaveBeenCalledWith({ block: 'nearest' });
+    expect((spy.mock.instances.at(-1) as HTMLElement).id).toBe('club-option-0');
+  });
+
+  describe('live region', () => {
+    const status = (host: HTMLElement) =>
+      host.querySelector('[role="status"]') as HTMLElement;
+
+    it('is always present, polite and atomic, and empty when not focused', () => {
+      const { host } = render({ options: ['A'] });
+      const el = status(host);
+      expect(el.getAttribute('aria-live')).toBe('polite');
+      expect(el.getAttribute('aria-atomic')).toBe('true');
+      expect(el.textContent?.trim()).toBe('');
+    });
+
+    it('announces one suggestion', () => {
+      const { host, focus } = render({ options: ['A'] });
+      focus();
+      expect(status(host).textContent?.trim()).toBe('1 suggestion disponible');
+    });
+
+    it('announces several suggestions', () => {
+      const { host, focus } = render({ options: ['A', 'B', 'C'] });
+      focus();
+      expect(status(host).textContent?.trim()).toBe('3 suggestions disponibles');
+    });
+
+    it('is empty with no options', () => {
+      const { host, focus } = render();
+      focus();
+      expect(status(host).textContent?.trim()).toBe('');
+    });
+  });
 });
