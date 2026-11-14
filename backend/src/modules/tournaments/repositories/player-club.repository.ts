@@ -8,6 +8,13 @@ const ADMIN_CLUB_SORTABLE_COLUMNS: Record<string, string> = {
     playersCount: 'players_count',
 };
 
+export const CLUB_SEARCH_LIMIT = 15;
+
+// Escapes the LIKE wildcards (and the escape character itself) so a search is matched literally.
+export function escapeLikePattern(value: string): string {
+    return value.replace(/[\\%_]/g, '\\$&');
+}
+
 export interface AdminClubSearchOptions {
     page: number;
     pageSize: number;
@@ -130,6 +137,60 @@ export class PlayerClubRepository {
             .getManyAndCount();
 
         return { items: items as (PlayerClub & { playersCount: number })[], total };
+    }
+
+    // Club names for the autocomplete: clubs already present in the tournament first, then the most
+    // populated ones; when searching, names starting with the search come before the others.
+    async searchNamesForTournament(
+        tournamentId: string,
+        search: string,
+        limit = CLUB_SEARCH_LIMIT,
+    ): Promise<string[]> {
+        const inTournament =
+            'EXISTS (SELECT 1 FROM players pt WHERE pt.player_club_id = club.id AND pt.tournament_id = :tournamentId)';
+
+        const queryBuilder = this.repo
+            .createQueryBuilder('club')
+            .select('club.name', 'name')
+            .addSelect(
+                (qb) =>
+                    qb
+                        .subQuery()
+                        .select('COUNT(*)')
+                        .from('players', 'p')
+                        .where('p.player_club_id = club.id'),
+                'players_count',
+            )
+            .addSelect(inTournament, 'in_tournament')
+            .setParameter('tournamentId', tournamentId);
+
+        if (search) {
+            const escaped = escapeLikePattern(search);
+            queryBuilder
+                .addSelect(
+                    'CASE WHEN unaccent(club.name) ILIKE unaccent(:prefix) THEN 0 ELSE 1 END',
+                    'starts_with',
+                )
+                .where('unaccent(club.name) ILIKE unaccent(:contains)', {
+                    contains: `%${escaped}%`,
+                })
+                .setParameter('prefix', `${escaped}%`)
+                .orderBy('in_tournament', 'DESC')
+                .addOrderBy('players_count', 'DESC')
+                .addOrderBy('starts_with', 'ASC');
+        } else {
+            queryBuilder
+                .where(inTournament)
+                .orderBy('in_tournament', 'DESC')
+                .addOrderBy('players_count', 'DESC');
+        }
+
+        const rows = await queryBuilder
+            .addOrderBy('club.name', 'ASC')
+            .limit(limit)
+            .getRawMany<{ name: string }>();
+
+        return rows.map((row) => row.name);
     }
 
     async findByNormalizedName(name: string, excludeId?: string): Promise<PlayerClub | null> {
