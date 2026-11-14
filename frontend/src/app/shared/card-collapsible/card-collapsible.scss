@@ -13,14 +13,6 @@
     .card-collapsible-content-wrapper {
       grid-template-rows: 1fr;
       opacity: 1;
-
-      // Overflow stays hidden while the open animation runs (the content is taller than the
-      // animated row), then turns visible so absolutely positioned popups (autocomplete
-      // listbox) are not clipped at the card's bottom edge.
-      .card-collapsible-content {
-        overflow: visible;
-        transition: overflow 0s 220ms allow-discrete;
-      }
     }
   }
 
@@ -74,5 +66,13 @@
       overflow: hidden;
       min-height: 0;
     }
+  }
+
+  // Opt-in: lets absolutely positioned popups (autocomplete listbox) escape the card once it is
+  // expanded. Overflow stays hidden during the open animation, then turns visible.
+  &.is-expanded.allow-overflow .card-collapsible-content-wrapper .card-collapsible-content {
+    overflow: visible;
+    min-width: 0;
+    transition: overflow 0s 220ms allow-discrete;
   }
 }
