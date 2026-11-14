@@ -1,6 +1,6 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Brackets, LessThan, Repository, UpdateResult } from 'typeorm';
+import { Brackets, In, LessThan, Repository, UpdateResult } from 'typeorm';
 import { TrainingSession } from 'src/entities/training-session.entity';
 import { TrainingSessionStatus } from 'src/enum/training.enum';
 
@@ -88,9 +88,13 @@ export class TrainingSessionRepository {
         });
     }
 
+    // Only the ones still open: a session closed by its admin meanwhile keeps its closing date.
     async closeMany(ids: string[]): Promise<void> {
         if (!ids.length) return;
-        await this.repo.update(ids, { status: TrainingSessionStatus.CLOSED, closedAt: new Date() });
+        await this.repo.update(
+            { id: In(ids), status: TrainingSessionStatus.OPEN },
+            { status: TrainingSessionStatus.CLOSED, closedAt: new Date() },
+        );
     }
 
     /**

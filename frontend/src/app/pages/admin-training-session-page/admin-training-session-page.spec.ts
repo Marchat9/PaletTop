@@ -22,6 +22,7 @@ import {
 import {
   selectAdminUpdateTrainingScoreLoading,
   selectCheckinTrainingParticipantLoading,
+  selectCloseTrainingSessionError,
   selectCloseTrainingSessionLoading,
   selectCreateTrainingTeamLoading,
   selectCurrentTrainingAdminInformations,
@@ -110,6 +111,7 @@ function setup() {
           { selector: selectCreateTrainingTeamLoading, value: false },
           { selector: selectGenerateTrainingRoundLoading, value: false },
           { selector: selectCloseTrainingSessionLoading, value: false },
+          { selector: selectCloseTrainingSessionError, value: null },
           { selector: selectAdminUpdateTrainingScoreLoading, value: false },
         ],
       }),

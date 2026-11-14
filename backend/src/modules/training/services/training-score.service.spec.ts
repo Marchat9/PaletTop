@@ -6,11 +6,11 @@ import { MatchStatus } from 'src/enum/status.enum';
 import { TrainingRoundStatus, TrainingSessionStatus } from 'src/enum/training.enum';
 import { TrainingScoreService } from './training-score.service';
 
-function makeService(match: TrainingMatch) {
+function makeService(match: TrainingMatch, status = TrainingSessionStatus.OPEN) {
     const session = {
         id: 'session-1',
         code: '1234',
-        status: TrainingSessionStatus.OPEN,
+        status,
         pointsPerGame: 13,
     } as unknown as TrainingSession;
 
@@ -100,12 +100,31 @@ describe('TrainingScoreService.adminUpdateScore on a closed round', () => {
     });
 });
 
+describe('TrainingScoreService.adminUpdateScore on a closed session', () => {
+    it('refuses any correction: the results of a closed session are final', async () => {
+        const { service, gateway } = makeService(
+            match({ status: MatchStatus.VALIDATED, scoreA: 13, scoreB: 5 }),
+            TrainingSessionStatus.CLOSED,
+        );
+
+        await expect(service.adminUpdateScore('1234', 'm1', 'pw', 13, 7)).rejects.toThrow(
+            'Cette séance est clôturée.',
+        );
+        expect(gateway.emitMatchUpdated).not.toHaveBeenCalled();
+    });
+});
+
 describe('TrainingScoreService.updateScore against a stale score', () => {
-    function setupPlayer(found: TrainingMatch, updated: boolean, latest: TrainingMatch = found) {
+    function setupPlayer(
+        found: TrainingMatch,
+        updated: boolean,
+        latest: TrainingMatch = found,
+        status = TrainingSessionStatus.OPEN,
+    ) {
         const session = {
             id: 'session-1',
             code: '1234',
-            status: TrainingSessionStatus.OPEN,
+            status,
             pointsPerGame: 13,
         } as unknown as TrainingSession;
         const matchRepo = {
@@ -226,6 +245,21 @@ describe('TrainingScoreService.updateScore against a stale score', () => {
         await expect(
             service.validateMatch('1234', 'm1', '1111', '2222', { scoreA: 13, scoreB: 9 }),
         ).rejects.toThrow(ConflictException);
+    });
+
+    it('refuses a validation once the session is closed: its results are final', async () => {
+        const ended = endedMatch();
+        const { service, matchRepo } = setupPlayer(
+            ended,
+            true,
+            ended,
+            TrainingSessionStatus.CLOSED,
+        );
+
+        await expect(
+            service.validateMatch('1234', 'm1', '1111', '2222', { scoreA: 13, scoreB: 9 }),
+        ).rejects.toThrow('Cette séance est clôturée.');
+        expect(matchRepo.updateIfStatus).not.toHaveBeenCalled();
     });
 
     it('keeps the already validated message when the other team validated first', async () => {

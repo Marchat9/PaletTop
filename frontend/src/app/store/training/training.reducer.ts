@@ -183,6 +183,27 @@ function upsertRound(rounds: TrainingRoundDto[], round: TrainingRoundDto): Train
     : [...rounds, round];
 }
 
+// A session is only closed once its rounds are all closed (the server closes the current one with
+// it): the rounds in memory follow, without reloading them.
+function withRoundsClosedIfSessionClosed(
+  state: TrainingState,
+  sessionStatus: string,
+): TrainingState {
+  if (sessionStatus !== 'CLOSED') {
+    return state;
+  }
+  const close = (round: TrainingRoundDto): TrainingRoundDto =>
+    round.status === 'OPEN' ? { ...round, status: 'CLOSED' } : round;
+  return {
+    ...state,
+    rounds: { ...state.rounds, data: state.rounds.data.map(close) },
+    currentRound: {
+      ...state.currentRound,
+      data: state.currentRound.data ? close(state.currentRound.data) : null,
+    },
+  };
+}
+
 function isInMatch(match: TrainingMatchDto, participantId: string): boolean {
   return [match.teamA, match.teamB].some((team) =>
     (team?.members ?? []).some((member) => member.id === participantId),
@@ -584,6 +605,11 @@ export const trainingReducer = createReducer(
     currentSession: { ...state.currentSession, isLoading: true, error: null },
     // Switching session: the displayed code would no longer concern the one being looked at.
     lastCheckedInParticipant: null,
+    // Nor would a refused closing of the previous session.
+    requestStatus: {
+      ...state.requestStatus,
+      closeSession: { isLoading: false, error: null },
+    },
   })),
   on(connectTrainingSessionAdministratorSuccess, (state, { session }) => ({
     ...state,
@@ -603,7 +629,7 @@ export const trainingReducer = createReducer(
     },
   })),
   on(closeTrainingSessionSuccess, (state, { session }) => ({
-    ...state,
+    ...withRoundsClosedIfSessionClosed(state, session.status),
     currentSession: { ...state.currentSession, data: session },
     sessions: {
       ...state.sessions,
@@ -981,7 +1007,10 @@ export const trainingReducer = createReducer(
   // provided it really is the session on screen.
   on(wsTrainingSessionUpdated, (state, { session }) =>
     state.currentSession.data?.code === session.code
-      ? { ...state, currentSession: { ...state.currentSession, data: session } }
+      ? {
+          ...withRoundsClosedIfSessionClosed(state, session.status),
+          currentSession: { ...state.currentSession, data: session },
+        }
       : state,
   ),
   on(wsTrainingRoundGenerated, (state, { round }) => {

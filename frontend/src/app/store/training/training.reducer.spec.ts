@@ -20,6 +20,9 @@ import {
 import {
   checkinTrainingParticipant,
   checkinTrainingParticipantSuccess,
+  closeTrainingSessionFailure,
+  closeTrainingSessionSuccess,
+  connectTrainingSessionAdministrator,
   createTrainingSessionSuccess,
   loadTrainingClubLeaderboard,
   loadTrainingClubLeaderboardFailure,
@@ -459,6 +462,52 @@ describe('trainingReducer', () => {
       expect(trainingReducer(followed, spectateTrainingSession({ sessionCode: '1234' }))).toBe(
         followed,
       );
+    });
+  });
+
+  describe('clôture de la séance', () => {
+    const openRound = {
+      id: 'r1',
+      roundNumber: 1,
+      status: 'OPEN',
+      matches: [],
+    } as unknown as TrainingRoundDto;
+    const withOpenRound = {
+      ...initialTrainingState,
+      currentSession: { data: buildSession([]), isLoading: false, error: null },
+      rounds: { data: [openRound], isLoading: false, error: null },
+      currentRound: { data: openRound, isLoading: false, error: null },
+    };
+    const closed = { ...buildSession([]), status: 'CLOSED' as const };
+
+    it('marque le round en cours terminé avec la séance', () => {
+      const state = trainingReducer(
+        withOpenRound,
+        closeTrainingSessionSuccess({ session: closed }),
+      );
+
+      expect(state.rounds.data[0].status).toBe('CLOSED');
+      expect(state.currentRound.data?.status).toBe('CLOSED');
+    });
+
+    it('fait de même quand la clôture arrive par le websocket', () => {
+      const state = trainingReducer(withOpenRound, wsTrainingSessionUpdated({ session: closed }));
+
+      expect(state.rounds.data[0].status).toBe('CLOSED');
+      expect(state.currentRound.data?.status).toBe('CLOSED');
+    });
+
+    it('oublie le refus de clôture en changeant de séance', () => {
+      const refused = trainingReducer(
+        withOpenRound,
+        closeTrainingSessionFailure({ error: "Le round 1 n'est pas terminé" }),
+      );
+      const state = trainingReducer(
+        refused,
+        connectTrainingSessionAdministrator({ sessionCode: '5678' }),
+      );
+
+      expect(state.requestStatus.closeSession.error).toBeNull();
     });
   });
 

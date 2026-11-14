@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, UpdateResult } from 'typeorm';
 import { TrainingRound } from 'src/entities/training-round.entity';
+import { TrainingRoundStatus } from 'src/enum/training.enum';
 
 const MATCH_TEAM_RELATIONS = {
     matches: {
@@ -39,6 +40,10 @@ export class TrainingRoundRepository {
             order: { matches: { createdAt: 'ASC' } },
             relations: MATCH_TEAM_RELATIONS,
         });
+    }
+
+    closeRound(roundId: string): Promise<UpdateResult> {
+        return this.repo.update(roundId, { status: TrainingRoundStatus.CLOSED });
     }
 
     findAllBySession(sessionId: string): Promise<TrainingRound[]> {

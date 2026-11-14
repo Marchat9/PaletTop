@@ -3,11 +3,10 @@ import { TrainingSession } from 'src/entities/training-session.entity';
 import { TrainingSessionStatus } from 'src/enum/training.enum';
 
 /**
- * Blocks the "session still alive" actions (check-in, teams, round generation, first score entry)
- * once the session is CLOSED. Deliberately left out of `validateMatch` (confirming a score already
- * recorded must not be lost if the closing - the automatic one in particular - happens before the
- * validation) and of `adminUpdateScore` (admin correction after the fact, mirroring the
- * `wasSessionClosed` behaviour already accepted on the tournament side).
+ * Blocks the "session still alive" actions (check-in, teams, round generation, score entry, admin
+ * score correction) once the session is CLOSED: its results, club leaderboard included, are final.
+ * Deliberately left out of `validateMatch`: confirming a score already recorded must not be lost if
+ * the closing happens before the validation.
  */
 export function assertSessionOpen(session: TrainingSession, logger: Logger, action: string): void {
     if (session.status === TrainingSessionStatus.CLOSED) {
