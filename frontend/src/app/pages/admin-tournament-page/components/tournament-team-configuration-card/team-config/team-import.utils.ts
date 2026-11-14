@@ -124,10 +124,7 @@ export function buildImportSummaryMessage(importedCount: number, ignoredCount: n
     : imported;
 }
 
-export function pickImportFile(
-  files: ArrayLike<File>,
-  acceptedExtensions: string,
-): Nullable<File> {
+export function pickImportFile(files: ArrayLike<File>, acceptedExtensions: string): Nullable<File> {
   const extensions = acceptedExtensions
     .split(',')
     .map((ext) => ext.trim().toLowerCase())

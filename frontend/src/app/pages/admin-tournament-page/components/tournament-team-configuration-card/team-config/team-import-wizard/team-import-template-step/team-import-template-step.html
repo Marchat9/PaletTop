@@ -1,0 +1,55 @@
+<div class="template-step">
+  <p class="intro">
+    Téléchargez un modèle Excel avec le bon nombre de colonnes, remplissez-le, puis importez-le à
+    l'étape suivante. Vous pourrez ajouter des colonnes supplémentaires à la main si une équipe
+    compte plus de joueurs.
+  </p>
+
+  <div class="field-group">
+    <label class="field-label" for="import-template-players">Nombre de joueurs par équipe</label>
+    <app-input-number
+      id="import-template-players"
+      [value]="playersCount()"
+      [min]="1"
+      [max]="maxPlayers()"
+      (valueChange)="onPlayersCountChange($event)"
+    />
+  </div>
+
+  <div
+    class="preview-wrapper"
+    role="region"
+    aria-label="Aperçu des colonnes du modèle"
+    tabindex="0"
+  >
+    <table class="preview">
+      <thead>
+        <tr>
+          @for (header of headers(); track $index) {
+            <th scope="col">{{ header }}</th>
+          }
+        </tr>
+      </thead>
+    </table>
+  </div>
+
+  <div class="actions">
+    <app-button
+      [large]="true"
+      title="Télécharger le modèle"
+      variant="secondary"
+      icon="download"
+      (clicked)="download.emit()"
+    />
+    <app-button [large]="true" title="Continuer" variant="primary" (clicked)="continue.emit()" />
+  </div>
+
+  <div class="skip">
+    <app-button
+      [large]="true"
+      title="J'ai déjà un fichier rempli"
+      variant="tertiary"
+      (clicked)="skip.emit()"
+    />
+  </div>
+</div>
