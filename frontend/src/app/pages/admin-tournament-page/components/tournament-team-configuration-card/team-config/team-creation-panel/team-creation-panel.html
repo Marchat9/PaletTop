@@ -4,80 +4,61 @@
     <span class="title">{{ isEditMode ? "Modifier l'équipe" : 'Ajouter une équipe' }}</span>
   </div>
 
-  @if (!isEditMode && canImportExcel()) {
-    <div class="creation-tabs" role="tablist">
-      <app-button
-        title="Ajout manuel"
-        icon="edit_note"
-        [variant]="activeTab() === 'manual' ? 'primary' : 'secondary'"
-        (clicked)="activeTab.set('manual')"
-      />
-      <app-button
-        title="Import Excel"
-        icon="upload_file"
-        [variant]="activeTab() === 'import' ? 'primary' : 'secondary'"
-        (clicked)="activeTab.set('import')"
-      />
-    </div>
-  }
-
-  @if (activeTab() === 'manual') {
-    <div class="tab-panel">
-      <p class="description">
-        {{
-          isEditMode
-            ? "Modifiez le nom d'équipe et/ou les joueurs puis validez."
-            : "Renseignez un nom d'équipe et/ou les joueurs puis validez."
-        }}
-      </p>
-
-      @if (canCreateTeam()) {
-        <app-team-form
-          [tournament]="resolvedTournament()"
-          [editingTeam]="editingTeam"
-          [clubSuggestions]="clubSuggestions()"
-          (clubSearchRequested)="clubSearchRequested.emit($event)"
-          (submitted)="emitOrClose($event)"
-          (cancelled)="closeSheet()"
-        />
-      } @else {
-        <span class="title icon-text">
-          <app-icon name="info" /> Nombre d'équipe maximum atteinte
-        </span>
-      }
-    </div>
-  } @else {
-    <div class="tab-panel">
-      <p class="description">
-        Téléchargez un modèle, remplissez-le, puis importez-le pour créer plusieurs équipes en une
-        fois.
-      </p>
-
-      <div class="actions-row flex-space gap wrap">
-        <app-button
-          title="Télécharger un modèle Excel"
-          icon="download"
-          variant="secondary"
-          (clicked)="openDownloadTemplateDialog()"
-        />
-        <app-input-file
-          title="Importer un fichier Excel"
-          icon="upload_file"
-          variant="secondary"
-          [accept]="importFileFormats"
-          [disabled]="!canCreateTeam()"
-          (fileSelected)="onFileSelected($event)"
-        />
-        @if (!canCreateTeam()) {
-          <span class="title icon-text">
-            <app-icon name="info" /> Nombre d'équipe maximum atteinte
-          </span>
+  @if (lastCreated(); as created) {
+    <p class="created-banner" role="status">
+      <app-icon name="check_circle" [ariaHidden]="true" />
+      <span class="created-banner-text"
+        >{{ created.name }} créée
+        @if (created.code) {
+          · <span class="code">{{ created.code }}</span>
         }
-      </div>
-
-      @if (importError(); as error) {
-        <span class="import-error">{{ error }}</span>
-      }
-    </div>
+      </span>
+    </p>
   }
+
+  <div class="creation-body">
+    <p class="description">
+      {{
+        isEditMode
+          ? "Modifiez le nom d'équipe et/ou les joueurs puis validez."
+          : "Renseignez un nom d'équipe et/ou les joueurs puis validez."
+      }}
+    </p>
+
+    @if (canCreateTeam()) {
+      <app-team-form
+        [tournament]="resolvedTournament()"
+        [editingTeam]="editingTeam"
+        [clubSuggestions]="clubSuggestions()"
+        (clubSearchRequested)="clubSearchRequested.emit($event)"
+        (submitted)="emitOrClose($event)"
+        (cancelled)="closeSheet()"
+      />
+    } @else {
+      <span class="title icon-text">
+        <app-icon name="info" /> Nombre d'équipe maximum atteinte
+      </span>
+    }
+
+    @if (showImportLink()) {
+      <app-button
+        class="import-link"
+        title="Beaucoup d'équipes ? Importer depuis Excel"
+        icon="upload_file"
+        variant="tertiary"
+        [titleCanWrap]="true"
+        (clicked)="requestImport()"
+      />
+    }
+
+    @if (isSheet && !isEditMode) {
+      <app-button
+        class="finish-button"
+        title="Terminer"
+        icon="check"
+        variant="secondary"
+        (clicked)="closeSheet()"
+      />
+    }
+  </div>
 </div>

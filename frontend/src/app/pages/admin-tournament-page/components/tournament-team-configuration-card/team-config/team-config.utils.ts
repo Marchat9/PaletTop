@@ -1,3 +1,4 @@
+import { Nullable } from 'src/app/models/nullable.model';
 import { TounamentTeamDto } from 'src/app/store/tournament/tournament.models';
 
 export interface TeamPlayerFormValue {
@@ -50,4 +51,13 @@ export function filterTeams(teams: TounamentTeamDto[], research: string): Tounam
 
     return teamText.includes(search) || playersText.includes(search);
   });
+}
+
+// The team that appeared since `previousIds` was captured — how a just-created team (and its
+// server-generated code) is recognised once the live tournament is refreshed.
+export function findNewTeam(
+  previousIds: ReadonlySet<string>,
+  teams: TounamentTeamDto[],
+): Nullable<TounamentTeamDto> {
+  return teams.find((team) => !previousIds.has(team.id)) ?? null;
 }
