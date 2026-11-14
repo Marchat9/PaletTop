@@ -63,7 +63,7 @@ import {
   selectCurrentTournamentAdminInformations,
   selectCurrentTournamentPlayerInformations,
 } from './tournament.selectors';
-import { buildImportSummaryMessage } from 'src/app/pages/admin-tournament-page/components/tournament-team-configuration-card/team-config/team-import.utils';
+import { buildImportSummaryMessage } from 'src/app/utils/import-summary.util';
 import { newId } from 'src/app/utils/unique-id.util';
 
 @Injectable()

@@ -17,6 +17,7 @@ import { Icon } from 'src/app/shared/icon/icon';
 import { TournamentDto } from 'src/app/store/tournament/tournament.models';
 import { findCreatedTeam, type TeamEditFormValue } from '../team-config.utils';
 import { TeamForm } from '../team-form/team-form';
+import { canImportTeams } from '../team-import.utils';
 
 export interface TeamCreationPanelData {
   tournament: Nullable<TournamentDto>;
@@ -76,10 +77,7 @@ export class TeamCreationPanel {
   );
 
   public readonly showImportLink = computed(
-    () =>
-      !this.isEditMode &&
-      this.resolvedTournament()?.configuration.competitionMode !== 'championship' &&
-      this.canCreateTeam(),
+    () => !this.isEditMode && canImportTeams(this.resolvedTournament()),
   );
 
   // The banner only reflects a server-confirmed creation: nothing is shown while the creation is

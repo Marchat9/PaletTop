@@ -62,7 +62,10 @@ import { MatchSessionsCardComponent } from './components/match-sessions-card/mat
 import { TournamentConfigurationCardComponent } from './components/tournament-configuration-card/tournament-configuration-card.component';
 import { TournamentHeaderComponent } from './components/tournament-header/tournament-header.component';
 import { TournamentTeamConfigurationCard } from './components/tournament-team-configuration-card/tournament-team-configuration-card';
-import { searchTournamentClubs } from 'src/app/store/tournament-club/tournament-club.actions';
+import {
+  clearTournamentClubSuggestions,
+  searchTournamentClubs,
+} from 'src/app/store/tournament-club/tournament-club.actions';
 import { selectTournamentClubSuggestions } from 'src/app/store/tournament-club/tournament-club.selectors';
 import { selectSessions } from 'src/app/store/session/session.selectors';
 import { selectAdminUpdateScoreLoading } from 'src/app/store/match/match.selectors';
@@ -156,6 +159,10 @@ export class AdminTournamentPageComponent implements OnInit {
       }
     });
 
+    // Club suggestions belong to one tournament: drop them when leaving the page (disconnect,
+    // navigation) so they never show up in another tournament.
+    this.destroyRef.onDestroy(() => this.store.dispatch(clearTournamentClubSuggestions()));
+
     onResyncRequested(() => {
       const code = this.tournament()?.code;
       const password = this.adminPassword();
@@ -171,7 +178,11 @@ export class AdminTournamentPageComponent implements OnInit {
       if (code) {
         // Normalized like the stored code: otherwise "abc" never equals the loaded "ABC" and the
         // connection effect fires again on every response.
-        this.tournamentCode.set(normalizeCode(code));
+        const normalized = normalizeCode(code);
+        if (normalized !== this.tournamentCode()) {
+          this.store.dispatch(clearTournamentClubSuggestions());
+        }
+        this.tournamentCode.set(normalized);
       } else {
         this.reconnectAsAdmin();
       }

@@ -58,16 +58,32 @@
           </ul>
         </div>
       }
+      <div class="error-actions">
+        <app-input-file
+          title="Choisir un autre fichier"
+          icon="folder_open"
+          [accept]="acceptedFormats()"
+          [disabled]="isParsing()"
+          (fileSelected)="onFileSelected($event)"
+        />
+        <app-button
+          title="Télécharger le modèle"
+          variant="tertiary"
+          icon="download"
+          [large]="true"
+          (clicked)="downloadTemplate.emit()"
+        />
+      </div>
+    </div>
+  } @else {
+    <div class="template-link">
+      <app-button
+        title="Télécharger le modèle"
+        variant="tertiary"
+        icon="download"
+        [large]="true"
+        (clicked)="downloadTemplate.emit()"
+      />
     </div>
   }
-
-  <div class="template-link">
-    <app-button
-      title="Télécharger le modèle"
-      variant="tertiary"
-      icon="download"
-      [large]="true"
-      (clicked)="downloadTemplate.emit()"
-    />
-  </div>
 </div>

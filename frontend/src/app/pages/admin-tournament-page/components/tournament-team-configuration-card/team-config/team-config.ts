@@ -40,6 +40,7 @@ import {
   TeamImportWizardData,
   TeamImportWizardResult,
 } from './team-import-wizard/team-import-wizard';
+import { canImportTeams } from './team-import.utils';
 import { environment } from '@environment';
 
 const MOBILE_BREAKPOINT = '(max-width: ' + environment.limitMobileSizePx + 'px)';
@@ -101,13 +102,7 @@ export class TeamConfig {
       this.tournament()?.configuration.maxTeamCapacity ??
       environment.tournamentConfiguration.maxTeamCapacity.max,
   );
-  // Excel import: never in championship, and only while the tournament still has room.
-  public readonly canImport = computed(
-    () =>
-      !!this.tournament() &&
-      this.tournament()?.configuration.competitionMode !== 'championship' &&
-      this.teamCount() < this.maxTeamCapacity(),
-  );
+  public readonly canImport = computed(() => canImportTeams(this.tournament()));
 
   // Brief outline on the desktop creation panel when the user is sent to it from elsewhere.
   public readonly highlightCreation = signal(false);

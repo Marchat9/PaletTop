@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import { Button } from 'src/app/shared/button/button';
 import { InputNumber } from 'src/app/shared/input-number/input-number';
-import { getTemplateHeaders } from '../../team-excel.utils';
+import { getTemplateExampleRows, getTemplateHeaders } from '../../team-excel.utils';
 
 @Component({
   selector: 'app-team-import-template-step',
@@ -20,6 +20,7 @@ export class TeamImportTemplateStep {
   public readonly skip = output<void>();
 
   public readonly headers = computed(() => getTemplateHeaders(this.playersCount()));
+  public readonly exampleRows = computed(() => getTemplateExampleRows(this.playersCount()));
 
   public onPlayersCountChange(value: number): void {
     this.playersCountChange.emit(value);

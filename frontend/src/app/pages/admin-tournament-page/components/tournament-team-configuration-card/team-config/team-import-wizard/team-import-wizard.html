@@ -1,9 +1,23 @@
 <div class="team-import-wizard popup-surface">
   <div class="popup-header">
-    <h2 class="popup-title">
-      <app-icon name="upload_file" iconClass="icon" [ariaHidden]="true" />
-      Importer des équipes
-    </h2>
+    <div class="header-start">
+      @if (canGoBack()) {
+        <app-button-icon
+          class="popup-back"
+          icon="arrow_back"
+          role="button"
+          tabindex="0"
+          aria-label="Étape précédente"
+          (clicked)="onBack()"
+          (keydown.enter)="onBack()"
+          (keydown.space)="$event.preventDefault(); onBack()"
+        />
+      }
+      <h2 class="popup-title">
+        <app-icon name="upload_file" iconClass="icon" [ariaHidden]="true" />
+        Importer des équipes
+      </h2>
+    </div>
     <button type="button" class="popup-close" aria-label="Fermer" (click)="onCancel()">
       <app-icon name="close" [ariaHidden]="true" />
     </button>
@@ -23,6 +37,13 @@
     }
   </ol>
   <p class="sr-only" role="status" aria-live="polite">{{ progressLabel() }}</p>
+
+  @if (templateError(); as message) {
+    <p class="wizard-error" role="alert">
+      <app-icon name="error" [ariaHidden]="true" />
+      <span>{{ message }}</span>
+    </p>
+  }
 
   @switch (step()) {
     @case (1) {

@@ -7,11 +7,6 @@ export enum TeamConfigEventType {
   IMPORT_TEAMS = 'import-teams',
 }
 
-export interface TeamConfigPlayerPayload {
-  name: string;
-  club?: string;
-}
-
 export interface TeamConfigCreateTeamPayload {
   name?: string;
   club?: string;

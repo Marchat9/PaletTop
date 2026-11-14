@@ -53,6 +53,31 @@ describe('TeamImportTemplateStep', () => {
     expect(headers()).toHaveLength(3);
   });
 
+  it('previews two example rows matching the generated template', () => {
+    const { root, fixture } = render(2);
+    const rows = () =>
+      Array.from(root.querySelectorAll('.preview tbody tr')).map((tr) =>
+        Array.from(tr.querySelectorAll('td')).map((td) => td.textContent?.trim()),
+      );
+    expect(rows()).toEqual([
+      [
+        'Équipe Exemple 1',
+        'Jean Dupont (exemple)',
+        'Club des Exemples',
+        'Marie Martin (exemple)',
+        '',
+      ],
+      ['Équipe Exemple 2', 'Paul Petit (exemple)', '', '', ''],
+    ]);
+
+    fixture.componentRef.setInput('playersCount', 1);
+    fixture.detectChanges();
+    expect(rows()).toEqual([
+      ['Équipe Exemple 1', 'Jean Dupont (exemple)', 'Club des Exemples'],
+      ['Équipe Exemple 2', 'Paul Petit (exemple)', ''],
+    ]);
+  });
+
   it('forwards player count changes', () => {
     const { fixture, emitted } = render();
     fixture.componentInstance.onPlayersCountChange(4);

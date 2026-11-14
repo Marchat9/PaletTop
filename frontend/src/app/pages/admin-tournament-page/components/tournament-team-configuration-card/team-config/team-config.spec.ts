@@ -73,6 +73,17 @@ describe('TeamConfig', () => {
     expect(buttonWithText('Importer une liste depuis Excel')).toBeUndefined();
   });
 
+  it('hides the import choice and refuses the wizard once the tournament has started', () => {
+    const { component, open, buttonWithText } = render({
+      ...buildTournament([]),
+      status: TournamentStatus.ACTIVE,
+    });
+    expect(buttonWithText('Importer une liste depuis Excel')).toBeUndefined();
+    expect(component.canImport()).toBe(false);
+    component.openImportWizard();
+    expect(open).not.toHaveBeenCalled();
+  });
+
   it('emits IMPORT_TEAMS with ignoredRows from the wizard result', () => {
     const teams = [{ name: 'Alpha', players: [{ name: 'Al' }] }];
     const { open, emitted, buttonWithText } = render(buildTournament([]), {

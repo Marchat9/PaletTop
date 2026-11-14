@@ -30,6 +30,15 @@
           }
         </tr>
       </thead>
+      <tbody>
+        @for (exampleRow of exampleRows(); track $index) {
+          <tr>
+            @for (cell of exampleRow; track $index) {
+              <td>{{ cell }}</td>
+            }
+          </tr>
+        }
+      </tbody>
     </table>
   </div>
 

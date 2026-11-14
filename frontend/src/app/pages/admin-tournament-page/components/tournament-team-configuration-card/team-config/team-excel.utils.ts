@@ -34,6 +34,22 @@ interface PlayerColumnMap {
   clubCol?: number;
 }
 
+/** Example rows written under the headers of the generated template (and shown in its preview). */
+export function getTemplateExampleRows(playersPerTeam: number): string[][] {
+  const columnCount = 1 + 2 * playersPerTeam;
+  const fill = (cells: string[]) =>
+    Array.from({ length: columnCount }, (_, index) => cells[index] ?? '');
+  return [
+    fill([
+      'Équipe Exemple 1',
+      'Jean Dupont (exemple)',
+      'Club des Exemples',
+      ...(playersPerTeam >= 2 ? ['Marie Martin (exemple)'] : []),
+    ]),
+    fill(['Équipe Exemple 2', 'Paul Petit (exemple)']),
+  ];
+}
+
 export function getTemplateHeaders(playersPerTeam: number): string[] {
   const headers = ['Nom Équipe (optionnel)'];
   for (let i = 1; i <= playersPerTeam; i++) {
@@ -66,16 +82,10 @@ export async function generateTeamsExcelTemplate(maxPlayers: number): Promise<Bl
   };
   worksheet.views = [{ state: 'frozen', ySplit: 1 }];
 
-  worksheet.addRow({
-    team: 'Équipe Exemple 1',
-    playerName1: 'Jean Dupont (exemple)',
-    playerClub1: 'Club des Exemples',
-    ...(maxPlayers >= 2 ? { playerName2: 'Marie Martin (exemple)' } : {}),
-  });
-  worksheet.addRow({
-    team: 'Équipe Exemple 2',
-    playerName1: 'Paul Petit (exemple)',
-  });
+  for (const exampleRow of getTemplateExampleRows(maxPlayers)) {
+    // Blank preview cells stay truly empty in the file.
+    worksheet.addRow(exampleRow.map((cell) => cell || null));
+  }
 
   const buffer = await workbook.xlsx.writeBuffer();
   return new Blob([buffer], {

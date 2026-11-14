@@ -98,6 +98,11 @@ describe('TeamCreationPanel', () => {
     expect(root.textContent).not.toContain('Importer depuis Excel');
   });
 
+  it('hides the import link once the tournament has started', () => {
+    const { root } = renderInline({ ...buildTournament([]), status: TournamentStatus.ACTIVE });
+    expect(root.querySelector('.import-link')).toBeNull();
+  });
+
   it('emits on desktop without any dialog', () => {
     const { fixture } = renderInline(buildTournament([]));
     const emitted: TeamConfigEvent[] = [];

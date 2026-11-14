@@ -38,6 +38,14 @@
         background: var(--color-template-header-bg);
         color: var(--color-template-header-text);
       }
+
+      td {
+        padding: 0.5rem 0.9rem;
+        white-space: nowrap;
+        font-size: 0.78rem;
+        color: var(--color-on-surface-variant);
+        border-top: 1px solid var(--color-outline-variant);
+      }
     }
   }
 

@@ -1,6 +1,8 @@
 import { environment } from '@environment';
 import { Nullable } from '../../../../../models/nullable.model';
 import { TeamConfigCreateTeamPayload } from '../../../../../models/team-config.model';
+import { TournamentStatus } from '../../../../../models/tournament-status.enum';
+import { TournamentDto } from '../../../../../store/tournament/tournament.models';
 import { ParsedTeamRow } from './team-excel.utils';
 
 export type ImportRowStatus = 'ready' | 'warning' | 'ignored';
@@ -117,13 +119,6 @@ export function buildImportBlockReason(
   return null;
 }
 
-export function buildImportSummaryMessage(importedCount: number, ignoredCount: number): string {
-  const imported = plural(importedCount, 'équipe importée', 'équipes importées');
-  return ignoredCount > 0
-    ? `${imported} · ${plural(ignoredCount, 'ligne ignorée', 'lignes ignorées')}`
-    : imported;
-}
-
 export function pickImportFile(files: ArrayLike<File>, acceptedExtensions: string): Nullable<File> {
   const extensions = acceptedExtensions
     .split(',')
@@ -133,5 +128,23 @@ export function pickImportFile(files: ArrayLike<File>, acceptedExtensions: strin
     Array.from(files).find((file) =>
       extensions.some((ext) => file.name.toLowerCase().endsWith(ext)),
     ) ?? null
+  );
+}
+
+/**
+ * Excel import is offered only while teams can still be added: draft tournament, outside
+ * championships, with room left (same capacity fallback as the creation form).
+ */
+export function canImportTeams(tournament: Nullable<TournamentDto>): boolean {
+  if (!tournament) {
+    return false;
+  }
+  const capacity =
+    tournament.configuration.maxTeamCapacity ??
+    environment.tournamentConfiguration.maxTeamCapacity.max;
+  return (
+    tournament.status === TournamentStatus.DRAFT &&
+    tournament.configuration.competitionMode !== 'championship' &&
+    (tournament.teams?.length ?? 0) < capacity
   );
 }

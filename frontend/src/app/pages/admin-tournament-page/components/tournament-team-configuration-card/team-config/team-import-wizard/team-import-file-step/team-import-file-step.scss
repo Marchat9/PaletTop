@@ -106,6 +106,13 @@
         border: 1px solid var(--color-status-error-border);
       }
     }
+
+    .error-actions {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.75rem;
+    }
   }
 
   .template-link {

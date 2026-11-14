@@ -104,6 +104,57 @@ describe('TeamImportWizard', () => {
     expect(wizard.step()).toBe(2);
   });
 
+  it('has no back button on step 1', () => {
+    const { root } = render();
+    expect(root.querySelector('.popup-back')).toBeNull();
+  });
+
+  it('goes back from step 2 to step 1 keeping the chosen player count', () => {
+    const { wizard, fixture, root } = render();
+    wizard.onPlayersCountChange(4);
+    wizard.onContinue();
+    fixture.detectChanges();
+    const back = root.querySelector('.popup-back') as HTMLElement;
+    expect(back.getAttribute('aria-label')).toBe('Étape précédente');
+
+    (back.querySelector('.button-icon') as HTMLElement).click();
+    fixture.detectChanges();
+
+    expect(wizard.step()).toBe(1);
+    expect(wizard.playersCount()).toBe(4);
+    expect(root.querySelector('.popup-back')).toBeNull();
+  });
+
+  it('goes back from step 3 to step 2', { timeout: 60_000 }, async () => {
+    const { wizard, fixture, root, select } = render();
+    await select(csv('A,Jean,'));
+    expect(wizard.step()).toBe(3);
+
+    (root.querySelector('.popup-back .button-icon') as HTMLElement).click();
+    fixture.detectChanges();
+
+    expect(wizard.step()).toBe(2);
+  });
+
+  it('shows an error when the template cannot be generated', { timeout: 60_000 }, async () => {
+    const { wizard, fixture, root } = render();
+    const original = URL.createObjectURL;
+    URL.createObjectURL = vi.fn(() => {
+      throw new Error('boom');
+    });
+    try {
+      await wizard.onDownloadTemplate();
+    } finally {
+      URL.createObjectURL = original;
+    }
+    fixture.detectChanges();
+
+    expect(wizard.templateError()).toBe("Le modèle n'a pas pu être généré. Réessayez.");
+    expect(root.querySelector('.wizard-error')?.textContent).toContain(
+      "Le modèle n'a pas pu être généré. Réessayez.",
+    );
+  });
+
   it('closes with undefined on cancel', () => {
     const { wizard, close } = render();
     wizard.onCancel();

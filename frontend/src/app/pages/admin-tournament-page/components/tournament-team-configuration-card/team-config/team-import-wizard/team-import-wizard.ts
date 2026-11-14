@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { environment } from '@environment';
 import { Nullable } from 'src/app/models/nullable.model';
 import { TeamConfigCreateTeamPayload } from 'src/app/models/team-config.model';
+import { ButtonIcon } from 'src/app/shared/button-icon/button-icon';
 import { Icon } from 'src/app/shared/icon/icon';
 import {
   downloadBlob,
@@ -47,6 +48,7 @@ interface StepItem {
 }
 
 const TOTAL_STEPS = 3;
+const TEMPLATE_ERROR = "Le modèle n'a pas pu être généré. Réessayez.";
 const STEPS: StepItem[] = [
   { number: 1, label: 'Modèle' },
   { number: 2, label: 'Fichier' },
@@ -55,7 +57,7 @@ const STEPS: StepItem[] = [
 
 @Component({
   selector: 'app-team-import-wizard',
-  imports: [Icon, TeamImportTemplateStep, TeamImportFileStep, TeamImportReviewStep],
+  imports: [ButtonIcon, Icon, TeamImportTemplateStep, TeamImportFileStep, TeamImportReviewStep],
   templateUrl: './team-import-wizard.html',
   styleUrl: './team-import-wizard.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -77,6 +79,7 @@ export class TeamImportWizard {
   public readonly parsedRows = signal<ParsedTeamRow[]>([]);
   public readonly filter = signal<ImportRowFilter>('all');
   public readonly isParsing = signal(false);
+  public readonly templateError = signal<Nullable<string>>(null);
 
   public readonly views = computed(() =>
     classifyImportRows(this.parsedRows(), this.data.existingTeamCount),
@@ -93,6 +96,7 @@ export class TeamImportWizard {
     buildImportBlockReason(this.counts(), this.capacity()),
   );
   public readonly canImport = computed(() => this.blockReason() === null);
+  public readonly canGoBack = computed(() => this.step() > 1);
   public readonly progressLabel = computed(() => `Étape ${this.step()} sur ${TOTAL_STEPS}`);
   public readonly visibleRows = computed(() => filterImportRows(this.views(), this.filter()));
 
@@ -103,10 +107,14 @@ export class TeamImportWizard {
     this.playersCount.set(value);
   }
 
-  public onDownloadTemplate(): void {
-    void generateTeamsExcelTemplate(this.playersCount()).then((blob) =>
-      downloadBlob(blob, `${this.limits.fileName}.xlsx`),
-    );
+  public async onDownloadTemplate(): Promise<void> {
+    this.templateError.set(null);
+    try {
+      const blob = await generateTeamsExcelTemplate(this.playersCount());
+      downloadBlob(blob, `${this.limits.fileName}.xlsx`);
+    } catch {
+      this.templateError.set(TEMPLATE_ERROR);
+    }
   }
 
   public onContinue(): void {
@@ -160,6 +168,15 @@ export class TeamImportWizard {
   public onChangeFile(): void {
     this.fileError.set(null);
     this.step.set(2);
+  }
+
+  /** Header back arrow: step 3 behaves like « Changer de fichier », step 2 returns to the template. */
+  public onBack(): void {
+    if (this.step() === 3) {
+      this.onChangeFile();
+    } else if (this.step() === 2) {
+      this.step.set(1);
+    }
   }
 
   public onCancel(): void {

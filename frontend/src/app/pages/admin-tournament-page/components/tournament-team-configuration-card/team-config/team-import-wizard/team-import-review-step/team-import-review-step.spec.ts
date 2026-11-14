@@ -1,10 +1,10 @@
 import { TestBed } from '@angular/core/testing';
-import { ImportRowFilter, ImportRowView } from '../../team-import.utils';
+import { ImportRowFilter, ImportRowStatus, ImportRowView } from '../../team-import.utils';
 import { TeamImportReviewStep } from './team-import-review-step';
 
 function view(
   rowIndex: number,
-  status: ImportRowView['status'],
+  status: ImportRowStatus,
   displayName: string,
   messages: { errors?: string[]; warnings?: string[] } = {},
 ): ImportRowView {

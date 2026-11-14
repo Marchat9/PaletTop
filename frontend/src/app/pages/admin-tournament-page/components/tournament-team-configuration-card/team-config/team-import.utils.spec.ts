@@ -1,6 +1,8 @@
+import { TournamentStatus } from 'src/app/models/tournament-status.enum';
+import { TournamentDto } from 'src/app/store/tournament/tournament.models';
 import {
   buildImportBlockReason,
-  buildImportSummaryMessage,
+  canImportTeams,
   classifyImportRows,
   computeImportCapacity,
   countImportRows,
@@ -9,6 +11,20 @@ import {
   toImportPayload,
 } from './team-import.utils';
 import { ParsedTeamRow } from './team-excel.utils';
+
+function tournament(
+  teamCount: number,
+  overrides: { status?: TournamentStatus; competitionMode?: string; maxTeamCapacity?: number } = {},
+): TournamentDto {
+  return {
+    status: overrides.status ?? TournamentStatus.DRAFT,
+    teams: Array.from({ length: teamCount }, (_, i) => ({ id: `t${i}`, name: `T${i}`, players: [] })),
+    configuration: {
+      competitionMode: overrides.competitionMode ?? 'standard',
+      maxTeamCapacity: 'maxTeamCapacity' in overrides ? overrides.maxTeamCapacity : 4,
+    },
+  } as unknown as TournamentDto;
+}
 
 function row(rowIndex: number, overrides: Partial<ParsedTeamRow> = {}): ParsedTeamRow {
   return {
@@ -113,17 +129,40 @@ describe('team import helpers', () => {
     expect(buildImportBlockReason(counts, computeImportCapacity(0, 2, 32))).toBeNull();
   });
 
-  it('builds the summary message', () => {
-    expect(buildImportSummaryMessage(13, 0)).toBe('13 équipes importées');
-    expect(buildImportSummaryMessage(13, 1)).toBe('13 équipes importées · 1 ligne ignorée');
-    expect(buildImportSummaryMessage(1, 2)).toBe('1 équipe importée · 2 lignes ignorées');
-  });
-
   it('picks the first accepted file', () => {
     const pdf = new File([''], 'a.pdf');
     const xlsx = new File([''], 'b.XLSX');
     expect(pickImportFile([pdf, xlsx], '.xlsx,.xls')).toBe(xlsx);
     expect(pickImportFile([pdf], '.xlsx')).toBeNull();
     expect(pickImportFile([], '.xlsx')).toBeNull();
+  });
+
+  describe('canImportTeams', () => {
+    it('allows a draft tournament with room left', () => {
+      expect(canImportTeams(tournament(3))).toBe(true);
+    });
+
+    it('refuses once the tournament has started or ended', () => {
+      expect(canImportTeams(tournament(0, { status: TournamentStatus.ACTIVE }))).toBe(false);
+      expect(canImportTeams(tournament(0, { status: TournamentStatus.FINISHED }))).toBe(false);
+    });
+
+    it('refuses in championship', () => {
+      expect(canImportTeams(tournament(0, { competitionMode: 'championship' }))).toBe(false);
+    });
+
+    it('refuses when the tournament is full', () => {
+      expect(canImportTeams(tournament(4))).toBe(false);
+    });
+
+    it('falls back to the environment capacity when none is configured', () => {
+      expect(canImportTeams(tournament(255, { maxTeamCapacity: undefined }))).toBe(true);
+      expect(canImportTeams(tournament(256, { maxTeamCapacity: undefined }))).toBe(false);
+    });
+
+    it('refuses while no tournament is loaded', () => {
+      expect(canImportTeams(null)).toBe(false);
+      expect(canImportTeams(undefined)).toBe(false);
+    });
   });
 });
