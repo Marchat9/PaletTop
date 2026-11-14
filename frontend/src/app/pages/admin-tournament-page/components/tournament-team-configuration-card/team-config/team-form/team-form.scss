@@ -2,4 +2,10 @@
 
 :host {
   @include fields.team-form-fields;
+
+  .field-error {
+    margin: 0;
+    color: var(--color-error);
+    font-size: 0.85rem;
+  }
 }

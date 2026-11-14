@@ -5,6 +5,7 @@ import {
   input,
   linkedSignal,
   output,
+  signal,
 } from '@angular/core';
 import { Nullable } from 'src/app/models/nullable.model';
 import { TeamConfigEvent, TeamConfigEventType } from 'src/app/models/team-config.model';
@@ -13,6 +14,7 @@ import { Button } from 'src/app/shared/button/button';
 import { InputSelect } from 'src/app/shared/input-select/input-select';
 import { InputText } from 'src/app/shared/input-text/input-text';
 import { TournamentDto } from 'src/app/store/tournament/tournament.models';
+import { getPlayerNameError, getTeamClubError } from './team-form.validation';
 import {
   generateDefaultPlayerRow,
   type TeamEditFormValue,
@@ -77,13 +79,42 @@ export class TeamForm {
       (!this.isChampionship() || (this.isChampionship() && !!this.teamClub())),
   );
 
+  public readonly submitAttempted = signal(false);
+  private readonly touchedPlayersState = signal<ReadonlySet<number>>(new Set());
+  public readonly touchedPlayers = this.touchedPlayersState.asReadonly();
+  public readonly touchedClub = signal(false);
+
+  public readonly playerErrors = computed<Nullable<string>[]>(() =>
+    this.teamPlayers().map((player, index) =>
+      getPlayerNameError(
+        index,
+        player.name,
+        this.submitAttempted() || this.touchedPlayersState().has(index),
+      ),
+    ),
+  );
+  public readonly clubError = computed<Nullable<string>>(() =>
+    getTeamClubError(
+      this.isChampionship(),
+      this.teamClub(),
+      this.submitAttempted() || this.touchedClub(),
+    ),
+  );
+  public readonly clubErrorId = `${this.formId}-club-error`;
+
   // ======= Actions =======
+  public markPlayerTouched(index: number): void {
+    this.touchedPlayersState.update((touched) => new Set(touched).add(index));
+  }
+
   public updateTeamName(value: string): void {
     this.teamName.set(value);
   }
 
   public updateTeamClub(value: string): void {
     this.teamClub.set(value);
+    // The select has no blur output: choosing a value (or clearing it) counts as touching it.
+    this.touchedClub.set(true);
   }
 
   public addPlayerRow(): void {
@@ -91,13 +122,21 @@ export class TeamForm {
   }
 
   public removePlayerRow(index: number): void {
-    this.teamPlayers.update((players) => {
-      if (players.length <= 1) {
-        return players;
-      }
+    if (this.teamPlayers().length <= 1) {
+      return;
+    }
 
-      return players.filter((_, playerIndex) => playerIndex !== index);
-    });
+    this.teamPlayers.update((players) =>
+      players.filter((_, playerIndex) => playerIndex !== index),
+    );
+    this.touchedPlayersState.update(
+      (touched) =>
+        new Set(
+          [...touched]
+            .filter((touchedIndex) => touchedIndex !== index)
+            .map((touchedIndex) => (touchedIndex > index ? touchedIndex - 1 : touchedIndex)),
+        ),
+    );
   }
 
   public updatePlayerName(index: number, value: string): void {
@@ -110,6 +149,7 @@ export class TeamForm {
 
   public onSubmit(): void {
     if (!this.canSubmit()) {
+      this.submitAttempted.set(true);
       return;
     }
 
@@ -140,7 +180,10 @@ export class TeamForm {
       },
     });
 
-    // reset form
+    // reset form (the player-row count is kept)
+    this.submitAttempted.set(false);
+    this.touchedPlayersState.set(new Set());
+    this.touchedClub.set(false);
     this.teamName.set('');
     this.teamPlayers.set(this.teamPlayers().map(() => generateDefaultPlayerRow()));
   }
