@@ -135,4 +135,17 @@ describe('TournamentTeamConfigurationCard', () => {
     teamConfig.clubSearchRequested.emit('Pal');
     expect(searchSpy).toHaveBeenCalledWith('Pal');
   });
+
+  it('opens the import wizard of the team configuration on startTeamImport()', () => {
+    const fixture = TestBed.createComponent(TournamentTeamConfigurationCard);
+    fixture.componentRef.setInput('tournament', buildTournament([]));
+    fixture.detectChanges();
+    const teamConfig = fixture.debugElement.query(By.directive(TeamConfig))
+      .componentInstance as TeamConfig;
+    const openSpy = vi.spyOn(teamConfig, 'openImportWizard').mockImplementation(() => {});
+
+    fixture.componentInstance.startTeamImport();
+
+    expect(openSpy).toHaveBeenCalledTimes(1);
+  });
 });

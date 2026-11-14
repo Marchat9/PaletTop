@@ -347,6 +347,11 @@ export class AdminTournamentPageComponent implements OnInit {
     this.teamCard()?.startTeamCreation();
   }
 
+  /** From the next-step card: open the Excel import wizard. */
+  public importTeams(): void {
+    this.teamCard()?.startTeamImport();
+  }
+
   public nextSession(): void {
     // The button only re-renders as loading on the next change detection: a double click can
     // land in between. The store signal is already up to date after the first dispatch.

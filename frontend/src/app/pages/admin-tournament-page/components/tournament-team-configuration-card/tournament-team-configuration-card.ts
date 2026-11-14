@@ -50,6 +50,11 @@ export class TournamentTeamConfigurationCard {
     this.teamConfig()?.startTeamCreation();
   }
 
+  /** "Import from Excel" asked from the next-step card. */
+  public startTeamImport(): void {
+    this.teamConfig()?.openImportWizard();
+  }
+
   public readonly hasTeams = computed(() => (this.tournament()?.teams?.length ?? 0) > 0);
 
   // Si le tournoi n'a pas de limite d'équipe, on affiche toujours la section de configuration des équipes

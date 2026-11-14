@@ -17,6 +17,14 @@
           [large]="true"
           (clicked)="addTeam.emit()"
         />
+        @if (canImport()) {
+          <app-button
+            title="Importer depuis Excel"
+            icon="upload_file"
+            variant="secondary"
+            (clicked)="importTeams.emit()"
+          />
+        }
         <div class="step is-todo">
           <span class="step-badge">2</span>
           <div class="step-text">
@@ -39,6 +47,12 @@
                 <button type="button" class="link" (click)="addTeam.emit()">
                   ajouter une équipe
                 </button>
+                @if (canImport()) {
+                  ·
+                  <button type="button" class="link" (click)="importTeams.emit()">
+                    importer depuis Excel
+                  </button>
+                }
               }
             </span>
           </div>

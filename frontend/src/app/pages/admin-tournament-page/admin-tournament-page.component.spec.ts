@@ -1,5 +1,6 @@
 import { Dialog } from '@angular/cdk/dialog';
 import { TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { Actions } from '@ngrx/effects';
 import { Action } from '@ngrx/store';
@@ -33,6 +34,7 @@ import { AdminTournamentPageComponent } from './admin-tournament-page.component'
 import { GlobalRankingEntry } from 'src/app/models/global-ranking.model';
 import type { TDocumentDefinitions } from 'pdfmake/interfaces';
 import { PdfExportService } from 'src/app/services/pdf-export.service';
+import { TournamentTeamConfigurationCard } from './components/tournament-team-configuration-card/tournament-team-configuration-card';
 
 function buildTournament(status = TournamentStatus.ACTIVE): TournamentDto {
   return {
@@ -248,5 +250,17 @@ describe('AdminTournamentPageComponent', { timeout: 15_000 }, () => {
         importSummary: { importedCount: 2, ignoredCount: 3 },
       }),
     );
+  });
+
+  it('opens the wizard through the card', () => {
+    const { fixture } = setup();
+    fixture.detectChanges();
+    const card = fixture.debugElement.query(By.directive(TournamentTeamConfigurationCard))
+      .componentInstance as TournamentTeamConfigurationCard;
+    const importSpy = vi.spyOn(card, 'startTeamImport').mockImplementation(() => {});
+
+    fixture.componentInstance.importTeams();
+
+    expect(importSpy).toHaveBeenCalledTimes(1);
   });
 });

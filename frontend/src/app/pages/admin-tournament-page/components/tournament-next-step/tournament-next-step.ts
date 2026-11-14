@@ -28,6 +28,7 @@ export class TournamentNextStep {
   public readonly startLoading = input<boolean>(false);
 
   public readonly addTeam = output<void>();
+  public readonly importTeams = output<void>();
   public readonly startTournament = output<void>();
   // ==============================
 
@@ -39,6 +40,15 @@ export class TournamentNextStep {
       environment.tournamentConfiguration.maxTeamCapacity.max,
   );
   public readonly isFull = computed(() => this.teamCount() >= this.capacity());
+
+  public readonly isChampionship = computed(
+    () => this.tournament()?.configuration.competitionMode === 'championship',
+  );
+
+  /** Excel import is offered while teams can still be added, outside championships. */
+  public readonly canImport = computed(
+    () => this.isDraft() && !this.isFull() && !this.isChampionship(),
+  );
 
   /** Enough teams registered: the start becomes the current step. */
   public readonly teamsReady = computed(() => this.teamCount() >= MIN_TEAMS_TO_START);
