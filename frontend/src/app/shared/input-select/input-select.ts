@@ -8,6 +8,7 @@ import {
   signal,
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { Nullable } from '../../models/nullable.model';
 import { Icon } from '../icon/icon';
 
 export interface InputSelectOption {
@@ -38,6 +39,9 @@ export class InputSelect implements ControlValueAccessor {
   readonly disabled = input<boolean>(false);
   readonly options = input<readonly InputSelectOption[]>([]);
   readonly icon = input<string>('');
+  /** Error state: red styling and aria-invalid. */
+  readonly invalid = input<boolean>(false);
+  readonly describedBy = input<Nullable<string>>(null);
 
   readonly valueChange = output<string>();
 
