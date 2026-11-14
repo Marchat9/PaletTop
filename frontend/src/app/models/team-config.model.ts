@@ -7,6 +7,11 @@ export enum TeamConfigEventType {
   IMPORT_TEAMS = 'import-teams',
 }
 
+export interface TeamConfigPlayerPayload {
+  name: string;
+  club?: string;
+}
+
 export interface TeamConfigCreateTeamPayload {
   name?: string;
   club?: string;
@@ -26,6 +31,10 @@ export interface TeamConfigRemoveTeamPayload {
 
 export type TeamConfigEvent =
   | { type: TeamConfigEventType.CREATE_TEAM; payload: TeamConfigCreateTeamPayload }
-  | { type: TeamConfigEventType.IMPORT_TEAMS; payload: TeamConfigCreateTeamPayload[] }
+  | {
+      type: TeamConfigEventType.IMPORT_TEAMS;
+      payload: TeamConfigCreateTeamPayload[];
+      ignoredRows?: number;
+    }
   | { type: TeamConfigEventType.UPDATE_TEAM; payload: TeamConfigUpdateTeamPayload }
   | { type: TeamConfigEventType.REMOVE_TEAM; payload: TeamConfigRemoveTeamPayload };

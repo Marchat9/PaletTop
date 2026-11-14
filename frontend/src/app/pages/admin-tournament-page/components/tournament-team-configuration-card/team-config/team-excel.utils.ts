@@ -11,6 +11,7 @@ export interface ParsedTeamRow {
 export interface ParseTeamsResult {
   rows: ParsedTeamRow[];
   globalError?: string;
+  foundHeaders?: string[];
 }
 
 export interface TeamImportLimits {
@@ -33,15 +34,24 @@ interface PlayerColumnMap {
   clubCol?: number;
 }
 
+export function getTemplateHeaders(playersPerTeam: number): string[] {
+  const headers = ['Nom Équipe (optionnel)'];
+  for (let i = 1; i <= playersPerTeam; i++) {
+    headers.push(`Nom Joueur ${i}`, `Nom Club ${i}`);
+  }
+  return headers;
+}
+
 export async function generateTeamsExcelTemplate(maxPlayers: number): Promise<Blob> {
   const { default: ExcelJS } = await import('exceljs');
   const workbook = new ExcelJS.Workbook();
   const worksheet = workbook.addWorksheet('Équipes');
 
-  const columns: Partial<Column>[] = [{ header: 'Nom Équipe (optionnel)', key: 'team', width: 26 }];
+  const headers = getTemplateHeaders(maxPlayers);
+  const columns: Partial<Column>[] = [{ header: headers[0], key: 'team', width: 26 }];
   for (let i = 1; i <= maxPlayers; i++) {
-    columns.push({ header: `Nom Joueur ${i}`, key: `playerName${i}`, width: 22 });
-    columns.push({ header: `Nom Club ${i}`, key: `playerClub${i}`, width: 20 });
+    columns.push({ header: headers[2 * i - 1], key: `playerName${i}`, width: 22 });
+    columns.push({ header: headers[2 * i], key: `playerClub${i}`, width: 20 });
   }
   worksheet.columns = columns;
 
@@ -129,6 +139,7 @@ export async function parseTeamsExcelFile(
       rows: [],
       globalError:
         'Aucune colonne "Nom Joueur N" détectée. Vérifiez que vous utilisez le modèle fourni.',
+      foundHeaders: headerRow.map((header) => (header ?? '').trim()).filter(Boolean),
     };
   }
 
