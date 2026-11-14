@@ -5,6 +5,7 @@ import { MockStore, provideMockStore } from '@ngrx/store/testing';
 import { of } from 'rxjs';
 import { TournamentStatus } from 'src/app/models/tournament-status.enum';
 import { ConfirmationPopupComponent } from 'src/app/modales/confirmation-popup/confirmation-popup';
+import { SuperAdminClubMergePopupComponent } from 'src/app/modales/super-admin-club-merge-popup/super-admin-club-merge-popup';
 import { SuperAdminClubRenamePopupComponent } from 'src/app/modales/super-admin-club-rename-popup/super-admin-club-rename-popup';
 import { SuperAdminTournamentDeletePopupComponent } from 'src/app/modales/super-admin-tournament-delete-popup/super-admin-tournament-delete-popup';
 import { SuperAdminTournamentDetailPopupComponent } from 'src/app/modales/super-admin-tournament-detail-popup/super-admin-tournament-detail-popup';
@@ -149,6 +150,7 @@ function setup(
             },
             renameRequest: { isLoading: false, error: null },
             deleteRequest: { isLoading: false, error: null },
+            mergeRequest: { isLoading: false, error: null },
           },
         },
       }),
@@ -506,5 +508,29 @@ describe('SuperAdminPageComponent', () => {
     expect(store.dispatch).toHaveBeenCalledWith(
       deleteSuperAdminClubs({ ids: [CLUB_WITH_PLAYERS.id, CLUB_WITHOUT_PLAYERS.id] }),
     );
+  });
+
+  it('opens the merge popup with the two selected clubs', () => {
+    const { fixture, dialogMock } = setup('secret');
+
+    fixture.componentInstance.onClubMergeRequested([CLUB_WITH_PLAYERS.id, CLUB_WITHOUT_PLAYERS.id]);
+
+    expect(dialogMock.open).toHaveBeenCalledWith(
+      SuperAdminClubMergePopupComponent,
+      expect.objectContaining({
+        data: { first: CLUB_WITH_PLAYERS, second: CLUB_WITHOUT_PLAYERS },
+        panelClass: 'dialog-panel',
+        backdropClass: 'dialog-backdrop-light',
+      }),
+    );
+  });
+
+  it('does not open the merge popup when a selected club is missing from the list', () => {
+    const { fixture, dialogMock } = setup('secret');
+    dialogMock.open.mockClear();
+
+    fixture.componentInstance.onClubMergeRequested([CLUB_WITH_PLAYERS.id, 'unknown-id']);
+
+    expect(dialogMock.open).not.toHaveBeenCalled();
   });
 });

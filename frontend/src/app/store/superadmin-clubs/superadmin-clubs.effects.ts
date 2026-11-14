@@ -10,6 +10,9 @@ import {
   deleteSuperAdminClubs,
   deleteSuperAdminClubsFailure,
   deleteSuperAdminClubsSuccess,
+  mergeSuperAdminClubs,
+  mergeSuperAdminClubsFailure,
+  mergeSuperAdminClubsSuccess,
   renameSuperAdminClub,
   renameSuperAdminClubFailure,
   renameSuperAdminClubSuccess,
@@ -79,20 +82,43 @@ export class SuperAdminClubsEffects {
     ),
   );
 
+  merge$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(mergeSuperAdminClubs),
+      withLatestFrom(this.store.select(selectSuperAdminPassword)),
+      switchMap(([{ targetId, sourceId, newName }, password]) =>
+        this.clubService.merge(targetId, sourceId, newName, password ?? '').pipe(
+          map(() => mergeSuperAdminClubsSuccess()),
+          catchError((error) =>
+            of(mergeSuperAdminClubsFailure({ error: convertErrorToString(error) })),
+          ),
+        ),
+      ),
+    ),
+  );
+
   refreshAfterMutation$ = createEffect(() =>
     this.actions$.pipe(
-      ofType(renameSuperAdminClubSuccess, deleteSuperAdminClubsSuccess),
+      ofType(
+        renameSuperAdminClubSuccess,
+        deleteSuperAdminClubsSuccess,
+        mergeSuperAdminClubsSuccess,
+      ),
       withLatestFrom(this.store.select(selectSuperAdminClubsList)),
       map(([, list]) => searchSuperAdminClubs({ criteria: list.criteria })),
     ),
   );
 
-  // Renames don't move the needle on metrics, but a club deletion changes the
-  // clubs count tile — reload metrics after any mutation so the tiles never
+  // Renames don't move the needle on metrics, but a club deletion or merge changes
+  // the clubs count tile — reload metrics after any mutation so the tiles never
   // go stale.
   refreshMetricsAfterMutation$ = createEffect(() =>
     this.actions$.pipe(
-      ofType(renameSuperAdminClubSuccess, deleteSuperAdminClubsSuccess),
+      ofType(
+        renameSuperAdminClubSuccess,
+        deleteSuperAdminClubsSuccess,
+        mergeSuperAdminClubsSuccess,
+      ),
       map(() => loadMetrics()),
     ),
   );

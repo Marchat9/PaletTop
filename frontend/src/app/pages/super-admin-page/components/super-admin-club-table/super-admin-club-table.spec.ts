@@ -142,4 +142,38 @@ describe('SuperAdminClubTableComponent', () => {
 
     expect(emitted).toEqual([[CLUB_WITH_PLAYERS.id]]);
   });
+
+  it('shows « Fusionner » only with 2 selected clubs', () => {
+    const third: SuperAdminClubSummaryDto = { id: 'id-third', name: 'Palet Club', playersCount: 2 };
+    const { fixture } = setup([CLUB_WITH_PLAYERS, CLUB_WITHOUT_PLAYERS, third]);
+    const compiled = fixture.nativeElement as HTMLElement;
+    const bulkBarText = (): string => compiled.querySelector('.bulk-bar')?.textContent ?? '';
+
+    fixture.componentInstance.toggleSelect(CLUB_WITH_PLAYERS.id, true);
+    fixture.detectChanges();
+    expect(fixture.componentInstance.canMerge()).toBe(false);
+    expect(bulkBarText()).not.toContain('Fusionner');
+
+    fixture.componentInstance.toggleSelect(CLUB_WITHOUT_PLAYERS.id, true);
+    fixture.detectChanges();
+    expect(fixture.componentInstance.canMerge()).toBe(true);
+    expect(bulkBarText()).toContain('Fusionner');
+
+    fixture.componentInstance.toggleSelect(third.id, true);
+    fixture.detectChanges();
+    expect(fixture.componentInstance.canMerge()).toBe(false);
+    expect(bulkBarText()).not.toContain('Fusionner');
+  });
+
+  it('emits mergeSelectionRequested with the two selected ids', () => {
+    const { fixture } = setup();
+    fixture.componentInstance.toggleSelect(CLUB_WITH_PLAYERS.id, true);
+    fixture.componentInstance.toggleSelect(CLUB_WITHOUT_PLAYERS.id, true);
+    const emitted: string[][] = [];
+    fixture.componentInstance.mergeSelectionRequested.subscribe((ids) => emitted.push(ids));
+
+    fixture.componentInstance.mergeSelection();
+
+    expect(emitted).toEqual([[CLUB_WITH_PLAYERS.id, CLUB_WITHOUT_PLAYERS.id]]);
+  });
 });

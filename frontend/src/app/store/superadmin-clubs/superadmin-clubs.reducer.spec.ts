@@ -2,6 +2,9 @@ import {
   deleteSuperAdminClubs,
   deleteSuperAdminClubsFailure,
   deleteSuperAdminClubsSuccess,
+  mergeSuperAdminClubs,
+  mergeSuperAdminClubsFailure,
+  mergeSuperAdminClubsSuccess,
   renameSuperAdminClub,
   renameSuperAdminClubFailure,
   renameSuperAdminClubSuccess,
@@ -79,5 +82,32 @@ describe('superAdminClubsReducer', () => {
 
     state = superAdminClubsReducer(state, deleteSuperAdminClubsFailure({ error: 'boom' }));
     expect(state.deleteRequest.error).toBe('boom');
+  });
+
+  it('tracks merge pending/success/failure independently of the list', () => {
+    let state = superAdminClubsReducer(
+      initialSuperAdminClubsState,
+      mergeSuperAdminClubs({ targetId: '1', sourceId: '2', newName: 'Palet Club' }),
+    );
+    expect(state.mergeRequest).toEqual({ isLoading: true, error: null });
+    expect(state.list).toEqual(initialSuperAdminClubsState.list);
+
+    state = superAdminClubsReducer(state, mergeSuperAdminClubsSuccess());
+    expect(state.mergeRequest).toEqual({ isLoading: false, error: null });
+
+    state = superAdminClubsReducer(state, mergeSuperAdminClubsFailure({ error: 'conflict' }));
+    expect(state.mergeRequest).toEqual({ isLoading: false, error: 'conflict' });
+  });
+
+  it('clears a previous merge error when a new merge starts', () => {
+    const failed = superAdminClubsReducer(
+      initialSuperAdminClubsState,
+      mergeSuperAdminClubsFailure({ error: 'conflict' }),
+    );
+    const state = superAdminClubsReducer(
+      failed,
+      mergeSuperAdminClubs({ targetId: '1', sourceId: '2' }),
+    );
+    expect(state.mergeRequest.error).toBeNull();
   });
 });

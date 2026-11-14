@@ -40,6 +40,20 @@ export class SuperAdminClubService {
     });
   }
 
+  // Merges the source club into the target one (players moved, source deleted, target optionally renamed).
+  public merge(
+    targetId: string,
+    sourceClubId: string,
+    newName: string | undefined,
+    password: string,
+  ): Observable<void> {
+    return this.http.post<void>(`${this.apiBaseUrl}/super-admin/clubs/${targetId}/merge`, {
+      password,
+      sourceClubId,
+      ...(newName ? { newName } : {}),
+    });
+  }
+
   public delete(ids: string[], password: string): Observable<void> {
     return this.http.post<void>(`${this.apiBaseUrl}/super-admin/clubs/delete`, { password, ids });
   }

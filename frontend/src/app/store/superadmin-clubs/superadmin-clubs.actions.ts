@@ -41,3 +41,13 @@ export const deleteSuperAdminClubsFailure = createAction(
   '[SuperAdminClubs] Delete Failure',
   props<{ error: string }>(),
 );
+
+export const mergeSuperAdminClubs = createAction(
+  '[SuperAdminClubs] Merge',
+  props<{ targetId: string; sourceId: string; newName?: string }>(),
+);
+export const mergeSuperAdminClubsSuccess = createAction('[SuperAdminClubs] Merge Success');
+export const mergeSuperAdminClubsFailure = createAction(
+  '[SuperAdminClubs] Merge Failure',
+  props<{ error: string }>(),
+);

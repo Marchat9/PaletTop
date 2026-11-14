@@ -15,6 +15,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { SuperAdminConfig } from 'src/config/super-admin.config';
 import { PlayerClubRepository } from 'src/modules/tournaments/repositories/player-club.repository';
+import { SuperAdminClubMergeDto } from './dto/super-admin-club-merge.dto';
 import { SuperAdminClubRenameDto } from './dto/super-admin-club-rename.dto';
 import { SuperAdminClubSearchDto } from './dto/super-admin-club-search.dto';
 import { SuperAdminIdsDto } from './dto/super-admin-ids.dto';
@@ -24,6 +25,7 @@ import {
     toSuperAdminClubSummaryDto,
 } from './responses/super-admin-club-summary.dto';
 import { SuperAdminAuthGuard } from './super-admin-auth.guard';
+import { SuperAdminClubsService } from './super-admin-clubs.service';
 
 @Controller('super-admin/clubs')
 @UseGuards(SuperAdminAuthGuard)
@@ -33,6 +35,7 @@ export class SuperAdminClubsController {
 
     constructor(
         private readonly clubRepo: PlayerClubRepository,
+        private readonly clubsService: SuperAdminClubsService,
         readonly configService: ConfigService,
     ) {
         this.maxPageSize = configService.getOrThrow<SuperAdminConfig>('superAdmin').maxPageSize;
@@ -76,6 +79,21 @@ export class SuperAdminClubsController {
             if (error instanceof HttpException) throw error;
             this.logger.error('Super admin club rename failed', error);
             throw new InternalServerErrorException('Erreur lors du renommage du club.');
+        }
+    }
+
+    @Post(':id/merge')
+    @HttpCode(HttpStatus.OK)
+    async merge(
+        @Param('id', ParseUUIDPipe) id: string,
+        @Body() dto: SuperAdminClubMergeDto,
+    ): Promise<void> {
+        try {
+            await this.clubsService.mergeClubs(id, dto);
+        } catch (error: unknown) {
+            if (error instanceof HttpException) throw error;
+            this.logger.error('Super admin club merge failed', error);
+            throw new InternalServerErrorException('Erreur lors de la fusion des clubs.');
         }
     }
 

@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
+import { Player } from 'src/entities/player.entity';
 import { PlayerClub } from 'src/entities/player_club.entity';
 
 const ADMIN_CLUB_SORTABLE_COLUMNS: Record<string, string> = {
@@ -193,17 +194,39 @@ export class PlayerClubRepository {
         return rows.map((row) => row.name);
     }
 
-    async findByNormalizedName(name: string, excludeId?: string): Promise<PlayerClub | null> {
+    async findByNormalizedName(
+        name: string,
+        excludeIds?: string | string[],
+    ): Promise<PlayerClub | null> {
         const normalizedName = name.trim().replace(/\s+/g, '').toLowerCase();
         const queryBuilder = this.repo
             .createQueryBuilder('club')
             .where("regexp_replace(lower(club.name), '\\s+', '', 'g') = :normalizedName", {
                 normalizedName,
             });
-        if (excludeId) {
-            queryBuilder.andWhere('club.id != :excludeId', { excludeId });
+        const excluded = (Array.isArray(excludeIds) ? excludeIds : [excludeIds]).filter(
+            (id): id is string => !!id,
+        );
+        if (excluded.length > 0) {
+            queryBuilder.andWhere('club.id NOT IN (:...excludeIds)', { excludeIds: excluded });
         }
         return queryBuilder.getOne();
+    }
+
+    findByIds(ids: string[]): Promise<PlayerClub[]> {
+        if (!ids.length) return Promise.resolve([]);
+        return this.repo.findBy({ id: In(ids) });
+    }
+
+    // Goes through the repository manager so the update joins the ambient @Transactional() one.
+    async movePlayers(sourceClubId: string, targetClubId: string): Promise<number> {
+        const result = await this.repo.manager
+            .createQueryBuilder()
+            .update(Player)
+            .set({ club: { id: targetClubId } })
+            .where('player_club_id = :sourceClubId', { sourceClubId })
+            .execute();
+        return result.affected ?? 0;
     }
 
     async rename(id: string, name: string): Promise<void> {

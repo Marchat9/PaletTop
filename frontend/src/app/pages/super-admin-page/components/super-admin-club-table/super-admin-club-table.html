@@ -17,7 +17,21 @@
     @if (selectedCount() > 0) {
       <div class="bulk-bar">
         <span>{{ selectedCount() }} sélectionné(s)</span>
-        <app-button title="Supprimer la sélection" variant="error" (clicked)="deleteSelection()" />
+        <div class="bulk-actions">
+          @if (canMerge()) {
+            <app-button
+              title="Fusionner"
+              icon="merge"
+              variant="secondary"
+              (clicked)="mergeSelection()"
+            />
+          }
+          <app-button
+            title="Supprimer la sélection"
+            variant="error"
+            (clicked)="deleteSelection()"
+          />
+        </div>
       </div>
     }
 

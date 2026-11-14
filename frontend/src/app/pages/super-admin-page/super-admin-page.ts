@@ -4,6 +4,10 @@ import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { first } from 'rxjs';
 import { ConfirmationPopupComponent } from 'src/app/modales/confirmation-popup/confirmation-popup';
+import {
+  ClubMergePopupData,
+  SuperAdminClubMergePopupComponent,
+} from 'src/app/modales/super-admin-club-merge-popup/super-admin-club-merge-popup';
 import { SuperAdminClubRenamePopupComponent } from 'src/app/modales/super-admin-club-rename-popup/super-admin-club-rename-popup';
 import { SuperAdminTournamentDeletePopupComponent } from 'src/app/modales/super-admin-tournament-delete-popup/super-admin-tournament-delete-popup';
 import { SuperAdminTournamentDetailPopupComponent } from 'src/app/modales/super-admin-tournament-detail-popup/super-admin-tournament-detail-popup';
@@ -238,6 +242,14 @@ export class SuperAdminPageComponent implements OnInit, OnDestroy {
       data: { id: club.id, name: club.name },
       ...DIALOG_OPTIONS,
     });
+  }
+
+  onClubMergeRequested(ids: string[]): void {
+    const [first, second] = ids.map((id) => this.clubs().items.find((club) => club.id === id));
+    if (ids.length !== 2 || !first || !second) return;
+
+    const data: ClubMergePopupData = { first, second };
+    this.dialog.open(SuperAdminClubMergePopupComponent, { data, ...DIALOG_OPTIONS });
   }
 
   onClubDeleteOneRequested(club: SuperAdminClubSummaryDto): void {

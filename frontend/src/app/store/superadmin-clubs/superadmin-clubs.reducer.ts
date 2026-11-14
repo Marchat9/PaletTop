@@ -7,6 +7,9 @@ import {
   deleteSuperAdminClubs,
   deleteSuperAdminClubsFailure,
   deleteSuperAdminClubsSuccess,
+  mergeSuperAdminClubs,
+  mergeSuperAdminClubsFailure,
+  mergeSuperAdminClubsSuccess,
   renameSuperAdminClub,
   renameSuperAdminClubFailure,
   renameSuperAdminClubSuccess,
@@ -27,6 +30,7 @@ export interface SuperAdminClubsState {
   list: SuperAdminClubsListState;
   renameRequest: ApiCallStatus;
   deleteRequest: ApiCallStatus;
+  mergeRequest: ApiCallStatus;
 }
 
 const initialCriteria: SuperAdminClubSearchCriteria = {
@@ -41,6 +45,7 @@ export const initialSuperAdminClubsState: SuperAdminClubsState = {
   list: { items: [], total: 0, criteria: initialCriteria, isLoading: false, error: null },
   renameRequest: { isLoading: false, error: null },
   deleteRequest: { isLoading: false, error: null },
+  mergeRequest: { isLoading: false, error: null },
 };
 
 export const superAdminClubsReducer = createReducer(
@@ -82,5 +87,18 @@ export const superAdminClubsReducer = createReducer(
   on(deleteSuperAdminClubsFailure, (state, { error }) => ({
     ...state,
     deleteRequest: { isLoading: false, error },
+  })),
+
+  on(mergeSuperAdminClubs, (state) => ({
+    ...state,
+    mergeRequest: { isLoading: true, error: null },
+  })),
+  on(mergeSuperAdminClubsSuccess, (state) => ({
+    ...state,
+    mergeRequest: { isLoading: false, error: null },
+  })),
+  on(mergeSuperAdminClubsFailure, (state, { error }) => ({
+    ...state,
+    mergeRequest: { isLoading: false, error },
   })),
 );

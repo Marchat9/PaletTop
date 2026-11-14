@@ -3,6 +3,7 @@ import { TournamentsModule } from '../tournaments/tournaments.module';
 import { TrainingModule } from '../training/training.module';
 import { SuperAdminAuthGuard } from './super-admin-auth.guard';
 import { SuperAdminClubsController } from './super-admin-clubs.controller';
+import { SuperAdminClubsService } from './super-admin-clubs.service';
 import { SuperAdminController } from './super-admin.controller';
 import { SuperAdminService } from './super-admin.service';
 import { SuperAdminTournamentsController } from './super-admin-tournaments.controller';
@@ -16,6 +17,6 @@ import { SuperAdminTrainingsController } from './super-admin-trainings.controlle
         SuperAdminClubsController,
         SuperAdminTrainingsController,
     ],
-    providers: [SuperAdminService, SuperAdminAuthGuard],
+    providers: [SuperAdminService, SuperAdminClubsService, SuperAdminAuthGuard],
 })
 export class SuperAdminModule {}
