@@ -51,17 +51,7 @@
   font-size: 0.875rem;
   line-height: 1.5;
   color: var(--color-on-surface-variant);
-
-  ::ng-deep .card-collapsible {
-    border-radius: 0;
-    padding: 0 0.5rem;
-  }
-  ::ng-deep .card-collapsible .card-collapsible-header.pointer {
-    cursor: auto;
-  }
-  ::ng-deep .card-collapsible.is-expanded .card-collapsible-content-wrapper {
-    padding: 0 0 1rem;
-  }
+  padding: 0 var(--padding-value);
 }
 
 .actions {

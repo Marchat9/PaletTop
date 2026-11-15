@@ -13,12 +13,11 @@ import {
 import { ActivatedRoute, Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { SpectateTrainingPopup } from 'src/app/modales/spectate-training-popup/spectate-training-popup';
-import { SessionLeaderboard } from 'src/app/pages/admin-training-session-page/components/session-leaderboard/session-leaderboard';
 import { SessionRound } from 'src/app/pages/admin-training-session-page/components/session-round/session-round';
 import { AutoScrollDirective } from 'src/app/shared/auto-scroll/auto-scroll.directive';
 import { Button } from 'src/app/shared/button/button';
-import { CardCollapsible } from 'src/app/shared/card-collapsible/card-collapsible';
-import { ClubLeaderboardTable } from 'src/app/shared/club-leaderboard-table/club-leaderboard-table';
+import { Leaderboard } from 'src/app/shared/leaderboard/leaderboard';
+import { toClubLeaderboard, toSessionLeaderboard } from 'src/app/utils/leaderboard.util';
 import { Icon } from 'src/app/shared/icon/icon';
 import { Switch } from 'src/app/shared/switch/switch';
 import { loadTrainingRounds } from 'src/app/store/training/training.round.actions';
@@ -53,17 +52,7 @@ import { environment } from 'src/environments/environment';
  */
 @Component({
   selector: 'app-spectator-training-page',
-  imports: [
-    DatePipe,
-    SessionRound,
-    SessionLeaderboard,
-    ClubLeaderboardTable,
-    CardCollapsible,
-    Switch,
-    AutoScrollDirective,
-    Icon,
-    Button,
-  ],
+  imports: [DatePipe, SessionRound, Leaderboard, Switch, AutoScrollDirective, Icon, Button],
   templateUrl: './spectator-training-page.html',
   styleUrl: './spectator-training-page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -100,6 +89,8 @@ export class SpectatorTrainingPage {
   public readonly clubLeaderboardError = this.store.selectSignal(
     selectTrainingClubLeaderboardError,
   );
+  public readonly leaderboardTable = computed(() => toSessionLeaderboard(this.leaderboard()));
+  public readonly clubLeaderboardTable = computed(() => toClubLeaderboard(this.clubLeaderboard()));
 
   public readonly isSessionClosed = computed(() => this.session()?.status === 'CLOSED');
   public readonly pointsPerGame = computed(() => this.session()?.pointsPerGame ?? 13);

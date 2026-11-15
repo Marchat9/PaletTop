@@ -86,7 +86,9 @@ function setup(
           { selector: selectTrainingLeaderboardIsLoading, value: false },
           {
             selector: selectTrainingClubLeaderboard,
-            value: [{ memberId: 'M1', name: 'Jean Dubois', wins: 5, points: 61 }],
+            value: [
+              { memberId: 'M1', name: 'Jean Dubois', wins: 5, points: 61, sessionsPlayed: 3 },
+            ],
           },
           { selector: selectTrainingClubLeaderboardIsLoading, value: false },
           { selector: selectTrainingClubLeaderboardError, value: null },
@@ -145,7 +147,7 @@ describe('SpectatorTrainingPage', () => {
     const element = fixture.nativeElement as HTMLElement;
 
     expect(element.querySelector('.column.matches app-session-round')).not.toBeNull();
-    expect(element.querySelector('.column.ranking app-session-leaderboard')).not.toBeNull();
+    expect(element.querySelector('.column.ranking app-leaderboard')).not.toBeNull();
     expect(element.textContent).toContain('Round : 2');
     expect(element.textContent).toContain('Séance en cours');
   });
@@ -166,9 +168,9 @@ describe('SpectatorTrainingPage', () => {
     const element = fixture.nativeElement as HTMLElement;
 
     expect(element.querySelector('.column.matches')).toBeNull();
-    expect(element.querySelector('.column.club app-club-leaderboard-table')).not.toBeNull();
+    expect(element.querySelector('.column.club app-leaderboard')).not.toBeNull();
     expect(element.querySelector('.column.club')?.textContent).toContain('Jean Dubois');
-    expect(element.querySelector('.column.ranking app-session-leaderboard')).not.toBeNull();
+    expect(element.querySelector('.column.ranking app-leaderboard')).not.toBeNull();
     expect(element.textContent).toContain('Séance terminée');
     expect(dispatchSpy).toHaveBeenCalledWith(
       loadTrainingClubLeaderboard({ sessionCode: '123456' }),

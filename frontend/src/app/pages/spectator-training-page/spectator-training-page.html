@@ -66,29 +66,30 @@
         </div>
       } @else {
         <div class="column club" [appAutoScroll]="autoScrollOn() && !isMobile()">
-          <app-card-collapsible [canCollapse]="false" [isExpanded]="true">
-            <div header class="club-header">
-              <div class="club-title">
-                <app-icon name="military_tech" iconClass="icon" [ariaHidden]="true" />
-                <span class="title">Classement du club</span>
-              </div>
-              <span class="club-description">
-                Cumul des séances du club jusqu'à celle-ci : victoires et points additionnés.
-              </span>
-            </div>
-            <app-club-leaderboard-table
-              content
-              [entries]="clubLeaderboard()"
-              [isLoading]="clubLeaderboardLoading()"
-              [error]="clubLeaderboardError()"
-            />
-          </app-card-collapsible>
+          <app-leaderboard
+            [table]="clubLeaderboardTable()"
+            [isLoading]="clubLeaderboardLoading()"
+            [error]="clubLeaderboardError()"
+            [canCollapse]="false"
+            [showPodium]="true"
+            title="Classement du club"
+            icon="military_tech"
+            titleSize="compact"
+            description="Cumul des séances du club jusqu'à celle-ci : victoires et points additionnés."
+            emptyLabel="Aucun membre du club n'a encore de match validé (les invités ne sont pas comptés)."
+          />
         </div>
       }
       <div class="column ranking" [appAutoScroll]="autoScrollOn() && !isMobile()">
-        <app-session-leaderboard
-          [leaderboard]="leaderboard()"
+        <app-leaderboard
+          [table]="leaderboardTable()"
           [isLoading]="leaderboardLoading() || isLoading()"
+          [canCollapse]="false"
+          [showPodium]="true"
+          title="Classement de la séance"
+          titleSize="compact"
+          description="Classement individuel : chaque joueur d'une équipe gagnante marque la totalité des points."
+          emptyLabel="Aucun match validé pour l'instant."
         />
       </div>
     </div>

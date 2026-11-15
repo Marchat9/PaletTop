@@ -7,6 +7,7 @@ import { MockStore, provideMockStore } from '@ngrx/store/testing';
 import { of, Subject } from 'rxjs';
 import { describe, expect, it, vi } from 'vitest';
 import { loadTrainingParticipantCurrentMatch } from 'src/app/store/training/training.actions';
+import { loadTrainingClubLeaderboard } from 'src/app/store/training/training.session.actions';
 import { resyncRequested } from 'src/app/store/realtime/realtime.actions';
 import { updateTrainingScore } from 'src/app/store/training/training.match.actions';
 import {
@@ -19,6 +20,7 @@ import {
   selectCurrentTrainingSessionData,
   selectStartTrainingMatchError,
   selectStartTrainingMatchLoading,
+  selectTrainingClubLeaderboard,
   selectTrainingLeaderboard,
   selectTrainingParticipantCurrentMatch,
   selectTrainingParticipantCurrentMatchError,
@@ -115,6 +117,14 @@ function setup(
             value: [
               { participantId: 'p2', name: 'Marie Lefèvre', wins: 3, points: 34 },
               { participantId: 'p1', name: 'Jean Dubois', wins: 2, points: 27 },
+            ],
+          },
+          {
+            selector: selectTrainingClubLeaderboard,
+            value: [
+              { memberId: 'mb9', name: 'Luc Béguin', wins: 9, points: 110, sessionsPlayed: 5 },
+              { memberId: 'mb1', name: 'Jean Dubois', wins: 7, points: 95, sessionsPlayed: 4 },
+              { memberId: 'mb2', name: 'Marie Lefèvre', wins: 2, points: 40, sessionsPlayed: 2 },
             ],
           },
           { selector: selectTrainingParticipantCurrentMatchIsLoading, value: false },
@@ -240,7 +250,42 @@ describe('PlayerTrainingSessionPage', () => {
 
     expect(tiles.find((t) => t.key === 'wins')?.value).toBe('2');
     expect(tiles.find((t) => t.key === 'points')?.value).toBe('27');
-    expect(tiles.find((t) => t.key === 'rank')?.value).toBe('2/2');
+    expect(tiles.find((t) => t.key === 'session-rank')?.value).toBe('2/2');
+  });
+
+  it('situe le membre dans le classement du club, chargé à l’ouverture de la page', () => {
+    const dispatchSpy = vi.spyOn(MockStore.prototype, 'dispatch');
+    const { fixture } = setup();
+
+    expect(dispatchSpy).toHaveBeenCalledWith(loadTrainingClubLeaderboard({ sessionCode: '1234' }));
+    expect(fixture.componentInstance.statTiles().find((t) => t.key === 'club-rank')?.value).toBe(
+      '2/3',
+    );
+    dispatchSpy.mockRestore();
+  });
+
+  it('rend cliquables les encarts Séance et Club, et eux seuls', () => {
+    const { fixture } = setup();
+
+    const clickable = fixture.componentInstance
+      .statTiles()
+      .filter((t) => t.clickable)
+      .map((t) => t.key);
+    expect(clickable).toEqual(['session-rank', 'club-rank']);
+  });
+
+  it('ouvre le classement de la séance en y marquant le joueur', () => {
+    const { fixture } = setup();
+    const openSpy = vi
+      .spyOn(TestBed.inject(Dialog), 'open')
+      .mockReturnValue({ closed: new Subject<void>() } as never);
+
+    fixture.componentInstance.onTileClicked({ key: 'session-rank', label: 'Séance', value: '2/2' });
+
+    expect(openSpy).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ data: { scope: 'session', highlightedId: 'p1' } }),
+    );
   });
 
   it('remet les scores dans le sens du match quand le joueur est en équipe B', () => {
@@ -277,7 +322,9 @@ describe('PlayerTrainingSessionPage', () => {
     });
 
     // 5 present + 0 gone with a ranking: the test leaderboard only holds p1 and p2, both present.
-    expect(fixture.componentInstance.statTiles().find((t) => t.key === 'rank')?.value).toBe('2/5');
+    expect(fixture.componentInstance.statTiles().find((t) => t.key === 'session-rank')?.value).toBe(
+      '2/5',
+    );
   });
 
   it('annonce le repos dans le titre plutôt que « match en cours »', () => {
@@ -367,7 +414,7 @@ describe('PlayerTrainingSessionPage', () => {
 
     expect(openSpy).toHaveBeenCalledWith(
       expect.anything(),
-      expect.objectContaining({ data: { myMemberId: 'mb1' } }),
+      expect.objectContaining({ data: { scope: 'club', highlightedId: 'mb1' } }),
     );
   });
 });

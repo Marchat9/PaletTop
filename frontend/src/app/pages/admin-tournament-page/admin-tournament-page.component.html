@@ -30,14 +30,23 @@
       (nextSession)="nextSession()"
     />
 
-    <app-ranking-card
-      [ranking]="ranking()"
+    <app-leaderboard
+      [table]="rankingTable()"
       [isLoading]="rankingLoading()"
-      [scoreCalculation]="tournament()?.configuration?.scoreCalculation"
-      [canDownload]="canDownloadRanking()"
-      [downloadLoading]="isRankingExporting()"
-      (downloadRequested)="downloadRanking()"
-    />
+      emptyLabel="Aucun round démarré."
+    >
+      @if (canDownloadRanking()) {
+        <div leaderboardActions class="ranking-download">
+          <app-button
+            title="Télécharger le classement (PDF)"
+            icon="download"
+            variant="secondary"
+            [loading]="isRankingExporting()"
+            (clicked)="downloadRanking()"
+          />
+        </div>
+      }
+    </app-leaderboard>
 
     <app-tournament-rounds-history
       [sessions]="sessions()"

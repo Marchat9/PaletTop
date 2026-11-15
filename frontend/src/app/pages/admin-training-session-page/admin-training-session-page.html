@@ -77,12 +77,23 @@
       (dissolveTeam)="dissolveTeam($event)"
     />
 
-    <app-session-leaderboard
-      [leaderboard]="leaderboard()"
+    <app-leaderboard
+      [table]="leaderboardTable()"
       [isLoading]="leaderboardLoading()"
-      [canOpenClubLeaderboard]="true"
-      (openClubLeaderboard)="openClubLeaderboard()"
-    />
+      title="Classement de la séance"
+      titleSize="compact"
+      description="Classement individuel : chaque joueur d'une équipe gagnante marque la totalité des points."
+      emptyLabel="Aucun match validé pour l'instant."
+    >
+      <app-button
+        leaderboardActions
+        class="club-button"
+        title="Classement du club"
+        icon="military_tech"
+        variant="tertiary"
+        (clicked)="openClubLeaderboard()"
+      />
+    </app-leaderboard>
 
     <app-session-rounds-history
       [rounds]="previousRounds()"

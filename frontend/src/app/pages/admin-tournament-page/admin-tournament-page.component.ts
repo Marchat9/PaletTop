@@ -34,7 +34,9 @@ import { ScoreUpdate } from 'src/app/models/score-update.model';
 import { TeamConfigEvent, TeamConfigEventType } from 'src/app/models/team-config.model';
 import { TournamentConfigurationDto } from 'src/app/models/tournament-configuration.model';
 import { AnimateOnChangeDirective } from 'src/app/shared/animate-on-change/animate-on-change.directive';
-import { RankingCard } from 'src/app/shared/ranking-card/ranking-card';
+import { Leaderboard } from 'src/app/shared/leaderboard/leaderboard';
+import { Button } from 'src/app/shared/button/button';
+import { toTournamentLeaderboard } from 'src/app/utils/leaderboard.util';
 import { TournamentConfigurationField } from 'src/app/shared/tournament-configuration/tournament-configuration-form.model';
 import { adminUpdateScore } from 'src/app/store/match/match.actions';
 import { selectRanking, selectRankingIsLoading } from 'src/app/store/ranking/ranking.selectors';
@@ -84,7 +86,8 @@ import { onResyncRequested } from 'src/app/utils/resync-on-reconnect.util';
     TournamentTeamConfigurationCard,
     MatchSessionsCardComponent,
     TournamentNextStep,
-    RankingCard,
+    Leaderboard,
+    Button,
     TournamentRoundsHistory,
     AnimateOnChangeDirective,
   ],
@@ -123,6 +126,12 @@ export class AdminTournamentPageComponent implements OnInit {
   public readonly scoreUpdateLoading = this.store.selectSignal(selectAdminUpdateScoreLoading);
   public readonly rankingLoading = computed(
     () => !this.ranking() && this.store.selectSignal(selectRankingIsLoading)(),
+  );
+  public readonly rankingTable = computed(() =>
+    toTournamentLeaderboard(
+      this.ranking() ?? [],
+      this.tournament()?.configuration?.scoreCalculation ?? 'victory_ga',
+    ),
   );
 
   // Compute

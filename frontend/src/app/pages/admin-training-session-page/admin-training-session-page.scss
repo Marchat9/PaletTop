@@ -44,6 +44,11 @@
     display: flex;
     flex-direction: column;
     gap: 1rem;
+
+    // Projected into the session leaderboard, above the table.
+    .club-button {
+      align-self: flex-end;
+    }
   }
 
   .metrics {

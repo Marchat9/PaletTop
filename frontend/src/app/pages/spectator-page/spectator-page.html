@@ -63,11 +63,12 @@
         </div>
       }
       <div class="column ranking" [appAutoScroll]="autoScrollOn() && !isMobile()">
-        <app-ranking-card
-          [ranking]="ranking()"
+        <app-leaderboard
+          [table]="rankingTable()"
           [isLoading]="isLoading()"
-          [scoreCalculation]="tournament()?.scoreCalculation"
           [canCollapse]="false"
+          [showPodium]="true"
+          emptyLabel="Aucun round démarré."
         />
       </div>
     </div>

@@ -1,5 +1,5 @@
 import { Dialog } from '@angular/cdk/dialog';
-import { ClubLeaderboardPopup } from 'src/app/modales/club-leaderboard-popup/club-leaderboard-popup';
+import { TrainingLeaderboardPopup } from 'src/app/modales/training-leaderboard-popup/training-leaderboard-popup';
 import {
   followTrainingClubLeaderboard,
   unfollowTrainingClubLeaderboard,
@@ -389,7 +389,7 @@ describe('AdminTrainingSessionPage', () => {
     expect(dispatchSpy).toHaveBeenCalledWith(
       followTrainingClubLeaderboard({ sessionCode: fixture.componentInstance.sessionCode()! }),
     );
-    expect(dialogMock.open).toHaveBeenCalledWith(ClubLeaderboardPopup, expect.anything());
+    expect(dialogMock.open).toHaveBeenCalledWith(TrainingLeaderboardPopup, expect.anything());
 
     closed.next();
     expect(dispatchSpy).toHaveBeenCalledWith(unfollowTrainingClubLeaderboard());
@@ -404,8 +404,8 @@ describe('AdminTrainingSessionPage', () => {
     fixture.componentInstance.openClubLeaderboard();
 
     expect(dialogMock.open).toHaveBeenCalledWith(
-      ClubLeaderboardPopup,
-      expect.objectContaining({ data: { myMemberId: 'm1' } }),
+      TrainingLeaderboardPopup,
+      expect.objectContaining({ data: { scope: 'club', highlightedId: 'm1' } }),
     );
   });
 
@@ -416,8 +416,8 @@ describe('AdminTrainingSessionPage', () => {
     fixture.componentInstance.openClubLeaderboard();
 
     expect(dialogMock.open).toHaveBeenCalledWith(
-      ClubLeaderboardPopup,
-      expect.objectContaining({ data: { myMemberId: null } }),
+      TrainingLeaderboardPopup,
+      expect.objectContaining({ data: { scope: 'club', highlightedId: null } }),
     );
   });
 });

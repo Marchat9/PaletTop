@@ -20,7 +20,6 @@ import {
   PlayerValidationCopy,
 } from 'src/app/models/player-match-view.model';
 import { AnimateOnChangeDirective } from 'src/app/shared/animate-on-change/animate-on-change.directive';
-import { Button } from 'src/app/shared/button/button';
 import { Icon } from 'src/app/shared/icon/icon';
 import { PlayerMatchCard } from 'src/app/shared/player-match-card/player-match-card';
 import { PlayerMatchHistory } from 'src/app/shared/player-match-history/player-match-history';
@@ -39,19 +38,28 @@ import {
   leaveTrainingSession,
   followTrainingClubLeaderboard,
   unfollowTrainingClubLeaderboard,
+  loadTrainingClubLeaderboard,
   loadTrainingLeaderboard,
   loadTrainingSessionPublic,
 } from 'src/app/store/training/training.session.actions';
 import { Dialog } from '@angular/cdk/dialog';
+import { BreakpointObserver } from '@angular/cdk/layout';
+import { Overlay } from '@angular/cdk/overlay';
 import {
-  ClubLeaderboardPopup,
-  ClubLeaderboardPopupData,
-} from 'src/app/modales/club-leaderboard-popup/club-leaderboard-popup';
+  TrainingLeaderboardPopup,
+  TrainingLeaderboardPopupData,
+  TrainingLeaderboardScope,
+} from 'src/app/modales/training-leaderboard-popup/training-leaderboard-popup';
+import {
+  LEADERBOARD_MOBILE_QUERY,
+  leaderboardDialogPlacement,
+} from 'src/app/utils/leaderboard-dialog.util';
 import {
   selectCurrentTrainingAdminInformations,
   selectCurrentTrainingSessionData,
   selectStartTrainingMatchError,
   selectStartTrainingMatchLoading,
+  selectTrainingClubLeaderboard,
   selectTrainingLeaderboard,
   selectTrainingParticipantCurrentMatch,
   selectTrainingParticipantCurrentMatchError,
@@ -62,7 +70,8 @@ import {
   selectValidateTrainingMatchLoading,
 } from 'src/app/store/training/training.selectors';
 import { PlayerSessionHeader } from './components/player-session-header/player-session-header';
-import { PlayerSessionLeaderboard } from './components/player-session-leaderboard/player-session-leaderboard';
+import { toClubLeaderboard, toSessionLeaderboard } from 'src/app/utils/leaderboard.util';
+import { Button } from 'src/app/shared/button/button';
 import { PlayerSessionPartners } from './components/player-session-partners/player-session-partners';
 import { historyToResults, myTeam, toPlayerMatchView } from './player-training-session-page.utils';
 
@@ -76,7 +85,6 @@ import { historyToResults, myTeam, toPlayerMatchView } from './player-training-s
     PlayerMatchHistory,
     PlayerStatsTiles,
     PlayerSessionHeader,
-    PlayerSessionLeaderboard,
     PlayerSessionPartners,
   ],
   templateUrl: './player-training-session-page.html',
@@ -89,6 +97,8 @@ export class PlayerTrainingSessionPage implements OnInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly store = inject(Store);
   private readonly dialog = inject(Dialog);
+  private readonly overlay = inject(Overlay);
+  private readonly breakpointObserver = inject(BreakpointObserver);
 
   public readonly sessionCode = signal<string | null>(null);
   public readonly participantCode = signal<string | null>(null);
@@ -103,7 +113,10 @@ export class PlayerTrainingSessionPage implements OnInit, OnDestroy {
     selectTrainingParticipantCurrentMatch,
   );
   public readonly session = this.store.selectSignal(selectCurrentTrainingSessionData);
-  public readonly leaderboard = this.store.selectSignal(selectTrainingLeaderboard);
+  private readonly leaderboard = this.store.selectSignal(selectTrainingLeaderboard);
+  private readonly leaderboardTable = computed(() => toSessionLeaderboard(this.leaderboard()));
+  private readonly clubLeaderboard = this.store.selectSignal(selectTrainingClubLeaderboard);
+  private readonly clubLeaderboardTable = computed(() => toClubLeaderboard(this.clubLeaderboard()));
   private readonly history = this.store.selectSignal(selectTrainingParticipantHistory);
   public readonly isLoading = this.store.selectSignal(
     selectTrainingParticipantCurrentMatchIsLoading,
@@ -182,13 +195,23 @@ export class PlayerTrainingSessionPage implements OnInit, OnDestroy {
     return me ? historyToResults(this.history(), me.id) : [];
   });
 
+  /** Rank in the session, ties shared (two first ex aequo are both first). */
   private readonly myRanking = computed(() => {
     const me = this.me();
     if (!me) {
       return null;
     }
-    const index = this.leaderboard().findIndex((entry) => entry.participantId === me.id);
-    return index < 0 ? null : { rank: index + 1, ...this.leaderboard()[index] };
+    const entry = this.leaderboard().find((candidate) => candidate.participantId === me.id);
+    const row = this.leaderboardTable().rows.find((candidate) => candidate.id === me.id);
+    return entry && row ? { ...entry, rank: row.rank } : null;
+  });
+
+  /** Rank in the club: only a roster member has one, a guest is not counted. */
+  private readonly myClubRankLabel = computed(() => {
+    const memberId = this.me()?.memberId;
+    const rows = this.clubLeaderboardTable().rows;
+    const row = memberId ? rows.find((candidate) => candidate.id === memberId) : undefined;
+    return row ? `${row.rank}/${rows.length}` : '—';
   });
 
   /**
@@ -230,10 +253,12 @@ export class PlayerTrainingSessionPage implements OnInit, OnDestroy {
       { key: 'wins', label: 'Victoires', value: ranking ? String(ranking.wins) : '—' },
       { key: 'points', label: 'Points', value: ranking ? String(ranking.points) : '—' },
       {
-        key: 'rank',
-        label: 'Classement',
+        key: 'session-rank',
+        label: 'Séance',
         value: ranking ? `${ranking.rank}/${total}` : '—',
+        clickable: true,
       },
+      { key: 'club-rank', label: 'Club', value: this.myClubRankLabel(), clickable: true },
     ];
   });
 
@@ -365,19 +390,40 @@ export class PlayerTrainingSessionPage implements OnInit, OnDestroy {
     );
   }
 
+  /** The « Séance » and « Club » tiles open their leaderboard. */
+  public onTileClicked(tile: PlayerStatTile): void {
+    if (tile.key === 'session-rank') {
+      this.openSessionLeaderboard();
+    } else if (tile.key === 'club-rank') {
+      this.openClubLeaderboard();
+    }
+  }
+
+  public openSessionLeaderboard(): void {
+    this.openLeaderboard('session', this.me()?.id ?? null);
+  }
+
+  /** The club leaderboard is followed live while its popup is open. */
   public openClubLeaderboard(): void {
     const sessionCode = this.sessionCode();
     if (!sessionCode) {
       return;
     }
     this.store.dispatch(followTrainingClubLeaderboard({ sessionCode }));
-    this.dialog
-      .open<void, ClubLeaderboardPopupData>(ClubLeaderboardPopup, {
-        data: { myMemberId: this.me()?.memberId ?? null },
-        panelClass: 'dialog-panel',
-        backdropClass: 'dialog-backdrop-light',
-      })
-      .closed.subscribe(() => this.store.dispatch(unfollowTrainingClubLeaderboard()));
+    this.openLeaderboard('club', this.me()?.memberId ?? null).subscribe(() =>
+      this.store.dispatch(unfollowTrainingClubLeaderboard()),
+    );
+  }
+
+  private openLeaderboard(scope: TrainingLeaderboardScope, highlightedId: string | null) {
+    return this.dialog.open<void, TrainingLeaderboardPopupData>(TrainingLeaderboardPopup, {
+      data: { scope, highlightedId },
+      ...leaderboardDialogPlacement(
+        this.overlay,
+        this.breakpointObserver.isMatched(LEADERBOARD_MOBILE_QUERY),
+        'dialog-panel',
+      ),
+    }).closed;
   }
 
   private reload(sessionCode: string, participantCode: string): void {
@@ -385,5 +431,7 @@ export class PlayerTrainingSessionPage implements OnInit, OnDestroy {
     this.store.dispatch(loadTrainingParticipantHistory({ sessionCode, participantCode }));
     this.store.dispatch(loadTrainingSessionPublic({ sessionCode }));
     this.store.dispatch(loadTrainingLeaderboard({ sessionCode }));
+    // Once, for the « Club » tile: the popup then follows it live.
+    this.store.dispatch(loadTrainingClubLeaderboard({ sessionCode }));
   }
 }

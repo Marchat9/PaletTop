@@ -15,7 +15,8 @@ import { Store } from '@ngrx/store';
 import { environment } from 'src/environments/environment';
 import { AutoScrollDirective } from 'src/app/shared/auto-scroll/auto-scroll.directive';
 import { Icon } from 'src/app/shared/icon/icon';
-import { RankingCard } from 'src/app/shared/ranking-card/ranking-card';
+import { Leaderboard } from 'src/app/shared/leaderboard/leaderboard';
+import { toTournamentLeaderboard } from 'src/app/utils/leaderboard.util';
 import { Switch } from 'src/app/shared/switch/switch';
 import {
   leaveSpectatorPage,
@@ -35,7 +36,7 @@ import { TournamentStatus } from 'src/app/models/tournament-status.enum';
 
 @Component({
   selector: 'app-spectator-page',
-  imports: [SpectatorMatchListComponent, RankingCard, Switch, AutoScrollDirective, Icon, Button],
+  imports: [SpectatorMatchListComponent, Leaderboard, Switch, AutoScrollDirective, Icon, Button],
   templateUrl: './spectator-page.html',
   styleUrl: './spectator-page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -56,6 +57,12 @@ export class SpectatorPageComponent {
   public readonly error = this.store.selectSignal(selectSpectatorTournamentError);
   public readonly currentSession = this.store.selectSignal(selectSpectatorCurrentSession);
   public readonly ranking = this.store.selectSignal(selectSpectatorRanking);
+  public readonly rankingTable = computed(() =>
+    toTournamentLeaderboard(
+      this.ranking() ?? [],
+      this.tournament()?.scoreCalculation ?? 'victory_ga',
+    ),
+  );
 
   public readonly autoScrollOn = signal(true);
   public readonly isMobile = signal(false);

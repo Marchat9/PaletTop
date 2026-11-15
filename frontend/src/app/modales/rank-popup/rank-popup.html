@@ -1,4 +1,4 @@
-<div class="rank-popup">
+<div class="rank-popup leaderboard-popup">
   <div class="header-row">
     <h2 class="title">
       Tournoi :
@@ -9,11 +9,12 @@
   </div>
 
   <div class="body">
-    <app-ranking-card
-      [ranking]="data.ranking"
-      [isLoading]="false"
-      [scoreCalculation]="data.scoreCalculation"
-      [canCollapse]="false"
+    <app-leaderboard
+      [table]="table"
+      [framed]="false"
+      [showPodium]="true"
+      [highlightedId]="data.teamId"
+      emptyLabel="Aucun round démarré."
     />
   </div>
 

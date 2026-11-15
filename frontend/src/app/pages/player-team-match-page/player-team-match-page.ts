@@ -1,6 +1,12 @@
 import { normalizeCode } from 'src/app/utils/code-format.util';
 import { selectMatchAwaitingResync } from 'src/app/store/match/match.selectors';
 import { Dialog } from '@angular/cdk/dialog';
+import { BreakpointObserver } from '@angular/cdk/layout';
+import { Overlay } from '@angular/cdk/overlay';
+import {
+  LEADERBOARD_MOBILE_QUERY,
+  leaderboardDialogPlacement,
+} from 'src/app/utils/leaderboard-dialog.util';
 import { Button } from 'src/app/shared/button/button';
 import { JoinTournamentPopupComponent } from 'src/app/modales/join-tournament-popup/join-tournament-popup';
 import {
@@ -77,6 +83,8 @@ export class PlayerTeamMatchPageComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly dialog = inject(Dialog);
+  private readonly overlay = inject(Overlay);
+  private readonly breakpointObserver = inject(BreakpointObserver);
 
   private readonly teamCode = this.route.snapshot.paramMap.get('teamCode');
   // Normalized like the codes stored by the server: typed in lowercase, some calls found nothing
@@ -316,8 +324,11 @@ export class PlayerTeamMatchPageComponent {
 
     this.dialog.open<boolean, RankData>(RankPopupComponent, {
       data,
-      panelClass: 'dialog-panel-large',
-      backdropClass: 'dialog-backdrop-light',
+      ...leaderboardDialogPlacement(
+        this.overlay,
+        this.breakpointObserver.isMatched(LEADERBOARD_MOBILE_QUERY),
+        'dialog-panel-large',
+      ),
       disableClose: false,
     });
   }
