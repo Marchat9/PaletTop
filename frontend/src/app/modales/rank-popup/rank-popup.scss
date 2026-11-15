@@ -6,6 +6,9 @@
   padding: 0rem;
   display: flex;
   flex-direction: column;
+  // A big tournament makes a long ranking: the list scrolls, the title and « Fermer » stay.
+  max-height: calc(100dvh - 2rem);
+  overflow: hidden;
   gap: 1.5rem;
   border-radius: 0.8rem;
   background: var(--color-surface-container-high);
@@ -41,6 +44,9 @@
 }
 
 .body {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   margin: 0;
   font-size: 0.875rem;
   line-height: 1.5;
@@ -48,6 +54,7 @@
 
   ::ng-deep .card-collapsible {
     border-radius: 0;
+    padding: 0 0.5rem;
   }
   ::ng-deep .card-collapsible .card-collapsible-header.pointer {
     cursor: auto;

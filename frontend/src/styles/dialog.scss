@@ -8,6 +8,13 @@
 
 // ###################################
 // Common dialog class
+
+// Overlays render outside .nav-main, so they do not inherit its scrollbar style.
+.cdk-overlay-container {
+  scrollbar-color: var(--color-primary) var(--color-surface-container-low);
+  scrollbar-width: thin;
+}
+
 .dialog-backdrop {
   backdrop-filter: blur(16px);
   background: var(--color-overlay-strong) !important;
