@@ -1,6 +1,8 @@
 import { normalizeCode } from 'src/app/utils/code-format.util';
 import { newId } from 'src/app/utils/unique-id.util';
 import { buildRankingPdf, rankingPdfFileName } from 'src/app/utils/pdf/ranking-pdf.util';
+import { buildMatchesPdf, matchesPdfFileName } from 'src/app/utils/pdf/matches-pdf.util';
+import { buildRoundHistoryViews } from './components/tournament-rounds-history/rounds-history.utils';
 import { PdfExportService } from 'src/app/services/pdf-export.service';
 import { TournamentStatus } from 'src/app/models/tournament-status.enum';
 import { TournamentNextStep } from './components/tournament-next-step/tournament-next-step';
@@ -131,6 +133,12 @@ export class AdminTournamentPageComponent implements OnInit {
       this.tournament()?.status === TournamentStatus.FINISHED && (this.ranking()?.length ?? 0) > 0,
   );
   public readonly isRankingExporting = signal(false);
+  /** The PDF of every match is offered once the tournament is over. */
+  public readonly canDownloadMatches = computed(
+    () =>
+      this.tournament()?.status === TournamentStatus.FINISHED && (this.sessions()?.length ?? 0) > 0,
+  );
+  public readonly isMatchesExporting = signal(false);
   /** Drawn rounds stay correctable while the tournament runs and once it is over, not cancelled. */
   public readonly canEditRoundsHistory = computed(
     () => this.tournament()?.status !== TournamentStatus.CANCELLED,
@@ -332,6 +340,39 @@ export class AdminTournamentPageComponent implements OnInit {
       });
     } finally {
       this.isRankingExporting.set(false);
+    }
+  }
+
+  /** Downloads every match of the finished tournament, round after round, as an A4 PDF. */
+  public async downloadMatches(): Promise<void> {
+    const tournament = this.tournament();
+    const sessions = this.sessions();
+    if (!tournament || !sessions?.length || this.isMatchesExporting()) {
+      return;
+    }
+
+    this.isMatchesExporting.set(true);
+    try {
+      const rounds = buildRoundHistoryViews(
+        sessions,
+        tournament.configuration.competitionMode,
+        false,
+        '',
+      );
+      await this.pdfExport.download(
+        buildMatchesPdf(tournament, rounds, window.location.origin),
+        matchesPdfFileName(tournament),
+      );
+    } catch {
+      this.onNotification({
+        id: newId(),
+        message: "La liste des matchs n'a pas pu être générée. Réessayez.",
+        typeIcon: 'warning',
+        type: 'Téléchargement',
+        createdAt: Date.now(),
+      });
+    } finally {
+      this.isMatchesExporting.set(false);
     }
   }
 

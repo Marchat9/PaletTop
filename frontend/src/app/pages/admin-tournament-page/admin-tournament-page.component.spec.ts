@@ -35,6 +35,7 @@ import {
 import { selectTournamentClubSuggestions } from 'src/app/store/tournament-club/tournament-club.selectors';
 import { AdminTournamentPageComponent } from './admin-tournament-page.component';
 import { GlobalRankingEntry } from 'src/app/models/global-ranking.model';
+import { MatchesSessionDto, SessionStatus } from 'src/app/models/matches-session.model';
 import type { TDocumentDefinitions } from 'pdfmake/interfaces';
 import { PdfExportService } from 'src/app/services/pdf-export.service';
 import { TournamentTeamConfigurationCard } from './components/tournament-team-configuration-card/tournament-team-configuration-card';
@@ -80,6 +81,7 @@ interface SetupOptions {
   isAdminView?: boolean;
   status?: TournamentStatus;
   ranking?: GlobalRankingEntry[];
+  sessions?: MatchesSessionDto[];
   pdfDownload?: () => Promise<void>;
   paramMap?: Observable<ParamMap>;
 }
@@ -88,6 +90,7 @@ function setup({
   isAdminView = true,
   status = TournamentStatus.ACTIVE,
   ranking = [],
+  sessions = [],
   pdfDownload = () => Promise.resolve(),
   paramMap = of(convertToParamMap({ tournamentCode: 'ABCD' })),
 }: SetupOptions = {}) {
@@ -122,7 +125,7 @@ function setup({
           { selector: selectNextSessionLoading, value: false },
           { selector: selectAdminUpdateScoreLoading, value: false },
           { selector: selectRankingIsLoading, value: false },
-          { selector: selectSessions, value: [] },
+          { selector: selectSessions, value: sessions },
           { selector: selectRanking, value: ranking },
           { selector: selectTournamentClubSuggestions, value: [] },
         ],
@@ -290,5 +293,41 @@ describe('AdminTournamentPageComponent', { timeout: 15_000 }, () => {
     fixture.destroy();
 
     expect(dispatchSpy).toHaveBeenCalledWith(clearTournamentClubSuggestions());
+  });
+
+  it('offers the PDF of every match only once the tournament is finished', () => {
+    const played: MatchesSessionDto[] = [
+      { id: 's1', sessionNumber: 1, status: SessionStatus.CLOSED, isDrawnRound: true, matches: [] },
+    ];
+
+    expect(setup({ sessions: played }).fixture.componentInstance.canDownloadMatches()).toBe(false);
+    TestBed.resetTestingModule();
+    expect(
+      setup({
+        status: TournamentStatus.FINISHED,
+        sessions: played,
+      }).fixture.componentInstance.canDownloadMatches(),
+    ).toBe(true);
+  });
+
+  it('downloads every match as a PDF named after the tournament', async () => {
+    const { fixture, pdfExport } = setup({
+      status: TournamentStatus.FINISHED,
+      sessions: [
+        {
+          id: 's1',
+          sessionNumber: 1,
+          status: SessionStatus.CLOSED,
+          isDrawnRound: true,
+          matches: [],
+        },
+      ],
+    });
+
+    await fixture.componentInstance.downloadMatches();
+
+    expect(pdfExport.download).toHaveBeenCalledTimes(1);
+    expect(pdfExport.download.mock.calls[0][1]).toBe('matchs-tournoi-test.pdf');
+    expect(fixture.componentInstance.isMatchesExporting()).toBe(false);
   });
 });

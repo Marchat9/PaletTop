@@ -45,7 +45,10 @@
       [competitionMode]="tournament()?.configuration?.competitionMode ?? 'standard'"
       [canEdit]="canEditRoundsHistory()"
       [scoreUpdateLoading]="scoreUpdateLoading()"
+      [canDownload]="canDownloadMatches()"
+      [downloadLoading]="isMatchesExporting()"
       (scoreUpdate)="adminScoreUpdate($event)"
+      (downloadRequested)="downloadMatches()"
     />
 
     <app-tournament-configuration-card

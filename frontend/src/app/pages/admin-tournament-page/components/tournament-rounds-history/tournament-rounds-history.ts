@@ -3,6 +3,7 @@ import { MatchesSessionDto, SessionStatus } from 'src/app/models/matches-session
 import { Nullable } from 'src/app/models/nullable.model';
 import { ScoreUpdate } from 'src/app/models/score-update.model';
 import { CompetitionMode } from 'src/app/models/tournament-configuration-detail.model';
+import { Button } from 'src/app/shared/button/button';
 import { CardCollapsible } from 'src/app/shared/card-collapsible/card-collapsible';
 import { Icon } from 'src/app/shared/icon/icon';
 import { InputText } from 'src/app/shared/input-text/input-text';
@@ -19,7 +20,7 @@ interface RoundHistoryItem extends RoundHistoryView {
  */
 @Component({
   selector: 'app-tournament-rounds-history',
-  imports: [AdminMatchRow, CardCollapsible, Icon, InputText],
+  imports: [AdminMatchRow, Button, CardCollapsible, Icon, InputText],
   templateUrl: './tournament-rounds-history.html',
   styleUrl: './tournament-rounds-history.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -32,8 +33,12 @@ export class TournamentRoundsHistory {
   /** False once corrections are no longer allowed (cancelled tournament). */
   public readonly canEdit = input<boolean>(true);
   public readonly scoreUpdateLoading = input<boolean>(false);
+  /** Offers the PDF of every match (finished tournament). */
+  public readonly canDownload = input<boolean>(false);
+  public readonly downloadLoading = input<boolean>(false);
 
   public readonly scoreUpdate = output<ScoreUpdate>();
+  public readonly downloadRequested = output<void>();
   // ==============================
 
   public readonly search = signal('');

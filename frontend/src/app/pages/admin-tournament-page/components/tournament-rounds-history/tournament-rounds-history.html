@@ -13,6 +13,18 @@
     </div>
 
     <div content class="history-content">
+      @if (canDownload()) {
+        <div class="download-action">
+          <app-button
+            title="Télécharger tous les matchs (PDF)"
+            icon="download"
+            variant="secondary"
+            [loading]="downloadLoading()"
+            (clicked)="downloadRequested.emit()"
+          />
+        </div>
+      }
+
       <app-input-text
         id="rounds-history-search"
         icon="search"
