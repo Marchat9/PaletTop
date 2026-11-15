@@ -1,13 +1,17 @@
 import { Component, effect, inject } from '@angular/core';
 import { SwUpdate } from '@angular/service-worker';
 import { Store } from '@ngrx/store';
-import { filter, interval, Subject, takeUntil } from 'rxjs';
+import { filter, merge, Subject, takeUntil } from 'rxjs';
 import { ThemeMode } from 'src/app/models/theme-mode.model';
-import { setTheme } from 'src/app/store/app-config/app-config.actions';
+import { addNotification, setTheme } from 'src/app/store/app-config/app-config.actions';
+import { newId } from 'src/app/utils/unique-id.util';
 import { selectTheme } from 'src/app/store/app-config/app-config.selectors';
 import { AppState } from 'src/app/store/app-store';
 import { environment } from '../environments/environment';
 import { PwaInstallService } from './services/pwa-install.service';
+import { AppUpdateService } from './services/app-update.service';
+import { AppVisibilityService } from './services/app-visibility.service';
+import { deployCheckSlots$ } from './utils/deploy-schedule.util';
 import { Navigation } from './pages/navigation/navigation';
 
 @Component({
@@ -23,7 +27,11 @@ export class App {
   public readonly theme = this.store.selectSignal(selectTheme);
 
   private destroy$ = new Subject<void>();
+  private readonly appUpdateService = inject(AppUpdateService);
+  private readonly appVisibility = inject(AppVisibilityService);
+
   constructor() {
+    this.watchAppVersion();
     if (environment.pwa.enabled) {
       this.processPwa();
       this.checkForPwaUpdate();
@@ -53,27 +61,54 @@ export class App {
     });
   }
 
-  private checkForPwaUpdate(): void {
-    const pwaInstallService = inject(PwaInstallService);
-    if (pwaInstallService.isInstalled()) {
-      const swUpdate = inject(SwUpdate);
-      // Check every N secondes if a new version is available
-      interval(30_000)
-        .pipe(takeUntil(this.destroy$))
-        .subscribe(() => {
-          swUpdate.checkForUpdate();
-        });
+  /**
+   * Compares this app with the deployed release at startup, each time the app comes back, and a
+   * few minutes after each deployment slot (on the hour and at half past).
+   */
+  private watchAppVersion(): void {
+    // A toast, not a popup: part of the app keeps working offline.
+    this.appUpdateService.serverUnreachable$.pipe(takeUntil(this.destroy$)).subscribe(() =>
+      this.store.dispatch(
+        addNotification({
+          notification: {
+            id: newId(),
+            message: 'Connexion au serveur impossible. Les matchs amicaux restent disponibles.',
+            typeIcon: 'warning',
+            type: 'Connexion',
+            createdAt: Date.now(),
+          },
+        }),
+      ),
+    );
 
-      // Trigger when a new version is available
-      swUpdate.versionUpdates
-        .pipe(
-          filter((evt) => evt.type === 'VERSION_READY'),
-          takeUntil(this.destroy$),
-        )
-        .subscribe(() => {
-          window.location.reload();
-        });
+    this.appUpdateService.checkVersion();
+    merge(this.appVisibility.resumed$, deployCheckSlots$())
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => this.appUpdateService.checkVersion());
+  }
+
+  /**
+   * Browser tab or installed PWA alike: the service worker looks for a new build at the same
+   * moments (deployment slots, app coming back) and, once it is downloaded, the « new version »
+   * popup offers the forced refresh (a plain reload would be served the old version from cache).
+   */
+  private checkForPwaUpdate(): void {
+    const swUpdate = inject(SwUpdate);
+    if (!swUpdate.isEnabled) {
+      return;
     }
+    merge(this.appVisibility.resumed$, deployCheckSlots$())
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => {
+        swUpdate.checkForUpdate().catch(() => undefined);
+      });
+
+    swUpdate.versionUpdates
+      .pipe(
+        filter((evt) => evt.type === 'VERSION_READY'),
+        takeUntil(this.destroy$),
+      )
+      .subscribe(() => this.appUpdateService.promptUpdate());
   }
 
   ngOnDestroy() {

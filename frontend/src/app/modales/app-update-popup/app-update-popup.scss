@@ -1,0 +1,31 @@
+:host {
+  display: block;
+}
+
+// The shell (background, header, close button) comes from `.popup-surface`, in styles/dialog.scss.
+.versions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin: 0;
+
+  .version-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+
+    dt {
+      color: var(--color-on-surface-variant);
+    }
+
+    dd {
+      margin: 0;
+      font-family: var(--font-label);
+      font-weight: 700;
+
+      &.latest {
+        color: var(--color-primary);
+      }
+    }
+  }
+}
