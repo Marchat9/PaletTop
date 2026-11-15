@@ -1,0 +1,316 @@
+:host {
+  display: block;
+}
+
+.match-row {
+  display: grid;
+  grid-template-columns:
+    auto minmax(0, 1fr) minmax(1.5rem, auto) auto minmax(1.5rem, auto) minmax(0, 1fr)
+    auto auto;
+  grid-template-areas: 'plate team-a score-a sep score-b team-b meta edit';
+  align-items: center;
+  column-gap: 0.6rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  background: var(--color-surface-container);
+  font-size: 0.875rem;
+
+  .plate {
+    grid-area: plate;
+    display: flex;
+    min-width: 3.5rem;
+
+    .plate-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--color-primary);
+      background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+      padding: 0.15rem 0.4rem;
+      border-radius: 0.3rem;
+      white-space: nowrap;
+    }
+  }
+
+  .team {
+    min-width: 0;
+    font-weight: 500;
+    color: var(--color-on-surface-variant);
+    overflow-wrap: anywhere;
+
+    &.team-a {
+      grid-area: team-a;
+    }
+
+    &.team-b {
+      grid-area: team-b;
+      text-align: right;
+    }
+
+    &.winner {
+      font-weight: 700;
+      color: var(--color-on-surface);
+    }
+  }
+
+  .score {
+    font-family: var(--font-label);
+    font-size: 1rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    text-align: center;
+    color: var(--color-on-surface-variant);
+
+    &.score-a {
+      grid-area: score-a;
+    }
+
+    &.score-b {
+      grid-area: score-b;
+    }
+
+    &.winner {
+      color: var(--color-on-surface);
+    }
+  }
+
+  .score-sep {
+    grid-area: sep;
+    font-weight: 300;
+    color: var(--color-on-surface-variant);
+  }
+
+  .match-meta {
+    grid-area: meta;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .edit-btn {
+    grid-area: edit;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border: none;
+    border-radius: 999px;
+    background: none;
+    color: var(--color-primary);
+    cursor: pointer;
+
+    &:hover {
+      background: var(--color-surface-container-high);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--color-primary);
+      outline-offset: 2px;
+    }
+  }
+
+  &.is-bye {
+    display: flex;
+    justify-content: space-between;
+    background: transparent;
+    border: 1px dashed var(--color-outline-variant);
+    opacity: 0.75;
+
+    .bye-badge {
+      font-size: 0.75rem;
+      font-style: italic;
+      color: var(--color-on-surface-variant);
+    }
+  }
+
+  &.is-editing {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: color-mix(in srgb, var(--color-primary) 5%, var(--color-surface-container));
+    border: 1px solid var(--color-primary);
+
+    .edit-teams {
+      display: flex;
+      flex: 1 1 auto;
+      flex-wrap: wrap;
+      gap: 0.75rem 1.5rem;
+    }
+
+    .edit-team {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+
+      .team {
+        color: var(--color-on-surface);
+      }
+    }
+
+    .score-editor {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+
+      app-input-number {
+        width: 3.75rem;
+
+        // The −/+ buttons around replace the input's own small arrows, and their reserved room.
+        ::ng-deep {
+          .stepper {
+            display: none;
+          }
+
+          .input-number {
+            padding: 0.5rem 0.25rem;
+            text-align: center;
+            font-family: var(--font-label);
+            font-size: 1.05rem;
+            font-weight: 700;
+          }
+        }
+      }
+    }
+
+    .step-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 2.75rem;
+      height: 2.75rem;
+      border: 1px solid var(--color-outline-variant);
+      border-radius: 0.6rem;
+      background: var(--color-surface);
+      color: var(--color-primary);
+      cursor: pointer;
+
+      &:disabled {
+        opacity: 0.4;
+        cursor: default;
+      }
+
+      &:focus-visible {
+        outline: 2px solid var(--color-primary);
+        outline-offset: 2px;
+      }
+    }
+
+    .previous-score {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      flex: 1 1 100%;
+      margin: 0;
+      font-size: 0.8rem;
+      color: var(--color-on-surface-variant);
+
+      ::ng-deep .previous-icon {
+        font-size: 1.1rem;
+        color: var(--color-tertiary);
+      }
+    }
+
+    .edit-actions {
+      display: flex;
+      gap: 0.5rem;
+      margin-left: auto;
+    }
+  }
+
+  // Phones: one team per line with its score beside it, the edit button on the right.
+  @media (width < 600px) {
+    grid-template-columns: minmax(0, 1fr) auto 2.75rem;
+    grid-template-areas:
+      'head head edit'
+      'team-a score-a edit'
+      'team-b score-b edit';
+    row-gap: 0.3rem;
+    padding: 0.6rem 0.75rem;
+
+    // Plate and live status share the top line, so they never widen the score column.
+    .plate {
+      grid-area: head;
+      justify-self: start;
+    }
+
+    .match-meta {
+      grid-area: head;
+      justify-self: end;
+    }
+
+    .score-sep {
+      display: none;
+    }
+
+    .team.team-b {
+      text-align: left;
+    }
+
+    .score {
+      text-align: right;
+    }
+
+    .edit-btn {
+      width: 2.75rem;
+      height: 2.75rem;
+    }
+
+    &.is-editing {
+      flex-direction: column;
+      align-items: stretch;
+
+      .edit-teams {
+        flex-direction: column;
+      }
+
+      .edit-team {
+        justify-content: space-between;
+
+        .team {
+          flex: 1 1 auto;
+          min-width: 0;
+        }
+      }
+
+      .edit-actions {
+        margin-left: 0;
+
+        app-button {
+          flex: 1 1 0;
+        }
+      }
+    }
+  }
+}
+
+.status-badge {
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+  white-space: nowrap;
+
+  &--pending {
+    background: color-mix(in srgb, var(--color-on-surface-variant) 10%, transparent);
+    color: var(--color-on-surface-variant);
+  }
+
+  &--ongoing {
+    background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+    color: var(--color-primary);
+  }
+
+  &--ended {
+    background: color-mix(in srgb, var(--color-secondary) 12%, transparent);
+    color: var(--color-secondary);
+  }
+
+  &--validated {
+    background: color-mix(in srgb, var(--color-tertiary) 12%, transparent);
+    color: var(--color-tertiary);
+  }
+}

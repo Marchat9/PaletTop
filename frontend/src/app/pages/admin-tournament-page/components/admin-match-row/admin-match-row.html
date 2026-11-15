@@ -1,0 +1,131 @@
+@if (match().isBye) {
+  <div class="match-row is-bye">
+    <span class="team team-a">{{ match().teamA.name }}</span>
+    <span class="bye-badge">Exempté</span>
+  </div>
+} @else if (editing()) {
+  <div class="match-row is-editing">
+    <span class="plate">
+      <span class="plate-label">Plaque N°{{ match().plateNumber }}</span>
+    </span>
+
+    <div class="edit-teams">
+      <div class="edit-team">
+        <span class="team">{{ match().teamA.name }}</span>
+        <div class="score-editor">
+          <button
+            type="button"
+            class="step-btn"
+            [attr.aria-label]="'Retirer un point à ' + match().teamA.name"
+            [disabled]="!canDecrementA()"
+            (click)="stepScoreA(-1)"
+          >
+            <app-icon name="remove" [ariaHidden]="true" />
+          </button>
+          <app-input-number
+            [value]="draftScoreA()"
+            [min]="0"
+            [max]="pointsPerGame()"
+            (valueChange)="setScoreA($event)"
+          />
+          <button
+            type="button"
+            class="step-btn"
+            [attr.aria-label]="'Ajouter un point à ' + match().teamA.name"
+            [disabled]="!canIncrementA()"
+            (click)="stepScoreA(1)"
+          >
+            <app-icon name="add" [ariaHidden]="true" />
+          </button>
+        </div>
+      </div>
+
+      <div class="edit-team">
+        <span class="team">{{ match().teamB?.name }}</span>
+        <div class="score-editor">
+          <button
+            type="button"
+            class="step-btn"
+            [attr.aria-label]="'Retirer un point à ' + match().teamB?.name"
+            [disabled]="!canDecrementB()"
+            (click)="stepScoreB(-1)"
+          >
+            <app-icon name="remove" [ariaHidden]="true" />
+          </button>
+          <app-input-number
+            [value]="draftScoreB()"
+            [min]="0"
+            [max]="pointsPerGame()"
+            (valueChange)="setScoreB($event)"
+          />
+          <button
+            type="button"
+            class="step-btn"
+            [attr.aria-label]="'Ajouter un point à ' + match().teamB?.name"
+            [disabled]="!canIncrementB()"
+            (click)="stepScoreB(1)"
+          >
+            <app-icon name="add" [ariaHidden]="true" />
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <p class="previous-score">
+      <app-icon name="info" iconClass="previous-icon" [ariaHidden]="true" />
+      <span>Score précédent : {{ match().scoreA }} – {{ match().scoreB }}</span>
+    </p>
+
+    <div class="edit-actions">
+      <app-button title="Annuler" variant="secondary" (clicked)="editCancelled.emit()" />
+      <app-button
+        title="Enregistrer"
+        variant="primary"
+        icon="check"
+        [loading]="saving()"
+        [disabled]="!hasChanges()"
+        (clicked)="submit()"
+      />
+    </div>
+  </div>
+} @else {
+  <div class="match-row">
+    <span class="plate">
+      <span class="plate-label">Plaque N°{{ match().plateNumber }}</span>
+    </span>
+    <span class="team team-a" [class.winner]="isWinnerA()">{{ match().teamA.name }}</span>
+    <span class="score score-a" [class.winner]="isWinnerA()" [appAnimateOnChange]="scoreKey()">{{
+      match().scoreA
+    }}</span>
+    <span class="score-sep" aria-hidden="true">—</span>
+    <span class="score score-b" [class.winner]="isWinnerB()" [appAnimateOnChange]="scoreKey()">{{
+      match().scoreB
+    }}</span>
+    <span class="team team-b" [class.winner]="isWinnerB()">{{ match().teamB?.name }}</span>
+
+    @if (showLiveStatus()) {
+      <div class="match-meta">
+        <span class="status-badge" [class]="statusClass()">
+          <app-match-status [status]="match().status" />
+        </span>
+        <app-match-timer
+          [startedAt]="match().startedAt"
+          [finishedAt]="match().finishedAt"
+          [status]="match().status"
+        />
+      </div>
+    }
+
+    @if (editable()) {
+      <button
+        type="button"
+        class="edit-btn"
+        aria-label="Modifier le score"
+        title="Modifier le score"
+        (click)="editRequested.emit()"
+      >
+        <app-icon name="edit" [ariaHidden]="true" />
+      </button>
+    }
+  </div>
+}
