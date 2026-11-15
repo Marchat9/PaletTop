@@ -39,6 +39,15 @@
       (downloadRequested)="downloadRanking()"
     />
 
+    <app-tournament-rounds-history
+      [sessions]="sessions()"
+      [pointsPerGame]="tournament()?.configuration?.pointsPerGame ?? 13"
+      [competitionMode]="tournament()?.configuration?.competitionMode ?? 'standard'"
+      [canEdit]="canEditRoundsHistory()"
+      [scoreUpdateLoading]="scoreUpdateLoading()"
+      (scoreUpdate)="adminScoreUpdate($event)"
+    />
+
     <app-tournament-configuration-card
       [tournament]="tournament() ?? null"
       [hiddenFields]="hiddenFields"

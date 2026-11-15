@@ -4,6 +4,7 @@ import { buildRankingPdf, rankingPdfFileName } from 'src/app/utils/pdf/ranking-p
 import { PdfExportService } from 'src/app/services/pdf-export.service';
 import { TournamentStatus } from 'src/app/models/tournament-status.enum';
 import { TournamentNextStep } from './components/tournament-next-step/tournament-next-step';
+import { TournamentRoundsHistory } from './components/tournament-rounds-history/tournament-rounds-history';
 import { Dialog } from '@angular/cdk/dialog';
 import { CommonModule } from '@angular/common';
 import {
@@ -82,6 +83,7 @@ import { onResyncRequested } from 'src/app/utils/resync-on-reconnect.util';
     MatchSessionsCardComponent,
     TournamentNextStep,
     RankingCard,
+    TournamentRoundsHistory,
     AnimateOnChangeDirective,
   ],
   templateUrl: './admin-tournament-page.component.html',
@@ -129,6 +131,10 @@ export class AdminTournamentPageComponent implements OnInit {
       this.tournament()?.status === TournamentStatus.FINISHED && (this.ranking()?.length ?? 0) > 0,
   );
   public readonly isRankingExporting = signal(false);
+  /** Drawn rounds stay correctable while the tournament runs and once it is over, not cancelled. */
+  public readonly canEditRoundsHistory = computed(
+    () => this.tournament()?.status !== TournamentStatus.CANCELLED,
+  );
 
   // Data
   public readonly hiddenFields: TournamentConfigurationField[] = environment.tournamentConfiguration

@@ -31,6 +31,7 @@ const SESSION: MatchesSessionDto = {
   id: 'session-1',
   sessionNumber: 1,
   status: SessionStatus.OPEN,
+  isDrawnRound: true,
   matches: [
     {
       id: 'match-1',
