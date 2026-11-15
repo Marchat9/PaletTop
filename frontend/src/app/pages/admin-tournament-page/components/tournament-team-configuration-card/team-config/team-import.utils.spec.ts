@@ -18,7 +18,11 @@ function tournament(
 ): TournamentDto {
   return {
     status: overrides.status ?? TournamentStatus.DRAFT,
-    teams: Array.from({ length: teamCount }, (_, i) => ({ id: `t${i}`, name: `T${i}`, players: [] })),
+    teams: Array.from({ length: teamCount }, (_, i) => ({
+      id: `t${i}`,
+      name: `T${i}`,
+      players: [],
+    })),
     configuration: {
       competitionMode: overrides.competitionMode ?? 'standard',
       maxTeamCapacity: 'maxTeamCapacity' in overrides ? overrides.maxTeamCapacity : 4,
@@ -50,7 +54,13 @@ describe('team import helpers', () => {
 
   it('sorts ignored first, then warnings, then ready rows by rowIndex', () => {
     const views = classifyImportRows(
-      [row(2), row(3, { warnings: ['w'] }), row(4, { errors: ['e'] }), row(5), row(6, { errors: ['e'] })],
+      [
+        row(2),
+        row(3, { warnings: ['w'] }),
+        row(4, { errors: ['e'] }),
+        row(5),
+        row(6, { errors: ['e'] }),
+      ],
       0,
     );
     expect(views.map((v) => v.row.rowIndex)).toEqual([4, 6, 3, 2, 5]);

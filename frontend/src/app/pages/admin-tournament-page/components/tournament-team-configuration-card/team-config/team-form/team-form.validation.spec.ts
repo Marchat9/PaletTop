@@ -3,7 +3,9 @@ import { getPlayerNameError, getTeamClubError } from './team-form.validation';
 
 describe('getPlayerNameError', () => {
   it('returns the message with a 1-based player number when the name is blank and visible', () => {
-    expect(getPlayerNameError(0, '', true)).toBe('Renseignez le nom du joueur 1, ou retirez la ligne.');
+    expect(getPlayerNameError(0, '', true)).toBe(
+      'Renseignez le nom du joueur 1, ou retirez la ligne.',
+    );
     expect(getPlayerNameError(2, '   ', true)).toBe(
       'Renseignez le nom du joueur 3, ou retirez la ligne.',
     );

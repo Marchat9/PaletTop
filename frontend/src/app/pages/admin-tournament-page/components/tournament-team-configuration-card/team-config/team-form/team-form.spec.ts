@@ -28,7 +28,15 @@ function render(tournament: TournamentDto | null = null) {
     const buttons = Array.from(root.querySelectorAll('app-button .button')) as HTMLElement[];
     return buttons[buttons.length - 1];
   };
-  return { fixture, component: fixture.componentInstance, root, emitted, playerInput, errorText, submitButton };
+  return {
+    fixture,
+    component: fixture.componentInstance,
+    root,
+    emitted,
+    playerInput,
+    errorText,
+    submitButton,
+  };
 }
 
 describe('TeamForm validation', () => {
@@ -47,7 +55,9 @@ describe('TeamForm validation', () => {
       'Renseignez le nom du joueur 1, ou retirez la ligne.',
     );
     expect(playerInput(0).getAttribute('aria-invalid')).toBe('true');
-    expect(playerInput(0).getAttribute('aria-describedby')).toBe(`${component.formId}-player-error-0`);
+    expect(playerInput(0).getAttribute('aria-describedby')).toBe(
+      `${component.formId}-player-error-0`,
+    );
   });
 
   it('shows all errors after a submit attempt and does not emit', () => {
@@ -63,7 +73,8 @@ describe('TeamForm validation', () => {
   });
 
   it('shows the club error in championship after a submit attempt', () => {
-    const { fixture, component, emitted, errorText, submitButton } = render(championshipTournament());
+    const { fixture, component, emitted, errorText, submitButton } =
+      render(championshipTournament());
     component.updatePlayerName(0, 'Alice');
     fixture.detectChanges();
     expect(component.clubError()).toBeNull();
@@ -71,7 +82,9 @@ describe('TeamForm validation', () => {
     fixture.detectChanges();
     expect(emitted).toEqual([]);
     expect(component.clubError()).toBe("Choisissez le club pour créer l'équipe.");
-    expect(errorText(`${component.formId}-club-error`)).toBe("Choisissez le club pour créer l'équipe.");
+    expect(errorText(`${component.formId}-club-error`)).toBe(
+      "Choisissez le club pour créer l'équipe.",
+    );
   });
 
   it('resets errors and keeps the player-row count after a creation', () => {

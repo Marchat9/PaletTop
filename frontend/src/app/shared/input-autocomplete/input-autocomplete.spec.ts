@@ -173,8 +173,7 @@ describe('InputAutocomplete', () => {
   });
 
   describe('live region', () => {
-    const status = (host: HTMLElement) =>
-      host.querySelector('[role="status"]') as HTMLElement;
+    const status = (host: HTMLElement) => host.querySelector('[role="status"]') as HTMLElement;
 
     it('is always present, polite and atomic, and empty when not focused', () => {
       const { host } = render({ options: ['A'] });

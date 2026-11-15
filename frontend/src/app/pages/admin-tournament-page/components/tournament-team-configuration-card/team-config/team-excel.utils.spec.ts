@@ -24,13 +24,19 @@ describe('team Excel import', () => {
 
   it('returns found headers when no player column is detected', { timeout: 60_000 }, async () => {
     const { utils, write } = await import('xlsx');
-    const sheet = utils.aoa_to_sheet([['Equipe', 'Truc'], ['A', 'B']]);
+    const sheet = utils.aoa_to_sheet([
+      ['Equipe', 'Truc'],
+      ['A', 'B'],
+    ]);
     const book = utils.book_new();
     utils.book_append_sheet(book, sheet, 'S');
     const data = write(book, { type: 'array', bookType: 'xlsx' });
     const file = new File([data], 'x.xlsx');
 
-    const result = await parseTeamsExcelFile(file, { maxPlayersPerTeam: 12, maxTeamsPerImport: 256 });
+    const result = await parseTeamsExcelFile(file, {
+      maxPlayersPerTeam: 12,
+      maxTeamsPerImport: 256,
+    });
 
     expect(result.globalError).toContain('Nom Joueur N');
     expect(result.foundHeaders).toEqual(['Equipe', 'Truc']);

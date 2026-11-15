@@ -130,9 +130,7 @@ export class TeamForm {
       return;
     }
 
-    this.teamPlayers.update((players) =>
-      players.filter((_, playerIndex) => playerIndex !== index),
-    );
+    this.teamPlayers.update((players) => players.filter((_, playerIndex) => playerIndex !== index));
     this.touchedPlayersState.update(
       (touched) =>
         new Set(

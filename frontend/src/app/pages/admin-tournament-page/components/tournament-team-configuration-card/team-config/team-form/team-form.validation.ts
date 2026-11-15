@@ -1,7 +1,11 @@
 import { Nullable } from 'src/app/models/nullable.model';
 
 /** Error of a player row whose name is blank; `visible` is true once the row is touched or a submit was attempted. */
-export function getPlayerNameError(index: number, name: string, visible: boolean): Nullable<string> {
+export function getPlayerNameError(
+  index: number,
+  name: string,
+  visible: boolean,
+): Nullable<string> {
   if (!visible || name.trim()) {
     return null;
   }
