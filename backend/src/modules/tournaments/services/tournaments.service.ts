@@ -57,7 +57,11 @@ export class TournamentsService {
     }
 
     async findSpectatorTournamentByCode(code: string): Promise<SpectatorTournamentDto> {
-        const tournament = await this.tournamentRepo.findByCode(code);
+        // Teams: listed on the spectator screen until the first round starts.
+        const tournament = await this.tournamentRepo.findWithRelations(
+            { code },
+            { withTeams: true },
+        );
         if (!tournament) {
             this.logger.warn(`Tournament not found with code: ${code}`);
             throw new NotFoundException('Tournoi introuvable');

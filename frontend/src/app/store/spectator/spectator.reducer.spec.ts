@@ -25,6 +25,7 @@ const TOURNAMENT: SpectatorTournamentDto = {
   status: TournamentStatus.ACTIVE,
   phaseName: 'Phase qualificative',
   scoreCalculation: 'score',
+  teamNames: [],
 };
 
 const SESSION: MatchesSessionDto = {

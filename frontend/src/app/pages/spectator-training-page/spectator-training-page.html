@@ -1,34 +1,52 @@
 <div class="spectator-page">
   <div class="header">
-    <h1 class="session-name">
+    <h1 class="page-title">
       <span>Entraînement : </span>
       {{ session() ? (session()!.date | date: 'EEEE d MMMM y') : '—' }}
     </h1>
-    <div class="session-info" [class.ended]="isSessionClosed()">
+    <div class="page-status">
       @if (session()) {
-        @if (isSessionClosed()) {
-          <span class="badge completed">Séance terminée</span>
-        } @else {
-          <span class="badge active">Séance en cours</span>
+        @switch (phase()) {
+          @case ('waiting') {
+            <span class="badge draft">Séance pas encore commencée</span>
+          }
+          @case ('finished') {
+            <span class="badge completed">Séance terminée · {{ roundCount() }} rounds</span>
+          }
+          @default {
+            <span class="badge active">Séance en cours</span>
+          }
         }
       }
-      @if (currentRound() && !isSessionClosed()) {
-        <span class="badge">Round : {{ currentRound()!.roundNumber }}</span>
+    </div>
+    <div class="page-side">
+      @if (session()) {
+        @switch (phase()) {
+          @case ('live') {
+            <span class="badge">
+              Round {{ roundNumber() }} · {{ validatedCount() }} / {{ matchCount() }} matchs validés
+            </span>
+          }
+          @case ('break') {
+            <span class="badge round-done">Round {{ roundNumber() }} · terminé</span>
+          }
+        }
       }
       @if (!!sessionCode) {
         <span class="badge draft"
           >Code session : <span class="code">{{ sessionCode }}</span></span
         >
       }
+      <!-- On mobile the switch sits under the tabs, with the leaderboard it acts on. -->
+      @if (session() && !isMobile()) {
+        <app-switch
+          class="podium-switch"
+          label="Podium"
+          [checked]="showPodium()"
+          (checkedChange)="togglePodium($event)"
+        />
+      }
     </div>
-    @if (!isMobile()) {
-      <app-switch
-        class="switch"
-        [checked]="autoScrollOn()"
-        label="Défilement automatique"
-        (checkedChange)="autoScrollOn.set($event)"
-      />
-    }
   </div>
 
   @if (error()) {
@@ -51,47 +69,179 @@
         />
       </div>
     </div>
-  } @else {
-    <div class="content">
-      @if (!isSessionClosed()) {
-        <div class="column matches" [appAutoScroll]="autoScrollOn() && !isMobile()">
-          <app-session-round
-            [round]="currentRound()"
-            [pointsPerGame]="pointsPerGame()"
-            [isSessionOpen]="false"
-            [isLoading]="roundsLoading() || isLoading()"
-            emptyTitle="Séance en configuration"
-            emptyMessage="La séance est en cours de configuration : les matchs s'afficheront dès le premier round."
-          />
+  } @else if (isLoading()) {
+    <p class="loading">Chargement de la séance…</p>
+  } @else if (phase() === 'waiting') {
+    <div class="waiting">
+      @if (!isMobile()) {
+        <section class="panel follow">
+          <span class="panel-label">Suivre en direct</span>
+          <app-qr-code [url]="spectatorUrl()" [size]="220" alt="Lien de cette page" />
+          <span class="code-label">Code</span>
+          <strong class="code">{{ sessionCode }}</strong>
+          <span class="hint">Scannez pour suivre la séance sur votre téléphone</span>
+        </section>
+      }
+      <section class="panel roster">
+        <div class="roster-header">
+          <span class="panel-label">Joueurs présents</span>
+          <strong class="roster-count">{{ presentNames().length }}</strong>
         </div>
-      } @else {
-        <div class="column club" [appAutoScroll]="autoScrollOn() && !isMobile()">
+        <ul class="chips">
+          @for (name of presentNames(); track $index) {
+            <li class="chip">{{ name }}</li>
+          } @empty {
+            <li class="empty">Personne n'est encore inscrit à la séance.</li>
+          }
+        </ul>
+        <p class="soon">
+          <span class="pulse" aria-hidden="true"></span>
+          La séance va bientôt commencer
+        </p>
+        @if (isMobile()) {
+          <p class="share">
+            Code à partager <strong class="code">{{ sessionCode }}</strong>
+          </p>
+        }
+      </section>
+    </div>
+  } @else {
+    @if (phase() === 'finished' && winner()) {
+      <section class="winner">
+        <span class="panel-label">Meilleur joueur de la séance</span>
+        <strong class="winner-name">{{ winner() }}</strong>
+        <span class="winner-summary">{{ winnerSummary() }}</span>
+      </section>
+    }
+
+    @if (isMobile()) {
+      <div class="tabs" role="tablist" aria-label="Affichage">
+        <app-button
+          role="tab"
+          [attr.aria-selected]="mobileTab() === 'ranking'"
+          title="Séance"
+          variant="primary"
+          (clicked)="showTab('ranking')"
+        />
+        @if (phase() === 'finished') {
+          <app-button
+            role="tab"
+            [attr.aria-selected]="mobileTab() === 'club'"
+            title="Club"
+            variant="primary"
+            (clicked)="showTab('club')"
+          />
+        } @else {
+          <app-button
+            role="tab"
+            [attr.aria-selected]="mobileTab() === 'matches'"
+            [title]="'Matchs · ' + matchCount()"
+            variant="primary"
+            (clicked)="showTab('matches')"
+          />
+        }
+      </div>
+      @if (mobileTab() !== 'matches') {
+        <app-switch
+          class="podium-switch mobile-switch"
+          label="Podium"
+          [checked]="showPodium()"
+          (checkedChange)="togglePodium($event)"
+        />
+      }
+      @switch (mobileTab()) {
+        @case ('matches') {
+          <app-live-match-board [matches]="liveMatches()" />
+        }
+        @case ('club') {
           <app-leaderboard
             [table]="clubLeaderboardTable()"
             [isLoading]="clubLeaderboardLoading()"
             [error]="clubLeaderboardError()"
             [canCollapse]="false"
-            [showPodium]="true"
+            [showPodium]="showPodium()"
             title="Classement du club"
             icon="military_tech"
             titleSize="compact"
             description="Cumul des séances du club jusqu'à celle-ci : victoires et points additionnés."
             emptyLabel="Aucun membre du club n'a encore de match validé (les invités ne sont pas comptés)."
           />
-        </div>
+        }
+        @default {
+          <app-leaderboard
+            [table]="leaderboardTable()"
+            [isLoading]="leaderboardLoading()"
+            [canCollapse]="false"
+            [showPodium]="showPodium()"
+            title="Classement de la séance"
+            titleSize="compact"
+            description="Classement individuel : chaque joueur d'une équipe gagnante marque la totalité des points."
+            emptyLabel="Aucun match validé pour l'instant."
+          />
+        }
       }
-      <div class="column ranking" [appAutoScroll]="autoScrollOn() && !isMobile()">
-        <app-leaderboard
-          [table]="leaderboardTable()"
-          [isLoading]="leaderboardLoading() || isLoading()"
-          [canCollapse]="false"
-          [showPodium]="true"
-          title="Classement de la séance"
-          titleSize="compact"
-          description="Classement individuel : chaque joueur d'une équipe gagnante marque la totalité des points."
-          emptyLabel="Aucun match validé pour l'instant."
-        />
+    } @else {
+      <div class="board" [class.split]="phase() !== 'break'">
+        @if (phase() === 'live') {
+          <section class="panel matches">
+            <h2 class="panel-title">Matchs du round</h2>
+            <app-live-match-board
+              [matches]="liveMatches()"
+              [fillHeight]="true"
+              [pageStart]="matchPager.start()"
+              [pageSize]="matchPageSize()"
+              (capacityChange)="matchPageSize.set($event)"
+            />
+            <app-page-progress
+              [page]="matchPager.page()"
+              [pageCount]="matchPager.pageCount()"
+              [intervalMs]="matchPageMs"
+            />
+          </section>
+        }
+        <section class="panel ranking">
+          <h2 class="panel-title">Classement de la séance</h2>
+          <app-leaderboard
+            [table]="leaderboardTable()"
+            [isLoading]="leaderboardLoading()"
+            [framed]="false"
+            [fillHeight]="true"
+            [showPodium]="showPodium()"
+            [listColumns]="rankingColumns()"
+            [pageStart]="rankingPager.start()"
+            [pageSize]="rankingPageSize()"
+            emptyLabel="Aucun match validé pour l'instant."
+            (capacityChange)="rankingPageSize.set($event)"
+          />
+          <app-page-progress
+            [page]="rankingPager.page()"
+            [pageCount]="rankingPager.pageCount()"
+            [intervalMs]="rankingPageMs"
+          />
+        </section>
+        @if (phase() === 'finished') {
+          <section class="panel club">
+            <h2 class="panel-title">Classement du club</h2>
+            <p class="panel-description">Cumul de toutes les séances du club jusqu'à celle-ci.</p>
+            <app-leaderboard
+              [table]="clubLeaderboardTable()"
+              [isLoading]="clubLeaderboardLoading()"
+              [error]="clubLeaderboardError()"
+              [framed]="false"
+              [fillHeight]="true"
+              [pageStart]="clubPager.start()"
+              [pageSize]="clubPageSize()"
+              emptyLabel="Aucun membre du club n'a encore de match validé (les invités ne sont pas comptés)."
+              (capacityChange)="clubPageSize.set($event)"
+            />
+            <app-page-progress
+              [page]="clubPager.page()"
+              [pageCount]="clubPager.pageCount()"
+              [intervalMs]="rankingPageMs"
+            />
+          </section>
+        }
       </div>
-    </div>
+    }
   }
 </div>

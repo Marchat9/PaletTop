@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { GlobalRankingEntry } from 'src/app/models/global-ranking.model';
 import { LeaderboardRow } from 'src/app/models/leaderboard.model';
+import { MatchGroupKey } from 'src/app/models/matches-session.model';
 import {
+  itemTables,
+  leaderboardItems,
   podiumSteps,
   rowsBelowPodium,
   toClubLeaderboard,
@@ -24,8 +27,17 @@ function team(rank: number, teamId: string, overrides: Partial<GlobalRankingEntr
   };
 }
 
-function row(id: string, rank: number, rankLabel = String(rank)): LeaderboardRow {
-  return { id, rank, rankLabel, name: id, cells: [], summary: `${id} stats` };
+function row(
+  id: string,
+  rank: number,
+  rankLabel = String(rank),
+  section: string | null = null,
+): LeaderboardRow {
+  return { id, rank, rankLabel, name: id, cells: [], summary: `${id} stats`, section };
+}
+
+function labels(items: ReturnType<typeof leaderboardItems>): string[] {
+  return items.map((item) => (item.kind === 'section' ? `# ${item.label}` : item.row.id));
 }
 
 describe('toTournamentLeaderboard', () => {
@@ -150,5 +162,61 @@ describe('rowsBelowPodium', () => {
     const rows = [row('A', 1, '1='), row('B', 1, '1='), row('C', 3), row('D', 4), row('E', 5)];
 
     expect(rowsBelowPodium(rows).map((entry) => entry.id)).toEqual(['D', 'E']);
+  });
+});
+
+describe('sections du classement', () => {
+  it('nomme le tableau de chaque équipe d’un tournoi structuré', () => {
+    const table = toTournamentLeaderboard(
+      [team(1, 'A', { section: MatchGroupKey.PRINCIPALE }), team(2, 'B', { section: 'pools' })],
+      'victory_ga',
+    );
+
+    expect(table.rows.map((entry) => entry.section)).toEqual([
+      'Tableau principal',
+      'Éliminés en poules',
+    ]);
+  });
+
+  it('n’a pas de section pour un classement unique', () => {
+    expect(toTournamentLeaderboard([team(1, 'A')], 'victory_ga').rows[0].section).toBeNull();
+  });
+
+  it('insère un intertitre avant chaque nouvelle section, sous le podium', () => {
+    const rows = [
+      row('A', 1, '1', 'Principal'),
+      row('B', 2, '2', 'Principal'),
+      row('C', 3, '3', 'Principal'),
+      row('D', 4, '4', 'Principal'),
+      row('E', 5, '5', 'Consolante'),
+    ];
+
+    expect(labels(leaderboardItems(rows, true))).toEqual(['# Principal', 'D', '# Consolante', 'E']);
+    expect(labels(leaderboardItems(rows, false))[0]).toBe('# Principal');
+  });
+
+  it('n’ajoute aucun intertitre sans section', () => {
+    expect(labels(leaderboardItems([row('A', 1), row('B', 2)], false))).toEqual(['A', 'B']);
+  });
+
+  it('répète l’intertitre en haut d’une page ou d’une colonne qui commence en pleine section', () => {
+    const items = leaderboardItems(
+      [
+        row('A', 1, '1', 'Principal'),
+        row('B', 2, '2', 'Principal'),
+        row('C', 3, '3', 'Principal'),
+        row('D', 4, '4', 'Consolante'),
+      ],
+      false,
+    );
+
+    const page = itemTables(items, 2, 3, 1);
+    expect(page.map(labels)).toEqual([['# Principal', 'B', 'C', '# Consolante']]);
+
+    const columns = itemTables(items, 0, null, 2);
+    expect(columns.map(labels)).toEqual([
+      ['# Principal', 'A', 'B'],
+      ['# Principal', 'C', '# Consolante', 'D'],
+    ]);
   });
 });

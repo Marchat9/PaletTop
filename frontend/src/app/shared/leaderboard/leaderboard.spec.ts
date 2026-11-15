@@ -63,17 +63,20 @@ describe('Leaderboard', () => {
     const steps = element.querySelectorAll('.podium-step');
     expect(steps).toHaveLength(1);
     expect(steps[0].querySelector('.medal')?.textContent?.trim()).toBe('1=');
-    expect(steps[0].querySelector('.podium-names')?.textContent?.trim()).toBe('A · B · C +1');
+    const names = Array.from(steps[0].querySelectorAll('.podium-name, .podium-more')).map((name) =>
+      name.textContent?.trim(),
+    );
+    expect(names).toEqual(['A', 'B', 'C', '+1']);
   });
 
-  it('met en surbrillance la ligne suivie, avec son badge, et la marche qui la porte', () => {
+  it('met en surbrillance la ligne suivie, sans badge, et la marche qui la porte', () => {
     const table = toSessionLeaderboard(players(5));
-    const inTable = setup({ table, showPodium: true, highlightedId: 'P4', highlightLabel: 'vous' });
+    const inTable = setup({ table, showPodium: true, highlightedId: 'P4' });
 
     const highlighted = inTable.querySelectorAll('tbody tr.is-highlighted');
     expect(highlighted).toHaveLength(1);
     expect(highlighted[0].textContent).toContain('Joueur 4');
-    expect(highlighted[0].querySelector('.me-badge')?.textContent?.trim()).toBe('vous');
+    expect(highlighted[0].querySelector('.me-badge')).toBeNull();
 
     const onPodium = setup({ table, showPodium: true, highlightedId: 'P1' });
     expect(
@@ -137,5 +140,23 @@ describe('Leaderboard', () => {
     fixture.detectChanges();
 
     expect((fixture.nativeElement as HTMLElement).querySelector('button')?.textContent).toBe('PDF');
+  });
+
+  it('affiche un intertitre avant chaque section, qui ne compte pas comme une ligne', () => {
+    const base = toSessionLeaderboard(players(3));
+    const table: LeaderboardTable = {
+      ...base,
+      rows: base.rows.map((row, index) => ({
+        ...row,
+        section: index < 2 ? 'Tableau principal' : 'Consolante',
+      })),
+    };
+    const element = setup({ table });
+
+    const headings = Array.from(element.querySelectorAll('tbody tr.section-row')).map((row) =>
+      row.textContent?.trim(),
+    );
+    expect(headings).toEqual(['Tableau principal', 'Consolante']);
+    expect(element.querySelectorAll('tbody tr:not(.section-row)')).toHaveLength(3);
   });
 });

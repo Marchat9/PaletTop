@@ -40,41 +40,57 @@
             <span class="medal" [attr.aria-label]="'Rang ' + step.rankLabel">{{
               step.rankLabel
             }}</span>
-            <strong class="podium-names">{{ step.names }}</strong>
+            <strong class="podium-names">
+              @for (name of step.names; track $index) {
+                <span class="podium-name">{{ name }}</span>
+              }
+              @if (step.hiddenCount > 0) {
+                <span class="podium-more">+{{ step.hiddenCount }}</span>
+              }
+            </strong>
             <span class="podium-summary">{{ step.summary }}</span>
           </li>
         }
       </ol>
     }
 
-    @if (tables().length > 0) {
-      <div class="tables" [class.two-columns]="tables().length > 1">
-        @for (rows of tables(); track $index) {
-          <table class="rank-table">
-            <thead>
-              <tr>
-                <th class="col-rank" scope="col">
-                  <span class="rank-label">Rang</span><span class="rank-label-short">#</span>
+    <div
+      class="tables"
+      [class.two-columns]="listColumns() === 2"
+      [class.fill]="fillHeight()"
+      [appFitCount]="rowRem"
+      [fitReserved]="headRem"
+      [fitColumns]="listColumns()"
+      (fitCountChange)="onFitCount($event)"
+    >
+      @for (rows of tables(); track $index) {
+        <table class="rank-table">
+          <thead>
+            <tr>
+              <th class="col-rank" scope="col">
+                <span class="rank-label">Rang</span><span class="rank-label-short">#</span>
+              </th>
+              <th class="col-name" scope="col">{{ table().nameLabel }}</th>
+              @for (column of table().columns; track column.label) {
+                <th class="col-stat" scope="col">
+                  <abbr [title]="column.title">{{ column.label }}</abbr>
                 </th>
-                <th class="col-name" scope="col">{{ table().nameLabel }}</th>
-                @for (column of table().columns; track column.label) {
-                  <th class="col-stat" scope="col">
-                    <abbr [title]="column.title">{{ column.label }}</abbr>
-                  </th>
-                }
-              </tr>
-            </thead>
-            <tbody>
-              @for (row of rows; track row.id) {
-                <tr [class.is-highlighted]="row.id === highlightedId()">
-                  <td class="col-rank">{{ row.rankLabel }}</td>
+              }
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of rows; track item.key) {
+              @if (item.kind === 'section') {
+                <tr class="section-row">
+                  <th scope="colgroup" [attr.colspan]="columnCount()">{{ item.label }}</th>
+                </tr>
+              } @else {
+                <tr [class.is-highlighted]="item.row.id === highlightedId()">
+                  <td class="col-rank">{{ item.row.rankLabel }}</td>
                   <td class="col-name">
-                    <span class="max-two-lines">{{ row.name }}</span>
-                    @if (row.id === highlightedId() && highlightLabel(); as badge) {
-                      <span class="me-badge">{{ badge }}</span>
-                    }
+                    <span class="max-two-lines">{{ item.row.name }}</span>
                   </td>
-                  @for (cell of row.cells; track $index) {
+                  @for (cell of item.row.cells; track $index) {
                     <td
                       class="col-stat"
                       [class.tone-positive]="cell.tone === 'positive'"
@@ -85,11 +101,11 @@
                   }
                 </tr>
               }
-            </tbody>
-          </table>
-        }
-      </div>
-    }
+            }
+          </tbody>
+        </table>
+      }
+    </div>
 
     @if (table().legend; as legend) {
       <p class="legend">{{ legend }}</p>

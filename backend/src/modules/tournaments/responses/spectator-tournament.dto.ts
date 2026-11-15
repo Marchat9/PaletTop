@@ -9,6 +9,8 @@ export interface SpectatorTournamentDto {
     status: TournamentStatus;
     phaseName: string;
     scoreCalculation: ScoreCalculation;
+    /** Registered teams, shown while the tournament has not started yet. */
+    teamNames: string[];
 }
 
 export function toSpectatorTournamentDto(
@@ -22,5 +24,8 @@ export function toSpectatorTournamentDto(
         status: tournament.status,
         phaseName,
         scoreCalculation: tournament.configuration.scoreCalculation,
+        teamNames: (tournament.teams ?? [])
+            .map((team) => team.name)
+            .sort((a, b) => a.localeCompare(b, 'fr', { numeric: true, sensitivity: 'base' })),
     };
 }

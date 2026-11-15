@@ -26,6 +26,20 @@ describe('toSpectatorTournamentDto', () => {
             status: TournamentStatus.ACTIVE,
             phaseName: 'phaseName',
             scoreCalculation: ScoreCalculation.SCORE,
+            teamNames: [],
         });
+    });
+
+    it('lists the registered teams in natural order (Équipe 2 before Équipe 11)', () => {
+        const tournament = {
+            configuration: { scoreCalculation: ScoreCalculation.SCORE },
+            teams: [{ name: 'Équipe 11' }, { name: 'Les Fondus' }, { name: 'Équipe 2' }],
+        } as Tournament;
+
+        expect(toSpectatorTournamentDto(tournament, '').teamNames).toEqual([
+            'Équipe 2',
+            'Équipe 11',
+            'Les Fondus',
+        ]);
     });
 });

@@ -2,10 +2,13 @@ import { GlobalRankingEntry } from 'src/app/models/global-ranking.model';
 import {
   LeaderboardCell,
   LeaderboardColumn,
+  LeaderboardItem,
   LeaderboardRow,
   LeaderboardTable,
   PodiumStep,
 } from 'src/app/models/leaderboard.model';
+import { MATCH_GROUP_LABELS, MatchGroupKey } from 'src/app/models/matches-session.model';
+import { RankingSection } from 'src/app/models/global-ranking.model';
 import { Nullable } from 'src/app/models/nullable.model';
 import { ScoreCalculation } from 'src/app/models/tournament-configuration-detail.model';
 import {
@@ -14,6 +17,8 @@ import {
 } from 'src/app/store/training/training.models';
 
 const PODIUM_PLACES = 3;
+
+const POOLS_SECTION_LABEL = 'Éliminés en poules';
 /** Visual order of the podium: second on the left, first in the middle, third on the right. */
 const PODIUM_ORDER = [2, 1, 3];
 
@@ -31,6 +36,13 @@ interface TournamentLayout {
   cells: (entry: GlobalRankingEntry) => LeaderboardCell[];
   summary: (entry: GlobalRankingEntry) => string;
   legend: Nullable<string>;
+}
+
+function sectionLabel(section: Nullable<RankingSection>): Nullable<string> {
+  if (!section) {
+    return null;
+  }
+  return section === 'pools' ? POOLS_SECTION_LABEL : MATCH_GROUP_LABELS[section as MatchGroupKey];
 }
 
 function plain(value: number): LeaderboardCell {
@@ -130,6 +142,7 @@ export function toTournamentLeaderboard(
         name: entry.teamName,
         cells: layout.cells(entry),
         summary: layout.summary(entry),
+        section: sectionLabel(entry.section),
       })),
     ),
   };
@@ -152,6 +165,7 @@ export function toSessionLeaderboard(entries: TrainingLeaderboardEntryDto[]): Le
         name: entry.name,
         cells: [plain(entry.wins), plain(entry.points)],
         summary: `${entry.wins} V · ${entry.points} pts`,
+        section: null,
       })),
     ),
   };
@@ -175,6 +189,7 @@ export function toClubLeaderboard(entries: TrainingClubLeaderboardEntryDto[]): L
         name: entry.name,
         cells: [plain(entry.sessionsPlayed), plain(entry.wins), plain(entry.points)],
         summary: `${entry.points} pts`,
+        section: null,
       })),
     ),
   };
@@ -208,4 +223,52 @@ export function podiumSteps(rows: LeaderboardRow[]): PodiumStep[] {
 /** Rows not standing on the podium. */
 export function rowsBelowPodium(rows: LeaderboardRow[]): LeaderboardRow[] {
   return rows.filter((entry) => entry.rank > PODIUM_PLACES);
+}
+
+/**
+ * What the tables list: the rows (those below the podium when it is shown), with a heading before
+ * each new section. The automatic pagination counts these items.
+ */
+export function leaderboardItems(rows: LeaderboardRow[], showPodium: boolean): LeaderboardItem[] {
+  const listed = showPodium ? rowsBelowPodium(rows) : rows;
+  const items: LeaderboardItem[] = [];
+  let current: Nullable<string> = null;
+  listed.forEach((row, index) => {
+    if (row.section && row.section !== current) {
+      items.push({ kind: 'section', key: `section-${index}`, label: row.section });
+    }
+    current = row.section;
+    items.push({ kind: 'row', key: row.id, row });
+  });
+  return items;
+}
+
+/**
+ * The window of items shown (all of them without a size), cut into one or two tables. A table
+ * starting in the middle of a section repeats its heading, so every line says where it stands.
+ */
+export function itemTables(
+  items: LeaderboardItem[],
+  start: number,
+  size: Nullable<number>,
+  columns: 1 | 2,
+): LeaderboardItem[][] {
+  const window = size ? items.slice(start, start + size) : items;
+  if (window.length === 0) {
+    return [];
+  }
+  const chunks =
+    columns === 2 && window.length > 1
+      ? [window.slice(0, Math.ceil(window.length / 2)), window.slice(Math.ceil(window.length / 2))]
+      : [window];
+  return chunks.map((chunk) => {
+    const first = chunk[0];
+    if (first.kind === 'row' && first.row.section) {
+      return [
+        { kind: 'section', key: `continued-${first.key}`, label: first.row.section },
+        ...chunk,
+      ];
+    }
+    return chunk;
+  });
 }

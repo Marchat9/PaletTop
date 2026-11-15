@@ -28,7 +28,14 @@ export interface LeaderboardRow {
   cells: LeaderboardCell[];
   /** The same statistics on a single line, for the podium (« 3 V · 39 · +21 »). */
   summary: string;
+  /** Section the row belongs to (« Consolante »...); null when the ranking has none. */
+  section: Nullable<string>;
 }
+
+/** What a leaderboard table lists: its rows, with a heading before each new section. */
+export type LeaderboardItem =
+  | { kind: 'section'; key: string; label: string }
+  | { kind: 'row'; key: string; row: LeaderboardRow };
 
 /** Everything a leaderboard displays, built from one of the ranking sources. */
 export interface LeaderboardTable {

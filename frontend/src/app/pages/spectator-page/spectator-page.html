@@ -1,38 +1,52 @@
 <div class="spectator-page">
   <div class="header">
-    <h1 class="tournament-name">
+    <h1 class="page-title">
       <span>Tournoi : </span>
       {{ tournament()?.name ?? '—' }}
     </h1>
-    <div class="tournament-info" [class.ended]="isTournamentEnded()">
+    <div class="page-status">
       @if (tournament()) {
-        @switch (tournamentStatus()) {
-          @case ('DRAFT') {
+        @switch (phase()) {
+          @case ('waiting') {
             <span class="badge draft">Tournoi non démarré</span>
           }
-          @case ('ACTIVE') {
+          @case ('finished') {
+            @if (tournamentStatus() === 'CANCELLED') {
+              <span class="badge cancelled">Tournoi annulé</span>
+            } @else {
+              <span class="badge completed">Tournoi terminé</span>
+            }
+          }
+          @default {
             <span class="badge active">Phase : {{ tournament()!.phaseName || '' }}</span>
-          }
-          @case ('COMPLETED') {
-            <span class="badge completed">🎉 Tournoi terminé ! 🎉</span>
-          }
-          @case ('CANCELLED') {
-            <span class="badge cancelled">Tournoi annulé</span>
           }
         }
       }
-      @if (currentSession() && !isTournamentEnded()) {
-        <span class="badge">Round : {{ currentSession()!.sessionNumber || '-' }}</span>
+    </div>
+    <div class="page-side">
+      @if (tournament()) {
+        @switch (phase()) {
+          @case ('live') {
+            <span class="badge">
+              Round {{ roundNumber() ?? '-' }} · {{ validatedCount() }} / {{ matchCount() }} matchs
+              validés
+            </span>
+          }
+          @case ('break') {
+            <span class="badge round-done">Round {{ roundNumber() ?? '-' }} · terminé</span>
+          }
+        }
+        <!-- On mobile the switch sits under the tabs, with the ranking it acts on. -->
+        @if (!isMobile()) {
+          <app-switch
+            class="podium-switch"
+            label="Podium"
+            [checked]="showPodium()"
+            (checkedChange)="togglePodium($event)"
+          />
+        }
       }
     </div>
-    @if (!isMobile()) {
-      <app-switch
-        class="switch"
-        [checked]="autoScrollOn()"
-        label="Défilement automatique"
-        (checkedChange)="autoScrollOn.set($event)"
-      />
-    }
   </div>
 
   @if (error()) {
@@ -55,22 +69,128 @@
         />
       </div>
     </div>
+  } @else if (isLoading()) {
+    <p class="loading">Chargement du tournoi…</p>
+  } @else if (phase() === 'waiting') {
+    <div class="waiting">
+      @if (!isMobile()) {
+        <section class="panel follow">
+          <span class="panel-label">Suivre en direct</span>
+          <app-qr-code [url]="spectatorUrl()" [size]="220" alt="Lien de cette page" />
+          <span class="code-label">Code</span>
+          <strong class="code">{{ tournament()?.code }}</strong>
+          <span class="hint">Scannez pour suivre le tournoi sur votre téléphone</span>
+        </section>
+      }
+      <section class="panel roster">
+        <div class="roster-header">
+          <span class="panel-label">Équipes inscrites</span>
+          <strong class="roster-count">{{ teamNames().length }}</strong>
+        </div>
+        <ul class="chips">
+          @for (name of teamNames(); track $index) {
+            <li class="chip">{{ name }}</li>
+          } @empty {
+            <li class="empty">Aucune équipe inscrite pour l'instant.</li>
+          }
+        </ul>
+        <p class="soon">
+          <span class="pulse" aria-hidden="true"></span>
+          Le tournoi va bientôt commencer
+        </p>
+        @if (isMobile()) {
+          <p class="share">
+            Code à partager <strong class="code">{{ tournament()?.code }}</strong>
+          </p>
+        }
+      </section>
+    </div>
   } @else {
-    <div class="content">
-      @if (!isTournamentEnded()) {
-        <div class="column matches" [appAutoScroll]="autoScrollOn() && !isMobile()">
-          <app-spectator-match-list [session]="currentSession()" />
+    @if (phase() === 'finished' && winner()) {
+      <section class="winner">
+        <span class="panel-label">Vainqueur</span>
+        <strong class="winner-name">{{ winner() }}</strong>
+        <span class="winner-summary">{{ winnerSummary() }}</span>
+      </section>
+    }
+
+    @if (isMobile()) {
+      @if (phase() !== 'finished') {
+        <div class="tabs" role="tablist" aria-label="Affichage">
+          <app-button
+            role="tab"
+            [attr.aria-selected]="mobileTab() === 'ranking'"
+            title="Classement"
+            variant="primary"
+            (clicked)="showTab('ranking')"
+          />
+          <app-button
+            role="tab"
+            [attr.aria-selected]="mobileTab() === 'matches'"
+            [title]="'Matchs · ' + matchCount()"
+            variant="primary"
+            (clicked)="showTab('matches')"
+          />
         </div>
       }
-      <div class="column ranking" [appAutoScroll]="autoScrollOn() && !isMobile()">
+      @if (phase() === 'finished' || mobileTab() === 'ranking') {
+        <app-switch
+          class="podium-switch mobile-switch"
+          label="Podium"
+          [checked]="showPodium()"
+          (checkedChange)="togglePodium($event)"
+        />
         <app-leaderboard
           [table]="rankingTable()"
-          [isLoading]="isLoading()"
           [canCollapse]="false"
-          [showPodium]="true"
-          emptyLabel="Aucun round démarré."
+          [showPodium]="showPodium()"
+          emptyLabel="Aucun match validé pour l'instant."
         />
+      } @else {
+        <app-live-match-board [matches]="liveMatches()" />
+      }
+    } @else {
+      <div class="board" [class.split]="phase() === 'live'">
+        @if (phase() === 'live') {
+          <section class="panel matches">
+            <h2 class="panel-title">Matchs du round</h2>
+            <app-live-match-board
+              [matches]="liveMatches()"
+              [fillHeight]="true"
+              [pageStart]="matchPager.start()"
+              [pageSize]="matchPageSize()"
+              (capacityChange)="matchPageSize.set($event)"
+            />
+            <app-page-progress
+              [page]="matchPager.page()"
+              [pageCount]="matchPager.pageCount()"
+              [intervalMs]="matchPageMs"
+            />
+          </section>
+        }
+        <section class="panel ranking">
+          <h2 class="panel-title">
+            {{ phase() === 'finished' ? 'Classement final' : 'Classement' }}
+          </h2>
+          <app-leaderboard
+            [table]="rankingTable()"
+            [framed]="false"
+            [fillHeight]="true"
+            [showPodium]="showPodium()"
+            [listColumns]="rankingColumns()"
+            [pageStart]="rankingPager.start()"
+            [pageSize]="rankingPageSize()"
+            emptyLabel="Aucun match validé pour l'instant."
+            (capacityChange)="rankingPageSize.set($event)"
+          />
+          <app-page-progress
+            [page]="rankingPager.page()"
+            [pageCount]="rankingPager.pageCount()"
+            [intervalMs]="rankingPageMsProgress"
+            [label]="rankingPageLabel()"
+          />
+        </section>
       </div>
-    </div>
+    }
   }
 </div>
