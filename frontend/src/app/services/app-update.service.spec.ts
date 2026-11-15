@@ -137,20 +137,21 @@ describe('AppUpdateService', () => {
     expect(dialog.open).toHaveBeenCalledTimes(2);
   });
 
-  it('forces the refresh only when asked: worker unregistered, caches emptied, then reload', async () => {
+  it('forces the refresh however the popup closes: worker unregistered, caches emptied, then reload', async () => {
     const { service, closeLast, reload } = setup('1.4.1');
     const unregister = vi.fn(async () => true);
     stubServiceWorker(async () => [{ unregister } as unknown as ServiceWorkerRegistration]);
     const cacheDelete = vi.fn(async () => true);
     vi.stubGlobal('caches', { keys: async () => ['ngsw:db', 'ngsw:app'], delete: cacheDelete });
 
+    // Close button, Escape or backdrop: the stale app is never kept.
     service.promptUpdate('1.4.2');
     closeLast(false);
-    expect(reload).not.toHaveBeenCalled();
+    await vi.waitFor(() => expect(reload).toHaveBeenCalledTimes(1));
 
     service.promptUpdate('1.4.2');
     closeLast(true);
-    await vi.waitFor(() => expect(reload).toHaveBeenCalledTimes(1));
+    await vi.waitFor(() => expect(reload).toHaveBeenCalledTimes(2));
     expect(unregister).toHaveBeenCalled();
     expect(cacheDelete).toHaveBeenCalledWith('ngsw:db');
     expect(cacheDelete).toHaveBeenCalledWith('ngsw:app');
