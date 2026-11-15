@@ -41,8 +41,16 @@ function rankingPdfMode(scoreCalculation: ScoreCalculation | undefined): Ranking
   switch (scoreCalculation) {
     case 'score':
       return {
-        stats: [{ label: 'Score', width: 34, value: (entry) => `${entry.pointsFor}` }],
-        nameCharsPerLine: 34,
+        stats: [
+          { label: 'Score', width: 34, value: (entry) => `${entry.pointsFor}` },
+          {
+            label: 'GA',
+            width: 26,
+            value: (entry) => `${entry.goalAverage > 0 ? '+' : ''}${entry.goalAverage}`,
+          },
+        ],
+        nameCharsPerLine: 28,
+        legend: 'Score = somme des scores · GA = Goal average',
       };
     case 'tournament_score':
       return {

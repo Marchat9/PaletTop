@@ -113,6 +113,20 @@ describe('buildRankingPdf', () => {
     ]);
   });
 
+  it('shows the score then the signed goal average that breaks its ties in score mode', () => {
+    const table = lastTable(
+      buildRankingPdf(tournament('score'), entries(2), APP_URL).content as unknown[],
+    );
+
+    expect(table.table.body[0].map((cell) => (cell as { text: string }).text)).toEqual([
+      '#',
+      'Équipe',
+      'Score',
+      'GA',
+    ]);
+    expect((table.table.body[1][3] as { text: string }).text).toBe('+19');
+  });
+
   it('lays a long ranking out in two columns with a page break before each extra page', () => {
     const content = buildRankingPdf(
       tournament('score'),

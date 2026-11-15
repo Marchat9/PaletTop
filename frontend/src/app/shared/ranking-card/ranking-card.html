@@ -34,6 +34,7 @@
                 </th>
                 <th class="col-team">Équipe</th>
                 <th class="col-stat">Score</th>
+                <th class="col-stat">GA</th>
               </tr>
             }
             @case ('tournament_score') {
@@ -70,6 +71,13 @@
                     <span class="max-two-lines">{{ entry.teamName }}</span>
                   </td>
                   <td class="col-stat">{{ entry.pointsFor }}</td>
+                  <td
+                    class="col-stat"
+                    [class.ga--positive]="entry.goalAverage > 0"
+                    [class.ga--negative]="entry.goalAverage < 0"
+                  >
+                    {{ entry.goalAverage > 0 ? '+' : '' }}{{ entry.goalAverage }}
+                  </td>
                 </tr>
               }
               @case ('tournament_score') {
@@ -102,8 +110,14 @@
           }
         </tbody>
       </table>
-      @if (scoreCalculation() !== 'score' && scoreCalculation() !== 'tournament_score') {
-        <p class="legend">V = victoires · Pts+ = points marqués · GA = Goal average</p>
+      @switch (scoreCalculation()) {
+        @case ('score') {
+          <p class="legend">Score = somme des scores · GA = Goal average</p>
+        }
+        @case ('tournament_score') {}
+        @default {
+          <p class="legend">V = victoires · Pts+ = points marqués · GA = Goal average</p>
+        }
       }
     }
   </div>
