@@ -115,8 +115,9 @@ jobs:
                   push: ${{ github.event_name != 'pull_request' }}
                   tags: ${{ steps.meta.outputs.tags }}
                   labels: ${{ steps.meta.outputs.labels }}
-                  # Only the frontend Dockerfile declares APP_VERSION as an ARG.
-                  build-args: ${{ matrix.name == 'frontend' && format('APP_VERSION={0}', env.APP_VERSION) || '' }}
+                  # Both images get the same version: the backend serves it (GET /version) and
+                  # the frontend compares it with its own to detect a stale cached app.
+                  build-args: APP_VERSION=${{ env.APP_VERSION }}
                   # No attestation manifest: keeps the pushed image a plain single-arch
                   # image rather than an OCI index, which is what `docker run` on a
                   # self-hosted deployment expects.
