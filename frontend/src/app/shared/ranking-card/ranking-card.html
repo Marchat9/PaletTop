@@ -94,6 +94,17 @@
       @if (scoreCalculation() !== 'score' && scoreCalculation() !== 'tournament_score') {
         <p class="legend">V = victoires · Pts+ = points marqués · GA = Goal average</p>
       }
+      @if (canDownload()) {
+        <div class="download-action">
+          <app-button
+            title="Télécharger le classement (PDF)"
+            icon="download"
+            variant="secondary"
+            [loading]="downloadLoading()"
+            (clicked)="downloadRequested.emit()"
+          />
+        </div>
+      }
     }
   </div>
 </app-card-collapsible>

@@ -1,4 +1,8 @@
 import { normalizeCode } from 'src/app/utils/code-format.util';
+import { newId } from 'src/app/utils/unique-id.util';
+import { buildRankingPdf, rankingPdfFileName } from 'src/app/utils/pdf/ranking-pdf.util';
+import { PdfExportService } from 'src/app/services/pdf-export.service';
+import { TournamentStatus } from 'src/app/models/tournament-status.enum';
 import { TournamentNextStep } from './components/tournament-next-step/tournament-next-step';
 import { Dialog } from '@angular/cdk/dialog';
 import { CommonModule } from '@angular/common';
@@ -85,6 +89,7 @@ export class AdminTournamentPageComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly store = inject(Store);
   private readonly dialog = inject(Dialog);
+  private readonly pdfExport = inject(PdfExportService);
 
   readonly tournamentCode = signal<string | null>(null);
 
@@ -112,6 +117,12 @@ export class AdminTournamentPageComponent implements OnInit {
 
   // Compute
   public readonly adminPassword = computed(() => this.adminSession()?.password ?? null);
+  /** The final ranking PDF is offered once the tournament is over and its ranking is loaded. */
+  public readonly canDownloadRanking = computed(
+    () =>
+      this.tournament()?.status === TournamentStatus.FINISHED && (this.ranking()?.length ?? 0) > 0,
+  );
+  public readonly isRankingExporting = signal(false);
 
   // Data
   public readonly hiddenFields: TournamentConfigurationField[] = environment.tournamentConfiguration
@@ -258,6 +269,33 @@ export class AdminTournamentPageComponent implements OnInit {
 
   public onNotification(notification: Notification): void {
     this.store.dispatch(addNotification({ notification }));
+  }
+
+  /** Downloads the final ranking as an A4 PDF (tournament header, two columns when long). */
+  public async downloadRanking(): Promise<void> {
+    const tournament = this.tournament();
+    const ranking = this.ranking();
+    if (!tournament || !ranking?.length || this.isRankingExporting()) {
+      return;
+    }
+
+    this.isRankingExporting.set(true);
+    try {
+      await this.pdfExport.download(
+        buildRankingPdf(tournament, ranking, window.location.origin),
+        rankingPdfFileName(tournament),
+      );
+    } catch {
+      this.onNotification({
+        id: newId(),
+        message: "Le classement n'a pas pu être généré. Réessayez.",
+        typeIcon: 'warning',
+        type: 'Téléchargement',
+        createdAt: Date.now(),
+      });
+    } finally {
+      this.isRankingExporting.set(false);
+    }
   }
 
   public startTournament(): void {

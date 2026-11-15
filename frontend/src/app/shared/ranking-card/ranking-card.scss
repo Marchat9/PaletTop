@@ -43,6 +43,12 @@
   color: var(--color-on-surface-variant);
 }
 
+.download-action {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1rem;
+}
+
 .pool-ranking {
   display: flex;
   flex-direction: column;
