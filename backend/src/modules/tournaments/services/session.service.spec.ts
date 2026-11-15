@@ -91,6 +91,7 @@ function setupActive(status: { canGenerateNewSession: boolean; canFinishTourname
     };
     const strategy = {
         canStartNextSession: vi.fn(() => true),
+        isDrawnSession: vi.fn(() => true),
         canCompleteTournament: vi.fn(() => true),
         computeTournamentStatus: vi.fn(() => ({ currentSession: 1, phaseName: '', ...status })),
     };

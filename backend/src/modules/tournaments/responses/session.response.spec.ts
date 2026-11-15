@@ -22,10 +22,22 @@ describe('toSessionResponseDto', () => {
             ],
         } as MatchesSession;
 
-        const dto = toSessionResponseDto(session);
+        const dto = toSessionResponseDto(session, true);
 
         expect(JSON.stringify(dto)).not.toContain('1111');
         expect(JSON.stringify(dto)).not.toContain('2222');
         expect(dto.matches[0].teamA).toEqual({ id: 'team-a', name: 'A' });
+    });
+
+    it('tells the clients whether the round was drawn', () => {
+        const session = {
+            id: 's',
+            sessionNumber: 5,
+            status: 'CLOSED',
+            matches: [],
+        } as unknown as MatchesSession;
+
+        expect(toSessionResponseDto(session, true).isDrawnRound).toBe(true);
+        expect(toSessionResponseDto(session, false).isDrawnRound).toBe(false);
     });
 });

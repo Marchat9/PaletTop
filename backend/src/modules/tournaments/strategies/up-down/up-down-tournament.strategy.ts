@@ -117,6 +117,11 @@ export class UpDownTournamentStrategy extends TournamentStrategy {
         };
     }
 
+    /** Every round is drawn, except the optional last one paired by ranking. */
+    override isDrawnSession(tournament: Tournament, sessionNumber: number): boolean {
+        return !isRankingRound(this.getConfig(tournament), sessionNumber);
+    }
+
     private getConfig(tournament: Tournament): UpDownCompetitionConfiguration {
         return extractCompetitionConfiguration(
             tournament.configuration,

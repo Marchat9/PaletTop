@@ -125,6 +125,11 @@ export class ChampionshipTournamentStrategy extends TournamentStrategy {
         };
     }
 
+    /** A fixed home/away rotation: no session depends on an earlier result. */
+    override isDrawnSession(_tournament: Tournament, _sessionNumber: number): boolean {
+        return true;
+    }
+
     private getConfig(tournament: Tournament): ChampionShipCompetitionConfiguration {
         return extractCompetitionConfiguration(
             tournament.configuration,

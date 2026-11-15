@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { TournamentMatch } from 'src/entities/tounament-match.entity';
 import { MatchStatus, MatchesSessionStatus, TournamentStatus } from 'src/enum/status.enum';
+import { Tournament } from 'src/entities/tournament.entity';
 import { ScoreCalculation } from 'src/enum/tounament.enum';
 import { RealtimeGateway } from 'src/modules/realtime/realtime.gateway';
 import { TournamentAuthService } from 'src/modules/tournaments/services/tournament-auth.service';
@@ -230,12 +231,8 @@ export class ScoreService {
                 `Le round de ce match est clôturé : le score corrigé doit rester final (${max} points pour une équipe).`,
             );
         }
-        // The next rounds were built from this result (bracket, up-down tables): another winner
-        // would leave them as they are, with the loser still playing on.
-        if (wasSessionClosed && match.scoreA > match.scoreB !== scoreA > scoreB) {
-            throw new BadRequestException(
-                'Le round de ce match est clôturé : la correction ne peut pas changer le vainqueur.',
-            );
+        if (wasSessionClosed) {
+            this.assertClosedMatchCorrectable(tournament, match);
         }
         const finishedAt = isFinished ? (match.finishedAt ?? new Date()) : null;
         const duration =
@@ -384,16 +381,32 @@ export class ScoreService {
         code: string,
         matchId: string,
         password: string,
-    ): Promise<{
-        match: TournamentMatch;
-        tournament: {
-            configuration: { pointsPerGame: number; scoreCalculation: ScoreCalculation };
-        };
-    }> {
+    ): Promise<{ match: TournamentMatch; tournament: Tournament }> {
         const tournament = await this.tournamentAuthService.findWithAdminAuth({ code }, password);
         const match = await this.matchRepo.findByIdInTournament(matchId, tournament.id);
         if (!match) throw new NotFoundException('Match introuvable.');
         return { match, tournament };
+    }
+
+    /**
+     * A closed round keeps its scores correctable only when its pairs were drawn (qualifying,
+     * up-down drawn rounds, championship): no later pairing was built from them, so even the
+     * winner may change; the brackets already drawn stay as they are. Elimination and ranking
+     * rounds fed the next ones, and a bye's score is the rule, not a result.
+     */
+    private assertClosedMatchCorrectable(tournament: Tournament, match: TournamentMatch): void {
+        if (match.isBye) {
+            throw new BadRequestException(
+                "Le score d'une équipe exemptée ne peut pas être corrigé.",
+            );
+        }
+        const strategy = this.strategyFactory.create(tournament.configuration.competitionMode);
+        const sessionNumber = match.session?.sessionNumber ?? match.sessionNumber;
+        if (!sessionNumber || !strategy.isDrawnSession(tournament, sessionNumber)) {
+            throw new BadRequestException(
+                "Ce round n'est pas un tirage au sort : ses scores ne peuvent plus être corrigés une fois clôturé.",
+            );
+        }
     }
 
     private async buildScoreUpdateResult(
