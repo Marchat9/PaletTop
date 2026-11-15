@@ -12,6 +12,17 @@
     } @else if (!hasData()) {
       <p class="empty-hint">Aucun round démarré.</p>
     } @else {
+      @if (canDownload()) {
+        <div class="download-action">
+          <app-button
+            title="Télécharger le classement (PDF)"
+            icon="download"
+            variant="secondary"
+            [loading]="downloadLoading()"
+            (clicked)="downloadRequested.emit()"
+          />
+        </div>
+      }
       <table class="ranking-table">
         <thead>
           @switch (scoreCalculation()) {
@@ -93,17 +104,6 @@
       </table>
       @if (scoreCalculation() !== 'score' && scoreCalculation() !== 'tournament_score') {
         <p class="legend">V = victoires · Pts+ = points marqués · GA = Goal average</p>
-      }
-      @if (canDownload()) {
-        <div class="download-action">
-          <app-button
-            title="Télécharger le classement (PDF)"
-            icon="download"
-            variant="secondary"
-            [loading]="downloadLoading()"
-            (clicked)="downloadRequested.emit()"
-          />
-        </div>
       }
     }
   </div>
