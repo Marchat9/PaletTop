@@ -1,11 +1,11 @@
 import { Dialog } from '@angular/cdk/dialog';
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { catchError, EMPTY } from 'rxjs';
 import {
   AppUpdatePopupComponent,
   AppUpdatePopupData,
 } from 'src/app/modales/app-update-popup/app-update-popup';
+import { ServerUnreachablePopupComponent } from 'src/app/modales/server-unreachable-popup/server-unreachable-popup';
 import { Nullable } from 'src/app/models/nullable.model';
 import { environment } from 'src/environments/environment';
 
@@ -31,20 +31,39 @@ export class AppUpdateService {
   private readonly apiBaseUrl = environment.backBaseApiUrl;
 
   private isPromptOpen = false;
+  private isUnreachableOpen = false;
 
-  /** Asks the backend which release is deployed and prompts when this app is another one. */
+  /**
+   * Asks the backend which release is deployed: prompts when this app is another one, and tells
+   * when the backend does not answer. Local builds (no release) only check the connection.
+   */
   public checkVersion(): void {
     const currentVersion = environment.version;
-    if (!isRelease(currentVersion)) {
+    this.http.get<AppVersionDto>(`${this.apiBaseUrl}/version`).subscribe({
+      next: ({ version }) => {
+        if (isRelease(currentVersion) && isRelease(version) && version !== currentVersion) {
+          this.promptUpdate(version);
+        }
+      },
+      error: () => this.promptServerUnreachable(),
+    });
+  }
+
+  /** « Connexion au serveur impossible », once at a time; « Réessayer » checks again. */
+  public promptServerUnreachable(): void {
+    if (this.isUnreachableOpen) {
       return;
     }
-    this.http
-      .get<AppVersionDto>(`${this.apiBaseUrl}/version`)
-      // Offline or backend restarting: nothing to compare, the next check will tell.
-      .pipe(catchError(() => EMPTY))
-      .subscribe(({ version }) => {
-        if (isRelease(version) && version !== currentVersion) {
-          this.promptUpdate(version);
+    this.isUnreachableOpen = true;
+    this.dialog
+      .open<boolean>(ServerUnreachablePopupComponent, {
+        panelClass: 'dialog-panel',
+        backdropClass: 'dialog-backdrop',
+      })
+      .closed.subscribe((retry) => {
+        this.isUnreachableOpen = false;
+        if (retry) {
+          this.checkVersion();
         }
       });
   }
@@ -73,7 +92,8 @@ export class AppUpdateService {
    * Reload that really loads the new release: a plain refresh is answered by the service worker
    * from its cache (the installed PWA kept the old version). Unregistering it and emptying the
    * app caches makes the reload fetch everything from the server; the worker installs again,
-   * with the new version.
+   * with the new version. Only the Cache Storage of the worker is emptied: cookies, local and
+   * session storage (admin access, theme, notifications) are left untouched.
    */
   public async forceRefresh(): Promise<void> {
     try {

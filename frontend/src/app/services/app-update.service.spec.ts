@@ -4,6 +4,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 import { Subject } from 'rxjs';
 import { AppUpdatePopupComponent } from 'src/app/modales/app-update-popup/app-update-popup';
+import { ServerUnreachablePopupComponent } from 'src/app/modales/server-unreachable-popup/server-unreachable-popup';
 import { environment } from 'src/environments/environment';
 import { AppUpdateService } from './app-update.service';
 
@@ -81,10 +82,11 @@ describe('AppUpdateService', () => {
     expect(dialog.open).not.toHaveBeenCalled();
   });
 
-  it('does not check a local build, nor against a backend without release', () => {
+  it('does not compare a local build, nor against a backend without release', () => {
     const local = setup('0.0.0');
     local.service.checkVersion();
-    local.http.expectNone(VERSION_URL);
+    local.http.expectOne(VERSION_URL).flush({ version: '1.4.2' });
+    expect(local.dialog.open).not.toHaveBeenCalled();
 
     TestBed.resetTestingModule();
     const unreleasedBack = setup('1.4.2');
@@ -93,13 +95,27 @@ describe('AppUpdateService', () => {
     expect(unreleasedBack.dialog.open).not.toHaveBeenCalled();
   });
 
-  it('ignores an unreachable backend', () => {
-    const { service, http, dialog } = setup('1.4.1');
+  it('tells when the backend does not answer, local builds included', () => {
+    const { service, http, dialog } = setup('0.0.0');
+
+    service.checkVersion();
+    http.expectOne(VERSION_URL).error(new ProgressEvent('error'));
+
+    expect(dialog.open).toHaveBeenCalledWith(ServerUnreachablePopupComponent, expect.anything());
+  });
+
+  it('shows a single connection popup and checks again on « Réessayer »', () => {
+    const { service, http, dialog, closeLast } = setup('1.4.1');
 
     service.checkVersion();
     http.expectOne(VERSION_URL).flush('down', { status: 503, statusText: 'Unavailable' });
+    service.checkVersion();
+    http.expectOne(VERSION_URL).flush('down', { status: 503, statusText: 'Unavailable' });
+    expect(dialog.open).toHaveBeenCalledTimes(1);
 
-    expect(dialog.open).not.toHaveBeenCalled();
+    closeLast(true);
+    http.expectOne(VERSION_URL).flush({ version: '1.4.1' });
+    expect(dialog.open).toHaveBeenCalledTimes(1);
   });
 
   it('opens a single popup at a time', () => {
@@ -131,6 +147,22 @@ describe('AppUpdateService', () => {
     expect(unregister).toHaveBeenCalled();
     expect(cacheDelete).toHaveBeenCalledWith('ngsw:db');
     expect(cacheDelete).toHaveBeenCalledWith('ngsw:app');
+  });
+
+  it('keeps cookies and local storage through the forced refresh', async () => {
+    const { service, reload } = setup('1.4.1');
+    stubServiceWorker(async () => []);
+    vi.stubGlobal('caches', { keys: async () => ['ngsw:app'], delete: async () => true });
+    document.cookie = 'palettop-session=keep';
+    localStorage.setItem('palettop-admin', 'keep');
+
+    await service.forceRefresh();
+
+    expect(reload).toHaveBeenCalledTimes(1);
+    expect(document.cookie).toContain('palettop-session=keep');
+    expect(localStorage.getItem('palettop-admin')).toBe('keep');
+    localStorage.removeItem('palettop-admin');
+    document.cookie = 'palettop-session=; expires=Thu, 01 Jan 1970 00:00:00 GMT';
   });
 
   it('still reloads when the cleanup fails', async () => {

@@ -1,7 +1,7 @@
 import { Component, effect, inject } from '@angular/core';
 import { SwUpdate } from '@angular/service-worker';
 import { Store } from '@ngrx/store';
-import { filter, interval, Subject, takeUntil } from 'rxjs';
+import { filter, merge, Subject, takeUntil } from 'rxjs';
 import { ThemeMode } from 'src/app/models/theme-mode.model';
 import { setTheme } from 'src/app/store/app-config/app-config.actions';
 import { selectTheme } from 'src/app/store/app-config/app-config.selectors';
@@ -10,6 +10,7 @@ import { environment } from '../environments/environment';
 import { PwaInstallService } from './services/pwa-install.service';
 import { AppUpdateService } from './services/app-update.service';
 import { AppVisibilityService } from './services/app-visibility.service';
+import { deployCheckSlots$ } from './utils/deploy-schedule.util';
 import { Navigation } from './pages/navigation/navigation';
 
 @Component({
@@ -26,6 +27,7 @@ export class App {
 
   private destroy$ = new Subject<void>();
   private readonly appUpdateService = inject(AppUpdateService);
+  private readonly appVisibility = inject(AppVisibilityService);
 
   constructor() {
     this.watchAppVersion();
@@ -58,25 +60,28 @@ export class App {
     });
   }
 
-  /** Compares this app with the deployed release at startup and each time the app comes back. */
+  /**
+   * Compares this app with the deployed release at startup, each time the app comes back, and a
+   * few minutes after each deployment slot (on the hour and at half past).
+   */
   private watchAppVersion(): void {
     this.appUpdateService.checkVersion();
-    inject(AppVisibilityService)
-      .resumed$.pipe(takeUntil(this.destroy$))
+    merge(this.appVisibility.resumed$, deployCheckSlots$())
+      .pipe(takeUntil(this.destroy$))
       .subscribe(() => this.appUpdateService.checkVersion());
   }
 
   /**
-   * Browser tab or installed PWA alike: the service worker checks for a new build every 30 s and,
-   * once it is downloaded, the « new version » popup offers the forced refresh (a plain reload
-   * would be served the old version from the worker cache).
+   * Browser tab or installed PWA alike: the service worker looks for a new build at the same
+   * moments (deployment slots, app coming back) and, once it is downloaded, the « new version »
+   * popup offers the forced refresh (a plain reload would be served the old version from cache).
    */
   private checkForPwaUpdate(): void {
     const swUpdate = inject(SwUpdate);
     if (!swUpdate.isEnabled) {
       return;
     }
-    interval(30_000)
+    merge(this.appVisibility.resumed$, deployCheckSlots$())
       .pipe(takeUntil(this.destroy$))
       .subscribe(() => {
         swUpdate.checkForUpdate().catch(() => undefined);
