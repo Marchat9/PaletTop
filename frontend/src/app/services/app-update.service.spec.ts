@@ -4,7 +4,6 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 import { Subject } from 'rxjs';
 import { AppUpdatePopupComponent } from 'src/app/modales/app-update-popup/app-update-popup';
-import { ServerUnreachablePopupComponent } from 'src/app/modales/server-unreachable-popup/server-unreachable-popup';
 import { environment } from 'src/environments/environment';
 import { AppUpdateService } from './app-update.service';
 
@@ -95,27 +94,35 @@ describe('AppUpdateService', () => {
     expect(unreleasedBack.dialog.open).not.toHaveBeenCalled();
   });
 
-  it('tells when the backend does not answer, local builds included', () => {
+  it('tells when the backend does not answer, without any popup, local builds included', () => {
     const { service, http, dialog } = setup('0.0.0');
+    let outages = 0;
+    service.serverUnreachable$.subscribe(() => outages++);
 
     service.checkVersion();
     http.expectOne(VERSION_URL).error(new ProgressEvent('error'));
 
-    expect(dialog.open).toHaveBeenCalledWith(ServerUnreachablePopupComponent, expect.anything());
+    expect(outages).toBe(1);
+    expect(dialog.open).not.toHaveBeenCalled();
   });
 
-  it('shows a single connection popup and checks again on « Réessayer »', () => {
-    const { service, http, dialog, closeLast } = setup('1.4.1');
+  it('tells once per outage, and again only after the backend came back', () => {
+    const { service, http } = setup('1.4.1');
+    let outages = 0;
+    service.serverUnreachable$.subscribe(() => outages++);
+    const down = () => {
+      service.checkVersion();
+      http.expectOne(VERSION_URL).flush('down', { status: 503, statusText: 'Unavailable' });
+    };
+
+    down();
+    down();
+    expect(outages).toBe(1);
 
     service.checkVersion();
-    http.expectOne(VERSION_URL).flush('down', { status: 503, statusText: 'Unavailable' });
-    service.checkVersion();
-    http.expectOne(VERSION_URL).flush('down', { status: 503, statusText: 'Unavailable' });
-    expect(dialog.open).toHaveBeenCalledTimes(1);
-
-    closeLast(true);
     http.expectOne(VERSION_URL).flush({ version: '1.4.1' });
-    expect(dialog.open).toHaveBeenCalledTimes(1);
+    down();
+    expect(outages).toBe(2);
   });
 
   it('opens a single popup at a time', () => {

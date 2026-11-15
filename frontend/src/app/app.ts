@@ -3,7 +3,8 @@ import { SwUpdate } from '@angular/service-worker';
 import { Store } from '@ngrx/store';
 import { filter, merge, Subject, takeUntil } from 'rxjs';
 import { ThemeMode } from 'src/app/models/theme-mode.model';
-import { setTheme } from 'src/app/store/app-config/app-config.actions';
+import { addNotification, setTheme } from 'src/app/store/app-config/app-config.actions';
+import { newId } from 'src/app/utils/unique-id.util';
 import { selectTheme } from 'src/app/store/app-config/app-config.selectors';
 import { AppState } from 'src/app/store/app-store';
 import { environment } from '../environments/environment';
@@ -65,6 +66,21 @@ export class App {
    * few minutes after each deployment slot (on the hour and at half past).
    */
   private watchAppVersion(): void {
+    // A toast, not a popup: part of the app keeps working offline.
+    this.appUpdateService.serverUnreachable$.pipe(takeUntil(this.destroy$)).subscribe(() =>
+      this.store.dispatch(
+        addNotification({
+          notification: {
+            id: newId(),
+            message: 'Connexion au serveur impossible. Les matchs amicaux restent disponibles.',
+            typeIcon: 'warning',
+            type: 'Connexion',
+            createdAt: Date.now(),
+          },
+        }),
+      ),
+    );
+
     this.appUpdateService.checkVersion();
     merge(this.appVisibility.resumed$, deployCheckSlots$())
       .pipe(takeUntil(this.destroy$))

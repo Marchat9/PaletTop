@@ -23,10 +23,10 @@ export class AppUpdatePopupComponent {
   public readonly data = inject<AppUpdatePopupData>(DIALOG_DATA);
 
   public refresh(): void {
-    this.dialogRef.close(true);
+    this.dialogRef.close();
   }
 
   public close(): void {
-    this.dialogRef.close(false);
+    this.dialogRef.close();
   }
 }

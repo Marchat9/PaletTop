@@ -1,11 +1,11 @@
 import { Dialog } from '@angular/cdk/dialog';
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
+import { Subject } from 'rxjs';
 import {
   AppUpdatePopupComponent,
   AppUpdatePopupData,
 } from 'src/app/modales/app-update-popup/app-update-popup';
-import { ServerUnreachablePopupComponent } from 'src/app/modales/server-unreachable-popup/server-unreachable-popup';
 import { Nullable } from 'src/app/models/nullable.model';
 import { environment } from 'src/environments/environment';
 
@@ -31,7 +31,14 @@ export class AppUpdateService {
   private readonly apiBaseUrl = environment.backBaseApiUrl;
 
   private isPromptOpen = false;
-  private isUnreachableOpen = false;
+  private isServerReachable = true;
+  private readonly serverUnreachable = new Subject<void>();
+
+  /**
+   * Emits when the backend stops answering (once per outage, not at each check): the app shows a
+   * toast rather than a popup, since some features keep working offline.
+   */
+  public readonly serverUnreachable$ = this.serverUnreachable.asObservable();
 
   /**
    * Asks the backend which release is deployed: prompts when this app is another one, and tells
@@ -41,31 +48,18 @@ export class AppUpdateService {
     const currentVersion = environment.version;
     this.http.get<AppVersionDto>(`${this.apiBaseUrl}/version`).subscribe({
       next: ({ version }) => {
+        this.isServerReachable = true;
         if (isRelease(currentVersion) && isRelease(version) && version !== currentVersion) {
           this.promptUpdate(version);
         }
       },
-      error: () => this.promptServerUnreachable(),
-    });
-  }
-
-  /** « Connexion au serveur impossible », once at a time; « Réessayer » checks again. */
-  public promptServerUnreachable(): void {
-    if (this.isUnreachableOpen) {
-      return;
-    }
-    this.isUnreachableOpen = true;
-    this.dialog
-      .open<boolean>(ServerUnreachablePopupComponent, {
-        panelClass: 'dialog-panel',
-        backdropClass: 'dialog-backdrop',
-      })
-      .closed.subscribe((retry) => {
-        this.isUnreachableOpen = false;
-        if (retry) {
-          this.checkVersion();
+      error: () => {
+        if (this.isServerReachable) {
+          this.isServerReachable = false;
+          this.serverUnreachable.next();
         }
-      });
+      },
+    });
   }
 
   /** Opens the « new version » popup, once at a time; refreshing reloads the app for good. */
@@ -80,11 +74,9 @@ export class AppUpdateService {
         panelClass: 'dialog-panel',
         backdropClass: 'dialog-backdrop',
       })
-      .closed.subscribe((refresh) => {
+      .closed.subscribe(() => {
         this.isPromptOpen = false;
-        if (refresh) {
-          void this.forceRefresh();
-        }
+        void this.forceRefresh();
       });
   }
 
