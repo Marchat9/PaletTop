@@ -60,6 +60,33 @@
   }
 }
 
+// Team import wizard: wide dialog on desktop, full screen on small viewports.
+.team-import-wizard-panel {
+  display: block;
+  width: min(100vw - 2rem, 46rem);
+
+  .cdk-dialog-container {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    outline: none;
+  }
+
+  @media (width < 768px) {
+    width: 100vw;
+    height: 100dvh;
+    max-width: 100vw;
+    max-height: 100dvh;
+    border-radius: 0;
+
+    .cdk-dialog-container {
+      height: 100dvh;
+      border-radius: 0;
+    }
+  }
+}
+
 // ###################################
 // Common popup shell
 //

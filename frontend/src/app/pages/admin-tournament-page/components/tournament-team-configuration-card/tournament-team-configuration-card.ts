@@ -33,8 +33,11 @@ export class TournamentTeamConfigurationCard {
   // ======= Input / Output =======
   public readonly tournament = input<Nullable<TournamentDto>>(null);
 
+  public readonly clubSuggestions = input<string[]>([]);
+
   public readonly onTeamUpdate = output<TeamConfigEvent>();
   public readonly notification = output<Notification>();
+  public readonly clubSearchRequested = output<string>();
   // ==============================
 
   public readonly isExporting = signal(false);
@@ -45,6 +48,11 @@ export class TournamentTeamConfigurationCard {
   /** "Add a team" asked from the next-step card. */
   public startTeamCreation(): void {
     this.teamConfig()?.startTeamCreation();
+  }
+
+  /** "Import from Excel" asked from the next-step card. */
+  public startTeamImport(): void {
+    this.teamConfig()?.openImportWizard();
   }
 
   public readonly hasTeams = computed(() => (this.tournament()?.teams?.length ?? 0) > 0);

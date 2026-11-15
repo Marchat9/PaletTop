@@ -1,6 +1,6 @@
 import { createAction, props } from '@ngrx/store';
 import { TournamentDto } from './tournament.models';
-import { TeamConfigCreateTeamPayload } from 'src/app/models/team-config.model';
+import { TeamConfigCreateTeamPayload, TeamImportSummary } from 'src/app/models/team-config.model';
 import { TeamDto } from 'src/app/models/team.model';
 import { TournamentConfigurationDto } from 'src/app/models/tournament-configuration.model';
 
@@ -37,11 +37,15 @@ export const updateTournamentAdministratorConfigurationFailure = createAction(
 // --------- Tournament Administrator Update configuration ---------
 export const updateTournamentAdministratorTeam = createAction(
   '[Tournament] Update Tournament Administrator Team',
-  props<{ code: string; teams: TeamConfigCreateTeamPayload[] }>(),
+  props<{
+    code: string;
+    teams: TeamConfigCreateTeamPayload[];
+    importSummary?: TeamImportSummary;
+  }>(),
 );
 export const updateTournamentAdministratorTeamSuccess = createAction(
   '[Tournament] Update Tournament Administrator Team Success',
-  props<{ tournament: TournamentDto }>(),
+  props<{ tournament: TournamentDto; importSummary?: TeamImportSummary }>(),
 );
 export const updateTournamentAdministratorTeamFailure = createAction(
   '[Tournament] Update Tournament Administrator Team Failure',

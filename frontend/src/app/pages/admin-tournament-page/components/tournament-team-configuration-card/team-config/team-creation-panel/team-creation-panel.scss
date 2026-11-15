@@ -17,29 +17,34 @@
     @include fields.section-header;
   }
 
-  .creation-tabs {
+  .created-banner {
     display: flex;
-    gap: 0.4rem;
-    padding: 0.3rem;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0.6rem 0.8rem;
     border-radius: 0.75rem;
-    background: var(--color-surface-container);
+    background: var(--color-success-container);
+    color: var(--color-on-success-container);
+    font-weight: 500;
 
-    app-button {
-      flex: 1 1 0;
-    }
-
-    @media (width < 375px) {
-      flex-wrap: wrap;
+    .code {
+      font-weight: bold;
+      letter-spacing: 0.1rem;
     }
   }
 
-  .tab-panel {
+  .creation-body {
     @include fields.team-form-fields;
 
     > .description {
       margin: -0.5rem 0 0;
       color: var(--color-on-surface-variant);
       line-height: 1.45;
+    }
+
+    .import-link {
+      align-self: flex-start;
     }
   }
 

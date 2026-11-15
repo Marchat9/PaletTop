@@ -18,6 +18,7 @@ function setup(renameRequest: { isLoading: boolean; error: string | null }) {
           superAdminClubs: {
             renameRequest,
             deleteRequest: { isLoading: false, error: null },
+            mergeRequest: { isLoading: false, error: null },
             list: { items: [], total: 0, criteria: {}, isLoading: false, error: null },
           },
         },

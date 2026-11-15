@@ -1,0 +1,54 @@
+<div class="merge-popup-container">
+  <div class="header-row">
+    <h2 class="title">
+      <app-icon name="merge" iconClass="icon" [ariaHidden]="true" />
+      Fusionner les clubs
+    </h2>
+    <button class="close-button" type="button" aria-label="Fermer" (click)="onCancel()">
+      <app-icon name="close" />
+    </button>
+  </div>
+
+  <div class="field-group">
+    <span class="field-label">Club à conserver</span>
+    <app-input-radio
+      name="Club à conserver"
+      [options]="keptOptions"
+      [value]="keptId()"
+      (valueChange)="onKeptChange($event)"
+    ></app-input-radio>
+  </div>
+
+  <div class="field-group">
+    <label class="field-label" for="club-merge-new-name">Nouveau nom (facultatif)</label>
+    <app-input-text
+      id="club-merge-new-name"
+      [placeholder]="kept().name"
+      [maxLength]="150"
+      [value]="newName()"
+      (valueChange)="onNewNameChange($event)"
+    ></app-input-text>
+  </div>
+
+  <p class="summary">
+    Les {{ merged().playersCount }} joueur(s) de « {{ merged().name }} » seront rattachés à «
+    {{ finalName() }} », puis « {{ merged().name }} » sera supprimé.
+  </p>
+
+  @if (error()) {
+    <div class="error-container">
+      <app-icon name="error" [ariaHidden]="true" />
+      <span>{{ error() }}</span>
+    </div>
+  }
+
+  <div class="actions">
+    <app-button title="Annuler" variant="secondary" (clicked)="onCancel()"></app-button>
+    <app-button
+      title="Fusionner"
+      variant="primary"
+      [loading]="request().isLoading"
+      (clicked)="onConfirm()"
+    ></app-button>
+  </div>
+</div>

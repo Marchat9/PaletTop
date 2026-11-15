@@ -58,4 +58,43 @@ describe('TournamentNextStep', () => {
     const host = render(tournament(4, { status: TournamentStatus.ACTIVE }));
     expect(host.querySelector('.next-step')).toBeNull();
   });
+
+  describe('import entry point', () => {
+    const importButton = (host: HTMLElement) =>
+      Array.from(host.querySelectorAll('app-button')).find((b) =>
+        b.textContent?.includes('Importer depuis Excel'),
+      );
+    const importLink = (host: HTMLElement) =>
+      Array.from(host.querySelectorAll('button.link')).find((b) =>
+        b.textContent?.includes('importer depuis Excel'),
+      );
+
+    it('shows the import button in draft when not full', () => {
+      expect(importButton(render(tournament(0)))).toBeTruthy();
+      expect(importLink(render(tournament(3)))).toBeTruthy();
+    });
+
+    it('hides it in championship and when full', () => {
+      const championship = {
+        configuration: {
+          maxTeamCapacity: 16,
+          competitionMode: 'championship',
+          competitionConfiguration: { homeClub: 'Home', awayClub: 'Away' },
+        },
+      } as unknown as Partial<TournamentDto>;
+      expect(importButton(render(tournament(0, championship)))).toBeUndefined();
+      expect(importLink(render(tournament(3, championship)))).toBeUndefined();
+      expect(importLink(render(tournament(16)))).toBeUndefined();
+    });
+
+    it('emits importTeams', () => {
+      const fixture = TestBed.createComponent(TournamentNextStep);
+      fixture.componentRef.setInput('tournament', tournament(0));
+      const spy = vi.fn();
+      fixture.componentInstance.importTeams.subscribe(spy);
+      fixture.detectChanges();
+      importButton(fixture.nativeElement)?.querySelector<HTMLElement>('.button')?.click();
+      expect(spy).toHaveBeenCalledTimes(1);
+    });
+  });
 });

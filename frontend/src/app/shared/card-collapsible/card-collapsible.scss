@@ -67,4 +67,12 @@
       min-height: 0;
     }
   }
+
+  // Opt-in: lets absolutely positioned popups (autocomplete listbox) escape the card once it is
+  // expanded. Overflow stays hidden during the open animation, then turns visible.
+  &.is-expanded.allow-overflow .card-collapsible-content-wrapper .card-collapsible-content {
+    overflow: visible;
+    min-width: 0;
+    transition: overflow 0s 220ms allow-discrete;
+  }
 }

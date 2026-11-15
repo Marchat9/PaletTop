@@ -1,10 +1,12 @@
-import { Dialog } from '@angular/cdk/dialog';
+import { Dialog, DialogRef } from '@angular/cdk/dialog';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { Overlay } from '@angular/cdk/overlay';
 import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  DestroyRef,
+  effect,
   ElementRef,
   inject,
   input,
@@ -12,9 +14,10 @@ import {
   signal,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { map } from 'rxjs';
+import { map, Subscription } from 'rxjs';
 import { Nullable } from 'src/app/models/nullable.model';
 import { TeamConfigEvent, TeamConfigEventType } from 'src/app/models/team-config.model';
+import { Button } from 'src/app/shared/button/button';
 import { ButtonIcon } from 'src/app/shared/button-icon/button-icon';
 import { StaggerDirective } from 'src/app/shared/stagger/stagger.directive';
 import { InputText } from 'src/app/shared/input-text/input-text';
@@ -32,13 +35,20 @@ import {
   TeamCreationPanelData,
 } from './team-creation-panel/team-creation-panel';
 import { TeamForm } from './team-form/team-form';
+import {
+  TeamImportWizard,
+  TeamImportWizardData,
+  TeamImportWizardResult,
+} from './team-import-wizard/team-import-wizard';
+import { canImportTeams } from './team-import.utils';
 import { environment } from '@environment';
 
 const MOBILE_BREAKPOINT = '(max-width: ' + environment.limitMobileSizePx + 'px)';
+const CREATION_HIGHLIGHT_MS = 1500;
 
 @Component({
   selector: 'app-team-config',
-  imports: [ButtonIcon, InputText, Icon, TeamCreationPanel, TeamForm, StaggerDirective],
+  imports: [Button, ButtonIcon, InputText, Icon, TeamCreationPanel, TeamForm, StaggerDirective],
   templateUrl: './team-config.html',
   styleUrl: './team-config.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -48,10 +58,13 @@ export class TeamConfig {
   private readonly overlay = inject(Overlay);
   private readonly breakpointObserver = inject(BreakpointObserver);
   private readonly host = inject(ElementRef<HTMLElement>);
+  private readonly destroyRef = inject(DestroyRef);
 
   // ======= Input / Output =======
   public readonly tournament = input<Nullable<TournamentDto>>(null);
+  public readonly clubSuggestions = input<string[]>([]);
   public readonly teamUpdated = output<TeamConfigEvent>();
+  public readonly clubSearchRequested = output<string>();
   // ==============================
 
   // Drives which of the two creation UIs is actually in the DOM — not just CSS-hidden —
@@ -83,6 +96,37 @@ export class TeamConfig {
 
   public readonly editingTeam = signal<Nullable<TeamEditFormValue>>(null);
 
+  public readonly teamCount = computed(() => this.tournament()?.teams?.length ?? 0);
+  public readonly maxTeamCapacity = computed(
+    () =>
+      this.tournament()?.configuration.maxTeamCapacity ??
+      environment.tournamentConfiguration.maxTeamCapacity.max,
+  );
+  public readonly canImport = computed(() => canImportTeams(this.tournament()));
+
+  // Brief outline on the desktop creation panel when the user is sent to it from elsewhere.
+  public readonly highlightCreation = signal(false);
+  private highlightTimer: Nullable<ReturnType<typeof setTimeout>> = null;
+
+  // The open mobile sheet, if any: its panel is created by the Dialog service, not by this
+  // template, so suggestions are pushed into it and its search requests are re-emitted here.
+  private readonly openSheet =
+    signal<Nullable<DialogRef<TeamConfigEvent | undefined, TeamCreationPanel>>>(null);
+
+  constructor() {
+    effect(() => {
+      const suggestions = this.clubSuggestions();
+      this.openSheet()?.componentRef?.setInput('clubSuggestions', suggestions);
+    });
+    // The sheet stays open between creations: it needs the live tournament to show the created
+    // team's code and to switch to the max-capacity message once the tournament is full.
+    effect(() => {
+      const tournament = this.tournament();
+      this.openSheet()?.componentRef?.setInput('tournament', tournament);
+    });
+    this.destroyRef.onDestroy(() => this.clearHighlightTimer());
+  }
+
   // ======= Actions =======
   public updateSearch(value: string): void {
     this.teamSearch.set(value);
@@ -102,7 +146,7 @@ export class TeamConfig {
 
   /**
    * Entry point for "add a team" from elsewhere on the page: the creation sheet on mobile, the
-   * creation form (scrolled to, name field focused) on larger screens.
+   * creation form (scrolled to, name field focused, briefly highlighted) on larger screens.
    */
   public startTeamCreation(): void {
     if (this.isMobile()) {
@@ -114,6 +158,46 @@ export class TeamConfig {
     ) as HTMLInputElement | null;
     nameField?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     nameField?.focus({ preventScroll: true });
+    this.flashCreationHighlight();
+  }
+
+  private flashCreationHighlight(): void {
+    this.clearHighlightTimer();
+    this.highlightCreation.set(true);
+    this.highlightTimer = setTimeout(() => {
+      this.highlightTimer = null;
+      this.highlightCreation.set(false);
+    }, CREATION_HIGHLIGHT_MS);
+  }
+
+  private clearHighlightTimer(): void {
+    if (this.highlightTimer) {
+      clearTimeout(this.highlightTimer);
+      this.highlightTimer = null;
+    }
+  }
+
+  // ======= Excel import wizard =======
+  public openImportWizard(): void {
+    if (!this.canImport()) {
+      return;
+    }
+    this.dialog
+      .open<TeamImportWizardResult, TeamImportWizardData>(TeamImportWizard, {
+        data: { existingTeamCount: this.teamCount(), maxTeamCapacity: this.maxTeamCapacity() },
+        panelClass: 'team-import-wizard-panel',
+        backdropClass: 'dialog-backdrop-light',
+      })
+      .closed.subscribe((result) => {
+        if (!result || result.teams.length === 0) {
+          return;
+        }
+        this.teamUpdated.emit({
+          type: TeamConfigEventType.IMPORT_TEAMS,
+          payload: result.teams,
+          ignoredRows: result.ignoredRows,
+        });
+      });
   }
 
   // ======= Creation / edition sheet (mobile) =======
@@ -129,18 +213,43 @@ export class TeamConfig {
   }
 
   private openTeamPanelSheet(data: TeamCreationPanelData): void {
-    this.dialog
-      .open<TeamConfigEvent | undefined, TeamCreationPanelData>(TeamCreationPanel, {
-        data,
-        positionStrategy: this.overlay.position().global().bottom('0').width('100%'),
-        panelClass: 'team-creation-sheet-panel',
-        backdropClass: 'dialog-backdrop-light',
-      })
-      .closed.subscribe((event) => {
-        if (event) {
-          this.teamUpdated.emit(event);
-        }
-      });
+    const ref = this.dialog.open<
+      TeamConfigEvent | undefined,
+      TeamCreationPanelData,
+      TeamCreationPanel
+    >(TeamCreationPanel, {
+      data,
+      positionStrategy: this.overlay.position().global().bottom('0').width('100%'),
+      panelClass: 'team-creation-sheet-panel',
+      backdropClass: 'dialog-backdrop-light',
+    });
+
+    // Creations are emitted while the sheet stays open; an edit closes it with its event.
+    const panelSubscriptions = new Subscription();
+    const panel = ref.componentInstance;
+    if (panel) {
+      panelSubscriptions.add(
+        panel.clubSearchRequested.subscribe((search) => this.clubSearchRequested.emit(search)),
+      );
+      panelSubscriptions.add(panel.teamUpdated.subscribe((event) => this.teamUpdated.emit(event)));
+      panelSubscriptions.add(
+        panel.importRequested.subscribe(() => {
+          ref.close(undefined);
+          this.openImportWizard();
+        }),
+      );
+    }
+    this.openSheet.set(ref);
+
+    ref.closed.subscribe((event) => {
+      panelSubscriptions.unsubscribe();
+      if (this.openSheet() === ref) {
+        this.openSheet.set(null);
+      }
+      if (event) {
+        this.teamUpdated.emit(event);
+      }
+    });
   }
 
   // ======= Team actions menu =======

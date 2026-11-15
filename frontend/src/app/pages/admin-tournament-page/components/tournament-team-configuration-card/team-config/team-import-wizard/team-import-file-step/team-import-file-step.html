@@ -1,0 +1,89 @@
+<div class="file-step">
+  <div
+    class="drop-zone"
+    [class.dragging]="isDragging()"
+    [class.has-error]="error() || dropError()"
+    (dragover)="onDragOver($event)"
+    (dragleave)="onDragLeave()"
+    (drop)="onDrop($event)"
+  >
+    <app-icon name="upload_file" iconClass="drop-icon" [ariaHidden]="true" />
+    @if (isParsing()) {
+      <p class="drop-title" role="status">Lecture de {{ fileName() }}…</p>
+    } @else {
+      <p class="drop-title">Déposez votre fichier ici</p>
+      <p class="drop-hint">ou</p>
+      <app-input-file
+        [title]="browseTitle()"
+        icon="folder_open"
+        [accept]="acceptedFormats()"
+        [disabled]="isParsing()"
+        (fileSelected)="onFileSelected($event)"
+      />
+    }
+    <p class="drop-hint">
+      Formats acceptés : {{ formatsLabel() }} · {{ maxTeams() }} équipes maximum
+    </p>
+  </div>
+
+  @if (dropError(); as message) {
+    <p class="drop-error" role="alert">{{ message }}</p>
+  }
+
+  @if (error(); as fileError) {
+    <div class="error-view" role="alert">
+      <p class="error-message">
+        <app-icon name="error" iconClass="error-icon" [ariaHidden]="true" />
+        <span
+          ><strong>{{ fileError.fileName }}</strong> : {{ fileError.message }}</span
+        >
+      </p>
+      @if (fileError.foundHeaders) {
+        <div class="headers found-headers">
+          <span class="headers-label">Colonnes trouvées</span>
+          <ul>
+            @for (header of fileError.foundHeaders; track $index) {
+              <li>{{ header }}</li>
+            }
+          </ul>
+        </div>
+      }
+      @if (fileError.expectedHeaders) {
+        <div class="headers expected-headers">
+          <span class="headers-label">Colonnes attendues</span>
+          <ul>
+            @for (header of fileError.expectedHeaders; track $index) {
+              <li>{{ header }}</li>
+            }
+          </ul>
+        </div>
+      }
+      <div class="error-actions">
+        <app-input-file
+          title="Choisir un autre fichier"
+          icon="folder_open"
+          [accept]="acceptedFormats()"
+          [disabled]="isParsing()"
+          (fileSelected)="onFileSelected($event)"
+        />
+        <app-button
+          title="Précédent"
+          variant="tertiary"
+          icon="arrow_back"
+          [large]="true"
+          (clicked)="back.emit()"
+        />
+      </div>
+    </div>
+  } @else {
+    <div class="step-actions">
+      <app-button
+        title="Précédent"
+        variant="tertiary"
+        icon="arrow_back"
+        [large]="true"
+        (clicked)="back.emit()"
+      />
+    </div>
+  }
+</div>

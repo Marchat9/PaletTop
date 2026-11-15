@@ -1,0 +1,122 @@
+:host {
+  display: block;
+}
+
+.file-step {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+
+  .drop-zone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 2rem 1rem;
+    text-align: center;
+    border: 2px dashed var(--color-outline-variant);
+    border-radius: 0.8rem;
+    background: var(--color-surface-container);
+    transition:
+      border-color 0.2s ease,
+      background 0.2s ease;
+
+    &.dragging {
+      border-color: var(--color-primary);
+      background: var(--color-hover-surface-soft);
+    }
+
+    &.has-error {
+      border-color: var(--color-status-error-border);
+    }
+
+    .drop-icon {
+      font-size: 2.5rem;
+      color: var(--color-primary);
+    }
+
+    .drop-title {
+      margin: 0;
+      font-weight: 600;
+      color: var(--color-on-surface);
+    }
+
+    .drop-hint {
+      margin: 0;
+      font-size: 0.78rem;
+      color: var(--color-on-surface-variant);
+    }
+
+    app-input-file {
+      display: block;
+    }
+  }
+
+  .drop-error {
+    margin: 0;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--color-status-error-text);
+  }
+
+  .error-view {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 0.9rem 1rem;
+    border-radius: 0.6rem;
+    border: 1px solid var(--color-status-error-border);
+    background: var(--color-status-error-bg);
+    color: var(--color-status-error-text);
+
+    .error-message {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.5rem;
+      margin: 0;
+      font-size: 0.9rem;
+      line-height: 1.4;
+    }
+
+    .headers {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+
+      .headers-label {
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+      }
+
+      ul {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      li {
+        padding: 0.2rem 0.55rem;
+        border-radius: 0.4rem;
+        font-size: 0.78rem;
+        border: 1px solid var(--color-status-error-border);
+      }
+    }
+
+    .error-actions {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.75rem;
+    }
+  }
+
+  .step-actions {
+    display: flex;
+    justify-content: center;
+  }
+}

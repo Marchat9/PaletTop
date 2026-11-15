@@ -11,11 +11,14 @@ import {
   viewChild,
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { Nullable } from '../../models/nullable.model';
 import { Icon } from '../icon/icon';
 
 /** Values of the inputmode attribute: which virtual keyboard a mobile browser shows. */
 export type InputMode =
   'text' | 'numeric' | 'decimal' | 'tel' | 'email' | 'url' | 'search' | 'none';
+/** Values of the aria-autocomplete attribute. */
+export type AriaAutocomplete = 'none' | 'inline' | 'list' | 'both';
 export type EnterKeyHint = 'enter' | 'done' | 'go' | 'next' | 'previous' | 'search' | 'send';
 
 @Component({
@@ -49,8 +52,19 @@ export class InputText implements AfterViewInit, ControlValueAccessor {
   readonly disabled = input<boolean>(false);
   readonly icon = input<string>('');
   readonly isPassword = input<boolean>(false);
+  /** Error state: red styling and aria-invalid. */
+  readonly invalid = input<boolean>(false);
+  readonly describedBy = input<Nullable<string>>(null);
+  readonly role = input<Nullable<string>>(null);
+  readonly ariaExpanded = input<Nullable<boolean>>(null);
+  readonly ariaControls = input<Nullable<string>>(null);
+  readonly ariaActivedescendant = input<Nullable<string>>(null);
+  readonly ariaAutocomplete = input<Nullable<AriaAutocomplete>>(null);
 
   readonly valueChange = output<string>();
+  readonly focused = output<void>();
+  readonly blurred = output<void>();
+  readonly keyPressed = output<KeyboardEvent>();
 
   protected readonly internalValue = signal('');
   protected readonly showPassword = signal(false);

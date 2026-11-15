@@ -7,6 +7,7 @@ import { Card } from 'src/app/shared/card/card';
 import { Icon } from 'src/app/shared/icon/icon';
 import { TournamentDto } from 'src/app/store/tournament/tournament.models';
 import { championshipStartBlocker } from 'src/app/utils/championship-start.util';
+import { canImportTeams } from '../tournament-team-configuration-card/team-config/team-import.utils';
 
 /** Below this, there is nobody to play against. */
 export const MIN_TEAMS_TO_START = 2;
@@ -28,6 +29,7 @@ export class TournamentNextStep {
   public readonly startLoading = input<boolean>(false);
 
   public readonly addTeam = output<void>();
+  public readonly importTeams = output<void>();
   public readonly startTournament = output<void>();
   // ==============================
 
@@ -39,6 +41,8 @@ export class TournamentNextStep {
       environment.tournamentConfiguration.maxTeamCapacity.max,
   );
   public readonly isFull = computed(() => this.teamCount() >= this.capacity());
+
+  public readonly canImport = computed(() => canImportTeams(this.tournament()));
 
   /** Enough teams registered: the start becomes the current step. */
   public readonly teamsReady = computed(() => this.teamCount() >= MIN_TEAMS_TO_START);

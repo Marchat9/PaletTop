@@ -11,6 +11,7 @@ export interface ParsedTeamRow {
 export interface ParseTeamsResult {
   rows: ParsedTeamRow[];
   globalError?: string;
+  foundHeaders?: string[];
 }
 
 export interface TeamImportLimits {
@@ -33,15 +34,40 @@ interface PlayerColumnMap {
   clubCol?: number;
 }
 
+/** Example rows written under the headers of the generated template (and shown in its preview). */
+export function getTemplateExampleRows(playersPerTeam: number): string[][] {
+  const columnCount = 1 + 2 * playersPerTeam;
+  const fill = (cells: string[]) =>
+    Array.from({ length: columnCount }, (_, index) => cells[index] ?? '');
+  return [
+    fill([
+      'Équipe Exemple 1',
+      'Jean Dupont (exemple)',
+      'Club des Exemples',
+      ...(playersPerTeam >= 2 ? ['Marie Martin (exemple)'] : []),
+    ]),
+    fill(['Équipe Exemple 2', 'Paul Petit (exemple)']),
+  ];
+}
+
+export function getTemplateHeaders(playersPerTeam: number): string[] {
+  const headers = ['Nom Équipe (optionnel)'];
+  for (let i = 1; i <= playersPerTeam; i++) {
+    headers.push(`Nom Joueur ${i}`, `Nom Club ${i}`);
+  }
+  return headers;
+}
+
 export async function generateTeamsExcelTemplate(maxPlayers: number): Promise<Blob> {
   const { default: ExcelJS } = await import('exceljs');
   const workbook = new ExcelJS.Workbook();
   const worksheet = workbook.addWorksheet('Équipes');
 
-  const columns: Partial<Column>[] = [{ header: 'Nom Équipe (optionnel)', key: 'team', width: 26 }];
+  const headers = getTemplateHeaders(maxPlayers);
+  const columns: Partial<Column>[] = [{ header: headers[0], key: 'team', width: 26 }];
   for (let i = 1; i <= maxPlayers; i++) {
-    columns.push({ header: `Nom Joueur ${i}`, key: `playerName${i}`, width: 22 });
-    columns.push({ header: `Nom Club ${i}`, key: `playerClub${i}`, width: 20 });
+    columns.push({ header: headers[2 * i - 1], key: `playerName${i}`, width: 22 });
+    columns.push({ header: headers[2 * i], key: `playerClub${i}`, width: 20 });
   }
   worksheet.columns = columns;
 
@@ -56,16 +82,10 @@ export async function generateTeamsExcelTemplate(maxPlayers: number): Promise<Bl
   };
   worksheet.views = [{ state: 'frozen', ySplit: 1 }];
 
-  worksheet.addRow({
-    team: 'Équipe Exemple 1',
-    playerName1: 'Jean Dupont (exemple)',
-    playerClub1: 'Club des Exemples',
-    ...(maxPlayers >= 2 ? { playerName2: 'Marie Martin (exemple)' } : {}),
-  });
-  worksheet.addRow({
-    team: 'Équipe Exemple 2',
-    playerName1: 'Paul Petit (exemple)',
-  });
+  for (const exampleRow of getTemplateExampleRows(maxPlayers)) {
+    // Blank preview cells stay truly empty in the file.
+    worksheet.addRow(exampleRow.map((cell) => cell || null));
+  }
 
   const buffer = await workbook.xlsx.writeBuffer();
   return new Blob([buffer], {
@@ -129,6 +149,7 @@ export async function parseTeamsExcelFile(
       rows: [],
       globalError:
         'Aucune colonne "Nom Joueur N" détectée. Vérifiez que vous utilisez le modèle fourni.',
+      foundHeaders: headerRow.map((header) => (header ?? '').trim()).filter(Boolean),
     };
   }
 

@@ -39,6 +39,16 @@
       border-color: var(--color-primary);
     }
 
+    &.invalid {
+      border-color: var(--color-error);
+      color: var(--color-error);
+
+      &:focus {
+        outline-color: color-mix(in srgb, var(--color-error) 60%, transparent);
+        border-color: var(--color-error);
+      }
+    }
+
     &:disabled {
       opacity: 0.7;
       cursor: not-allowed;

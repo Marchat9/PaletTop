@@ -18,6 +18,8 @@ import { TeamController } from './controllers/team.controller';
 import { ScoreController } from './controllers/score.controller';
 import { TournamentsController } from './controllers/tournaments.controller';
 import { MetricsController } from './controllers/metrics.controller';
+import { TournamentClubsController } from './controllers/tournament-clubs.controller';
+import { TournamentClubsService } from './services/tournament-clubs.service';
 import { MatchRepository } from './repositories/match.repository';
 import { PlayerClubRepository } from './repositories/player-club.repository';
 import { SessionRepository } from './repositories/session.repository';
@@ -48,6 +50,7 @@ import { SessionController } from 'src/modules/tournaments/controllers/session.c
         ScoreController,
         SessionController,
         MetricsController,
+        TournamentClubsController,
     ],
     providers: [
         TournamentRepository,
@@ -57,6 +60,7 @@ import { SessionController } from 'src/modules/tournaments/controllers/session.c
         SessionRepository,
         PoolRepository,
         TournamentAuthService,
+        TournamentClubsService,
         TournamentsService,
         PoolService,
         SessionService,

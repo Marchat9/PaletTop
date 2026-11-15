@@ -1,3 +1,4 @@
+import { Nullable } from 'src/app/models/nullable.model';
 import { TounamentTeamDto } from 'src/app/store/tournament/tournament.models';
 
 export interface TeamPlayerFormValue {
@@ -50,4 +51,36 @@ export function filterTeams(teams: TounamentTeamDto[], research: string): Tounam
 
     return teamText.includes(search) || playersText.includes(search);
   });
+}
+
+// The team that appeared since `previousIds` was captured — how a just-created team (and its
+// server-generated code) is recognised once the live tournament is refreshed.
+export function findNewTeam(
+  previousIds: ReadonlySet<string>,
+  teams: TounamentTeamDto[],
+): Nullable<TounamentTeamDto> {
+  return teams.find((team) => !previousIds.has(team.id)) ?? null;
+}
+
+// The server-confirmed team for a creation submitted when `previousIds` was captured. Matched by
+// the submitted name so a concurrently added team is not mistaken for it; a creation without a
+// name is matched by the backend auto-name (`Équipe <n>`), or by being the only new team.
+export function findCreatedTeam(
+  previousIds: ReadonlySet<string>,
+  teams: TounamentTeamDto[],
+  submittedName: Nullable<string>,
+): Nullable<TounamentTeamDto> {
+  const newTeams = teams.filter((team) => !previousIds.has(team.id));
+  const name = submittedName?.trim();
+  if (name) {
+    return findNewTeam(
+      previousIds,
+      newTeams.filter((team) => team.name.trim() === name),
+    );
+  }
+  const autoName = `Équipe ${previousIds.size + 1}`;
+  return (
+    newTeams.find((team) => team.name.trim() === autoName) ??
+    (newTeams.length === 1 ? newTeams[0] : null)
+  );
 }

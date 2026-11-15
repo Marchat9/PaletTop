@@ -1,17 +1,22 @@
 import { Dialog } from '@angular/cdk/dialog';
 import { TestBed } from '@angular/core/testing';
-import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
+import { By } from '@angular/platform-browser';
+import { ActivatedRoute, convertToParamMap, ParamMap, Router } from '@angular/router';
 import { Actions } from '@ngrx/effects';
 import { Action } from '@ngrx/store';
 import { MockStore, provideMockStore } from '@ngrx/store/testing';
-import { of, Subject } from 'rxjs';
+import { BehaviorSubject, Observable, of, Subject } from 'rxjs';
 import { describe, expect, it, vi } from 'vitest';
+import { TeamConfigEventType } from 'src/app/models/team-config.model';
 import { TournamentStatus } from 'src/app/models/tournament-status.enum';
 import { resyncRequested } from 'src/app/store/realtime/realtime.actions';
 import { selectAdminUpdateScoreLoading } from 'src/app/store/match/match.selectors';
 import { selectRanking, selectRankingIsLoading } from 'src/app/store/ranking/ranking.selectors';
 import { selectSessions } from 'src/app/store/session/session.selectors';
-import { connectTournamentAdministrator } from 'src/app/store/tournament/tournament.admin.actions';
+import {
+  connectTournamentAdministrator,
+  updateTournamentAdministratorTeam,
+} from 'src/app/store/tournament/tournament.admin.actions';
 import {
   selectCompleteTournamentLoading,
   selectCurrentTournamentAdminInformations,
@@ -23,10 +28,16 @@ import {
   selectTournamentUpdateConfigLoading,
 } from 'src/app/store/tournament/tournament.selectors';
 import { TournamentDto } from 'src/app/store/tournament/tournament.models';
+import {
+  clearTournamentClubSuggestions,
+  searchTournamentClubs,
+} from 'src/app/store/tournament-club/tournament-club.actions';
+import { selectTournamentClubSuggestions } from 'src/app/store/tournament-club/tournament-club.selectors';
 import { AdminTournamentPageComponent } from './admin-tournament-page.component';
 import { GlobalRankingEntry } from 'src/app/models/global-ranking.model';
 import type { TDocumentDefinitions } from 'pdfmake/interfaces';
 import { PdfExportService } from 'src/app/services/pdf-export.service';
+import { TournamentTeamConfigurationCard } from './components/tournament-team-configuration-card/tournament-team-configuration-card';
 
 function buildTournament(status = TournamentStatus.ACTIVE): TournamentDto {
   return {
@@ -70,6 +81,7 @@ interface SetupOptions {
   status?: TournamentStatus;
   ranking?: GlobalRankingEntry[];
   pdfDownload?: () => Promise<void>;
+  paramMap?: Observable<ParamMap>;
 }
 
 function setup({
@@ -77,10 +89,9 @@ function setup({
   status = TournamentStatus.ACTIVE,
   ranking = [],
   pdfDownload = () => Promise.resolve(),
+  paramMap = of(convertToParamMap({ tournamentCode: 'ABCD' })),
 }: SetupOptions = {}) {
-  const activatedRoute = {
-    paramMap: of(convertToParamMap({ tournamentCode: 'ABCD' })),
-  } as unknown as ActivatedRoute;
+  const activatedRoute = { paramMap } as unknown as ActivatedRoute;
   const routerMock = { navigate: vi.fn() };
   const dialogMock = { open: vi.fn() };
   const actions$ = new Subject<Action>();
@@ -113,6 +124,7 @@ function setup({
           { selector: selectRankingIsLoading, value: false },
           { selector: selectSessions, value: [] },
           { selector: selectRanking, value: ranking },
+          { selector: selectTournamentClubSuggestions, value: [] },
         ],
       }),
     ],
@@ -208,5 +220,75 @@ describe('AdminTournamentPageComponent', { timeout: 15_000 }, () => {
         }),
       }),
     );
+  });
+
+  it('dispatches searchTournamentClubs with the tournament code', () => {
+    const { fixture, store } = setup();
+    fixture.detectChanges();
+    const dispatchSpy = vi.spyOn(store, 'dispatch');
+
+    fixture.componentInstance.searchClubs('Pal');
+
+    expect(dispatchSpy).toHaveBeenCalledWith(
+      searchTournamentClubs({ code: 'ABCD', search: 'Pal' }),
+    );
+  });
+
+  it('passes the import summary on IMPORT_TEAMS', () => {
+    const { fixture, store } = setup();
+    fixture.detectChanges();
+    const dispatchSpy = vi.spyOn(store, 'dispatch');
+    const teams = [{ players: [{ name: 'A' }] }, { players: [{ name: 'B' }] }];
+
+    fixture.componentInstance.updateTournamentTeam({
+      type: TeamConfigEventType.IMPORT_TEAMS,
+      payload: teams,
+      ignoredRows: 3,
+    });
+
+    expect(dispatchSpy).toHaveBeenCalledWith(
+      updateTournamentAdministratorTeam({
+        code: 'ABCD',
+        teams,
+        importSummary: { importedCount: 2, ignoredCount: 3 },
+      }),
+    );
+  });
+
+  it('opens the wizard through the card', () => {
+    const { fixture } = setup();
+    fixture.detectChanges();
+    const card = fixture.debugElement.query(By.directive(TournamentTeamConfigurationCard))
+      .componentInstance as TournamentTeamConfigurationCard;
+    const importSpy = vi.spyOn(card, 'startTeamImport').mockImplementation(() => {});
+
+    fixture.componentInstance.importTeams();
+
+    expect(importSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('clears the club suggestions when the tournament code changes', () => {
+    const paramMap = new BehaviorSubject(convertToParamMap({ tournamentCode: 'ABCD' }));
+    const { fixture, store } = setup({ paramMap });
+    const dispatchSpy = vi.spyOn(store, 'dispatch');
+    fixture.detectChanges();
+    expect(dispatchSpy).toHaveBeenCalledWith(clearTournamentClubSuggestions());
+
+    dispatchSpy.mockClear();
+    paramMap.next(convertToParamMap({ tournamentCode: 'abcd' }));
+    expect(dispatchSpy).not.toHaveBeenCalledWith(clearTournamentClubSuggestions());
+
+    paramMap.next(convertToParamMap({ tournamentCode: 'WXYZ' }));
+    expect(dispatchSpy).toHaveBeenCalledWith(clearTournamentClubSuggestions());
+  });
+
+  it('clears the club suggestions when the page is left (disconnect, other page)', () => {
+    const { fixture, store } = setup();
+    fixture.detectChanges();
+    const dispatchSpy = vi.spyOn(store, 'dispatch');
+
+    fixture.destroy();
+
+    expect(dispatchSpy).toHaveBeenCalledWith(clearTournamentClubSuggestions());
   });
 });

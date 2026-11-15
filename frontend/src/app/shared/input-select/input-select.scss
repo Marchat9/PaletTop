@@ -43,6 +43,16 @@
       border-color: var(--color-primary);
     }
 
+    &.invalid {
+      border-color: var(--color-error);
+      color: var(--color-error);
+
+      &:focus {
+        outline-color: var(--color-error);
+        border-color: var(--color-error);
+      }
+    }
+
     &:disabled {
       opacity: 0.7;
       cursor: not-allowed;

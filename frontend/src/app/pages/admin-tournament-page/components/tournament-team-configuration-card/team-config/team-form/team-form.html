@@ -15,8 +15,13 @@
       icon="location_city"
       [options]="championshipClubs()"
       [value]="teamClub()"
+      [invalid]="!!clubError()"
+      [describedBy]="clubError() ? clubErrorId : null"
       (valueChange)="updateTeamClub($event)"
     />
+    @if (clubError(); as error) {
+      <p class="field-error" [id]="clubErrorId">{{ error }}</p>
+    }
   }
 </div>
 
@@ -35,21 +40,27 @@
   </div>
 
   @for (player of teamPlayers(); track $index) {
+    @let playerError = playerErrors()[$index];
     <div class="player-row">
       <app-input-text
         id="{{ formId }}-player-name-{{ $index }}"
         icon="badge"
         placeholder="Nom du joueur"
         [value]="player.name"
+        [invalid]="!!playerError"
+        [describedBy]="playerError ? formId + '-player-error-' + $index : null"
         (valueChange)="updatePlayerName($index, $event)"
+        (blurred)="markPlayerTouched($index)"
       />
       @if (!isChampionship()) {
-        <app-input-text
+        <app-input-autocomplete
           id="{{ formId }}-player-club-{{ $index }}"
           icon="location_city"
           placeholder="Club (optionnel)"
           [value]="player.club"
+          [options]="clubSuggestions()"
           (valueChange)="updatePlayerClub($index, $event)"
+          (search)="clubSearchRequested.emit($event)"
         />
       }
       <app-button
@@ -60,6 +71,9 @@
         (clicked)="removePlayerRow($index)"
       />
     </div>
+    @if (playerError) {
+      <p class="field-error" id="{{ formId }}-player-error-{{ $index }}">{{ playerError }}</p>
+    }
   }
 </div>
 
@@ -70,7 +84,6 @@
   <app-button
     [title]="isEditMode() ? 'Enregistrer' : 'Créer l\'équipe'"
     [icon]="isEditMode() ? 'save' : 'group_add'"
-    [disabled]="!canSubmit()"
     (clicked)="onSubmit()"
   />
 </div>

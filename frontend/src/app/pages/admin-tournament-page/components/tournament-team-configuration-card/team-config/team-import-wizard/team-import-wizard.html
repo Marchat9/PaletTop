@@ -1,0 +1,85 @@
+<div class="team-import-wizard popup-surface">
+  <div class="popup-header">
+    <div class="header-start">
+      @if (canGoBack()) {
+        <app-button-icon
+          class="popup-back"
+          icon="arrow_back"
+          role="button"
+          tabindex="0"
+          aria-label="Étape précédente"
+          (clicked)="onBack()"
+          (keydown.enter)="onBack()"
+          (keydown.space)="$event.preventDefault(); onBack()"
+        />
+      }
+      <h2 class="popup-title">
+        <app-icon name="upload_file" iconClass="icon" [ariaHidden]="true" />
+        Importer des équipes
+      </h2>
+    </div>
+    <button type="button" class="popup-close" aria-label="Fermer" (click)="onCancel()">
+      <app-icon name="close" [ariaHidden]="true" />
+    </button>
+  </div>
+
+  <ol class="stepper" aria-label="Progression de l'import">
+    @for (item of steps; track item.number) {
+      <li
+        class="step"
+        [class.current]="item.number === step()"
+        [class.done]="item.number < step()"
+        [attr.aria-current]="item.number === step() ? 'step' : null"
+      >
+        <span class="step-number" aria-hidden="true">{{ item.number }}</span>
+        <span class="step-label">{{ item.label }}</span>
+      </li>
+    }
+  </ol>
+  <p class="sr-only" role="status" aria-live="polite">{{ progressLabel() }}</p>
+
+  @if (templateError(); as message) {
+    <p class="wizard-error" role="alert">
+      <app-icon name="error" [ariaHidden]="true" />
+      <span>{{ message }}</span>
+    </p>
+  }
+
+  @switch (step()) {
+    @case (1) {
+      <app-team-import-template-step
+        [playersCount]="playersCount()"
+        [maxPlayers]="maxPlayersPerTeam"
+        (playersCountChange)="onPlayersCountChange($event)"
+        (download)="onDownloadTemplate()"
+        (continue)="onContinue()"
+        (skip)="onContinue()"
+      />
+    }
+    @case (2) {
+      <app-team-import-file-step
+        [fileName]="fileName()"
+        [error]="fileError()"
+        [isParsing]="isParsing()"
+        [maxTeams]="maxTeamsPerImport"
+        [acceptedFormats]="acceptedFormats"
+        (fileSelected)="onFileSelected($event)"
+        (back)="onBack()"
+      />
+    }
+    @case (3) {
+      <app-team-import-review-step
+        [rows]="visibleRows()"
+        [counts]="counts()"
+        [filter]="filter()"
+        [capacity]="capacity()"
+        [blockReason]="blockReason()"
+        [canImport]="canImport()"
+        (filterChange)="onFilterChange($event)"
+        (changeFile)="onChangeFile()"
+        (cancel)="onCancel()"
+        (import)="onImport()"
+      />
+    }
+  }
+</div>

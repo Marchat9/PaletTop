@@ -18,3 +18,7 @@ export const selectSuperAdminClubDeleteRequest = createSelector(
   selectSuperAdminClubsState,
   (state) => state.deleteRequest,
 );
+export const selectSuperAdminClubMergeRequest = createSelector(
+  selectSuperAdminClubsState,
+  (state) => state.mergeRequest,
+);

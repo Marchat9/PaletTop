@@ -1,0 +1,42 @@
+<div class="input-autocomplete">
+  <div class="visually-hidden" role="status" aria-live="polite" aria-atomic="true">
+    {{ statusMessage() }}
+  </div>
+
+  <app-input-text
+    [id]="id()"
+    [icon]="icon()"
+    [placeholder]="placeholder()"
+    [value]="currentValue()"
+    [maxLength]="maxLength()"
+    [disabled]="disabled()"
+    [invalid]="invalid()"
+    [describedBy]="describedBy()"
+    [role]="comboboxRole"
+    [ariaExpanded]="isOpen()"
+    [ariaControls]="listboxId()"
+    [ariaActivedescendant]="activeOptionId()"
+    [ariaAutocomplete]="autocompleteMode"
+    (valueChange)="onValueChange($event)"
+    (focused)="onFocus()"
+    (blurred)="onBlur()"
+    (keyPressed)="onKeyPressed($event)"
+  />
+
+  @if (isOpen()) {
+    <ul class="listbox" role="listbox" [id]="listboxId()">
+      @for (item of items(); track item.id; let i = $index) {
+        <li
+          class="option"
+          role="option"
+          [id]="item.id"
+          [class.active]="i === activeIndex()"
+          [attr.aria-selected]="i === activeIndex()"
+          (mousedown)="onOptionMouseDown($event, i)"
+        >
+          {{ item.label }}
+        </li>
+      }
+    </ul>
+  }
+</div>

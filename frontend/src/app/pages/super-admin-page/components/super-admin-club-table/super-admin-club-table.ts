@@ -40,9 +40,12 @@ export class SuperAdminClubTableComponent {
   readonly renameRequested = output<SuperAdminClubSummaryDto>();
   readonly deleteOneRequested = output<SuperAdminClubSummaryDto>();
   readonly deleteSelectionRequested = output<string[]>();
+  readonly mergeSelectionRequested = output<string[]>();
 
   readonly selectedIds = signal<Set<string>>(new Set());
   readonly selectedCount = computed(() => this.selectedIds().size);
+  // A merge always takes exactly two clubs: the kept one and the merged one.
+  readonly canMerge = computed(() => this.selectedCount() === 2);
   readonly totalPages = computed(() =>
     computeTotalPages(this.list().total, this.list().criteria.pageSize),
   );
@@ -103,5 +106,10 @@ export class SuperAdminClubTableComponent {
 
   deleteSelection(): void {
     this.deleteSelectionRequested.emit(Array.from(this.selectedIds()));
+  }
+
+  mergeSelection(): void {
+    if (!this.canMerge()) return;
+    this.mergeSelectionRequested.emit(Array.from(this.selectedIds()));
   }
 }

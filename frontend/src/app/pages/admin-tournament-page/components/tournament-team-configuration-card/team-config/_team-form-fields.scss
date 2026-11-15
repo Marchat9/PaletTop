@@ -98,7 +98,8 @@
       gap: 0.55rem;
       align-items: center;
 
-      app-input-text {
+      app-input-text,
+      app-input-autocomplete {
         flex: 1 1 auto;
       }
 
@@ -132,10 +133,5 @@
     &.wrap {
       flex-wrap: wrap;
     }
-  }
-
-  .import-error {
-    color: var(--color-error);
-    font-size: 0.85rem;
   }
 }

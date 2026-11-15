@@ -1,0 +1,81 @@
+<div class="review-step">
+  <div class="chips" role="group" aria-label="Filtrer les lignes">
+    @for (chip of chips(); track chip.filter) {
+      <button
+        type="button"
+        class="chip"
+        [class]="'chip ' + chip.filter"
+        [attr.aria-pressed]="filter() === chip.filter"
+        (click)="filterChange.emit(chip.filter)"
+      >
+        <span>{{ chip.label }}</span>
+        <span class="chip-count">{{ chip.count }}</span>
+      </button>
+    }
+  </div>
+
+  <ul class="rows">
+    @for (view of rows(); track view.row.rowIndex) {
+      <li class="row-item" [class]="'row-item ' + view.status">
+        <div class="row-header">
+          <span class="row-index">Ligne {{ view.row.rowIndex }}</span>
+          <span class="row-name" [class.struck]="view.status === 'ignored'">{{
+            view.displayName
+          }}</span>
+          <span class="row-count">{{ view.row.players.length }} joueur(s)</span>
+        </div>
+        @if (view.row.errors.length > 0 || view.row.warnings.length > 0) {
+          <div class="row-messages">
+            @for (error of view.row.errors; track error) {
+              <span class="message error">{{ error }}</span>
+            }
+            @for (warning of view.row.warnings; track warning) {
+              <span class="message warning">{{ warning }}</span>
+            }
+          </div>
+        }
+      </li>
+    } @empty {
+      <li class="empty">Aucune ligne dans cette catégorie.</li>
+    }
+  </ul>
+
+  <div class="gauge">
+    <span class="gauge-label" [class.exceeds]="capacity().exceeds"
+      >Après import : {{ capacity().after }} / {{ capacity().max }}</span
+    >
+    <div class="gauge-track" aria-hidden="true">
+      <div
+        class="gauge-fill"
+        [class.exceeds]="capacity().exceeds"
+        [style.width.%]="gaugePercent()"
+      ></div>
+    </div>
+  </div>
+
+  @if (blockReason(); as reason) {
+    <p class="block-reason" role="alert">
+      <app-icon name="warning" [ariaHidden]="true" />
+      <span>{{ reason }}</span>
+    </p>
+  }
+
+  <div class="actions">
+    <app-button
+      title="Changer de fichier"
+      variant="tertiary"
+      icon="swap_horiz"
+      [large]="true"
+      (clicked)="changeFile.emit()"
+    />
+    <app-button title="Annuler" variant="secondary" [large]="true" (clicked)="cancel.emit()" />
+    <app-button
+      [title]="importLabel()"
+      variant="primary"
+      icon="upload_file"
+      [large]="true"
+      [disabled]="!canImport()"
+      (clicked)="import.emit()"
+    />
+  </div>
+</div>

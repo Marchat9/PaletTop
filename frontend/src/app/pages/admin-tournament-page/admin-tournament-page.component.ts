@@ -62,6 +62,11 @@ import { MatchSessionsCardComponent } from './components/match-sessions-card/mat
 import { TournamentConfigurationCardComponent } from './components/tournament-configuration-card/tournament-configuration-card.component';
 import { TournamentHeaderComponent } from './components/tournament-header/tournament-header.component';
 import { TournamentTeamConfigurationCard } from './components/tournament-team-configuration-card/tournament-team-configuration-card';
+import {
+  clearTournamentClubSuggestions,
+  searchTournamentClubs,
+} from 'src/app/store/tournament-club/tournament-club.actions';
+import { selectTournamentClubSuggestions } from 'src/app/store/tournament-club/tournament-club.selectors';
 import { selectSessions } from 'src/app/store/session/session.selectors';
 import { selectAdminUpdateScoreLoading } from 'src/app/store/match/match.selectors';
 import { onResyncRequested } from 'src/app/utils/resync-on-reconnect.util';
@@ -99,6 +104,7 @@ export class AdminTournamentPageComponent implements OnInit {
   private readonly isAdminView = this.store.selectSignal(selectCurrentTournamentIsAdminView);
   public readonly sessions = this.store.selectSignal(selectSessions);
   public readonly ranking = this.store.selectSignal(selectRanking);
+  public readonly clubSuggestions = this.store.selectSignal(selectTournamentClubSuggestions);
 
   // Loadings
   public readonly tournamentLoading = computed(
@@ -153,6 +159,10 @@ export class AdminTournamentPageComponent implements OnInit {
       }
     });
 
+    // Club suggestions belong to one tournament: drop them when leaving the page (disconnect,
+    // navigation) so they never show up in another tournament.
+    this.destroyRef.onDestroy(() => this.store.dispatch(clearTournamentClubSuggestions()));
+
     onResyncRequested(() => {
       const code = this.tournament()?.code;
       const password = this.adminPassword();
@@ -168,7 +178,11 @@ export class AdminTournamentPageComponent implements OnInit {
       if (code) {
         // Normalized like the stored code: otherwise "abc" never equals the loaded "ABC" and the
         // connection effect fires again on every response.
-        this.tournamentCode.set(normalizeCode(code));
+        const normalized = normalizeCode(code);
+        if (normalized !== this.tournamentCode()) {
+          this.store.dispatch(clearTournamentClubSuggestions());
+        }
+        this.tournamentCode.set(normalized);
       } else {
         this.reconnectAsAdmin();
       }
@@ -201,6 +215,14 @@ export class AdminTournamentPageComponent implements OnInit {
     );
   }
 
+  public searchClubs(search: string): void {
+    const code = this.tournament()?.code;
+    if (!code) {
+      return;
+    }
+    this.store.dispatch(searchTournamentClubs({ code, search }));
+  }
+
   public updateTournamentTeam(event: TeamConfigEvent): void {
     const code = this.tournament()?.code;
     if (!code) {
@@ -211,7 +233,16 @@ export class AdminTournamentPageComponent implements OnInit {
         this.store.dispatch(updateTournamentAdministratorTeam({ code, teams: [event.payload] }));
         break;
       case TeamConfigEventType.IMPORT_TEAMS:
-        this.store.dispatch(updateTournamentAdministratorTeam({ code, teams: event.payload }));
+        this.store.dispatch(
+          updateTournamentAdministratorTeam({
+            code,
+            teams: event.payload,
+            importSummary: {
+              importedCount: event.payload.length,
+              ignoredCount: event.ignoredRows ?? 0,
+            },
+          }),
+        );
         break;
       case TeamConfigEventType.UPDATE_TEAM: {
         const team = this.tournament()?.teams.find((t) => t.id === event.payload.teamId);
@@ -325,6 +356,11 @@ export class AdminTournamentPageComponent implements OnInit {
   /** From the next-step card: open the team creation (sheet on mobile, form on desktop). */
   public addTeam(): void {
     this.teamCard()?.startTeamCreation();
+  }
+
+  /** From the next-step card: open the Excel import wizard. */
+  public importTeams(): void {
+    this.teamCard()?.startTeamImport();
   }
 
   public nextSession(): void {

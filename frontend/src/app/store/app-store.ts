@@ -60,6 +60,10 @@ import { TrainingEffects } from './training/training.effects';
 import { TrainingState } from './training/training.models';
 import { trainingReducer } from './training/training.reducer';
 import { trainingFeatureKey } from './training/training.selectors';
+import { TournamentClubEffects } from './tournament-club/tournament-club.effects';
+import { TournamentClubState } from './tournament-club/tournament-club.reducer';
+import { tournamentClubReducer } from './tournament-club/tournament-club.reducer';
+import { tournamentClubFeatureKey } from './tournament-club/tournament-club.selectors';
 
 export interface AppState {
   [appConfigFeatureKey]: AppConfigState;
@@ -77,6 +81,7 @@ export interface AppState {
   [superAdminClubsFeatureKey]: SuperAdminClubsState;
   [spectatorFeatureKey]: SpectatorState;
   [trainingFeatureKey]: TrainingState;
+  [tournamentClubFeatureKey]: TournamentClubState;
 }
 
 export const reducers: ActionReducerMap<AppState> = {
@@ -95,6 +100,7 @@ export const reducers: ActionReducerMap<AppState> = {
   [superAdminClubsFeatureKey]: superAdminClubsReducer,
   [spectatorFeatureKey]: spectatorReducer,
   [trainingFeatureKey]: trainingReducer,
+  [tournamentClubFeatureKey]: tournamentClubReducer,
 };
 
 export const effects = [
@@ -114,4 +120,5 @@ export const effects = [
   SuperAdminClubsEffects,
   SpectatorEffects,
   TrainingEffects,
+  TournamentClubEffects,
 ];

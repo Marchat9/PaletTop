@@ -1,0 +1,67 @@
+:host {
+  display: block;
+}
+
+.template-step {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+
+  .intro {
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: var(--color-on-surface-variant);
+  }
+
+  .preview-wrapper {
+    overflow-x: auto;
+    border-radius: 0.5rem;
+    border: 1px solid var(--color-outline-variant);
+
+    &:focus-visible {
+      outline: 2px solid var(--color-primary);
+      outline-offset: 2px;
+    }
+
+    .preview {
+      border-collapse: collapse;
+      width: max-content;
+      min-width: 100%;
+
+      th {
+        padding: 0.6rem 0.9rem;
+        text-align: left;
+        white-space: nowrap;
+        font-size: 0.78rem;
+        font-weight: 700;
+        background: var(--color-template-header-bg);
+        color: var(--color-template-header-text);
+      }
+
+      td {
+        padding: 0.5rem 0.9rem;
+        white-space: nowrap;
+        font-size: 0.78rem;
+        color: var(--color-on-surface-variant);
+        border-top: 1px solid var(--color-outline-variant);
+      }
+    }
+  }
+
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+
+    app-button {
+      flex: 1;
+      min-width: 11rem;
+    }
+  }
+
+  .skip {
+    display: flex;
+    justify-content: center;
+  }
+}

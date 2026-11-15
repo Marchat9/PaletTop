@@ -1,4 +1,8 @@
-<div class="card-collapsible" [class.is-expanded]="isExpanded()">
+<div
+  class="card-collapsible"
+  [class.is-expanded]="isExpanded()"
+  [class.allow-overflow]="allowOverflow()"
+>
   <div
     class="card-collapsible-header"
     [class.pointer]="canCollapse()"

@@ -1,9 +1,12 @@
 <div class="team-config">
   @if (!isMobile()) {
-    <div class="creation-column">
+    <div class="creation-column" [class.highlighted]="highlightCreation()">
       <app-team-creation-panel
         [tournament]="tournament()"
+        [clubSuggestions]="clubSuggestions()"
+        (clubSearchRequested)="clubSearchRequested.emit($event)"
         (teamUpdated)="teamUpdated.emit($event)"
+        (importRequested)="openImportWizard()"
       />
     </div>
   }
@@ -13,7 +16,7 @@
       <div class="section-header">
         <span class="eyebrow">Vue d'ensemble</span>
         <div class="title-row">
-          <span class="title">Équipes inscrites ({{ tournament()?.teams?.length ?? 0 }})</span>
+          <span class="title">Équipes inscrites ({{ teamCount() }})</span>
           <ng-content select="[actions]" />
         </div>
       </div>
@@ -33,12 +36,34 @@
       </div>
     </div>
 
-    @if ((tournament()?.teams?.length ?? 0) === 0) {
-      <span class="team-config-empty">
-        Aucune équipe pour le moment. Créez la première équipe via le formulaire.
-      </span>
+    @if (teamCount() === 0) {
+      <div class="team-config-empty-state">
+        <span class="team-config-empty"
+          >Aucune équipe pour le moment. Comment voulez-vous commencer ?</span
+        >
+        <div class="empty-state-choices">
+          <app-button
+            title="Saisir les équipes une par une"
+            icon="edit_note"
+            variant="secondary"
+            [large]="true"
+            [titleCanWrap]="true"
+            (clicked)="startTeamCreation()"
+          />
+          @if (canImport()) {
+            <app-button
+              title="Importer une liste depuis Excel"
+              icon="upload_file"
+              variant="secondary"
+              [large]="true"
+              [titleCanWrap]="true"
+              (clicked)="openImportWizard()"
+            />
+          }
+        </div>
+      </div>
     } @else if (filteredTeams().length === 0) {
-      <span class="team-config-empty">Aucune equipe ne correspond à ce filtre.</span>
+      <span class="team-config-empty">Aucune équipe ne correspond à ce filtre.</span>
     } @else {
       <div class="team-table" role="table">
         <div class="team-row team-row-header" role="row">
@@ -56,6 +81,8 @@
                 <app-team-form
                   [tournament]="tournament()"
                   [editingTeam]="editingTeam()"
+                  [clubSuggestions]="clubSuggestions()"
+                  (clubSearchRequested)="clubSearchRequested.emit($event)"
                   (submitted)="onEditTeamSubmitted($event)"
                   (cancelled)="cancelEditTeam()"
                 />
