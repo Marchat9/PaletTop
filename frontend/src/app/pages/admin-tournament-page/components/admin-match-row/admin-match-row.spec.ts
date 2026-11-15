@@ -1,7 +1,11 @@
+import { Dialog } from '@angular/cdk/dialog';
+import { BreakpointObserver } from '@angular/cdk/layout';
 import { TestBed } from '@angular/core/testing';
+import { Subject } from 'rxjs';
 import { SessionMatchDto } from 'src/app/models/matches-session.model';
 import { ScoreUpdate } from 'src/app/models/score-update.model';
 import { AdminMatchRow } from './admin-match-row';
+import { MatchScoreSheet } from './match-score-sheet/match-score-sheet';
 
 const MATCH: SessionMatchDto = {
   id: 'm6',
@@ -19,99 +23,147 @@ const MATCH: SessionMatchDto = {
   duration: null,
 };
 
-function render(inputs: { editing?: boolean; editable?: boolean; match?: SessionMatchDto } = {}) {
+interface RenderOptions {
+  editing?: boolean;
+  editable?: boolean;
+  match?: SessionMatchDto;
+  mobile?: boolean;
+}
+
+function render({
+  editing = false,
+  editable = true,
+  match = MATCH,
+  mobile = false,
+}: RenderOptions = {}) {
+  const sheetClosed = new Subject<ScoreUpdate | undefined>();
+  const dialog = { open: vi.fn(() => ({ closed: sheetClosed })) };
+  TestBed.configureTestingModule({
+    providers: [
+      { provide: Dialog, useValue: dialog },
+      { provide: BreakpointObserver, useValue: { isMatched: () => mobile } },
+    ],
+  });
   const fixture = TestBed.createComponent(AdminMatchRow);
-  fixture.componentRef.setInput('match', inputs.match ?? MATCH);
+  fixture.componentRef.setInput('match', match);
   fixture.componentRef.setInput('pointsPerGame', 13);
-  fixture.componentRef.setInput('editable', inputs.editable ?? true);
-  fixture.componentRef.setInput('editing', inputs.editing ?? false);
+  fixture.componentRef.setInput('editable', editable);
+  fixture.componentRef.setInput('editing', editing);
   fixture.componentRef.setInput('showLiveStatus', false);
   fixture.detectChanges();
   const submitted: ScoreUpdate[] = [];
+  let editRequests = 0;
+  let cancels = 0;
   fixture.componentInstance.scoreSubmitted.subscribe((update) => submitted.push(update));
+  fixture.componentInstance.editRequested.subscribe(() => editRequests++);
+  fixture.componentInstance.editCancelled.subscribe(() => cancels++);
   return {
     fixture,
     row: fixture.componentInstance,
     root: fixture.nativeElement as HTMLElement,
+    dialog,
+    sheetClosed,
     submitted,
+    editRequests: () => editRequests,
+    cancels: () => cancels,
   };
 }
 
 describe('AdminMatchRow', () => {
-  it('shows each team with its score and highlights the winner', () => {
+  it('shows the plate, each team with its score, and highlights the winner', () => {
     const { root } = render();
 
-    expect(root.querySelector('.team-a')?.textContent).toContain('Les Vendéens');
+    expect(root.querySelector('.plate')?.textContent?.trim()).toBe('6');
     expect(root.querySelector('.score-a')?.textContent?.trim()).toBe('6');
     expect(root.querySelector('.score-b')?.textContent?.trim()).toBe('13');
     expect(root.querySelector('.team-b')?.classList).toContain('winner');
     expect(root.querySelector('.team-a')?.classList).not.toContain('winner');
   });
 
-  it('hides the edit button on a round that cannot be corrected', () => {
-    expect(render({ editable: true }).root.querySelector('.edit-btn')).not.toBeNull();
+  it('is a button only when the match can be corrected', () => {
+    expect(render({ editable: true }).root.querySelector('button.match-row')).not.toBeNull();
     TestBed.resetTestingModule();
-    expect(render({ editable: false }).root.querySelector('.edit-btn')).toBeNull();
+    const locked = render({ editable: false }).root;
+    expect(locked.querySelector('button.match-row')).toBeNull();
+    expect(locked.querySelector('div.match-row')).not.toBeNull();
   });
 
-  it('starts the correction from the saved score and shows it as the previous score', () => {
-    const { row, root } = render({ editing: true });
+  it('asks the parent to correct in the line on desktop', () => {
+    const { root, dialog, editRequests } = render({ mobile: false });
 
-    expect(row.draftScoreA()).toBe(6);
-    expect(row.draftScoreB()).toBe(13);
-    expect(root.querySelector('.previous-score')?.textContent).toContain(
-      'Score précédent : 6 – 13',
+    (root.querySelector('button.match-row') as HTMLElement).click();
+
+    expect(editRequests()).toBe(1);
+    expect(dialog.open).not.toHaveBeenCalled();
+  });
+
+  it('opens the bottom sheet on mobile and submits the score it returns', () => {
+    const { root, dialog, sheetClosed, submitted, editRequests } = render({ mobile: true });
+
+    (root.querySelector('button.match-row') as HTMLElement).click();
+    expect(dialog.open).toHaveBeenCalledWith(
+      MatchScoreSheet,
+      expect.objectContaining({
+        data: { match: MATCH, pointsPerGame: 13 },
+        panelClass: 'match-score-sheet-panel',
+      }),
     );
-  });
+    expect(editRequests()).toBe(0);
 
-  it('steps the scores between 0 and the points per game', () => {
-    const { row } = render({ editing: true });
-
-    row.stepScoreA(1);
-    row.stepScoreB(1);
-    expect(row.draftScoreA()).toBe(7);
-    expect(row.draftScoreB()).toBe(13);
-
-    row.setScoreA(-4);
-    expect(row.draftScoreA()).toBe(0);
-    expect(row.canDecrementA()).toBe(false);
-    expect(row.canIncrementB()).toBe(false);
-  });
-
-  it('submits the corrected score of the match', () => {
-    const { row, submitted } = render({ editing: true });
-
-    row.setScoreA(13);
-    row.setScoreB(9);
-    row.submit();
-
+    sheetClosed.next({ matchId: 'm6', scoreA: 13, scoreB: 9 });
     expect(submitted).toEqual([{ matchId: 'm6', scoreA: 13, scoreB: 9 }]);
   });
 
-  it('cannot save before a score changed', () => {
-    const { row } = render({ editing: true });
+  it('submits nothing when the sheet is cancelled', () => {
+    const { root, sheetClosed, submitted } = render({ mobile: true });
 
-    expect(row.hasChanges()).toBe(false);
-    row.stepScoreA(1);
-    expect(row.hasChanges()).toBe(true);
+    (root.querySelector('button.match-row') as HTMLElement).click();
+    sheetClosed.next(undefined);
+
+    expect(submitted).toEqual([]);
   });
 
-  it('drops an unsaved draft when the correction is reopened', () => {
-    const { fixture, row } = render({ editing: true });
-    row.setScoreA(11);
+  it('turns the line into the correction and shows the previous score', () => {
+    const { root, row } = render({ editing: true });
+
+    expect(root.querySelectorAll('app-score-stepper')).toHaveLength(2);
+    expect(root.querySelector('.previous-score')?.textContent).toContain('avant 6 – 13');
+    expect(row.draftScoreA()).toBe(6);
+  });
+
+  it('saves only a changed score, with Enter from a score field', () => {
+    const { root, row, submitted } = render({ editing: true });
+    const field = root.querySelector('app-score-stepper input') as HTMLInputElement;
+
+    field.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    expect(submitted).toEqual([]);
+
+    row.draftScoreA.set(13);
+    row.draftScoreB.set(9);
+    field.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    expect(submitted).toEqual([{ matchId: 'm6', scoreA: 13, scoreB: 9 }]);
+  });
+
+  it('cancels the correction with Escape and drops the draft when reopened', () => {
+    const { fixture, root, row, cancels } = render({ editing: true });
+    row.draftScoreA.set(11);
+
+    root
+      .querySelector('.is-editing')!
+      .dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    expect(cancels()).toBe(1);
 
     fixture.componentRef.setInput('editing', false);
     fixture.detectChanges();
     fixture.componentRef.setInput('editing', true);
     fixture.detectChanges();
-
     expect(row.draftScoreA()).toBe(6);
   });
 
-  it('shows a bye without score nor edit button', () => {
+  it('shows a bye without score nor correction', () => {
     const { root } = render({ match: { ...MATCH, isBye: true, teamB: null } });
 
     expect(root.querySelector('.bye-badge')?.textContent).toContain('Exempté');
-    expect(root.querySelector('.edit-btn')).toBeNull();
+    expect(root.querySelector('button')).toBeNull();
   });
 });

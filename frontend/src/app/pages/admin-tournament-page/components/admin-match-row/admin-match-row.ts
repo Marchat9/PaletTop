@@ -1,58 +1,72 @@
+import { Dialog } from '@angular/cdk/dialog';
+import { BreakpointObserver } from '@angular/cdk/layout';
+import { Overlay } from '@angular/cdk/overlay';
+import { NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  inject,
   input,
   linkedSignal,
   output,
 } from '@angular/core';
+import { environment } from '@environment';
 import { SessionMatchDto } from 'src/app/models/matches-session.model';
 import { ScoreUpdate } from 'src/app/models/score-update.model';
 import { AnimateOnChangeDirective } from 'src/app/shared/animate-on-change/animate-on-change.directive';
-import { Button } from 'src/app/shared/button/button';
 import { Icon } from 'src/app/shared/icon/icon';
-import { InputNumber } from 'src/app/shared/input-number/input-number';
 import { MatchStatusComponent } from 'src/app/shared/match-status/match-status';
 import { MatchTimerComponent } from 'src/app/shared/match-timer/match-timer';
+import { MatchScoreSheet, MatchScoreSheetData } from './match-score-sheet/match-score-sheet';
+import { ScoreStepper } from './score-stepper/score-stepper';
 
 /** Statuses whose score is a result: the winner can be highlighted. */
 const RESULT_STATUSES = ['ENDED', 'VALIDATED'];
+/** Same limit as the rest of the admin page: below it, corrections open in a bottom sheet. */
+const MOBILE_BREAKPOINT = `(max-width: ${environment.limitMobileSizePx}px)`;
 
 /**
- * One match of an admin round: read view (one line on desktop, team-per-line card on mobile) and
- * the score correction, shared by the current round and the rounds history.
+ * One match of an admin round, shared by the current round and the rounds history: a compact
+ * line to read it; the score is corrected right in the line on desktop, in a bottom sheet on mobile.
  */
 @Component({
   selector: 'app-admin-match-row',
   imports: [
     AnimateOnChangeDirective,
-    Button,
     Icon,
-    InputNumber,
     MatchStatusComponent,
     MatchTimerComponent,
+    NgTemplateOutlet,
+    ScoreStepper,
   ],
   templateUrl: './admin-match-row.html',
   styleUrl: './admin-match-row.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AdminMatchRow {
+  private readonly dialog = inject(Dialog);
+  private readonly overlay = inject(Overlay);
+  private readonly breakpointObserver = inject(BreakpointObserver);
+
   // ======= Input / Output =======
   public readonly match = input.required<SessionMatchDto>();
   public readonly pointsPerGame = input.required<number>();
-  /** Shows the edit button: current round, or a previous round whose scores stay correctable. */
+  /** The line can be corrected: current round, or a previous round whose scores stay correctable. */
   public readonly editable = input<boolean>(true);
+  /** Desktop correction open in this line (the parent keeps one open at a time). */
   public readonly editing = input<boolean>(false);
   public readonly saving = input<boolean>(false);
   /** Status badge and timer: only meaningful while the round is being played. */
   public readonly showLiveStatus = input<boolean>(true);
 
+  /** Desktop only: asks the parent to open the correction in this line. */
   public readonly editRequested = output<void>();
   public readonly editCancelled = output<void>();
   public readonly scoreSubmitted = output<ScoreUpdate>();
   // ==============================
 
-  // Reset to the saved score each time the edition opens (or the match is updated meanwhile).
+  // Reset to the saved score each time the correction opens (or the match is updated meanwhile).
   public readonly draftScoreA = linkedSignal({
     source: () => ({ editing: this.editing(), score: this.match().scoreA }),
     computation: ({ score }) => score,
@@ -69,35 +83,34 @@ export class AdminMatchRow {
   public readonly isWinnerB = computed(
     () => this.hasResult() && this.match().scoreB > this.match().scoreA,
   );
+  public readonly isOngoing = computed(() => this.match().status === 'ONGOING');
   public readonly scoreKey = computed(() => `${this.match().scoreA}-${this.match().scoreB}`);
   public readonly statusClass = computed(
     () => `status-badge status-badge--${this.match().status.toLowerCase()}`,
   );
+  public readonly editLabel = computed(
+    () => `Modifier le score de la plaque ${this.match().plateNumber ?? ''}`,
+  );
   public readonly hasChanges = computed(
     () => this.draftScoreA() !== this.match().scoreA || this.draftScoreB() !== this.match().scoreB,
   );
-  public readonly canDecrementA = computed(() => this.draftScoreA() > 0);
-  public readonly canIncrementA = computed(() => this.draftScoreA() < this.pointsPerGame());
-  public readonly canDecrementB = computed(() => this.draftScoreB() > 0);
-  public readonly canIncrementB = computed(() => this.draftScoreB() < this.pointsPerGame());
 
-  public stepScoreA(delta: number): void {
-    this.draftScoreA.set(this.clamp(this.draftScoreA() + delta));
-  }
-
-  public stepScoreB(delta: number): void {
-    this.draftScoreB.set(this.clamp(this.draftScoreB() + delta));
-  }
-
-  public setScoreA(value: number): void {
-    this.draftScoreA.set(this.clamp(value));
-  }
-
-  public setScoreB(value: number): void {
-    this.draftScoreB.set(this.clamp(value));
+  /** Mobile: bottom sheet. Desktop: the line itself turns into the correction. */
+  public requestEdit(): void {
+    if (!this.editable()) {
+      return;
+    }
+    if (this.breakpointObserver.isMatched(MOBILE_BREAKPOINT)) {
+      this.openScoreSheet();
+    } else {
+      this.editRequested.emit();
+    }
   }
 
   public submit(): void {
+    if (!this.hasChanges() || this.saving()) {
+      return;
+    }
     this.scoreSubmitted.emit({
       matchId: this.match().id,
       scoreA: this.draftScoreA(),
@@ -105,7 +118,28 @@ export class AdminMatchRow {
     });
   }
 
-  private clamp(value: number): number {
-    return Math.min(Math.max(Number.isFinite(value) ? value : 0, 0), this.pointsPerGame());
+  /** Enter saves from a score field (not from the − / + buttons, which Enter already clicks). */
+  public onEditKeydown(event: KeyboardEvent): void {
+    if (event.key === 'Escape') {
+      this.editCancelled.emit();
+    } else if (event.key === 'Enter' && event.target instanceof HTMLInputElement) {
+      event.preventDefault();
+      this.submit();
+    }
+  }
+
+  private openScoreSheet(): void {
+    this.dialog
+      .open<ScoreUpdate, MatchScoreSheetData>(MatchScoreSheet, {
+        data: { match: this.match(), pointsPerGame: this.pointsPerGame() },
+        positionStrategy: this.overlay.position().global().bottom('0').width('100%'),
+        panelClass: 'match-score-sheet-panel',
+        backdropClass: 'dialog-backdrop-light',
+      })
+      .closed.subscribe((update) => {
+        if (update) {
+          this.scoreSubmitted.emit(update);
+        }
+      });
   }
 }
