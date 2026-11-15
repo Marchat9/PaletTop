@@ -1,0 +1,37 @@
+<div class="popup-surface" role="dialog" aria-modal="true" aria-labelledby="app-update-title">
+  <div class="popup-header">
+    <h2 id="app-update-title" class="popup-title">
+      <app-icon name="system_update" iconClass="icon" [ariaHidden]="true" />
+      <span>Nouvelle version disponible</span>
+    </h2>
+    <button class="popup-close" type="button" aria-label="Fermer" (click)="close()">
+      <app-icon name="close" [ariaHidden]="true" />
+    </button>
+  </div>
+
+  <p class="popup-subtitle">
+    Une nouvelle version de PaletTop est en ligne. Rafraîchissez la page pour la charger : sans
+    cela, l'application (et l'application installée) continue d'utiliser l'ancienne version.
+  </p>
+
+  <dl class="versions">
+    <div class="version-row">
+      <dt>Votre version</dt>
+      <dd>{{ data.currentVersion }}</dd>
+    </div>
+    @if (data.latestVersion) {
+      <div class="version-row">
+        <dt>Dernière version</dt>
+        <dd class="latest">{{ data.latestVersion }}</dd>
+      </div>
+    }
+  </dl>
+
+  <app-button
+    title="Rafraîchir la page"
+    icon="refresh"
+    variant="primary"
+    [large]="true"
+    (clicked)="refresh()"
+  />
+</div>

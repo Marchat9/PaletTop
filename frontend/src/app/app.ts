@@ -8,6 +8,8 @@ import { selectTheme } from 'src/app/store/app-config/app-config.selectors';
 import { AppState } from 'src/app/store/app-store';
 import { environment } from '../environments/environment';
 import { PwaInstallService } from './services/pwa-install.service';
+import { AppUpdateService } from './services/app-update.service';
+import { AppVisibilityService } from './services/app-visibility.service';
 import { Navigation } from './pages/navigation/navigation';
 
 @Component({
@@ -23,7 +25,10 @@ export class App {
   public readonly theme = this.store.selectSignal(selectTheme);
 
   private destroy$ = new Subject<void>();
+  private readonly appUpdateService = inject(AppUpdateService);
+
   constructor() {
+    this.watchAppVersion();
     if (environment.pwa.enabled) {
       this.processPwa();
       this.checkForPwaUpdate();
@@ -53,27 +58,36 @@ export class App {
     });
   }
 
-  private checkForPwaUpdate(): void {
-    const pwaInstallService = inject(PwaInstallService);
-    if (pwaInstallService.isInstalled()) {
-      const swUpdate = inject(SwUpdate);
-      // Check every N secondes if a new version is available
-      interval(30_000)
-        .pipe(takeUntil(this.destroy$))
-        .subscribe(() => {
-          swUpdate.checkForUpdate();
-        });
+  /** Compares this app with the deployed release at startup and each time the app comes back. */
+  private watchAppVersion(): void {
+    this.appUpdateService.checkVersion();
+    inject(AppVisibilityService)
+      .resumed$.pipe(takeUntil(this.destroy$))
+      .subscribe(() => this.appUpdateService.checkVersion());
+  }
 
-      // Trigger when a new version is available
-      swUpdate.versionUpdates
-        .pipe(
-          filter((evt) => evt.type === 'VERSION_READY'),
-          takeUntil(this.destroy$),
-        )
-        .subscribe(() => {
-          window.location.reload();
-        });
+  /**
+   * Browser tab or installed PWA alike: the service worker checks for a new build every 30 s and,
+   * once it is downloaded, the « new version » popup offers the forced refresh (a plain reload
+   * would be served the old version from the worker cache).
+   */
+  private checkForPwaUpdate(): void {
+    const swUpdate = inject(SwUpdate);
+    if (!swUpdate.isEnabled) {
+      return;
     }
+    interval(30_000)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => {
+        swUpdate.checkForUpdate().catch(() => undefined);
+      });
+
+    swUpdate.versionUpdates
+      .pipe(
+        filter((evt) => evt.type === 'VERSION_READY'),
+        takeUntil(this.destroy$),
+      )
+      .subscribe(() => this.appUpdateService.promptUpdate());
   }
 
   ngOnDestroy() {

@@ -1,7 +1,10 @@
 import { Dialog } from '@angular/cdk/dialog';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { SwUpdate } from '@angular/service-worker';
 import { provideMockStore } from '@ngrx/store/testing';
 import { Subject } from 'rxjs';
 import { PwaInstallService } from 'src/app/services/pwa-install.service';
@@ -69,6 +72,10 @@ describe('App - PWA install popup', () => {
       imports: [App],
       providers: [
         provideRouter([]),
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        // The service worker is off in tests: no update check, no « new version » popup.
+        { provide: SwUpdate, useValue: { isEnabled: false } },
         provideMockStore({ initialState: { [appConfigFeatureKey]: initialAppConfigState } }),
         { provide: Dialog, useValue: { open: openSpy } },
         {
@@ -116,6 +123,10 @@ describe('App - PWA install popup', () => {
       imports: [App],
       providers: [
         provideRouter([]),
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        // The service worker is off in tests: no update check, no « new version » popup.
+        { provide: SwUpdate, useValue: { isEnabled: false } },
         provideMockStore({ initialState: { [appConfigFeatureKey]: initialAppConfigState } }),
         { provide: Dialog, useValue: { open: openSpy } },
         {
@@ -147,6 +158,10 @@ describe('App - PWA install popup', () => {
       imports: [App],
       providers: [
         provideRouter([]),
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        // The service worker is off in tests: no update check, no « new version » popup.
+        { provide: SwUpdate, useValue: { isEnabled: false } },
         provideMockStore({ initialState: { [appConfigFeatureKey]: initialAppConfigState } }),
         { provide: Dialog, useValue: { open: openSpy } },
         {
@@ -185,6 +200,10 @@ describe('App - PWA install popup', () => {
       imports: [App],
       providers: [
         provideRouter([]),
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        // The service worker is off in tests: no update check, no « new version » popup.
+        { provide: SwUpdate, useValue: { isEnabled: false } },
         provideMockStore({ initialState: { [appConfigFeatureKey]: initialAppConfigState } }),
         { provide: Dialog, useValue: { open: openSpy } },
         {
