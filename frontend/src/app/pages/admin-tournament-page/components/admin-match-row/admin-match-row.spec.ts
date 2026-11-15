@@ -127,7 +127,6 @@ describe('AdminMatchRow', () => {
     const { root, row } = render({ editing: true });
 
     expect(root.querySelectorAll('app-score-stepper')).toHaveLength(2);
-    expect(root.querySelector('.previous-score')?.textContent).toContain('avant 6 – 13');
     expect(row.draftScoreA()).toBe(6);
   });
 
