@@ -12,9 +12,9 @@ function render(inputs: { error?: TeamImportFileError | null; isParsing?: boolea
   fixture.componentRef.setInput('acceptedFormats', FORMATS);
   fixture.detectChanges();
   const selected: File[] = [];
-  let templateDownloads = 0;
+  let backs = 0;
   fixture.componentInstance.fileSelected.subscribe((file) => selected.push(file));
-  fixture.componentInstance.downloadTemplate.subscribe(() => templateDownloads++);
+  fixture.componentInstance.back.subscribe(() => backs++);
   const root = fixture.nativeElement as HTMLElement;
   const drop = (files: File[]) => {
     const event = new Event('drop', { bubbles: true, cancelable: true });
@@ -22,7 +22,7 @@ function render(inputs: { error?: TeamImportFileError | null; isParsing?: boolea
     (root.querySelector('.drop-zone') as HTMLElement).dispatchEvent(event);
     fixture.detectChanges();
   };
-  return { fixture, root, selected, drop, templateDownloads: () => templateDownloads };
+  return { fixture, root, selected, drop, backs: () => backs };
 }
 
 describe('TeamImportFileStep', () => {
@@ -74,19 +74,23 @@ describe('TeamImportFileStep', () => {
     expect(selected).toEqual([file]);
   });
 
-  it('keeps « Télécharger le modèle » in the error view', () => {
-    const { root, templateDownloads } = render({
+  it('offers « Précédent » instead of the template download in the error view', () => {
+    const { root, backs } = render({
       error: { fileName: 'bad.xlsx', message: "Ce fichier n'a pas pu être lu." },
     });
+    expect(root.textContent).not.toContain('Télécharger le modèle');
     const button = root.querySelector('.error-actions app-button .button') as HTMLElement;
-    expect(button.textContent).toContain('Télécharger le modèle');
+    expect(button.textContent).toContain('Précédent');
     button.click();
-    expect(templateDownloads()).toBe(1);
+    expect(backs()).toBe(1);
   });
 
-  it('emits downloadTemplate from the helper button', () => {
-    const { root, templateDownloads } = render();
-    (root.querySelector('.template-link .button') as HTMLElement).click();
-    expect(templateDownloads()).toBe(1);
+  it('emits back from « Précédent » and no longer offers the template download', () => {
+    const { root, backs } = render();
+    expect(root.textContent).not.toContain('Télécharger le modèle');
+    const button = root.querySelector('.step-actions app-button .button') as HTMLElement;
+    expect(button.textContent).toContain('Précédent');
+    button.click();
+    expect(backs()).toBe(1);
   });
 });

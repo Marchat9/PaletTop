@@ -38,7 +38,7 @@ export class TeamImportFileStep {
   public readonly acceptedFormats = input.required<string>();
 
   public readonly fileSelected = output<File>();
-  public readonly downloadTemplate = output<void>();
+  public readonly back = output<void>();
 
   public readonly isDragging = signal(false);
   public readonly dropError = signal<Nullable<string>>(null);

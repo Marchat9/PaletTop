@@ -67,22 +67,22 @@
           (fileSelected)="onFileSelected($event)"
         />
         <app-button
-          title="Télécharger le modèle"
+          title="Précédent"
           variant="tertiary"
-          icon="download"
+          icon="arrow_back"
           [large]="true"
-          (clicked)="downloadTemplate.emit()"
+          (clicked)="back.emit()"
         />
       </div>
     </div>
   } @else {
-    <div class="template-link">
+    <div class="step-actions">
       <app-button
-        title="Télécharger le modèle"
+        title="Précédent"
         variant="tertiary"
-        icon="download"
+        icon="arrow_back"
         [large]="true"
-        (clicked)="downloadTemplate.emit()"
+        (clicked)="back.emit()"
       />
     </div>
   }

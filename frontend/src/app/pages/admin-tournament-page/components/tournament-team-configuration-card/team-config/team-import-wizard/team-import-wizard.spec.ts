@@ -125,6 +125,19 @@ describe('TeamImportWizard', () => {
     expect(root.querySelector('.popup-back')).toBeNull();
   });
 
+  it('goes back to step 1 from the step 2 « Précédent » button', () => {
+    const { wizard, fixture, root } = render();
+    wizard.onPlayersCountChange(4);
+    wizard.onContinue();
+    fixture.detectChanges();
+
+    (root.querySelector('app-team-import-file-step .step-actions .button') as HTMLElement).click();
+    fixture.detectChanges();
+
+    expect(wizard.step()).toBe(1);
+    expect(wizard.playersCount()).toBe(4);
+  });
+
   it('goes back from step 3 to step 2', { timeout: 60_000 }, async () => {
     const { wizard, fixture, root, select } = render();
     await select(csv('A,Jean,'));
