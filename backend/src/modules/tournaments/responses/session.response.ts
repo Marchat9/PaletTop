@@ -29,6 +29,8 @@ export interface SessionResponseDto {
     id: string;
     sessionNumber: number;
     status: string;
+    /** Random draw or fixed rotation: once closed, the admin may still correct its scores. */
+    isDrawnRound: boolean;
     matches: SessionMatchResponseDto[];
 }
 
@@ -58,11 +60,15 @@ export function toSessionMatchResponseDto(match: TournamentMatch): SessionMatchR
     };
 }
 
-export function toSessionResponseDto(session: MatchesSession): SessionResponseDto {
+export function toSessionResponseDto(
+    session: MatchesSession,
+    isDrawnRound: boolean,
+): SessionResponseDto {
     return {
         id: session.id,
         sessionNumber: session.sessionNumber,
         status: session.status,
+        isDrawnRound,
         matches: (session.matches ?? []).map(toSessionMatchResponseDto),
     };
 }

@@ -1,0 +1,19 @@
+<button
+  type="button"
+  class="step-btn"
+  [attr.aria-label]="decrementLabel()"
+  [disabled]="!canDecrement()"
+  (click)="step(-1)"
+>
+  <app-icon name="remove" [ariaHidden]="true" />
+</button>
+<app-input-number [value]="value()" [min]="0" [max]="max()" (valueChange)="set($event)" />
+<button
+  type="button"
+  class="step-btn"
+  [attr.aria-label]="incrementLabel()"
+  [disabled]="!canIncrement()"
+  (click)="step(1)"
+>
+  <app-icon name="add" [ariaHidden]="true" />
+</button>

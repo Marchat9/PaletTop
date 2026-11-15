@@ -1,32 +1,16 @@
 import { ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
-import {
-  MatchesSessionDto,
-  MatchPoolGroup,
-  SessionMatchDto,
-} from 'src/app/models/matches-session.model';
+import { MatchesSessionDto, MatchPoolGroup } from 'src/app/models/matches-session.model';
 import { Nullable } from 'src/app/models/nullable.model';
 import { ScoreUpdate } from 'src/app/models/score-update.model';
-import { Button } from 'src/app/shared/button/button';
-import { InputNumber } from 'src/app/shared/input-number/input-number';
-import { MatchStatusComponent } from 'src/app/shared/match-status/match-status';
-import { MatchTimerComponent } from 'src/app/shared/match-timer/match-timer';
 import { Icon } from 'src/app/shared/icon/icon';
-import { AnimateOnChangeDirective } from 'src/app/shared/animate-on-change/animate-on-change.directive';
 import { StaggerDirective } from 'src/app/shared/stagger/stagger.directive';
+import { AdminMatchRow } from '../../admin-match-row/admin-match-row';
 import { computeMatchGroups } from './session-matches.utils';
 
 @Component({
   selector: 'app-session-matches',
   standalone: true,
-  imports: [
-    Button,
-    InputNumber,
-    MatchStatusComponent,
-    MatchTimerComponent,
-    Icon,
-    StaggerDirective,
-    AnimateOnChangeDirective,
-  ],
+  imports: [AdminMatchRow, Icon, StaggerDirective],
   templateUrl: './session-matches.html',
   styleUrl: './session-matches.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -40,8 +24,6 @@ export class SessionMatchesComponent {
   // ==============================
 
   public readonly editingMatchId = signal<Nullable<string>>(null);
-  public readonly draftScoreA = signal(0);
-  public readonly draftScoreB = signal(0);
 
   public readonly matchGroups = computed<MatchPoolGroup[]>(() =>
     computeMatchGroups(this.session()?.matches ?? []),
@@ -50,22 +32,16 @@ export class SessionMatchesComponent {
   // Replay the cascade when the session's matches change (a new session), not on every score.
   public readonly staggerKey = computed(() => this.session()?.sessionNumber ?? 0);
 
-  public startEdit(match: SessionMatchDto): void {
-    this.draftScoreA.set(match.scoreA);
-    this.draftScoreB.set(match.scoreB);
-    this.editingMatchId.set(match.id);
+  public startEdit(matchId: string): void {
+    this.editingMatchId.set(matchId);
   }
 
   public cancelEdit(): void {
     this.editingMatchId.set(null);
   }
 
-  public saveEdit(matchId: string): void {
-    this.scoreUpdate.emit({
-      matchId,
-      scoreA: this.draftScoreA(),
-      scoreB: this.draftScoreB(),
-    });
+  public saveEdit(update: ScoreUpdate): void {
+    this.scoreUpdate.emit(update);
     this.editingMatchId.set(null);
   }
 }

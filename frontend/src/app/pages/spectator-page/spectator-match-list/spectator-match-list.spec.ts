@@ -7,6 +7,7 @@ const SESSION: MatchesSessionDto = {
   id: 'session-1',
   sessionNumber: 2,
   status: SessionStatus.OPEN,
+  isDrawnRound: true,
   matches: [
     {
       id: 'match-1',

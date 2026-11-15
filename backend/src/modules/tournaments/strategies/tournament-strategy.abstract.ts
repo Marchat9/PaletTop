@@ -30,6 +30,15 @@ export abstract class TournamentStrategy {
         );
     }
 
+    /**
+     * True when this session's pairs did not come from earlier results (random draw, fixed
+     * rotation): its scores fed no later pairing, so the admin may still correct them, winner
+     * included, once the session is closed. Brackets and ranking rounds stay locked.
+     */
+    isDrawnSession(_tournament: Tournament, _sessionNumber: number): boolean {
+        return false;
+    }
+
     computeGlobalRanking(tournament: Tournament, matches: TournamentMatch[]): GlobalRankingEntry[] {
         const stats = this.computeStats(tournament.teams, matches);
         const { scoreCalculation } = tournament.configuration;

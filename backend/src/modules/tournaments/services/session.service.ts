@@ -63,7 +63,10 @@ export class SessionService {
             (s) => s.sessionNumber === session.sessionNumber,
         )!;
         // Emit new session data
-        this.gateway.emitSessionUpdated(tournamentCode, toSessionResponseDto(newSessionMatches));
+        this.gateway.emitSessionUpdated(
+            tournamentCode,
+            this.toSessionDto(strategy, tournament, newSessionMatches),
+        );
         // Emit match for every team in new session
         this.emitNewMatchForEachTeam(tournamentCode, newSessionMatches);
 
@@ -169,7 +172,10 @@ export class SessionService {
 
         // ======= Common steps (after commit) =======
         // Common step: emit session update
-        this.gateway.emitSessionUpdated(tournamentCode, toSessionResponseDto(currentSessionClosed));
+        this.gateway.emitSessionUpdated(
+            tournamentCode,
+            this.toSessionDto(strategy, tournament, currentSessionClosed),
+        );
         // Common step: emit history update for just closed session
         await this.emitHistoryForSession(tournamentCode, currentSessionClosed);
 
@@ -178,7 +184,10 @@ export class SessionService {
             (s) => s.sessionNumber === newSession.sessionNumber,
         )!;
         // Common step: Emit new session data
-        this.gateway.emitSessionUpdated(tournamentCode, toSessionResponseDto(newSessionMatches));
+        this.gateway.emitSessionUpdated(
+            tournamentCode,
+            this.toSessionDto(strategy, tournament, newSessionMatches),
+        );
         // Common step: Emit match for every team in new session
         this.emitNewMatchForEachTeam(tournamentCode, newSessionMatches);
         // A bye of the new session is validated straight away: its win changes the ranking.
@@ -276,7 +285,10 @@ export class SessionService {
 
         // ==== Common steps (after commit) ====
         // Common step: emit updated session data
-        this.gateway.emitSessionUpdated(tournamentCode, toSessionResponseDto(closedSession));
+        this.gateway.emitSessionUpdated(
+            tournamentCode,
+            this.toSessionDto(strategy, tournament, closedSession),
+        );
         // Common step: emit history update for just closed session
         await this.emitHistoryForSession(tournamentCode, closedSession);
 
@@ -319,7 +331,8 @@ export class SessionService {
         const tournament = await this.tournamentRepo.findByCode(tournamentCode);
         if (!tournament) throw new NotFoundException('Tournoi introuvable');
         const sessions = await this.sessionRepo.findAllByTournament(tournament.id);
-        return sessions.map(toSessionResponseDto);
+        const strategy = this.strategyFactory.create(tournament.configuration.competitionMode);
+        return sessions.map((session) => this.toSessionDto(strategy, tournament, session));
     }
 
     async getSessionByNumber(
@@ -334,7 +347,20 @@ export class SessionService {
             sessionNumber,
         );
         if (!session) throw new NotFoundException('Round introuvable');
-        return toSessionResponseDto(session);
+        const strategy = this.strategyFactory.create(tournament.configuration.competitionMode);
+        return this.toSessionDto(strategy, tournament, session);
+    }
+
+    /** Session as sent to the clients, flagged when its scores stay correctable once closed. */
+    private toSessionDto(
+        strategy: TournamentStrategy,
+        tournament: Tournament,
+        session: MatchesSession,
+    ): SessionResponseDto {
+        return toSessionResponseDto(
+            session,
+            strategy.isDrawnSession(tournament, session.sessionNumber),
+        );
     }
 
     /** Status from the persisted sessions, with their matches: what the admin buttons rely on. */

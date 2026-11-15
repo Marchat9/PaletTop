@@ -1,0 +1,90 @@
+@if (closedRoundCount() > 0) {
+  <app-card-collapsible [isExpanded]="false">
+    <div header class="header">
+      <div class="header-title">
+        <app-icon name="history" iconClass="icon" [ariaHidden]="true" />
+        <span class="title"
+          >Historique des rounds <span class="count">({{ closedRoundCount() }})</span></span
+        >
+      </div>
+      <span class="header-description">
+        Revoir les matchs joués et corriger un score des rounds tirés au sort.
+      </span>
+    </div>
+
+    <div content class="history-content">
+      @if (canDownload()) {
+        <div class="download-action">
+          <app-button
+            title="Télécharger tous les matchs (PDF)"
+            icon="download"
+            variant="secondary"
+            [loading]="downloadLoading()"
+            (clicked)="downloadRequested.emit()"
+          />
+        </div>
+      }
+
+      <app-input-text
+        id="rounds-history-search"
+        icon="search"
+        placeholder="Filtrer par équipe"
+        [value]="search()"
+        (valueChange)="updateSearch($event)"
+      />
+
+      @if (hasNoMatchForSearch()) {
+        <p class="empty-hint">Aucun match ne correspond à cette équipe.</p>
+      }
+
+      @for (round of rounds(); track round.id) {
+        <section class="round" [class.is-open]="round.expanded">
+          <button
+            type="button"
+            class="round-toggle"
+            [attr.aria-expanded]="round.expanded"
+            (click)="toggleRound(round.id)"
+          >
+            <app-icon name="chevron_right" iconClass="round-chevron" [ariaHidden]="true" />
+            <span class="round-title">Round {{ round.sessionNumber }}</span>
+            <span class="round-meta">{{ round.label }} · {{ round.matchCountLabel }}</span>
+            @if (round.editable) {
+              <span class="badge badge--editable">
+                <app-icon name="edit" iconClass="badge-icon" [ariaHidden]="true" />
+                Scores modifiables
+              </span>
+            } @else {
+              <span class="badge">
+                <app-icon name="lock" iconClass="badge-icon" [ariaHidden]="true" />
+                Lecture seule
+              </span>
+            }
+          </button>
+
+          @if (round.expanded) {
+            <div class="round-content">
+              @for (group of round.groups; track group.label) {
+                @if (group.label) {
+                  <span class="pool-header">{{ group.label }}</span>
+                }
+                @for (match of group.matches; track match.id) {
+                  <app-admin-match-row
+                    [match]="match"
+                    [pointsPerGame]="pointsPerGame()"
+                    [editable]="round.editable && !match.isBye"
+                    [editing]="editingMatchId() === match.id"
+                    [saving]="scoreUpdateLoading()"
+                    [showLiveStatus]="false"
+                    (editRequested)="startEdit(match.id)"
+                    (editCancelled)="cancelEdit()"
+                    (scoreSubmitted)="saveEdit($event)"
+                  />
+                }
+              }
+            </div>
+          }
+        </section>
+      }
+    </div>
+  </app-card-collapsible>
+}

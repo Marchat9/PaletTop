@@ -289,6 +289,11 @@ export class StructuredTournamentStrategy extends TournamentStrategy {
         );
     }
 
+    /** Qualifying rounds are drawn in each pool; elimination rounds come from earlier results. */
+    override isDrawnSession(tournament: Tournament, sessionNumber: number): boolean {
+        return sessionNumber <= (this.getConfig(tournament).numberOfQualifyingRounds ?? 0);
+    }
+
     private getConfig(tournament: Tournament): StructuredCompetitionConfiguration {
         return extractCompetitionConfiguration(
             tournament.configuration,

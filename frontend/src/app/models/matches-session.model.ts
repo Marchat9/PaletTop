@@ -31,6 +31,8 @@ export interface MatchesSessionDto {
   id: string;
   sessionNumber: number;
   status: SessionStatus;
+  /** Random draw or fixed rotation: once closed, the admin may still correct its scores. */
+  isDrawnRound: boolean;
   matches: SessionMatchDto[];
 }
 

@@ -4,7 +4,7 @@ import { MatchStatus, MatchesSessionStatus } from 'src/enum/status.enum';
 import { TournamentMatch } from 'src/entities/tounament-match.entity';
 import { ScoreService } from './score.service';
 
-function setup(match: Partial<TournamentMatch>) {
+function setup(match: Partial<TournamentMatch>, drawnRound = true) {
     const matchRepo = {
         findByIdInTournament: vi.fn(async () => match),
         update: vi.fn(async () => undefined),
@@ -12,9 +12,11 @@ function setup(match: Partial<TournamentMatch>) {
     const tournamentAuthService = {
         findWithAdminAuth: vi.fn(async () => ({
             id: 'T1',
-            configuration: { pointsPerGame: 13 },
+            configuration: { pointsPerGame: 13, competitionMode: 'standard' },
         })),
     };
+    const isDrawnSession = vi.fn(() => drawnRound);
+    const strategyFactory = { create: vi.fn(() => ({ isDrawnSession })) };
     const service = new ScoreService(
         {} as never,
         matchRepo as never,
@@ -23,39 +25,62 @@ function setup(match: Partial<TournamentMatch>) {
         {} as never,
         tournamentAuthService as never,
         {} as never,
-        {} as never,
+        strategyFactory as never,
     );
-    return { service, matchRepo };
+    return { service, matchRepo, isDrawnSession };
 }
 
 const closedMatch: Partial<TournamentMatch> = {
     id: 'm1',
     scoreA: 13,
     scoreB: 7,
+    isBye: false,
     status: MatchStatus.VALIDATED,
-    session: { status: MatchesSessionStatus.CLOSED } as TournamentMatch['session'],
+    session: {
+        status: MatchesSessionStatus.CLOSED,
+        sessionNumber: 2,
+    } as TournamentMatch['session'],
 };
 
 describe('ScoreService.adminUpdateScore on a closed round', () => {
-    it('refuses a correction that changes the winner', async () => {
-        const { service, matchRepo } = setup(closedMatch);
+    it('accepts a correction that changes the winner of a drawn round', async () => {
+        const { service, matchRepo, isDrawnSession } = setup(closedMatch, true);
 
-        await expect(service.adminUpdateScore('CODE', 'm1', 'pwd', 7, 13)).rejects.toBeInstanceOf(
+        // The rest of the flow (ranking, broadcast) is out of the scope of this test.
+        await service.adminUpdateScore('CODE', 'm1', 'pwd', 7, 13).catch(() => undefined);
+
+        expect(isDrawnSession).toHaveBeenCalledWith(expect.objectContaining({ id: 'T1' }), 2);
+        expect(matchRepo.update).toHaveBeenCalledWith(
+            'm1',
+            expect.objectContaining({ scoreA: 7, scoreB: 13 }),
+        );
+    });
+
+    it('refuses any correction of a round built from earlier results (bracket, ranking round)', async () => {
+        const { service, matchRepo } = setup(closedMatch, false);
+
+        await expect(service.adminUpdateScore('CODE', 'm1', 'pwd', 13, 9)).rejects.toThrow(
+            "Ce round n'est pas un tirage au sort",
+        );
+        expect(matchRepo.update).not.toHaveBeenCalled();
+    });
+
+    it("refuses to correct a bye's score", async () => {
+        const { service, matchRepo } = setup({ ...closedMatch, isBye: true }, true);
+
+        await expect(service.adminUpdateScore('CODE', 'm1', 'pwd', 13, 0)).rejects.toBeInstanceOf(
             BadRequestException,
         );
         expect(matchRepo.update).not.toHaveBeenCalled();
     });
 
-    it('accepts a correction that keeps the same winner', async () => {
-        const { service, matchRepo } = setup(closedMatch);
+    it('still refuses a score that is not final', async () => {
+        const { service, matchRepo } = setup(closedMatch, true);
 
-        // The rest of the flow (ranking, broadcast) is out of the scope of this test.
-        await service.adminUpdateScore('CODE', 'm1', 'pwd', 13, 9).catch(() => undefined);
-
-        expect(matchRepo.update).toHaveBeenCalledWith(
-            'm1',
-            expect.objectContaining({ scoreA: 13, scoreB: 9 }),
+        await expect(service.adminUpdateScore('CODE', 'm1', 'pwd', 9, 7)).rejects.toThrow(
+            'doit rester final',
         );
+        expect(matchRepo.update).not.toHaveBeenCalled();
     });
 });
 
