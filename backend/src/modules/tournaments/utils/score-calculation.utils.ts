@@ -32,8 +32,9 @@ export function computeTournamentScorePoints(won: boolean, ownScore: number): nu
 
 /**
  * Score de classement d'une entry pour une méthode de calcul donnée, comparable directement
- * par soustraction — pour VICTORY_AND_GOAL_AVERAGE, les victoires sont pondérées pour toujours
- * primer sur le goal average (départage).
+ * par soustraction — pour VICTORY_AND_GOAL_AVERAGE (victoires) et SCORE (somme des scores), le
+ * critère principal est pondéré pour toujours primer sur le goal average, qui départage les
+ * égalités.
  */
 export function computeEntryScore(
     entry: Pick<GlobalRankingEntry, 'tournamentPoints' | 'wins' | 'goalAverage' | 'pointsFor'>,
@@ -48,6 +49,6 @@ export function computeEntryScore(
             return entry.wins * GOAL_AVERAGE_TIEBREAK_OFFSET + entry.goalAverage;
         default:
         case ScoreCalculation.SCORE:
-            return entry.pointsFor;
+            return entry.pointsFor * GOAL_AVERAGE_TIEBREAK_OFFSET + entry.goalAverage;
     }
 }

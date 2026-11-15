@@ -74,7 +74,9 @@ export function computeRanking(
 
     result.sort((a, b) => {
         if (scoreCalculation === ScoreCalculation.SCORE) {
-            return b.pointsFor - a.pointsFor;
+            // Same sum of scores: the goal average breaks the tie.
+            if (b.pointsFor !== a.pointsFor) return b.pointsFor - a.pointsFor;
+            return b.goalAverage - a.goalAverage;
         }
         if (scoreCalculation === ScoreCalculation.TOURNAMENT_SCORE) {
             return b.tournamentPoints - a.tournamentPoints;
