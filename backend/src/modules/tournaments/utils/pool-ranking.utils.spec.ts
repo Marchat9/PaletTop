@@ -30,3 +30,48 @@ describe('computeRanking — bye', () => {
         expect(entry).toMatchObject({ wins: 0, pointsFor: 0 });
     });
 });
+
+function played(teamA: string, scoreA: number, teamB: string, scoreB: number): TournamentMatch {
+    return {
+        teamA: { id: teamA, name: teamA },
+        teamB: { id: teamB, name: teamB },
+        scoreA,
+        scoreB,
+        isBye: false,
+        status: MatchStatus.VALIDATED,
+    } as unknown as TournamentMatch;
+}
+
+describe('computeRanking — somme des scores', () => {
+    const pool = ['A', 'B', 'C', 'D'].map((id) => ({ id, name: id }) as Team);
+
+    it('départage au goal average les équipes à somme des scores égale', () => {
+        // A, D et C marquent 20 points chacune : le goal average les classe (+11, +6, +3).
+        const ranking = computeRanking(
+            pool,
+            [
+                played('A', 13, 'B', 2),
+                played('A', 7, 'D', 7),
+                played('C', 7, 'D', 13),
+                played('C', 13, 'B', 4),
+            ],
+            ScoreCalculation.SCORE,
+        );
+
+        expect(ranking.map((entry) => entry.teamId)).toEqual(['A', 'D', 'C', 'B']);
+        expect(ranking[0]).toMatchObject({ pointsFor: 20, goalAverage: 11 });
+        expect(ranking[1]).toMatchObject({ pointsFor: 20, goalAverage: 6 });
+        expect(ranking[2]).toMatchObject({ pointsFor: 20, goalAverage: 3 });
+    });
+
+    it('garde la somme des scores comme critère principal', () => {
+        // D marque plus (20 contre 13) malgré un goal average bien moins bon.
+        const ranking = computeRanking(
+            pool,
+            [played('A', 13, 'B', 0), played('D', 20, 'C', 19)],
+            ScoreCalculation.SCORE,
+        );
+
+        expect(ranking[0].teamId).toBe('D');
+    });
+});

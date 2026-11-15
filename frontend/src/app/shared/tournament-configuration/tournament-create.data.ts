@@ -42,8 +42,8 @@ export const scoreCalculationOptions: {
   {
     value: 'score',
     icon: 'swap_vert',
-    label: 'Somme des scores',
-    description: 'Scores de chaque manche additionnés',
+    label: 'Somme des scores & Goal Average',
+    description: 'Scores de chaque manche additionnés puis Goal Average',
   },
   {
     value: 'tournament_score',
