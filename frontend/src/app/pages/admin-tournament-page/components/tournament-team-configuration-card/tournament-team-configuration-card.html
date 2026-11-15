@@ -24,16 +24,13 @@
     <app-team-config [tournament]="tournament()" (teamUpdated)="onTeamUpdate.emit($event)">
       <app-button
         actions
-        title="Imprimer la liste des équipes"
-        icon="print"
+        title="Télécharger la liste des équipes (PDF)"
+        icon="download"
         variant="secondary"
+        [loading]="isExporting()"
         [disabled]="!hasTeams()"
-        (clicked)="printTeamList()"
+        (clicked)="downloadTeamList()"
       />
     </app-team-config>
   </div>
 </app-card-collapsible>
-
-@if (isPrinting()) {
-  <app-team-print-sheet class="print-sheet" [tournament]="tournament()" />
-}

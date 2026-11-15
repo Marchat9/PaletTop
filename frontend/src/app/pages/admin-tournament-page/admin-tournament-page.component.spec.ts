@@ -24,8 +24,11 @@ import {
 } from 'src/app/store/tournament/tournament.selectors';
 import { TournamentDto } from 'src/app/store/tournament/tournament.models';
 import { AdminTournamentPageComponent } from './admin-tournament-page.component';
+import { GlobalRankingEntry } from 'src/app/models/global-ranking.model';
+import type { TDocumentDefinitions } from 'pdfmake/interfaces';
+import { PdfExportService } from 'src/app/services/pdf-export.service';
 
-function buildTournament(): TournamentDto {
+function buildTournament(status = TournamentStatus.ACTIVE): TournamentDto {
   return {
     id: 't1',
     code: 'ABCD',
@@ -41,20 +44,49 @@ function buildTournament(): TournamentDto {
       competitionMode: 'standard',
       competitionConfiguration: {},
     },
-    status: TournamentStatus.ACTIVE,
+    status,
     teams: [],
     createdAt: new Date().toISOString(),
     tournamentStatus: null,
   };
 }
 
-function setup({ isAdminView = true } = {}) {
+const FINAL_RANKING: GlobalRankingEntry[] = [
+  {
+    rank: 1,
+    teamId: 'team-1',
+    teamName: 'Alpha',
+    wins: 3,
+    pointsFor: 39,
+    pointsAgainst: 12,
+    goalAverage: 27,
+    matchesPlayed: 3,
+    tournamentPoints: 9,
+  },
+];
+
+interface SetupOptions {
+  isAdminView?: boolean;
+  status?: TournamentStatus;
+  ranking?: GlobalRankingEntry[];
+  pdfDownload?: () => Promise<void>;
+}
+
+function setup({
+  isAdminView = true,
+  status = TournamentStatus.ACTIVE,
+  ranking = [],
+  pdfDownload = () => Promise.resolve(),
+}: SetupOptions = {}) {
   const activatedRoute = {
     paramMap: of(convertToParamMap({ tournamentCode: 'ABCD' })),
   } as unknown as ActivatedRoute;
   const routerMock = { navigate: vi.fn() };
   const dialogMock = { open: vi.fn() };
   const actions$ = new Subject<Action>();
+  const pdfExport = {
+    download: vi.fn((_document: TDocumentDefinitions, _fileName: string) => pdfDownload()),
+  };
 
   TestBed.configureTestingModule({
     imports: [AdminTournamentPageComponent],
@@ -63,9 +95,10 @@ function setup({ isAdminView = true } = {}) {
       { provide: Router, useValue: routerMock },
       { provide: Dialog, useValue: dialogMock },
       { provide: Actions, useValue: actions$ },
+      { provide: PdfExportService, useValue: pdfExport },
       provideMockStore({
         selectors: [
-          { selector: selectCurrentTournamentData, value: buildTournament() },
+          { selector: selectCurrentTournamentData, value: buildTournament(status) },
           {
             selector: selectCurrentTournamentAdminInformations,
             value: { code: 'ABCD', password: 'secret' },
@@ -79,7 +112,7 @@ function setup({ isAdminView = true } = {}) {
           { selector: selectAdminUpdateScoreLoading, value: false },
           { selector: selectRankingIsLoading, value: false },
           { selector: selectSessions, value: [] },
-          { selector: selectRanking, value: [] },
+          { selector: selectRanking, value: ranking },
         ],
       }),
     ],
@@ -87,7 +120,7 @@ function setup({ isAdminView = true } = {}) {
 
   const fixture = TestBed.createComponent(AdminTournamentPageComponent);
   const store = TestBed.inject(MockStore);
-  return { fixture, store, actions$ };
+  return { fixture, store, actions$, pdfExport };
 }
 
 // The first render of this large page takes about 1 s alone, but went past the default 5 s when
@@ -125,6 +158,55 @@ describe('AdminTournamentPageComponent', { timeout: 15_000 }, () => {
 
     expect(dispatchSpy).toHaveBeenCalledWith(
       connectTournamentAdministrator({ code: 'ABCD', password: 'secret' }),
+    );
+  });
+
+  it('offers the ranking PDF only once the tournament is finished and ranked', () => {
+    expect(setup({ ranking: FINAL_RANKING }).fixture.componentInstance.canDownloadRanking()).toBe(
+      false,
+    );
+    TestBed.resetTestingModule();
+    expect(
+      setup({ status: TournamentStatus.FINISHED }).fixture.componentInstance.canDownloadRanking(),
+    ).toBe(false);
+    TestBed.resetTestingModule();
+    expect(
+      setup({
+        status: TournamentStatus.FINISHED,
+        ranking: FINAL_RANKING,
+      }).fixture.componentInstance.canDownloadRanking(),
+    ).toBe(true);
+  });
+
+  it('downloads the final ranking PDF named after the tournament', async () => {
+    const { fixture, pdfExport } = setup({
+      status: TournamentStatus.FINISHED,
+      ranking: FINAL_RANKING,
+    });
+
+    await fixture.componentInstance.downloadRanking();
+
+    expect(pdfExport.download).toHaveBeenCalledTimes(1);
+    expect(pdfExport.download.mock.calls[0][1]).toBe('classement-tournoi-test.pdf');
+    expect(fixture.componentInstance.isRankingExporting()).toBe(false);
+  });
+
+  it('notifies the admin when the ranking PDF cannot be generated', async () => {
+    const { fixture, store } = setup({
+      status: TournamentStatus.FINISHED,
+      ranking: FINAL_RANKING,
+      pdfDownload: () => Promise.reject(new Error('chunk load failed')),
+    });
+    const dispatchSpy = vi.spyOn(store, 'dispatch');
+
+    await fixture.componentInstance.downloadRanking();
+
+    expect(dispatchSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        notification: expect.objectContaining({
+          message: "Le classement n'a pas pu être généré. Réessayez.",
+        }),
+      }),
     );
   });
 });

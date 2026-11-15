@@ -28,7 +28,7 @@
 .card-content {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1rem;
 }
 
 .empty-hint {
@@ -41,6 +41,11 @@
   margin: 0.75rem 0 0;
   font-size: 0.75rem;
   color: var(--color-on-surface-variant);
+}
+
+.download-action {
+  display: flex;
+  justify-content: flex-end;
 }
 
 .pool-ranking {

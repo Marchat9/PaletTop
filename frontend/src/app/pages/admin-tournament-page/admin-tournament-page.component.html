@@ -33,6 +33,9 @@
       [ranking]="ranking()"
       [isLoading]="rankingLoading()"
       [scoreCalculation]="tournament()?.configuration?.scoreCalculation"
+      [canDownload]="canDownloadRanking()"
+      [downloadLoading]="isRankingExporting()"
+      (downloadRequested)="downloadRanking()"
     />
 
     <app-tournament-configuration-card
