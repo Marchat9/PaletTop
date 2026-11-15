@@ -406,7 +406,7 @@ describe('trainingReducer', () => {
   });
 
   describe('classement du club', () => {
-    const entries = [{ memberId: 'M1', name: 'Jean', wins: 3, points: 39 }];
+    const entries = [{ memberId: 'M1', name: 'Jean', wins: 3, points: 39, sessionsPlayed: 1 }];
 
     it('le charge, sans montrer celui lu depuis une autre séance', () => {
       const loaded = trainingReducer(
