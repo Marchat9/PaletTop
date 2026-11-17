@@ -45,6 +45,10 @@ function match(
     } as unknown as TournamentMatch;
 }
 
+function scheduled(pool: MatchGroupKey, session: number, a: string, b: string): TournamentMatch {
+    return { ...match(pool, session, a, 0, b, 0), status: MatchStatus.PENDING } as TournamentMatch;
+}
+
 function order(entries: { teamId: string; rank: number }[]): string[] {
     return [...entries].sort((a, b) => a.rank - b.rank).map((e) => e.teamId);
 }
@@ -128,5 +132,79 @@ describe('StructuredTournamentStrategy.computeStandings', () => {
         const standings = order(strategy.computeStandings(tournament(teams), matches));
         // Finalists first (W then X), then the semi losers best-score-first (L9 before L5).
         expect(standings).toEqual(['W', 'X', 'L9', 'L5']);
+    });
+
+    // The final standings say which table each team ended in, so the ranking can show sections.
+    it('indique le tableau de chacun, la petite finale avec le tableau principal', () => {
+        const teams = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'P'];
+        const matches = [
+            match(MatchGroupKey.PRINCIPALE, 3, 'A', 13, 'B', 7),
+            match(MatchGroupKey.THIRD_PLACE_MATCH, 3, 'C', 13, 'D', 7),
+            match(MatchGroupKey.CHALLENGE, 3, 'E', 13, 'F', 7),
+            match(MatchGroupKey.CONSOLANTE, 3, 'G', 13, 'H', 7),
+        ];
+
+        const sections = Object.fromEntries(
+            strategy
+                .computeStandings(tournament(teams), matches)
+                .map((entry) => [entry.teamId, entry.section]),
+        );
+
+        expect(sections).toEqual({
+            A: MatchGroupKey.PRINCIPALE,
+            B: MatchGroupKey.PRINCIPALE,
+            C: MatchGroupKey.PRINCIPALE,
+            D: MatchGroupKey.PRINCIPALE,
+            E: MatchGroupKey.CHALLENGE,
+            F: MatchGroupKey.CHALLENGE,
+            G: MatchGroupKey.CONSOLANTE,
+            H: MatchGroupKey.CONSOLANTE,
+            // Never reached a table: knocked out in the pools.
+            P: 'pools',
+        });
+    });
+
+    // Before the elimination phase there is a single ranking: no section at all.
+    it('ne donne aucune section tant qu’aucun tableau n’a commencé', () => {
+        const standings = strategy.computeStandings(tournament(['A', 'B']), []);
+
+        expect(standings.map((entry) => entry.section)).toEqual([null, null]);
+    });
+
+    // As soon as an elimination round starts, its matches tell each team's table: the sections show
+    // before any of them is validated, teams of a table kept in their qualifying order.
+    it('place chaque équipe dans son tableau dès le lancement du round, avant tout résultat', () => {
+        const teams = ['A', 'B', 'C', 'D', 'P'];
+        const standings = strategy.computeStandings(
+            tournament(teams),
+            [],
+            [
+                scheduled(MatchGroupKey.CONSOLANTE, 1, 'C', 'D'),
+                scheduled(MatchGroupKey.PRINCIPALE, 1, 'A', 'B'),
+            ],
+        );
+
+        expect(order(standings).slice(0, 2).sort()).toEqual(['A', 'B']);
+        expect(order(standings).slice(2, 4).sort()).toEqual(['C', 'D']);
+        expect(Object.fromEntries(standings.map((entry) => [entry.teamId, entry.section]))).toEqual(
+            {
+                A: MatchGroupKey.PRINCIPALE,
+                B: MatchGroupKey.PRINCIPALE,
+                C: MatchGroupKey.CONSOLANTE,
+                D: MatchGroupKey.CONSOLANTE,
+                P: 'pools',
+            },
+        );
+    });
+
+    // A team still playing a round ranks above the teams already knocked out of that table.
+    it('classe une équipe encore en lice au-dessus des éliminées de son tableau', () => {
+        const standings = strategy.computeStandings(
+            tournament(['W', 'L', 'X', 'Y']),
+            [match(MatchGroupKey.PRINCIPALE, 1, 'W', 13, 'L', 4)],
+            [scheduled(MatchGroupKey.PRINCIPALE, 2, 'W', 'X')],
+        );
+
+        expect(order(standings).indexOf('W')).toBeLessThan(order(standings).indexOf('L'));
     });
 });

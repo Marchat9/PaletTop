@@ -66,7 +66,13 @@ export abstract class TournamentStrategy {
      * separate from `computeGlobalRanking` on purpose: that one still seeds the brackets and must
      * stay a plain aggregate, whereas this one describes the final standings.
      */
-    computeStandings(tournament: Tournament, matches: TournamentMatch[]): GlobalRankingEntry[] {
+    computeStandings(
+        tournament: Tournament,
+        matches: TournamentMatch[],
+        // Only the structured tournaments use them, to place each team in its table.
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        scheduledMatches: TournamentMatch[] = [],
+    ): GlobalRankingEntry[] {
         return this.computeGlobalRanking(tournament, matches);
     }
 
