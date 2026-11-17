@@ -29,7 +29,7 @@ import {
   ConfirmationPopupComponent,
 } from 'src/app/modales/confirmation-popup/confirmation-popup';
 import { BackLink } from 'src/app/shared/back-link/back-link';
-import { AdminHeaderMetric } from 'src/app/shared/admin-page-header/admin-page-header.model';
+import { AdminHeaderInfo } from 'src/app/shared/admin-page-header/admin-page-header.model';
 import { AnimateOnChangeDirective } from 'src/app/shared/animate-on-change/animate-on-change.directive';
 import { addNotification } from 'src/app/store/app-config/app-config.actions';
 import { connectTrainingAdministrator } from 'src/app/store/training/training.admin.actions';
@@ -192,7 +192,7 @@ export class AdminTrainingSessionPage implements OnInit, OnDestroy {
   );
   public readonly currentRound = computed(() => this.sortedRounds().at(-1) ?? null);
   public readonly roundHistories = computed(() =>
-    toTrainingRoundHistories(this.sortedRounds().slice(0, -1)),
+    toTrainingRoundHistories(this.sortedRounds().slice(0, -1), this.isSessionOpen()),
   );
   public readonly currentRoundGroups = computed(() =>
     toTrainingAdminMatchGroups(this.currentRound()?.matches ?? []),
@@ -242,11 +242,15 @@ export class AdminTrainingSessionPage implements OnInit, OnDestroy {
   public readonly fixedTeamCount = computed(
     () => this.session()?.teams.filter((team) => team.kind === 'FIXED').length ?? 0,
   );
-  public readonly headerMetrics = computed<AdminHeaderMetric[]>(() => [
-    { label: 'Présents', value: String(this.presentParticipants().length) },
-    { label: this.roundTileLabel(), value: String(this.currentRound()?.roundNumber ?? 0) },
-    { label: 'Matchs à valider', value: String(this.ongoingMatchCount()) },
-    { label: 'Équipes fixes', value: String(this.fixedTeamCount()) },
+  public readonly headerInfos = computed<AdminHeaderInfo[]>(() => [
+    { icon: 'how_to_reg', label: 'Présents', value: String(this.presentParticipants().length) },
+    {
+      icon: 'sports_score',
+      label: this.roundTileLabel(),
+      value: String(this.currentRound()?.roundNumber ?? 0),
+    },
+    { icon: 'pending_actions', label: 'Matchs à valider', value: String(this.ongoingMatchCount()) },
+    { icon: 'groups', label: 'Équipes fixes', value: String(this.fixedTeamCount()) },
   ]);
 
   /** Split settings of the session, as the preview reads them. */

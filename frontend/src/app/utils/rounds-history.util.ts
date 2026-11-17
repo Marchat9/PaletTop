@@ -97,10 +97,13 @@ export function toTournamentRoundHistories(
 }
 
 /**
- * Previous rounds of a training session, most recent first. The backend refuses any correction in
- * a closed round: they are read-only.
+ * Previous rounds of a training session, most recent first. Their scores stay correctable while the
+ * session is open (the backend then only takes a final score).
  */
-export function toTrainingRoundHistories(rounds: TrainingRoundDto[]): AdminRoundHistory[] {
+export function toTrainingRoundHistories(
+  rounds: TrainingRoundDto[],
+  canEdit: boolean,
+): AdminRoundHistory[] {
   return [...rounds]
     .sort((a, b) => b.roundNumber - a.roundNumber)
     .map((round) => ({
@@ -108,7 +111,7 @@ export function toTrainingRoundHistories(rounds: TrainingRoundDto[]): AdminRound
       roundNumber: round.roundNumber,
       label: null,
       matchCountLabel: matchCountLabel(round.matches.filter((match) => !match.isBye).length),
-      editable: false,
+      editable: canEdit,
       groups: toTrainingAdminMatchGroups(round.matches),
     }));
 }

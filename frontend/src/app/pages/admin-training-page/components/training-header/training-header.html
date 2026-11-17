@@ -3,10 +3,9 @@
   icon="school"
   [title]="training()?.name ?? null"
   [code]="training()?.code ?? null"
-  [metrics]="metrics()"
+  [infos]="infos()"
 >
   <ng-container headerActions>
-    <app-button title="Modifier" icon="edit" variant="secondary" (clicked)="edit.emit()" />
     <app-button-icon
       icon="more_vert"
       aria-label="Actions du groupe d'entraînement"

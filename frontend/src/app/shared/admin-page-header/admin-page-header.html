@@ -35,10 +35,10 @@
 
     <ng-content />
 
-    @if (metrics().length > 0) {
-      <div class="metrics">
-        @for (metric of metrics(); track metric.label) {
-          <app-metric-tile [value]="metric.value" [label]="metric.label" size="normal" />
+    @if (infos().length > 0) {
+      <div class="infos">
+        @for (info of infos(); track info.label) {
+          <app-info-tile [icon]="info.icon" [label]="info.label" [value]="info.value" />
         }
       </div>
     }

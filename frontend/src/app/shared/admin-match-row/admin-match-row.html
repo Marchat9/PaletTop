@@ -77,12 +77,10 @@
       ><span class="plate-number">{{ match().plateNumber }}</span></span
     >
   }
-  <span class="team team-a" [class.winner]="isWinnerA()"
-    >{{ match().teamA }}
-    @if (isOngoing()) {
-      <span class="live-dot" title="En cours"></span>
-    }
-  </span>
+  <span class="team team-a" [class.winner]="isWinnerA()">{{ match().teamA }}</span>
+  @if (liveDot(); as dot) {
+    <span class="live-dot" [class]="dot.className" [title]="dot.label"></span>
+  }
   <span class="score score-a" [class.winner]="isWinnerA()" [appAnimateOnChange]="scoreKey()">{{
     match().scoreA
   }}</span>

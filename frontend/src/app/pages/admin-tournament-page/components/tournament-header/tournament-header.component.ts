@@ -16,7 +16,7 @@ import { Button } from 'src/app/shared/button/button';
 import { ButtonIcon } from 'src/app/shared/button-icon/button-icon';
 import { AdminPageHeader } from 'src/app/shared/admin-page-header/admin-page-header';
 import {
-  AdminHeaderMetric,
+  AdminHeaderInfo,
   AdminHeaderStatus,
 } from 'src/app/shared/admin-page-header/admin-page-header.model';
 import { Icon } from 'src/app/shared/icon/icon';
@@ -83,19 +83,28 @@ export class TournamentHeaderComponent {
     if (!this.tournament()) {
       return [];
     }
-    const phase = this.phaseName();
+    // The phase only adds something while the tournament runs: once over, it repeats the status.
+    const phase = this.tournament()?.status === TournamentStatus.ACTIVE ? this.phaseName() : null;
     return [
       this.statusPresentation(),
       ...(phase ? [{ label: phase, tone: 'neutral' as StatusPillTone }] : []),
     ];
   });
-  public readonly metrics = computed<AdminHeaderMetric[]>(() => {
+  public readonly infos = computed<AdminHeaderInfo[]>(() => {
     const tournament = this.tournament();
     return [
-      { label: 'Date du tournoi', value: this.formatOrDash(tournament?.date, 'dd/MM/yyyy') },
-      { label: 'Création', value: this.formatOrDash(tournament?.createdAt, 'dd/MM/yyyy HH:mm') },
-      { label: 'Équipes', value: String(this.teamCount()) },
-      { label: 'Mode de tournoi', value: this.tournamentMode() },
+      {
+        icon: 'event',
+        label: 'Date du tournoi',
+        value: this.formatOrDash(tournament?.date, 'dd/MM/yyyy'),
+      },
+      {
+        icon: 'schedule',
+        label: 'Création',
+        value: this.formatOrDash(tournament?.createdAt, 'dd/MM/yyyy HH:mm'),
+      },
+      { icon: 'groups', label: 'Équipes', value: String(this.teamCount()) },
+      { icon: 'emoji_events', label: 'Mode de tournoi', value: this.tournamentMode() },
     ];
   });
 

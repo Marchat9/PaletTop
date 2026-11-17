@@ -6,8 +6,9 @@ export interface AdminHeaderStatus {
   tone: StatusPillTone;
 }
 
-/** A key figure of the page subject, shown as a metric tile. */
-export interface AdminHeaderMetric {
+/** A piece of information of the page subject (a count, a date, a mode), shown as an info tile. */
+export interface AdminHeaderInfo {
+  icon: string;
   label: string;
   value: string;
 }

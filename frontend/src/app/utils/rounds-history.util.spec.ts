@@ -127,20 +127,25 @@ describe('toTrainingRoundHistories', () => {
     },
   ];
 
-  it('lists the rounds most recent first, read-only, without phase label', () => {
-    const views = toTrainingRoundHistories(rounds);
+  it('lists the rounds most recent first, without phase label', () => {
+    const views = toTrainingRoundHistories(rounds, true);
 
     expect(views.map((view) => view.roundNumber)).toEqual([2, 1]);
-    expect(views.every((view) => !view.editable && view.label === null)).toBe(true);
+    expect(views.every((view) => view.label === null)).toBe(true);
     expect(views[0].matchCountLabel).toBe('2 matchs');
   });
 
   it('orders the matches by the plate given by the backend, byes last, teams by their label', () => {
-    const [latest] = toTrainingRoundHistories(rounds);
+    const [latest] = toTrainingRoundHistories(rounds, true);
     const matches = latest.groups[0].matches;
 
     expect(matches.map((match) => match.id)).toEqual(['b', 'c', 'bye']);
     expect(matches[0].teamA).toBe('Alice');
     expect(matches[0].teamB).toBe('Les Laitons');
+  });
+
+  it('keeps the scores correctable only while the session is open', () => {
+    expect(toTrainingRoundHistories(rounds, true).every((view) => view.editable)).toBe(true);
+    expect(toTrainingRoundHistories(rounds, false).some((view) => view.editable)).toBe(false);
   });
 });

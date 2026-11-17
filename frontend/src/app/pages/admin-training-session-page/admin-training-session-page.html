@@ -10,7 +10,7 @@
     animation="slide-in"
     [animateOnInit]="true"
   >
-    <app-session-header [session]="session()" [metrics]="headerMetrics()" />
+    <app-session-header [session]="session()" [infos]="headerInfos()" />
 
     <app-session-actions
       [isSessionOpen]="isSessionOpen()"
@@ -81,8 +81,10 @@
     <app-rounds-history
       [rounds]="roundHistories()"
       [pointsPerGame]="pointsPerGame()"
-      description="Revoir les matchs des rounds précédents de la séance."
+      description="Revoir les matchs des rounds précédents et corriger un score tant que la séance est ouverte."
       searchPlaceholder="Filtrer par joueur ou équipe"
+      [scoreUpdateLoading]="scoreLoading()"
+      (scoreUpdate)="updateScore($event)"
     />
   </div>
 </div>

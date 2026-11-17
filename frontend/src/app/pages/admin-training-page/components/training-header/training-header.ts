@@ -11,15 +11,14 @@ import {
 import { MatMenuModule } from '@angular/material/menu';
 import { Nullable } from 'src/app/models/nullable.model';
 import { AdminPageHeader } from 'src/app/shared/admin-page-header/admin-page-header';
-import { AdminHeaderMetric } from 'src/app/shared/admin-page-header/admin-page-header.model';
-import { Button } from 'src/app/shared/button/button';
+import { AdminHeaderInfo } from 'src/app/shared/admin-page-header/admin-page-header.model';
 import { ButtonIcon } from 'src/app/shared/button-icon/button-icon';
 import { Icon } from 'src/app/shared/icon/icon';
 import { AdminTrainingDto } from 'src/app/store/training/training.models';
 
 @Component({
   selector: 'app-training-header',
-  imports: [AdminPageHeader, Button, ButtonIcon, Icon, MatMenuModule],
+  imports: [AdminPageHeader, ButtonIcon, Icon, MatMenuModule],
   templateUrl: './training-header.html',
   styleUrl: './training-header.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -34,17 +33,19 @@ export class TrainingHeader {
   public readonly disconnect = output<void>();
   public readonly edit = output<void>();
 
-  public readonly metrics = computed<AdminHeaderMetric[]>(() => {
+  public readonly infos = computed<AdminHeaderInfo[]>(() => {
     const training = this.training();
     const lastSession = this.lastSessionDate();
     return [
-      { label: 'Membres', value: String(training?.members?.length ?? 0) },
-      { label: 'Séances', value: String(this.sessionCount()) },
+      { icon: 'group', label: 'Membres', value: String(training?.members?.length ?? 0) },
+      { icon: 'event_repeat', label: 'Séances', value: String(this.sessionCount()) },
       {
+        icon: 'event',
         label: 'Dernière séance',
         value: lastSession ? formatDate(lastSession, 'dd/MM/yyyy', this.locale) : '—',
       },
       {
+        icon: 'schedule',
         label: 'Créé le',
         value: training ? formatDate(training.createdAt, 'dd/MM/yyyy', this.locale) : '—',
       },

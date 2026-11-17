@@ -23,6 +23,13 @@ import { StatusPill } from 'src/app/shared/status-pill/status-pill';
 import { MatchScoreSheet, MatchScoreSheetData } from './match-score-sheet/match-score-sheet';
 import { ScoreStepper } from './score-stepper/score-stepper';
 
+/** Corner dot of a match being played (yellow), awaiting validation (blue) or validated (green). */
+const LIVE_DOTS: Partial<Record<string, { modifier: string; label: string }>> = {
+  ONGOING: { modifier: 'ongoing', label: 'En cours' },
+  ENDED: { modifier: 'ended', label: 'En validation' },
+  VALIDATED: { modifier: 'validated', label: 'Validé' },
+};
+
 /** Statuses whose score is a result: the winner can be highlighted. */
 const RESULT_STATUSES = ['ENDED', 'VALIDATED'];
 /** Same limit as the rest of the admin page: below it, corrections open in a bottom sheet. */
@@ -87,7 +94,11 @@ export class AdminMatchRow {
   public readonly isWinnerB = computed(
     () => this.hasResult() && this.match().scoreB > this.match().scoreA,
   );
-  public readonly isOngoing = computed(() => this.match().status === 'ONGOING');
+  /** Mobile, where the status badge is hidden: a coloured dot in the corner of the card. */
+  public readonly liveDot = computed(() => {
+    const dot = LIVE_DOTS[this.match().status];
+    return dot ? { className: `live-dot live-dot--${dot.modifier}`, label: dot.label } : null;
+  });
   public readonly scoreKey = computed(() => `${this.match().scoreA}-${this.match().scoreB}`);
   public readonly statusTone = computed(() => matchStatusTone(this.match().status));
   public readonly editLabel = computed(

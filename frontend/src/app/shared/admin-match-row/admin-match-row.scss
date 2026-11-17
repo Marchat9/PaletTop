@@ -3,6 +3,7 @@
 }
 
 .match-row {
+  position: relative;
   box-sizing: border-box;
   display: grid;
   grid-template-columns:
@@ -116,14 +117,27 @@
     gap: 0.5rem;
   }
 
+  // Mobile only, in the top right corner of the card: the status badge is hidden there.
   .live-dot {
     display: none;
+    position: absolute;
+    top: 0.4rem;
+    right: 0.4rem;
     width: 0.5rem;
     height: 0.5rem;
-    margin-left: 0.35rem;
     border-radius: 999px;
-    background: var(--color-primary);
-    vertical-align: middle;
+
+    &--ongoing {
+      background: var(--color-primary);
+    }
+
+    &--ended {
+      background: var(--color-status-pending-text);
+    }
+
+    &--validated {
+      background: var(--color-success);
+    }
   }
 
   ::ng-deep .edit-icon,

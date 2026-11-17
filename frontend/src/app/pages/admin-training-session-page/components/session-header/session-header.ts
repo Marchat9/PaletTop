@@ -3,7 +3,7 @@ import { DatePipe } from '@angular/common';
 import { Nullable } from 'src/app/models/nullable.model';
 import { AdminPageHeader } from 'src/app/shared/admin-page-header/admin-page-header';
 import {
-  AdminHeaderMetric,
+  AdminHeaderInfo,
   AdminHeaderStatus,
 } from 'src/app/shared/admin-page-header/admin-page-header.model';
 import { InlineNotice } from 'src/app/shared/inline-notice/inline-notice';
@@ -18,8 +18,8 @@ import { TrainingSessionAdminDto } from 'src/app/store/training/training.models'
 })
 export class SessionHeader {
   public readonly session = input<Nullable<TrainingSessionAdminDto>>(null);
-  /** Key figures of the session (present players, round…), computed by the page. */
-  public readonly metrics = input<AdminHeaderMetric[]>([]);
+  /** Key information of the session (present players, round…), computed by the page. */
+  public readonly infos = input<AdminHeaderInfo[]>([]);
 
   protected readonly statuses = computed<AdminHeaderStatus[]>(() => {
     const status = this.session()?.status;
