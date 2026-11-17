@@ -164,11 +164,14 @@ export class StructuredTournamentStrategy extends TournamentStrategy {
     override computeStandings(
         tournament: Tournament,
         matches: TournamentMatch[],
-        scheduledMatches: TournamentMatch[] = [],
     ): GlobalRankingEntry[] {
-        const base = super.computeGlobalRanking(tournament, matches);
+        const validatedMatches = matches.filter((m) => m.status === MatchStatus.VALIDATED);
+        // Matches still to play only place the teams in their table: they count for nothing.
+        const scheduledMatches = matches.filter((m) => m.status !== MatchStatus.VALIDATED);
+
+        const base = super.computeGlobalRanking(tournament, validatedMatches);
         const seed = new Map(base.map((entry, index) => [entry.teamId, index]));
-        const exits = this.eliminationExits(tournament, matches);
+        const exits = this.eliminationExits(tournament, validatedMatches);
         this.addScheduledTables(tournament, scheduledMatches, exits);
 
         const placed = base

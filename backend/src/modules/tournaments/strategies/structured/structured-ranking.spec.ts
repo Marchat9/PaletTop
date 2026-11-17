@@ -175,14 +175,10 @@ describe('StructuredTournamentStrategy.computeStandings', () => {
     // before any of them is validated, teams of a table kept in their qualifying order.
     it('place chaque équipe dans son tableau dès le lancement du round, avant tout résultat', () => {
         const teams = ['A', 'B', 'C', 'D', 'P'];
-        const standings = strategy.computeStandings(
-            tournament(teams),
-            [],
-            [
-                scheduled(MatchGroupKey.CONSOLANTE, 1, 'C', 'D'),
-                scheduled(MatchGroupKey.PRINCIPALE, 1, 'A', 'B'),
-            ],
-        );
+        const standings = strategy.computeStandings(tournament(teams), [
+            scheduled(MatchGroupKey.CONSOLANTE, 1, 'C', 'D'),
+            scheduled(MatchGroupKey.PRINCIPALE, 1, 'A', 'B'),
+        ]);
 
         expect(order(standings).slice(0, 2).sort()).toEqual(['A', 'B']);
         expect(order(standings).slice(2, 4).sort()).toEqual(['C', 'D']);
@@ -199,11 +195,10 @@ describe('StructuredTournamentStrategy.computeStandings', () => {
 
     // A team still playing a round ranks above the teams already knocked out of that table.
     it('classe une équipe encore en lice au-dessus des éliminées de son tableau', () => {
-        const standings = strategy.computeStandings(
-            tournament(['W', 'L', 'X', 'Y']),
-            [match(MatchGroupKey.PRINCIPALE, 1, 'W', 13, 'L', 4)],
-            [scheduled(MatchGroupKey.PRINCIPALE, 2, 'W', 'X')],
-        );
+        const standings = strategy.computeStandings(tournament(['W', 'L', 'X', 'Y']), [
+            match(MatchGroupKey.PRINCIPALE, 1, 'W', 13, 'L', 4),
+            scheduled(MatchGroupKey.PRINCIPALE, 2, 'W', 'X'),
+        ]);
 
         expect(order(standings).indexOf('W')).toBeLessThan(order(standings).indexOf('L'));
     });

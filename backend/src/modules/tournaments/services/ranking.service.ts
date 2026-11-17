@@ -1,6 +1,5 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { TournamentMatch } from 'src/entities/tounament-match.entity';
-import { MatchStatus } from 'src/enum/status.enum';
 import { TournamentRepository } from 'src/modules/tournaments/repositories/tournament.repository';
 import { RealtimeGateway } from 'src/modules/realtime/realtime.gateway';
 import { MatchHistoryDto } from '../responses/match-history.dto';
@@ -111,11 +110,8 @@ export class RankingService {
 
         const sessions = await this.sessionRepo.findAllByTournament(tournament.id);
         const allMatches = sessions.flatMap((s) => s.matches);
-        const validatedMatches = allMatches.filter((m) => m.status === MatchStatus.VALIDATED);
-        // Matches still to play only place the teams in their table: they count for nothing.
-        const scheduledMatches = allMatches.filter((m) => m.status !== MatchStatus.VALIDATED);
 
         const strategy = this.strategyFactory.create(tournament.configuration.competitionMode);
-        return strategy.computeStandings(tournament, validatedMatches, scheduledMatches);
+        return strategy.computeStandings(tournament, allMatches);
     }
 }

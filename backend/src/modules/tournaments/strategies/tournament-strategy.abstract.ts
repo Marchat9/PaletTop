@@ -64,16 +64,14 @@ export abstract class TournamentStrategy {
      * The ranking shown to everyone. By default it is the aggregate ranking above; modes with an
      * elimination phase override this to place teams by how far they got in the bracket. It is kept
      * separate from `computeGlobalRanking` on purpose: that one still seeds the brackets and must
-     * stay a plain aggregate, whereas this one describes the final standings.
+     * stay a plain aggregate, whereas this one describes the final standings. It takes every match
+     * of the tournament: only the validated ones count.
      */
-    computeStandings(
-        tournament: Tournament,
-        matches: TournamentMatch[],
-        // Only the structured tournaments use them, to place each team in its table.
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        scheduledMatches: TournamentMatch[] = [],
-    ): GlobalRankingEntry[] {
-        return this.computeGlobalRanking(tournament, matches);
+    computeStandings(tournament: Tournament, matches: TournamentMatch[]): GlobalRankingEntry[] {
+        return this.computeGlobalRanking(
+            tournament,
+            matches.filter((m) => m.status === MatchStatus.VALIDATED),
+        );
     }
 
     computeTeamHistory(matches: TournamentMatch[], teamId: string): MatchHistoryDto[] {
