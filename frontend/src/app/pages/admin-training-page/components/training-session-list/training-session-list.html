@@ -32,9 +32,9 @@
           >
             <span class="dot" aria-hidden="true"></span>
             <span class="date">{{ session.date | date: 'EEEE dd/MM/yyyy' }}</span>
-            <span class="status" [class.open]="session.status === 'OPEN'">
+            <app-status-pill [tone]="session.status === 'OPEN' ? 'ongoing' : 'pending'">
               {{ session.status === 'OPEN' ? 'Ouverte' : 'Clôturée' }}
-            </span>
+            </app-status-pill>
             <span class="spacer"></span>
             <span class="who">
               {{ session.participantsCount }}

@@ -1,8 +1,8 @@
 <div class="admin-training-session-page">
-  <button type="button" class="back-link" (click)="backToTraining()">
-    <app-icon name="arrow_back" iconClass="back-icon" [ariaHidden]="true" />
-    {{ training()?.name || "Retour à l'entraînement" }}
-  </button>
+  <app-back-link
+    [label]="training()?.name || 'Retour à l\'entraînement'"
+    (clicked)="backToTraining()"
+  />
 
   <div
     class="session-body"
@@ -10,55 +10,38 @@
     animation="slide-in"
     [animateOnInit]="true"
   >
-    <app-session-header [session]="session()" />
-
-    <div class="metrics">
-      <app-metric-tile
-        [value]="presentParticipants().length.toString()"
-        label="Présents"
-        size="responsive"
-      />
-      <app-metric-tile
-        [value]="(currentRound()?.roundNumber ?? 0).toString()"
-        [label]="roundTileLabel()"
-        size="responsive"
-      />
-      <app-metric-tile
-        [value]="ongoingMatchCount().toString()"
-        label="Matchs à valider"
-        size="responsive"
-      />
-      <app-metric-tile
-        [value]="fixedTeamCount().toString()"
-        label="Équipes fixes"
-        size="responsive"
-      />
-    </div>
+    <app-session-header [session]="session()" [infos]="headerInfos()" />
 
     <app-session-actions
       [isSessionOpen]="isSessionOpen()"
-      [canGenerateRound]="canGenerateRound()"
+      [canCloseSession]="canCloseSession()"
       [generateBlockedReason]="generateBlockedReason()"
       [generateBlockedIsAlert]="generateBlockedIsAlert()"
       [nextRoundPreview]="nextRoundPreview()"
-      [generateLoading]="generateRoundLoading()"
       [closeLoading]="closeSessionLoading()"
       [closeError]="closeSessionError()"
       (openCheckin)="openCheckin()"
-      (generateRound)="generateRound()"
       [canPlayMyMatches]="!!adminParticipant()"
       [playMyMatchesDisabled]="playMyMatchesDisabled()"
       (closeSession)="closeSession()"
       (playMyMatches)="playMyMatches()"
     />
 
-    <app-session-round
-      [round]="currentRound()"
-      [pointsPerGame]="session()?.pointsPerGame ?? 13"
-      [isSessionOpen]="isSessionOpen()"
+    <app-current-round-card
+      [roundNumber]="currentRound()?.roundNumber ?? null"
+      [groups]="currentRoundGroups()"
+      [showMatches]="!!currentRound()"
+      [pointsPerGame]="pointsPerGame()"
+      [editable]="isCurrentRoundEditable()"
+      [scoreUpdateLoading]="scoreLoading()"
+      [message]="currentRoundMessage()"
       [isLoading]="roundsLoading()"
-      [scoreLoading]="scoreLoading()"
-      (updateScore)="updateScore($event)"
+      [showNextButton]="isSessionOpen()"
+      nextLabel="Générer le round suivant"
+      [canGenerateNext]="canGenerateRound()"
+      [nextLoading]="generateRoundLoading()"
+      (scoreUpdate)="updateScore($event)"
+      (nextRound)="generateRound()"
     />
 
     <app-session-participants
@@ -95,9 +78,13 @@
       />
     </app-leaderboard>
 
-    <app-session-rounds-history
-      [rounds]="previousRounds()"
-      [pointsPerGame]="session()?.pointsPerGame ?? 13"
+    <app-rounds-history
+      [rounds]="roundHistories()"
+      [pointsPerGame]="pointsPerGame()"
+      description="Revoir les matchs des rounds précédents et corriger un score tant que la séance est ouverte."
+      searchPlaceholder="Filtrer par joueur ou équipe"
+      [scoreUpdateLoading]="scoreLoading()"
+      (scoreUpdate)="updateScore($event)"
     />
   </div>
 </div>

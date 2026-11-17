@@ -1,22 +1,37 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { Nullable } from 'src/app/models/nullable.model';
-import { Card } from 'src/app/shared/card/card';
-import { Icon } from 'src/app/shared/icon/icon';
+import { AdminPageHeader } from 'src/app/shared/admin-page-header/admin-page-header';
+import {
+  AdminHeaderInfo,
+  AdminHeaderStatus,
+} from 'src/app/shared/admin-page-header/admin-page-header.model';
+import { InlineNotice } from 'src/app/shared/inline-notice/inline-notice';
 import { RulePill, RulePills } from 'src/app/shared/rule-pills/rule-pills';
 import { TrainingSessionAdminDto } from 'src/app/store/training/training.models';
 
 @Component({
   selector: 'app-session-header',
-  imports: [Card, Icon, DatePipe, RulePills],
+  imports: [AdminPageHeader, DatePipe, InlineNotice, RulePills],
   templateUrl: './session-header.html',
-  styleUrl: './session-header.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SessionHeader {
   public readonly session = input<Nullable<TrainingSessionAdminDto>>(null);
+  /** Key information of the session (present players, round…), computed by the page. */
+  public readonly infos = input<AdminHeaderInfo[]>([]);
 
-  protected readonly isOpen = computed(() => this.session()?.status === 'OPEN');
+  protected readonly statuses = computed<AdminHeaderStatus[]>(() => {
+    const status = this.session()?.status;
+    if (!status) {
+      return [];
+    }
+    return [
+      status === 'OPEN'
+        ? { label: 'Ouverte', tone: 'ongoing' }
+        : { label: 'Clôturée', tone: 'pending' },
+    ];
+  });
 
   /** The matchmaking settings, frozen at creation, summed up in one row of pills. */
   protected readonly rules = computed<RulePill[]>(() => {

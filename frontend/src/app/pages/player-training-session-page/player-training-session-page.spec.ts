@@ -190,7 +190,7 @@ describe('PlayerTrainingSessionPage', () => {
     const ADMIN = { code: 'LAITON-2026', password: 'secret' };
     const FROM_ADMIN = { adminTraining: 'LAITON-2026' };
     const backButton = (element: HTMLElement) =>
-      [...element.querySelectorAll('.button')].find((button) =>
+      [...element.querySelectorAll('.back-link')].find((button) =>
         button.textContent?.includes("Retour à l'administration"),
       );
 
@@ -385,7 +385,9 @@ describe('PlayerTrainingSessionPage', () => {
     const element: HTMLElement = fixture.nativeElement;
 
     expect(fixture.componentInstance.isSessionClosed()).toBe(true);
-    expect(element.querySelector('.session-closed')?.textContent).toContain('terminée');
+    // The card gives way to the end of the session, with the player's rank once known.
+    expect(element.querySelector('app-player-final-rank')?.textContent).toContain('terminée');
+    expect(element.querySelector('app-status-pill')?.textContent).toContain('Séance terminée');
     // Starting the match is no longer accepted by the server: the button disappears.
     expect(element.querySelector('.match-card__action')).toBeNull();
   });

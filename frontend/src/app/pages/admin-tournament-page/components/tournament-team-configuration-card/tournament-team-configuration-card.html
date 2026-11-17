@@ -32,6 +32,7 @@
         title="Télécharger la liste des équipes (PDF)"
         icon="download"
         variant="secondary"
+        [titleCanWrap]="true"
         [loading]="isExporting()"
         [disabled]="!hasTeams()"
         (clicked)="downloadTeamList()"

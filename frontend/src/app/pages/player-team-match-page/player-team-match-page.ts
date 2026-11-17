@@ -19,7 +19,10 @@ import {
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Store } from '@ngrx/store';
-import { RankData, RankPopupComponent } from 'src/app/modales/rank-popup/rank-popup';
+import {
+  LeaderboardPopup,
+  LeaderboardPopupData,
+} from 'src/app/modales/leaderboard-popup/leaderboard-popup';
 import { SessionStatus } from 'src/app/models/matches-session.model';
 import { Nullable } from 'src/app/models/nullable.model';
 import { PlayerMatchDto } from 'src/app/models/player-match.model';
@@ -28,7 +31,11 @@ import {
   historyToResults,
   toPlayerMatchView,
 } from 'src/app/pages/player-team-match-page/player-team-match-page.utils';
-import { PlayerByeCopy, PlayerValidationCopy } from 'src/app/models/player-match-view.model';
+import {
+  PlayerByeCopy,
+  PlayerStatTile,
+  PlayerValidationCopy,
+} from 'src/app/models/player-match-view.model';
 import { PlayerMatchCard } from 'src/app/shared/player-match-card/player-match-card';
 import { PlayerMatchHistory } from 'src/app/shared/player-match-history/player-match-history';
 import { Icon } from 'src/app/shared/icon/icon';
@@ -57,8 +64,14 @@ import {
   selectCurrentTournamentData,
 } from 'src/app/store/tournament/tournament.selectors';
 import { onResyncRequested } from 'src/app/utils/resync-on-reconnect.util';
-import { PlayerTeamHeaderComponent } from './player-team-header/player-team-header';
-import { PlayerTeamMembersComponent } from './player-team-members/player-team-members';
+import { PageState } from 'src/app/shared/page-state/page-state';
+import { PlayerFinalRank } from 'src/app/shared/player-final-rank/player-final-rank';
+import { PlayerHeader } from 'src/app/shared/player-header/player-header';
+import {
+  PlayerHeaderInfo,
+  PlayerHeaderStatus,
+} from 'src/app/shared/player-header/player-header.model';
+import { PlayerTeammates } from 'src/app/shared/player-teammates/player-teammates';
 import { newId } from 'src/app/utils/unique-id.util';
 
 export type TeamMatchStatus = 'NOT_STARTED' | 'CANCELLED' | 'FINISH';
@@ -67,8 +80,10 @@ export type TeamMatchStatus = 'NOT_STARTED' | 'CANCELLED' | 'FINISH';
   selector: 'app-player-team-match-page',
   standalone: true,
   imports: [
-    PlayerTeamHeaderComponent,
-    PlayerTeamMembersComponent,
+    PageState,
+    PlayerFinalRank,
+    PlayerHeader,
+    PlayerTeammates,
     PlayerMatchHistory,
     PlayerMatchCard,
     Icon,
@@ -214,6 +229,27 @@ export class PlayerTeamMatchPageComponent {
     return entry ? String(entry.rank) : '—';
   });
 
+  // ======= Header =======
+  public readonly headerInfos = computed<PlayerHeaderInfo[]>(() => [
+    { label: 'Code équipe', value: this.team()?.code ?? '—', isCode: true },
+  ]);
+  public readonly headerStatus = computed<Nullable<PlayerHeaderStatus>>(() => {
+    const phase = this.phaseName();
+    return phase ? { label: phase, tone: 'ongoing', icon: 'sports_score' } : null;
+  });
+  public readonly statTiles = computed<PlayerStatTile[]>(() => [
+    { key: 'wins', label: 'Victoires / matchs', value: this.wins() },
+    {
+      key: 'rank',
+      label: 'Classement',
+      value: this.nbTeams() ? `${this.rank()}/${this.nbTeams()}` : this.rank(),
+      clickable: true,
+    },
+  ]);
+  public readonly teamMembersSubtitle = computed(
+    () => `${this.team()?.players.length ?? 0} joueur(s) inscrit(s).`,
+  );
+
   constructor() {
     effect(() => {
       if (this.tournamentPathCode?.length === 0 || this.teamCode?.length !== 4) {
@@ -315,21 +351,20 @@ export class PlayerTeamMatchPageComponent {
       return;
     }
 
-    const data: RankData = {
+    const data: LeaderboardPopupData = {
+      scope: 'tournament',
+      highlightedId: team.id,
       tournamentName,
-      teamId: team.id,
       scoreCalculation,
-      ranking: this.ranking(),
     };
 
-    this.dialog.open<boolean, RankData>(RankPopupComponent, {
+    this.dialog.open<void, LeaderboardPopupData>(LeaderboardPopup, {
       data,
       ...leaderboardDialogPlacement(
         this.overlay,
         this.breakpointObserver.isMatched(LEADERBOARD_MOBILE_QUERY),
-        'dialog-panel-large',
+        'dialog-panel',
       ),
-      disableClose: false,
     });
   }
 

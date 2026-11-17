@@ -1,0 +1,42 @@
+:host {
+  display: block;
+}
+
+.matches-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.pool-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.pool-header {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-primary);
+
+  ::ng-deep .pool-icon {
+    font-size: 1rem;
+  }
+}
+
+.match-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.empty {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--color-on-surface-variant);
+}

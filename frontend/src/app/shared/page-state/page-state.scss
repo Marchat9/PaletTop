@@ -1,0 +1,62 @@
+:host {
+  display: block;
+}
+
+.page-state {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1rem;
+  border-radius: 0.8rem;
+  background: var(--color-surface-container-low);
+  border: 1px solid var(--color-border-default);
+
+  .state-message {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+
+    ::ng-deep .state-icon {
+      flex: none;
+      color: var(--color-primary);
+    }
+
+    p {
+      margin: 0;
+    }
+
+    .message {
+      color: var(--color-on-surface-variant);
+    }
+
+    .description {
+      margin-top: 0.2rem;
+      font-size: 0.8rem;
+      color: var(--color-on-surface-variant);
+    }
+  }
+
+  .state-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+
+    &:empty {
+      display: none;
+    }
+  }
+
+  // Only the message is red: the action buttons keep their own colours.
+  &.error {
+    border-color: color-mix(in srgb, var(--color-error) 45%, transparent);
+
+    .state-message {
+      ::ng-deep .state-icon,
+      .message {
+        color: var(--color-error);
+        font-weight: 600;
+      }
+    }
+  }
+}

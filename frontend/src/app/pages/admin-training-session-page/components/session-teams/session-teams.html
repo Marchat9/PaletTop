@@ -30,19 +30,19 @@
           <p class="empty">Tous les joueurs présents font déjà partie d'une équipe fixe.</p>
         } @else {
           <div class="participant-chips">
-            @for (participant of availableParticipants(); track participant.id) {
+            @for (chip of participantChips(); track chip.id) {
               <button
                 type="button"
                 class="participant-chip"
-                [class.is-selected]="isSelected(participant.id)"
-                (click)="toggleParticipant(participant.id)"
+                [class.is-selected]="chip.selected"
+                (click)="toggleParticipant(chip.id)"
               >
                 <app-icon
-                  [name]="isSelected(participant.id) ? 'check' : 'add'"
+                  [name]="chip.selected ? 'check' : 'add'"
                   iconClass="chip-icon"
                   [ariaHidden]="true"
                 />
-                {{ participant.name }}
+                {{ chip.name }}
               </button>
             }
           </div>
@@ -74,22 +74,22 @@
       <p class="empty">Aucune équipe fixe — tous les joueurs sont appariés à chaque round.</p>
     } @else {
       <div class="team-grid">
-        @for (team of fixedTeams(); track team.id) {
+        @for (card of fixedTeamCards(); track card.team.id) {
           <div class="team-card">
             <span class="team-name">
-              {{ team.name || teamMembersLabel(team) }}
+              {{ card.label }}
               @if (isSessionOpen()) {
                 <button
                   type="button"
                   class="dissolve-btn"
-                  [attr.aria-label]="'Dissoudre ' + (team.name || teamMembersLabel(team))"
-                  (click)="dissolveTeam.emit(team)"
+                  [attr.aria-label]="'Dissoudre ' + card.label"
+                  (click)="dissolveTeam.emit(card.team)"
                 >
                   <app-icon name="group_remove" [ariaHidden]="true" />
                 </button>
               }
             </span>
-            <span class="team-members">{{ teamMembersLabel(team) }}</span>
+            <span class="team-members">{{ card.membersLabel }}</span>
           </div>
         }
       </div>

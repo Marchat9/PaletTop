@@ -1,5 +1,5 @@
 import { Dialog } from '@angular/cdk/dialog';
-import { TrainingLeaderboardPopup } from 'src/app/modales/training-leaderboard-popup/training-leaderboard-popup';
+import { LeaderboardPopup } from 'src/app/modales/leaderboard-popup/leaderboard-popup';
 import {
   followTrainingClubLeaderboard,
   unfollowTrainingClubLeaderboard,
@@ -389,7 +389,7 @@ describe('AdminTrainingSessionPage', () => {
     expect(dispatchSpy).toHaveBeenCalledWith(
       followTrainingClubLeaderboard({ sessionCode: fixture.componentInstance.sessionCode()! }),
     );
-    expect(dialogMock.open).toHaveBeenCalledWith(TrainingLeaderboardPopup, expect.anything());
+    expect(dialogMock.open).toHaveBeenCalledWith(LeaderboardPopup, expect.anything());
 
     closed.next();
     expect(dispatchSpy).toHaveBeenCalledWith(unfollowTrainingClubLeaderboard());
@@ -404,7 +404,7 @@ describe('AdminTrainingSessionPage', () => {
     fixture.componentInstance.openClubLeaderboard();
 
     expect(dialogMock.open).toHaveBeenCalledWith(
-      TrainingLeaderboardPopup,
+      LeaderboardPopup,
       expect.objectContaining({ data: { scope: 'club', highlightedId: 'm1' } }),
     );
   });
@@ -416,7 +416,7 @@ describe('AdminTrainingSessionPage', () => {
     fixture.componentInstance.openClubLeaderboard();
 
     expect(dialogMock.open).toHaveBeenCalledWith(
-      TrainingLeaderboardPopup,
+      LeaderboardPopup,
       expect.objectContaining({ data: { scope: 'club', highlightedId: null } }),
     );
   });

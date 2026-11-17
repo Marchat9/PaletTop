@@ -2,8 +2,8 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 
 export type StatusPillTone = 'neutral' | 'draft' | 'pending' | 'ongoing' | 'success' | 'error';
 
-/** `lg` for a page header, `sm` along a list or a card. */
-export type StatusPillSize = 'sm' | 'lg';
+/** `xl` for a screen read from afar (spectator), `lg` for a page header, `sm` along a list. */
+export type StatusPillSize = 'sm' | 'lg' | 'xl';
 
 @Component({
   selector: 'app-status-pill',

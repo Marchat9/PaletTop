@@ -268,7 +268,7 @@ export class TeamConfig {
 
     this.dialog
       .open<TeamAction | undefined>(TeamActionsMenu, {
-        data: { teamName: team.name },
+        data: { teamName: team.name, isSheet: isMobile },
         positionStrategy,
         panelClass: isMobile ? 'team-actions-sheet-panel' : 'team-actions-popover-panel',
         backdropClass: isMobile ? 'dialog-backdrop-light' : 'team-actions-popover-backdrop',

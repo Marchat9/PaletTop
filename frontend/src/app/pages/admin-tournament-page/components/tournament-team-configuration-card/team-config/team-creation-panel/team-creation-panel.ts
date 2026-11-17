@@ -14,6 +14,7 @@ import { Nullable } from 'src/app/models/nullable.model';
 import { TeamConfigEvent, TeamConfigEventType } from 'src/app/models/team-config.model';
 import { Button } from 'src/app/shared/button/button';
 import { Icon } from 'src/app/shared/icon/icon';
+import { SwipeToDismissDirective } from 'src/app/shared/swipe-to-dismiss/swipe-to-dismiss.directive';
 import { TournamentDto } from 'src/app/store/tournament/tournament.models';
 import { findCreatedTeam, type TeamEditFormValue } from '../team-config.utils';
 import { TeamForm } from '../team-form/team-form';
@@ -43,7 +44,7 @@ interface PendingCreation {
 // the sheet with its event — desktop editing stays on the inline row editor in team-config.html.
 @Component({
   selector: 'app-team-creation-panel',
-  imports: [Button, TeamForm, Icon],
+  imports: [Button, TeamForm, Icon, SwipeToDismissDirective],
   templateUrl: './team-creation-panel.html',
   styleUrl: './team-creation-panel.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

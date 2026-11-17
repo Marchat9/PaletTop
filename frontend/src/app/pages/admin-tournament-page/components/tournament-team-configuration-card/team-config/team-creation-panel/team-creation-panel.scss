@@ -52,4 +52,40 @@
     display: flex;
     gap: 0.5rem;
   }
+
+  // Mobile bottom sheet: tighter, its header always in view (the handle to swipe it down by) and
+  // only the form scrolling, once a team has more players than the screen holds.
+  &.sheet {
+    gap: 0.9rem;
+    padding-top: 0.6rem;
+
+    .handle {
+      flex: none;
+      align-self: center;
+      width: 2.5rem;
+      height: 0.25rem;
+      border-radius: 999px;
+      background: var(--color-outline-variant);
+    }
+
+    .section-header,
+    .created-banner {
+      flex: none;
+    }
+
+    .section-header {
+      gap: 0.3rem;
+    }
+
+    .creation-body {
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      gap: 1.1rem;
+      // Room for the focus ring of the fields, which the scroll box would otherwise clip.
+      margin: -0.25rem;
+      padding: 0.25rem;
+    }
+  }
 }

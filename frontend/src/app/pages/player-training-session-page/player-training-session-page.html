@@ -1,52 +1,36 @@
 <section class="player-training-page">
   @if (canBackToAdmin()) {
-    <div class="admin-back">
-      <app-button
-        title="Retour à l'administration"
-        icon="arrow_back"
-        variant="tertiary"
-        (clicked)="backToAdmin()"
-      />
-    </div>
+    <app-back-link label="Retour à l'administration" (clicked)="backToAdmin()" />
   }
 
   @if (isLoading() && !me()) {
-    <section class="state">
-      <app-icon name="progress_activity" />
-      <p>Chargement de votre séance…</p>
-    </section>
+    <app-page-state tone="loading" message="Chargement de votre séance…" />
   } @else if (error()) {
-    <section class="state state--error">
-      <app-icon name="error" />
-      <p>{{ error() }}</p>
-    </section>
+    <app-page-state tone="error" [message]="error()!">
+      <app-button title="Ressaisir mes codes" icon="edit" (clicked)="retypeCodes()" />
+      <app-button title="Retour à l'accueil" icon="home" variant="secondary" (clicked)="goHome()" />
+    </app-page-state>
   } @else {
-    <app-player-session-header
-      [participant]="me()"
-      [participantCode]="participantCode()"
-      [session]="session()"
-      [roundNumber]="roundNumber()"
+    <app-player-header
+      eyebrow="Séance d'entraînement"
+      [title]="me()?.name ?? null"
+      [showAvatar]="true"
+      [infos]="headerInfos()"
+      [status]="headerStatus()"
+      [tiles]="statTiles()"
+      (tileClicked)="onTileClicked($event)"
     />
 
-    @if (isSessionClosed()) {
+    <!-- The last match stays on screen, frozen: say what is still possible. -->
+    @if (canStillValidate()) {
       <div class="session-closed" [appAnimateOnChange]="isSessionClosed()" [animateOnInit]="true">
         <app-icon name="sports_score" iconClass="closed-icon" [ariaHidden]="true" />
         <div class="closed-text">
           <strong>La séance est terminée.</strong>
-          @if (canStillValidate()) {
-            <span>Vous pouvez encore valider le score de votre dernier match.</span>
-          } @else if (finalRankLabel(); as rank) {
-            <span>
-              Vous terminez <span class="rank">{{ rank }}</span> au classement. Merci d'avoir joué !
-            </span>
-          } @else {
-            <span>Merci d'avoir joué !</span>
-          }
+          <span>Vous pouvez encore valider le score de votre dernier match.</span>
         </div>
       </div>
     }
-
-    <app-player-stats-tiles [tiles]="statTiles()" (tileClicked)="onTileClicked($event)" />
 
     <section class="current-match">
       @if (matchTitle(); as title) {
@@ -65,6 +49,7 @@
         [startLoading]="startLoading()"
         [validateLoading]="validateLoading()"
         [syncing]="awaitingResync()"
+        [emptyTone]="isSessionClosed() && !hasLeft() ? 'celebration' : 'neutral'"
         (startMatch)="startMatch()"
         (scoreChange)="updateScore($event)"
         (validateMatch)="validateMatch($event)"
@@ -76,8 +61,10 @@
             l'administrateur pour être réintégré(e).
           </p>
         } @else if (isSessionClosed()) {
-          <app-icon name="lock" iconClass="empty-icon" />
-          <p>La séance est terminée. Merci d'avoir joué !</p>
+          <app-player-final-rank
+            headline="La séance est terminée, merci d'avoir joué !"
+            [rankLabel]="finalRankLabel()"
+          />
         } @else if (isSittingOut()) {
           <app-icon name="airline_seat_recline_normal" iconClass="empty-icon" />
           <p>Vous êtes au repos ce round. Le prochain vous remettra en jeu.</p>
@@ -89,7 +76,12 @@
     </section>
 
     @if (!isSittingOut() && cardMatch()) {
-      <app-player-session-partners [partners]="partners()" />
+      <app-player-teammates
+        title="Mon équipe ce round"
+        [teammates]="partners()"
+        emptyTitle="Vous jouez seul ce round"
+        emptyMessage="Aucun partenaire : votre équipe, c'est vous."
+      />
     }
 
     <app-player-match-history

@@ -1,40 +1,27 @@
 <section class="player-page">
   <main class="player-page__main">
     @if (isLoading()) {
-      <section class="state state--loading">
-        <app-icon name="progress_activity" />
-        <p>Chargement des informations d'équipe...</p>
-      </section>
+      <app-page-state tone="loading" message="Chargement des informations d'équipe..." />
     } @else if (error()) {
-      <section class="state state--error">
-        <div class="state-message">
-          <app-icon name="error" />
-          <p>{{ error() }}</p>
-        </div>
-        <div class="state-actions">
-          <app-button title="Ressaisir mes codes" icon="edit" (clicked)="retypeCodes()" />
-          <app-button
-            title="Retour à l'accueil"
-            icon="home"
-            variant="secondary"
-            (clicked)="goHome()"
-          />
-        </div>
-      </section>
+      <app-page-state tone="error" [message]="error()!">
+        <app-button title="Ressaisir mes codes" icon="edit" (clicked)="retypeCodes()" />
+        <app-button
+          title="Retour à l'accueil"
+          icon="home"
+          variant="secondary"
+          (clicked)="goHome()"
+        />
+      </app-page-state>
     } @else if (!team()) {
-      <section class="state state--empty">
-        <app-icon name="groups" />
-        <p>Aucune équipe trouvée dans ce tournoi.</p>
-      </section>
+      <app-page-state icon="groups" message="Aucune équipe trouvée dans ce tournoi." />
     } @else {
-      <app-player-team-header
-        [team]="team()!"
-        [tournamentCode]="tournamentCode()"
-        [wins]="wins()"
-        [rank]="rank()"
-        [nbTeams]="nbTeams()"
-        [phaseName]="phaseName()"
-        (openRank)="openRankModale()"
+      <app-player-header
+        eyebrow="Fiche équipe"
+        [title]="team()!.name"
+        [infos]="headerInfos()"
+        [status]="headerStatus()"
+        [tiles]="statTiles()"
+        (tileClicked)="openRankModale()"
       />
 
       <section class="current-match">
@@ -63,19 +50,10 @@
               <p>Le tournoi n'a pas encore commencé, préparez-vous</p>
             }
             @case ('FINISH') {
-              <div class="finish-icon">
-                <span class="confetti" aria-hidden="true">🎉</span>
-                <app-icon name="emoji_events" iconClass="cup-icon" />
-                <span class="confetti" aria-hidden="true">🎉</span>
-              </div>
-              <div class="end-tournament-text">
-                <p class="headline">C'est fini, merci d'avoir joué avec nous !</p>
-                @if (rankLabel(); as label) {
-                  <p class="rank-line">
-                    Vous terminez <span class="rank-badge">{{ label }}</span>
-                  </p>
-                }
-              </div>
+              <app-player-final-rank
+                headline="C'est fini, merci d'avoir joué avec nous !"
+                [rankLabel]="rankLabel()"
+              />
             }
             @case ('CANCELLED') {
               <app-icon name="event_busy" iconClass="empty-icon" />
@@ -92,7 +70,11 @@
         </app-player-match-card>
       </section>
 
-      <app-player-team-members [players]="team()!.players" />
+      <app-player-teammates
+        title="Membres de l'équipe"
+        [subtitle]="teamMembersSubtitle()"
+        [teammates]="team()!.players"
+      />
 
       <app-player-match-history
         [results]="recentResults()"

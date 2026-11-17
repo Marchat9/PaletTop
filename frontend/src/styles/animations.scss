@@ -75,6 +75,9 @@
 
 .animate-pulse {
   animation: palettop-pulse 900ms ease;
+  // The ring follows the corners of the element: a bare score would get a square one. An element
+  // with its own corners keeps them (component styles are more specific).
+  border-radius: 0.5rem;
 }
 
 .animate-slide-in {

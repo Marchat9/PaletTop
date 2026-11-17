@@ -81,11 +81,12 @@ span.highlight {
     outline: none;
   }
 
+  // The backdrop stays visible above (tap to close); the sheet itself does not scroll, only the
+  // form inside it (see TeamCreationPanel).
   .creation-section {
-    max-height: 85vh;
-    overflow-y: auto;
+    max-height: calc(100dvh - 4rem);
+    overflow: hidden;
     border-radius: 1rem 1rem 0 0 !important;
-    padding-top: 0.4rem;
   }
 }
 // ###################################

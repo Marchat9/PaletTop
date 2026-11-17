@@ -1,0 +1,128 @@
+// Layout shared by the two spectator screens (tournament and training): the panels that fill the
+// screen and turn their pages, the mobile tabs. Each page includes `page` inside its
+// `.spectator-page` block; the shared spectator components (header, waiting screen, winner) use
+// `panel` and `panel-label`.
+
+/** A block of the screen: the matches, a ranking, the roster… */
+@mixin panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  min-width: 0;
+  min-height: 0;
+  padding: 1.1rem 1.25rem;
+  border-radius: 1rem;
+  background: var(--color-surface-container-low);
+
+  .panel-title {
+    margin: 0;
+    font-family: var(--font-headline);
+    font-size: 1.4rem;
+  }
+
+  .panel-description {
+    margin: -0.5rem 0 0;
+    font-size: 0.85rem;
+    color: var(--color-on-surface-variant);
+  }
+}
+
+/** The small capital title of a panel. */
+@mixin panel-label {
+  font-family: var(--font-label);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-primary);
+}
+
+@mixin host {
+  display: block;
+
+  /* On desktop the page fills the height the nav shell actually leaves below the
+     top bar, instead of demanding a literal 100dvh which would overflow it. */
+  @media (width >= 768px) {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+}
+
+@mixin page {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+
+  @media (width >= 768px) {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .panel {
+    @include panel;
+  }
+
+  .panel-label {
+    @include panel-label;
+  }
+
+  .loading {
+    margin: 0;
+    color: var(--color-on-surface-variant);
+  }
+
+  // ======= Rounds and end: everything fits in the screen, the lists turn their pages =======
+  .board {
+    display: grid;
+    gap: 1.25rem;
+    flex: 1 1 auto;
+    min-height: 0;
+
+    &.split {
+      grid-auto-flow: column;
+      grid-auto-columns: minmax(0, 1fr);
+    }
+
+    .panel {
+      overflow: hidden;
+
+      app-live-match-board,
+      app-leaderboard {
+        flex: 1 1 auto;
+        min-height: 0;
+      }
+    }
+  }
+
+  // Mobile: under the tabs, on the right, only with a leaderboard.
+  .mobile-switch {
+    align-self: flex-end;
+  }
+
+  .tabs {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.4rem;
+    padding: 0.3rem;
+    border-radius: 0.9rem;
+    background: var(--color-surface-container-low);
+
+    app-button {
+      display: block;
+
+      ::ng-deep .button {
+        width: 100%;
+      }
+
+      // Unselected tab: only its label, so the selected one stands out.
+      &[aria-selected='false'] ::ng-deep .button {
+        background: transparent;
+        color: var(--color-on-surface-variant);
+      }
+    }
+  }
+}

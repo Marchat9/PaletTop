@@ -52,8 +52,11 @@
           min-width: 0;
         }
 
+        // Shrinks to the screen, its label wrapping, rather than overflow a small phone.
         ::ng-deep app-button {
-          flex-shrink: 0;
+          flex: 0 1 auto;
+          min-width: 0;
+          max-width: 100%;
         }
       }
     }

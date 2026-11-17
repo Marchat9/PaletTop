@@ -1,0 +1,65 @@
+:host {
+  display: block;
+}
+
+// Title on the left, status in the middle, the rest on the right: the two sides take the same
+// width, so the status stays centred even when the right is empty (event over).
+.spectator-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 1rem;
+
+  @media (width <= 580px) {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+    text-align: center;
+  }
+
+  .page-title {
+    margin: 0;
+    font-family: var(--font-headline);
+    font-size: 1.5rem;
+  }
+
+  // The pills may not be wider than the screen: past it, their label wraps (see StatusPill xl).
+  app-status-pill {
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .page-status {
+    display: flex;
+    justify-content: center;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  // On one line, or all stacked (see SpectatorHeader): never a badge left alone on a line.
+  .page-side {
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 0;
+
+    > * {
+      flex: none;
+    }
+
+    &.stacked {
+      flex-direction: column;
+      align-items: flex-end;
+    }
+
+    @media (width <= 580px) {
+      width: 100%;
+      justify-content: center;
+
+      &.stacked {
+        align-items: center;
+      }
+    }
+  }
+}

@@ -5,6 +5,7 @@ import { MatchGroupKey } from 'src/app/models/matches-session.model';
 import {
   itemTables,
   leaderboardItems,
+  pageRankLabel,
   podiumSteps,
   rowsBelowPodium,
   toClubLeaderboard,
@@ -218,5 +219,21 @@ describe('sections du classement', () => {
       ['# Principal', 'A', 'B'],
       ['# Principal', 'C', '# Consolante', 'D'],
     ]);
+  });
+});
+
+describe('pageRankLabel', () => {
+  const items = leaderboardItems(
+    [row('A', 1), row('B', 2), row('C', 3), row('D', 4), row('E', 5)],
+    false,
+  );
+
+  it('names the ranks of the page shown', () => {
+    expect(pageRankLabel(items, 0, 3)).toBe('Rangs 1 – 3');
+    expect(pageRankLabel(items, 3, 3)).toBe('Rangs 4 – 5');
+  });
+
+  it('says nothing for an empty page', () => {
+    expect(pageRankLabel(items, 10, 3)).toBeNull();
   });
 });

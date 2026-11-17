@@ -1,0 +1,20 @@
+<section class="members">
+  <div class="header">
+    <h3>{{ title() }}</h3>
+    @if (subtitle()) {
+      <p>{{ subtitle() }}</p>
+    }
+  </div>
+
+  <div class="members-list">
+    @for (teammate of teammates(); track teammate.id) {
+      <app-member-card [name]="teammate.name" [club]="teammate.club ?? null" />
+    } @empty {
+      <article class="empty-card">
+        <app-icon name="person_off" iconClass="icon" />
+        <h4>{{ emptyTitle() }}</h4>
+        <p>{{ emptyMessage() }}</p>
+      </article>
+    }
+  </div>
+</section>

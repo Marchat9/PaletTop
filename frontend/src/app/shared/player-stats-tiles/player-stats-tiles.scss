@@ -2,12 +2,15 @@
   display: block;
 }
 
+// Tiles of the same width, sized by the widest one rather than stretched over the whole row; they
+// shrink together when the row is too narrow.
 .stats-tiles {
-  display: flex;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
   gap: 0.6rem;
-
-  app-metric-tile {
-    flex: 1 1 0;
-    min-width: 0;
-  }
+  min-width: 0;
+  // The tiles sit on the player header card: a darker background stands them out from it.
+  --metric-tile-background: var(--color-surface-container-high);
+  --metric-tile-hover-background: var(--color-surface-container-highest);
 }

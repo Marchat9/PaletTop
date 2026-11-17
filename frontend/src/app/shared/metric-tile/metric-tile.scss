@@ -1,3 +1,7 @@
+:host {
+  display: block;
+}
+
 .metric-tile {
   position: relative;
   display: flex;
@@ -5,8 +9,12 @@
   align-items: center;
   justify-content: center;
   gap: 0.4rem;
+  box-sizing: border-box;
+  // Fills its host, so tiles laid out on one row share the height of the tallest.
+  height: 100%;
   border-radius: 0.65rem;
-  background: var(--color-surface-container-low);
+  // A container that already has the default background (a card) gives its tiles a darker one.
+  background: var(--metric-tile-background, var(--color-surface-container-low));
   border: 1px solid transparent;
 
   &.small {
@@ -41,20 +49,23 @@
     }
   }
 
+  // Reads as a button: a brass border and a slight lift, which the press flattens.
   &.clickable {
     cursor: pointer;
-    border-color: var(--color-outline-variant);
+    border-color: color-mix(in srgb, var(--color-primary) 55%, transparent);
+    box-shadow: 0 2px 6px var(--color-shadow-strong);
 
     transition:
       background-color 150ms ease,
       border-color 150ms ease,
+      box-shadow 150ms ease,
       transform 100ms ease;
 
     // Gated behind (hover: hover) so a tap on touch devices doesn't leave the tile
     // stuck in its "hovered" look until the user taps elsewhere.
     @media (hover: hover) {
       &:hover {
-        background: var(--color-surface-container-high);
+        background: var(--metric-tile-hover-background, var(--color-surface-container-high));
         border-color: var(--color-primary);
 
         ::ng-deep .clickable-hint {
@@ -65,6 +76,7 @@
 
     &:active {
       transform: scale(0.97);
+      box-shadow: none;
     }
 
     &:focus-visible {
@@ -80,6 +92,11 @@
       opacity: 0.22;
       pointer-events: none;
       transition: opacity 150ms ease;
+
+      // Too narrow on a phone, where it covered the value: the brass border tells it is a button.
+      @media (width < 768px) {
+        display: none;
+      }
     }
   }
 

@@ -1,0 +1,45 @@
+<app-card-collapsible [isExpanded]="true">
+  <div header class="header">
+    <div class="header-title">
+      <app-icon name="sports_score" iconClass="icon" />
+      <span class="title">Rounds</span>
+      @if (roundNumber(); as round) {
+        <span class="header-session-info"> - </span>
+        <span class="header-session-info"> Round {{ round }} </span>
+      }
+    </div>
+
+    @if (showNextButton()) {
+      <div class="header-actions">
+        <app-button
+          [title]="nextLabel()"
+          icon="skip_next"
+          variant="primary"
+          [loading]="nextLoading()"
+          [disabled]="!canGenerateNext()"
+          [stopPropagation]="true"
+          (clicked)="nextRound.emit()"
+        />
+      </div>
+    }
+  </div>
+
+  <div content class="card-content">
+    @if (isLoading() && !showMatches()) {
+      <app-skeleton [rows]="3" height="3rem" />
+    } @else if (showMatches()) {
+      <app-round-match-list
+        [groups]="groups()"
+        [pointsPerGame]="pointsPerGame()"
+        [editable]="editable()"
+        [saving]="scoreUpdateLoading()"
+        [staggerKey]="roundNumber()"
+        (scoreUpdate)="scoreUpdate.emit($event)"
+      />
+    } @else if (message()) {
+      <div class="info-section">
+        <p class="message">{{ message() }}</p>
+      </div>
+    }
+  </div>
+</app-card-collapsible>

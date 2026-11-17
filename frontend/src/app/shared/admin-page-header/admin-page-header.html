@@ -1,0 +1,46 @@
+<app-card>
+  <div class="admin-page-header">
+    <div class="top-row">
+      <span class="eyebrow">{{ eyebrow() }}</span>
+      <div class="actions">
+        <ng-content select="[headerActions]" />
+      </div>
+    </div>
+
+    <div class="identity-row">
+      <div class="identity">
+        <div class="title">
+          <app-icon [name]="icon()" iconClass="icon" [ariaHidden]="true" />
+          <h1 [class.capitalize]="capitalizeTitle()">{{ title() }}</h1>
+        </div>
+        @if (code() && !prominentCode()) {
+          <span class="code-line"
+            >{{ codeLabel() }} : <span class="badge-code">{{ code() }}</span></span
+          >
+        }
+      </div>
+
+      <div class="side">
+        @for (status of statuses(); track status.label) {
+          <app-status-pill [tone]="status.tone" size="lg">{{ status.label }}</app-status-pill>
+        }
+        @if (code() && prominentCode()) {
+          <div class="prominent-code">
+            <span class="label">{{ codeLabel() }}</span>
+            <span class="value">{{ code() }}</span>
+          </div>
+        }
+      </div>
+    </div>
+
+    <ng-content />
+
+    @if (infos().length > 0) {
+      <div class="infos">
+        @for (info of infos(); track info.label) {
+          <app-info-tile [icon]="info.icon" [label]="info.label" [value]="info.value" />
+        }
+      </div>
+    }
+  </div>
+</app-card>

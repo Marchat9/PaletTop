@@ -1,5 +1,18 @@
 import { Routes } from '@angular/router';
 import { trainingAdminGuard } from './guards/training-admin.guard';
+import {
+  ADMIN_TOURNAMENT_CONNECTION,
+  ADMIN_TRAINING_CONNECTION,
+  PLAYER_TOURNAMENT_CONNECTION,
+  PLAYER_TRAINING_CONNECTION,
+  SPECTATOR_TOURNAMENT_CONNECTION,
+  SPECTATOR_TRAINING_CONNECTION,
+} from './pages/connections/connection-page/connection-page.configs';
+import { CONNECTION_ROUTE_DATA_KEY } from './pages/connections/connection-page/connection-page.model';
+
+/** Entry of a universe without codes in the URL: one page, configured by the route. */
+const connectionPage = () =>
+  import('./pages/connections/connection-page/connection-page').then((m) => m.ConnectionPage);
 
 const tournamentRoutes: Routes = [
   {
@@ -11,10 +24,8 @@ const tournamentRoutes: Routes = [
   },
   {
     path: 'admin/tournament',
-    loadComponent: () =>
-      import('./pages/connections/admin-connection-page/admin-connection-page').then(
-        (m) => m.AdminConnectionPageComponent,
-      ),
+    loadComponent: connectionPage,
+    data: { [CONNECTION_ROUTE_DATA_KEY]: ADMIN_TOURNAMENT_CONNECTION },
   },
   {
     path: 'admin/tournament/:tournamentCode',
@@ -25,10 +36,8 @@ const tournamentRoutes: Routes = [
   },
   {
     path: 'player/tournament',
-    loadComponent: () =>
-      import('./pages/connections/player-connection-page/player-connection-page').then(
-        (m) => m.PlayerConnectionPage,
-      ),
+    loadComponent: connectionPage,
+    data: { [CONNECTION_ROUTE_DATA_KEY]: PLAYER_TOURNAMENT_CONNECTION },
   },
   {
     path: 'player/tournament/:tournamentCode/:teamCode',
@@ -39,10 +48,8 @@ const tournamentRoutes: Routes = [
   },
   {
     path: 'spectateur',
-    loadComponent: () =>
-      import('./pages/connections/spectator-connection-page/spectator-connection-page').then(
-        (m) => m.SpectatorConnectionPageComponent,
-      ),
+    loadComponent: connectionPage,
+    data: { [CONNECTION_ROUTE_DATA_KEY]: SPECTATOR_TOURNAMENT_CONNECTION },
   },
   {
     path: 'spectateur/:tournamentCode',
@@ -54,10 +61,8 @@ const tournamentRoutes: Routes = [
 const trainingRoutes: Routes = [
   {
     path: 'spectateur/training',
-    loadComponent: () =>
-      import('./pages/connections/spectator-training-connection-page/spectator-training-connection-page').then(
-        (m) => m.SpectatorTrainingConnectionPage,
-      ),
+    loadComponent: connectionPage,
+    data: { [CONNECTION_ROUTE_DATA_KEY]: SPECTATOR_TRAINING_CONNECTION },
   },
   {
     path: 'spectateur/training/:sessionCode',
@@ -75,10 +80,8 @@ const trainingRoutes: Routes = [
   },
   {
     path: 'admin/training',
-    loadComponent: () =>
-      import('./pages/connections/training-admin-connection-page/training-admin-connection-page').then(
-        (m) => m.TrainingAdminConnectionPage,
-      ),
+    loadComponent: connectionPage,
+    data: { [CONNECTION_ROUTE_DATA_KEY]: ADMIN_TRAINING_CONNECTION },
   },
   {
     path: 'admin/training/:trainingCode',
@@ -104,10 +107,8 @@ const trainingRoutes: Routes = [
   },
   {
     path: 'player/training',
-    loadComponent: () =>
-      import('./pages/connections/training-player-connection-page/training-player-connection-page').then(
-        (m) => m.TrainingPlayerConnectionPage,
-      ),
+    loadComponent: connectionPage,
+    data: { [CONNECTION_ROUTE_DATA_KEY]: PLAYER_TRAINING_CONNECTION },
   },
   {
     path: 'player/training/:sessionCode/:participantCode',

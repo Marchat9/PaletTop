@@ -1,117 +1,40 @@
 <div class="spectator-page">
-  <div class="header">
-    <h1 class="page-title">
-      <span>Tournoi : </span>
-      {{ tournament()?.name ?? '—' }}
-    </h1>
-    <div class="page-status">
-      @if (tournament()) {
-        @switch (phase()) {
-          @case ('waiting') {
-            <span class="badge draft">Tournoi non démarré</span>
-          }
-          @case ('finished') {
-            @if (tournamentStatus() === 'CANCELLED') {
-              <span class="badge cancelled">Tournoi annulé</span>
-            } @else {
-              <span class="badge completed">Tournoi terminé</span>
-            }
-          }
-          @default {
-            <span class="badge active">Phase : {{ tournament()!.phaseName || '' }}</span>
-          }
-        }
-      }
-    </div>
-    <div class="page-side">
-      @if (tournament()) {
-        @switch (phase()) {
-          @case ('live') {
-            <span class="badge">
-              Round {{ roundNumber() ?? '-' }} · {{ validatedCount() }} / {{ matchCount() }} matchs
-              validés
-            </span>
-          }
-          @case ('break') {
-            <span class="badge round-done">Round {{ roundNumber() ?? '-' }} · terminé</span>
-          }
-        }
-        <!-- On mobile the switch sits under the tabs, with the ranking it acts on. -->
-        @if (!isMobile()) {
-          <app-switch
-            class="podium-switch"
-            label="Podium"
-            [checked]="showPodium()"
-            (checkedChange)="togglePodium($event)"
-          />
-        }
-      }
-    </div>
-  </div>
+  <app-spectator-header
+    kind="Tournoi"
+    [title]="tournament()?.name ?? null"
+    [status]="statusBadge()"
+    [round]="roundBadge()"
+    [code]="tournament()?.code ?? null"
+    [showPodiumSwitch]="!!tournament() && !isMobile()"
+    [showPodium]="showPodium()"
+    (podiumChange)="togglePodium($event)"
+  />
 
   @if (error()) {
-    <div class="error-container">
-      <span class="message">
-        <app-icon name="error" [ariaHidden]="true" />
-        Tournoi introuvable.
-      </span>
-      <span class="description">
-        Veuillez vérifier le code du tournoi ou contacter l'administrateur du tournoi pour plus
-        d'informations.
-      </span>
-      <div class="state-actions">
-        <app-button title="Ressaisir le code" icon="edit" (clicked)="retypeCodes()" />
-        <app-button
-          title="Retour à l'accueil"
-          icon="home"
-          variant="secondary"
-          (clicked)="goHome()"
-        />
-      </div>
-    </div>
+    <app-page-state
+      tone="error"
+      message="Tournoi introuvable."
+      description="Veuillez vérifier le code du tournoi ou contacter l'administrateur du tournoi pour plus d'informations."
+    >
+      <app-button title="Ressaisir le code" icon="edit" (clicked)="retypeCodes()" />
+      <app-button title="Retour à l'accueil" icon="home" variant="secondary" (clicked)="goHome()" />
+    </app-page-state>
   } @else if (isLoading()) {
     <p class="loading">Chargement du tournoi…</p>
   } @else if (phase() === 'waiting') {
-    <div class="waiting">
-      @if (!isMobile()) {
-        <section class="panel follow">
-          <span class="panel-label">Suivre en direct</span>
-          <app-qr-code [url]="spectatorUrl()" [size]="220" alt="Lien de cette page" />
-          <span class="code-label">Code</span>
-          <strong class="code">{{ tournament()?.code }}</strong>
-          <span class="hint">Scannez pour suivre le tournoi sur votre téléphone</span>
-        </section>
-      }
-      <section class="panel roster">
-        <div class="roster-header">
-          <span class="panel-label">Équipes inscrites</span>
-          <strong class="roster-count">{{ teamNames().length }}</strong>
-        </div>
-        <ul class="chips">
-          @for (name of teamNames(); track $index) {
-            <li class="chip">{{ name }}</li>
-          } @empty {
-            <li class="empty">Aucune équipe inscrite pour l'instant.</li>
-          }
-        </ul>
-        <p class="soon">
-          <span class="pulse" aria-hidden="true"></span>
-          Le tournoi va bientôt commencer
-        </p>
-        @if (isMobile()) {
-          <p class="share">
-            Code à partager <strong class="code">{{ tournament()?.code }}</strong>
-          </p>
-        }
-      </section>
-    </div>
+    <app-spectator-waiting
+      [code]="tournament()?.code ?? null"
+      [url]="spectatorUrl()"
+      [isMobile]="isMobile()"
+      followHint="Scannez pour suivre le tournoi sur votre téléphone"
+      rosterLabel="Équipes inscrites"
+      [names]="teamNames()"
+      emptyLabel="Aucune équipe inscrite pour l'instant."
+      soonLabel="Le tournoi va bientôt commencer"
+    />
   } @else {
     @if (phase() === 'finished' && winner()) {
-      <section class="winner">
-        <span class="panel-label">Vainqueur</span>
-        <strong class="winner-name">{{ winner() }}</strong>
-        <span class="winner-summary">{{ winnerSummary() }}</span>
-      </section>
+      <app-spectator-winner label="Vainqueur" [name]="winner()!" [summary]="winnerSummary()" />
     }
 
     @if (isMobile()) {

@@ -1,0 +1,121 @@
+@use '../spectator-layout/spectator-layout' as spectator;
+
+:host {
+  display: block;
+}
+
+.waiting {
+  display: grid;
+  gap: 1.25rem;
+
+  @media (width >= 768px) {
+    grid-template-columns: 22rem minmax(0, 1fr);
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+
+  .follow {
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+
+    .code-label {
+      font-family: var(--font-label);
+      color: var(--color-on-surface-variant);
+    }
+
+    .code {
+      font-family: var(--font-label);
+      font-size: 2.6rem;
+      letter-spacing: 0.08em;
+      color: var(--color-primary);
+    }
+
+    .hint {
+      font-size: 0.9rem;
+      color: var(--color-on-surface-variant);
+    }
+  }
+
+  .roster {
+    .roster-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+
+      .roster-count {
+        font-family: var(--font-label);
+        font-size: 1.6rem;
+      }
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      align-content: flex-start;
+      gap: 0.5rem;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      overflow: hidden;
+
+      .chip {
+        padding: 0.45rem 0.8rem;
+        border: 1px solid var(--color-border-default);
+        border-radius: 0.6rem;
+        // Raised above the panel, readable from afar.
+        background: var(--color-surface-container-highest);
+        color: var(--color-on-surface);
+        font-size: 1rem;
+        font-weight: 600;
+      }
+
+      .empty {
+        color: var(--color-on-surface-variant);
+      }
+    }
+
+    .soon {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      margin: auto 0 0;
+      padding: 0.9rem 1rem;
+      border-radius: 0.8rem;
+      background: var(--color-surface-container);
+      font-size: 1.1rem;
+
+      .pulse {
+        width: 0.8rem;
+        height: 0.8rem;
+        flex: none;
+        border-radius: 999px;
+        background: var(--color-primary);
+        box-shadow: 0 0 0 0.35rem var(--color-status-draft-bg);
+      }
+    }
+
+    .share {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 0;
+      color: var(--color-on-surface-variant);
+
+      .code {
+        font-family: var(--font-label);
+        font-size: 1.2rem;
+        letter-spacing: 0.06em;
+        color: var(--color-primary);
+      }
+    }
+  }
+
+  .panel {
+    @include spectator.panel;
+  }
+
+  .panel-label {
+    @include spectator.panel-label;
+  }
+}

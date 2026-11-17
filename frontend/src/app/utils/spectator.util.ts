@@ -1,8 +1,10 @@
 import { LiveMatchView, SpectatorPhase } from 'src/app/models/live-match.model';
 import { SessionMatchDto } from 'src/app/models/matches-session.model';
-import { computeMatchGroups } from 'src/app/pages/admin-tournament-page/components/match-sessions-card/session-matches/session-matches.utils';
-import { teamLabel } from 'src/app/pages/player-training-session-page/player-training-session-page.utils';
+import { Nullable } from 'src/app/models/nullable.model';
+import { SpectatorBadge } from 'src/app/shared/spectator-header/spectator-header.model';
+import { computeMatchGroups } from 'src/app/utils/match-groups.util';
 import { TrainingMatchDto } from 'src/app/store/training/training.models';
+import { teamLabel } from 'src/app/utils/training-team.util';
 
 /** What the spectator phase is deduced from. */
 export interface SpectatorPhaseSource {
@@ -85,4 +87,25 @@ export function toTrainingLiveMatches(matches: TrainingMatchDto[]): LiveMatchVie
     scoreA: match.scoreA,
     scoreB: match.scoreB,
   }));
+}
+
+/** Progress of the current round, during it or once all its matches are validated. */
+export function spectatorRoundBadge(
+  phase: SpectatorPhase,
+  roundNumber: Nullable<number>,
+  validatedCount: number,
+  matchCount: number,
+): Nullable<SpectatorBadge> {
+  const round = `Round ${roundNumber ?? '-'}`;
+  switch (phase) {
+    case 'live':
+      return {
+        label: `${round} · ${validatedCount} / ${matchCount} matchs validés`,
+        tone: 'neutral',
+      };
+    case 'break':
+      return { label: `${round} · terminé`, tone: 'success' };
+    default:
+      return null;
+  }
 }

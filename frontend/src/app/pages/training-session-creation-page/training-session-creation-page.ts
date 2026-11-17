@@ -15,6 +15,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { Button } from 'src/app/shared/button/button';
 import { Card } from 'src/app/shared/card/card';
+import { BackLink } from 'src/app/shared/back-link/back-link';
 import { Icon } from 'src/app/shared/icon/icon';
 import {
   InputCardRadio,
@@ -52,6 +53,7 @@ const MAX_POINTS_PER_GAME = 100;
 @Component({
   selector: 'app-training-session-creation-page',
   imports: [
+    BackLink,
     Card,
     Button,
     Icon,

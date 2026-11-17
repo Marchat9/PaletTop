@@ -1,117 +1,44 @@
 <div class="spectator-page">
-  <div class="header">
-    <h1 class="page-title">
-      <span>Entraînement : </span>
-      {{ session() ? (session()!.date | date: 'EEEE d MMMM y') : '—' }}
-    </h1>
-    <div class="page-status">
-      @if (session()) {
-        @switch (phase()) {
-          @case ('waiting') {
-            <span class="badge draft">Séance pas encore commencée</span>
-          }
-          @case ('finished') {
-            <span class="badge completed">Séance terminée · {{ roundCount() }} rounds</span>
-          }
-          @default {
-            <span class="badge active">Séance en cours</span>
-          }
-        }
-      }
-    </div>
-    <div class="page-side">
-      @if (session()) {
-        @switch (phase()) {
-          @case ('live') {
-            <span class="badge">
-              Round {{ roundNumber() }} · {{ validatedCount() }} / {{ matchCount() }} matchs validés
-            </span>
-          }
-          @case ('break') {
-            <span class="badge round-done">Round {{ roundNumber() }} · terminé</span>
-          }
-        }
-      }
-      @if (!!sessionCode) {
-        <span class="badge draft"
-          >Code session : <span class="code">{{ sessionCode }}</span></span
-        >
-      }
-      <!-- On mobile the switch sits under the tabs, with the leaderboard it acts on. -->
-      @if (session() && !isMobile()) {
-        <app-switch
-          class="podium-switch"
-          label="Podium"
-          [checked]="showPodium()"
-          (checkedChange)="togglePodium($event)"
-        />
-      }
-    </div>
-  </div>
+  <app-spectator-header
+    kind="Entraînement"
+    [title]="session() ? (session()!.date | date: 'EEEE d MMMM y') : null"
+    [status]="statusBadge()"
+    [round]="roundBadge()"
+    [code]="sessionCode"
+    [showPodiumSwitch]="!!session() && !isMobile()"
+    [showPodium]="showPodium()"
+    (podiumChange)="togglePodium($event)"
+  />
 
   @if (error()) {
-    <div class="error-container">
-      <span class="message">
-        <app-icon name="error" [ariaHidden]="true" />
-        Séance introuvable.
-      </span>
-      <span class="description">
-        Veuillez vérifier le code de la séance ou contacter le référent d'entraînement pour plus
-        d'informations.
-      </span>
-      <div class="state-actions">
-        <app-button title="Ressaisir le code" icon="edit" (clicked)="retypeCode()" />
-        <app-button
-          title="Retour à l'accueil"
-          icon="home"
-          variant="secondary"
-          (clicked)="goHome()"
-        />
-      </div>
-    </div>
+    <app-page-state
+      tone="error"
+      message="Séance introuvable."
+      description="Veuillez vérifier le code de la séance ou contacter le référent d'entraînement pour plus d'informations."
+    >
+      <app-button title="Ressaisir le code" icon="edit" (clicked)="retypeCode()" />
+      <app-button title="Retour à l'accueil" icon="home" variant="secondary" (clicked)="goHome()" />
+    </app-page-state>
   } @else if (isLoading()) {
     <p class="loading">Chargement de la séance…</p>
   } @else if (phase() === 'waiting') {
-    <div class="waiting">
-      @if (!isMobile()) {
-        <section class="panel follow">
-          <span class="panel-label">Suivre en direct</span>
-          <app-qr-code [url]="spectatorUrl()" [size]="220" alt="Lien de cette page" />
-          <span class="code-label">Code</span>
-          <strong class="code">{{ sessionCode }}</strong>
-          <span class="hint">Scannez pour suivre la séance sur votre téléphone</span>
-        </section>
-      }
-      <section class="panel roster">
-        <div class="roster-header">
-          <span class="panel-label">Joueurs présents</span>
-          <strong class="roster-count">{{ presentNames().length }}</strong>
-        </div>
-        <ul class="chips">
-          @for (name of presentNames(); track $index) {
-            <li class="chip">{{ name }}</li>
-          } @empty {
-            <li class="empty">Personne n'est encore inscrit à la séance.</li>
-          }
-        </ul>
-        <p class="soon">
-          <span class="pulse" aria-hidden="true"></span>
-          La séance va bientôt commencer
-        </p>
-        @if (isMobile()) {
-          <p class="share">
-            Code à partager <strong class="code">{{ sessionCode }}</strong>
-          </p>
-        }
-      </section>
-    </div>
+    <app-spectator-waiting
+      [code]="sessionCode"
+      [url]="spectatorUrl()"
+      [isMobile]="isMobile()"
+      followHint="Scannez pour suivre la séance sur votre téléphone"
+      rosterLabel="Joueurs présents"
+      [names]="presentNames()"
+      emptyLabel="Personne n'est encore inscrit à la séance."
+      soonLabel="La séance va bientôt commencer"
+    />
   } @else {
     @if (phase() === 'finished' && winner()) {
-      <section class="winner">
-        <span class="panel-label">Meilleur joueur de la séance</span>
-        <strong class="winner-name">{{ winner() }}</strong>
-        <span class="winner-summary">{{ winnerSummary() }}</span>
-      </section>
+      <app-spectator-winner
+        label="Meilleur joueur de la séance"
+        [name]="winner()!"
+        [summary]="winnerSummary()"
+      />
     }
 
     @if (isMobile()) {
@@ -216,7 +143,8 @@
           <app-page-progress
             [page]="rankingPager.page()"
             [pageCount]="rankingPager.pageCount()"
-            [intervalMs]="rankingPageMs"
+            [intervalMs]="rankingPageMsProgress"
+            [label]="rankingPageLabel()"
           />
         </section>
         @if (phase() === 'finished') {
@@ -237,7 +165,8 @@
             <app-page-progress
               [page]="clubPager.page()"
               [pageCount]="clubPager.pageCount()"
-              [intervalMs]="rankingPageMs"
+              [intervalMs]="rankingPageMsProgress"
+              [label]="clubPageLabel()"
             />
           </section>
         }

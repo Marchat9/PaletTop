@@ -14,11 +14,15 @@ import { Store } from '@ngrx/store';
 import { SpectateTournamentPopupComponent } from 'src/app/modales/spectate-tournament-popup/spectate-tournament-popup';
 import { TournamentStatus } from 'src/app/models/tournament-status.enum';
 import { Button } from 'src/app/shared/button/button';
-import { Icon } from 'src/app/shared/icon/icon';
+import { Nullable } from 'src/app/models/nullable.model';
 import { Leaderboard } from 'src/app/shared/leaderboard/leaderboard';
 import { LiveMatchBoard } from 'src/app/shared/live-match-board/live-match-board';
 import { PageProgress } from 'src/app/shared/page-progress/page-progress';
-import { QrCode } from 'src/app/shared/qr-code/qr-code';
+import { PageState } from 'src/app/shared/page-state/page-state';
+import { SpectatorHeader } from 'src/app/shared/spectator-header/spectator-header';
+import { SpectatorBadge } from 'src/app/shared/spectator-header/spectator-header.model';
+import { SpectatorWaiting } from 'src/app/shared/spectator-waiting/spectator-waiting';
+import { SpectatorWinner } from 'src/app/shared/spectator-winner/spectator-winner';
 import { Switch } from 'src/app/shared/switch/switch';
 import { setLocalStorageData } from 'src/app/store/app-config/app-config.actions';
 import {
@@ -38,12 +42,17 @@ import {
   selectSpectatorTournamentIsLoading,
 } from 'src/app/store/spectator/spectator.selectors';
 import { AutoPager } from 'src/app/utils/auto-pager.util';
-import { leaderboardItems, toTournamentLeaderboard } from 'src/app/utils/leaderboard.util';
+import {
+  leaderboardItems,
+  pageRankLabel,
+  toTournamentLeaderboard,
+} from 'src/app/utils/leaderboard.util';
 import { onResyncRequested } from 'src/app/utils/resync-on-reconnect.util';
 import {
   orderForBoard,
   playedMatches,
   spectatorPhase,
+  spectatorRoundBadge,
   toTournamentLiveMatches,
 } from 'src/app/utils/spectator.util';
 import { environment } from 'src/environments/environment';
@@ -63,7 +72,17 @@ export type SpectatorTab = 'ranking' | 'matches';
  */
 @Component({
   selector: 'app-spectator-page',
-  imports: [Leaderboard, LiveMatchBoard, PageProgress, QrCode, Switch, Icon, Button],
+  imports: [
+    Leaderboard,
+    LiveMatchBoard,
+    PageProgress,
+    PageState,
+    SpectatorHeader,
+    SpectatorWaiting,
+    SpectatorWinner,
+    Switch,
+    Button,
+  ],
   templateUrl: './spectator-page.html',
   styleUrl: './spectator-page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -107,6 +126,26 @@ export class SpectatorPageComponent {
     () => this.playedRoundMatches().filter((match) => match.status === 'VALIDATED').length,
   );
   public readonly matchCount = computed(() => this.playedRoundMatches().length);
+
+  // ======= Header =======
+  public readonly statusBadge = computed<Nullable<SpectatorBadge>>(() => {
+    if (!this.tournament()) {
+      return null;
+    }
+    switch (this.phase()) {
+      case 'waiting':
+        return { label: 'Tournoi non démarré', tone: 'draft' };
+      case 'finished':
+        return this.tournamentStatus() === TournamentStatus.CANCELLED
+          ? { label: 'Tournoi annulé', tone: 'error' }
+          : { label: 'Tournoi terminé', tone: 'success' };
+      default:
+        return { label: `Phase : ${this.tournament()!.phaseName || ''}`, tone: 'ongoing' };
+    }
+  });
+  public readonly roundBadge = computed<Nullable<SpectatorBadge>>(() =>
+    spectatorRoundBadge(this.phase(), this.roundNumber(), this.validatedCount(), this.matchCount()),
+  );
 
   // ======= Content =======
   public readonly liveMatches = computed(() =>
@@ -154,16 +193,9 @@ export class SpectatorPageComponent {
   public readonly rankingPageMs = RANKING_PAGE_MS;
   public readonly rankingPageMsProgress = this.rankingPageMs - 500; // let 0.5 secs to max
   /** « Rangs 4 – 15 »: what the page of the ranking shows. */
-  public readonly rankingPageLabel = computed(() => {
-    const start = this.rankingPager.start();
-    const page = this.rankingItems()
-      .slice(start, start + this.rankingPageSize())
-      .flatMap((item) => (item.kind === 'row' ? [item.row] : []));
-    if (page.length === 0) {
-      return null;
-    }
-    return `Rangs ${page[0].rank} – ${page[page.length - 1].rank}`;
-  });
+  public readonly rankingPageLabel = computed(() =>
+    pageRankLabel(this.rankingItems(), this.rankingPager.start(), this.rankingPageSize()),
+  );
 
   // ======= Layout =======
   public readonly isMobile = signal(false);

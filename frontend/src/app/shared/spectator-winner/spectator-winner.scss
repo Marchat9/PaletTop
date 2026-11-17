@@ -1,0 +1,33 @@
+@use '../spectator-layout/spectator-layout' as spectator;
+
+:host {
+  display: block;
+}
+
+.winner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.9rem 1rem;
+  border-radius: 1rem;
+  background: var(--color-status-draft-bg);
+  outline: 1px solid var(--color-status-draft-border);
+  text-align: center;
+
+  .winner-name {
+    font-family: var(--font-headline);
+    font-size: clamp(1.5rem, 3vw, 2.6rem);
+    font-weight: 900;
+    color: var(--color-primary);
+  }
+
+  .winner-summary {
+    font-family: var(--font-label);
+    color: var(--color-on-surface-variant);
+  }
+
+  .panel-label {
+    @include spectator.panel-label;
+  }
+}
