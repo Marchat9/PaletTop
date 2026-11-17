@@ -1,0 +1,43 @@
+@if (matches().length === 0) {
+  <p class="empty">{{ emptyLabel() }}</p>
+}
+<ul
+  class="tiles"
+  [class.fill]="fillHeight()"
+  [appFitCount]="tileRem"
+  (fitCountChange)="capacityChange.emit($event)"
+>
+  @for (match of visibleMatches(); track match.id) {
+    <li class="tile" [class]="'status-' + match.status.toLowerCase()" [class.is-bye]="match.isBye">
+      <div class="meta">
+        @if (match.isBye) {
+          <span class="plate">Plaque -</span>
+        } @else if (match.plateNumber) {
+          <span class="plate">Plaque {{ match.plateNumber }}</span>
+        }
+        @if (match.groupLabel; as group) {
+          <span class="group">{{ group }}</span>
+        }
+        <span class="status">
+          @if (match.isBye) {
+            Exempté
+          } @else {
+            <app-match-status [status]="match.status" />
+          }
+        </span>
+      </div>
+      <div class="team">
+        <span class="name">{{ match.teamA }}</span>
+        @if (!match.isBye) {
+          <strong class="score" [appAnimateOnChange]="match.scoreA">{{ match.scoreA }}</strong>
+        }
+      </div>
+      @if (match.teamB; as teamB) {
+        <div class="team">
+          <span class="name">{{ teamB }}</span>
+          <strong class="score" [appAnimateOnChange]="match.scoreB">{{ match.scoreB }}</strong>
+        </div>
+      }
+    </li>
+  }
+</ul>

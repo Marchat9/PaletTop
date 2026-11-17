@@ -9,6 +9,8 @@ export interface TrainingClubLeaderboardEntryDto {
     name: string;
     wins: number;
     points: number;
+    /** Number of the club's sessions in which the member played at least one validated match. */
+    sessionsPlayed: number;
 }
 
 export interface TrainingLeaderboardEntryDto {

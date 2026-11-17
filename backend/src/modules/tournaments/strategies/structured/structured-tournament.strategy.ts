@@ -11,7 +11,7 @@ import { extractCompetitionConfiguration } from 'src/modules/tournaments/utils/t
 import { DeepPartial } from 'typeorm';
 import { MatchRepository } from '../../../tournaments/repositories/match.repository';
 import { PoolRepository } from '../../../tournaments/repositories/pool.repository';
-import { GlobalRankingEntry } from '../../../tournaments/responses/ranking.dto';
+import { GlobalRankingEntry, RankingSection } from '../../../tournaments/responses/ranking.dto';
 import { TournamentStatusInfo } from '../../../tournaments/responses/tournament-status.dto';
 import { PoolService } from '../../../tournaments/services/pool.service';
 import { computePrincipalBracketSize } from '../../../tournaments/utils/bracket.utils';
@@ -50,6 +50,12 @@ function standingTable(exit: EliminationExit): number {
     return exit.table === MatchGroupKey.THIRD_PLACE_MATCH
         ? TABLE_STANDING_ORDER[MatchGroupKey.PRINCIPALE]
         : TABLE_STANDING_ORDER[exit.table];
+}
+
+/** Section of the standings: the 3rd-place match is shown with the principal table. */
+function standingSection(exit: EliminationExit | undefined): RankingSection {
+    if (!exit) return 'pools';
+    return exit.table === MatchGroupKey.THIRD_PLACE_MATCH ? MatchGroupKey.PRINCIPALE : exit.table;
 }
 
 /** Just under the final (played in the same round): finalists first, then the 3rd-place match. */
@@ -159,9 +165,14 @@ export class StructuredTournamentStrategy extends TournamentStrategy {
         tournament: Tournament,
         matches: TournamentMatch[],
     ): GlobalRankingEntry[] {
-        const base = super.computeGlobalRanking(tournament, matches);
+        const validatedMatches = matches.filter((m) => m.status === MatchStatus.VALIDATED);
+        // Matches still to play only place the teams in their table: they count for nothing.
+        const scheduledMatches = matches.filter((m) => m.status !== MatchStatus.VALIDATED);
+
+        const base = super.computeGlobalRanking(tournament, validatedMatches);
         const seed = new Map(base.map((entry, index) => [entry.teamId, index]));
-        const exits = this.eliminationExits(tournament, matches);
+        const exits = this.eliminationExits(tournament, validatedMatches);
+        this.addScheduledTables(tournament, scheduledMatches, exits);
 
         const placed = base
             .map((entry) => ({
@@ -176,7 +187,9 @@ export class StructuredTournamentStrategy extends TournamentStrategy {
                 index > 0 && this.compareStandings(placed[index - 1], item) === 0
                     ? ranked[index - 1].rank
                     : index + 1;
-            ranked.push({ ...item.entry, rank });
+            // Sections only once a table has started: before, it is a single ranking.
+            const section = exits.size > 0 ? standingSection(item.exit) : null;
+            ranked.push({ ...item.entry, rank, section });
             return ranked;
         }, []);
     }
@@ -205,6 +218,32 @@ export class StructuredTournamentStrategy extends TournamentStrategy {
      * Each team's terminal elimination match (the deepest round it played): which table it was in,
      * whether it won, and the points it scored there. Byes and pool matches are ignored.
      */
+    /**
+     * A table match not validated yet already tells where its teams stand: in that table, still in
+     * the game at that round. The sections show as soon as an elimination round is launched, and a
+     * team still playing ranks above those already knocked out of its table.
+     */
+    private addScheduledTables(
+        tournament: Tournament,
+        scheduledMatches: TournamentMatch[],
+        exits: Map<string, EliminationExit>,
+    ): void {
+        const qualifyingRounds = this.getConfig(tournament).numberOfQualifyingRounds ?? 0;
+        for (const match of scheduledMatches) {
+            if (match.isBye || !match.teamB || match.status === MatchStatus.VALIDATED) continue;
+            const session = match.sessionNumber ?? 0;
+            if (session <= qualifyingRounds) continue;
+
+            const table = (match.pool?.name ?? MatchGroupKey.PRINCIPALE) as MatchGroupKey;
+            for (const teamId of [match.teamA.id, match.teamB.id]) {
+                const current = exits.get(teamId);
+                if (!current || session > current.session) {
+                    exits.set(teamId, { table, session, won: true, ownScore: -1 });
+                }
+            }
+        }
+    }
+
     private eliminationExits(
         tournament: Tournament,
         matches: TournamentMatch[],

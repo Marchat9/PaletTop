@@ -55,11 +55,31 @@ export class TrainingLeaderboardService {
         const sessionIds = await this.trainingSessionRepo.findIdsByTrainingUpTo(session);
         const matches = await this.trainingMatchRepo.findValidatedBySessions(sessionIds);
 
+        const sessionsByMember = this.sessionsPlayedByMember(matches);
         // Credited to the roster member, so that their sessions add up; a guest has none.
         return this.rank(matches, (participant) => participant.member).map(({ id, ...entry }) => ({
             memberId: id,
             ...entry,
+            sessionsPlayed: sessionsByMember.get(id)?.size ?? 0,
         }));
+    }
+
+    /** Distinct sessions in which each roster member played at least one of these matches. */
+    private sessionsPlayedByMember(matches: TrainingMatch[]): Map<string, Set<string>> {
+        const sessions = new Map<string, Set<string>>();
+        for (const match of matches) {
+            const sessionId = match.session?.id;
+            if (!sessionId) continue;
+            const teams = match.teamB ? [match.teamA, match.teamB] : [match.teamA];
+            for (const teamMember of teams.flatMap((team) => team.members ?? [])) {
+                const memberId = teamMember.participant.member?.id;
+                if (!memberId) continue;
+                const played = sessions.get(memberId) ?? new Set<string>();
+                played.add(sessionId);
+                sessions.set(memberId, played);
+            }
+        }
+        return sessions;
     }
 
     /**

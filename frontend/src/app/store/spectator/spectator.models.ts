@@ -12,6 +12,8 @@ export interface SpectatorTournamentDto {
   status: TournamentStatus;
   phaseName: string;
   scoreCalculation: ScoreCalculation;
+  /** Registered teams, in natural order, shown until the first round starts. */
+  teamNames: string[];
 }
 
 export interface SpectatorState {

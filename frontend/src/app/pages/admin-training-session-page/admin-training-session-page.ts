@@ -1,8 +1,14 @@
 import { Dialog } from '@angular/cdk/dialog';
+import { BreakpointObserver } from '@angular/cdk/layout';
+import { Overlay } from '@angular/cdk/overlay';
 import {
-  ClubLeaderboardPopup,
-  ClubLeaderboardPopupData,
-} from 'src/app/modales/club-leaderboard-popup/club-leaderboard-popup';
+  TrainingLeaderboardPopup,
+  TrainingLeaderboardPopupData,
+} from 'src/app/modales/training-leaderboard-popup/training-leaderboard-popup';
+import {
+  LEADERBOARD_MOBILE_QUERY,
+  leaderboardDialogPlacement,
+} from 'src/app/utils/leaderboard-dialog.util';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -77,7 +83,9 @@ import { TrainingScoreUpdate, TrainingTeamCreation } from './admin-training-sess
 import { SessionActions } from './components/session-actions/session-actions';
 import { isInTeam } from '../player-training-session-page/player-training-session-page.utils';
 import { SessionHeader } from './components/session-header/session-header';
-import { SessionLeaderboard } from './components/session-leaderboard/session-leaderboard';
+import { Leaderboard } from 'src/app/shared/leaderboard/leaderboard';
+import { Button } from 'src/app/shared/button/button';
+import { toSessionLeaderboard } from 'src/app/utils/leaderboard.util';
 import { SessionParticipants } from './components/session-participants/session-participants';
 import { SessionRound } from './components/session-round/session-round';
 import { SessionRoundsHistory } from './components/session-rounds-history/session-rounds-history';
@@ -95,7 +103,8 @@ import { newId } from 'src/app/utils/unique-id.util';
     SessionRound,
     SessionParticipants,
     SessionTeams,
-    SessionLeaderboard,
+    Leaderboard,
+    Button,
     SessionRoundsHistory,
   ],
   templateUrl: './admin-training-session-page.html',
@@ -108,6 +117,8 @@ export class AdminTrainingSessionPage implements OnInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly store = inject(Store);
   private readonly dialog = inject(Dialog);
+  private readonly overlay = inject(Overlay);
+  private readonly breakpointObserver = inject(BreakpointObserver);
 
   public readonly trainingCode = signal<string | null>(null);
   public readonly sessionCode = signal<string | null>(null);
@@ -122,6 +133,7 @@ export class AdminTrainingSessionPage implements OnInit, OnDestroy {
   public readonly roundsLoading = this.store.selectSignal(selectTrainingRoundsIsLoading);
   public readonly leaderboard = this.store.selectSignal(selectTrainingLeaderboard);
   public readonly leaderboardLoading = this.store.selectSignal(selectTrainingLeaderboardIsLoading);
+  public readonly leaderboardTable = computed(() => toSessionLeaderboard(this.leaderboard()));
   public readonly lastCheckedIn = this.store.selectSignal(selectLastCheckedInTrainingParticipant);
   public readonly createTeamLoading = this.store.selectSignal(selectCreateTrainingTeamLoading);
   public readonly generateRoundLoading = this.store.selectSignal(
@@ -572,10 +584,13 @@ export class AdminTrainingSessionPage implements OnInit, OnDestroy {
     }
     this.store.dispatch(followTrainingClubLeaderboard({ sessionCode }));
     this.dialog
-      .open<void, ClubLeaderboardPopupData>(ClubLeaderboardPopup, {
-        data: { myMemberId: this.adminParticipant()?.memberId ?? null },
-        panelClass: 'dialog-panel',
-        backdropClass: 'dialog-backdrop-light',
+      .open<void, TrainingLeaderboardPopupData>(TrainingLeaderboardPopup, {
+        data: { scope: 'club', highlightedId: this.adminParticipant()?.memberId ?? null },
+        ...leaderboardDialogPlacement(
+          this.overlay,
+          this.breakpointObserver.isMatched(LEADERBOARD_MOBILE_QUERY),
+          'dialog-panel',
+        ),
       })
       .closed.subscribe(() => this.store.dispatch(unfollowTrainingClubLeaderboard()));
   }

@@ -46,7 +46,7 @@
       </div>
     }
 
-    <app-player-stats-tiles [tiles]="statTiles()" />
+    <app-player-stats-tiles [tiles]="statTiles()" (tileClicked)="onTileClicked($event)" />
 
     <section class="current-match">
       @if (matchTitle(); as title) {
@@ -91,12 +91,6 @@
     @if (!isSittingOut() && cardMatch()) {
       <app-player-session-partners [partners]="partners()" />
     }
-
-    <app-player-session-leaderboard
-      [leaderboard]="leaderboard()"
-      [myParticipantId]="me()?.id ?? null"
-      (openClubLeaderboard)="openClubLeaderboard()"
-    />
 
     <app-player-match-history
       [results]="results()"

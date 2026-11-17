@@ -1,0 +1,114 @@
+@if (framed()) {
+  <app-card-collapsible [canCollapse]="canCollapse()" [isExpanded]="true">
+    <div header class="header" [class.compact]="titleSize() === 'compact'">
+      <div class="header-title">
+        <app-icon [name]="icon()" iconClass="icon" [ariaHidden]="true" />
+        <h2 class="title">{{ title() }}</h2>
+      </div>
+      @if (description(); as text) {
+        <span class="header-description">{{ text }}</span>
+      }
+    </div>
+    <div content class="leaderboard-content">
+      <ng-container [ngTemplateOutlet]="body" />
+    </div>
+  </app-card-collapsible>
+} @else {
+  <div class="leaderboard-content">
+    <ng-container [ngTemplateOutlet]="body" />
+  </div>
+}
+
+<ng-template #body>
+  <ng-content select="[leaderboardActions]" />
+
+  @if (isLoading() && !hasRows()) {
+    <app-skeleton [rows]="4" height="2.2rem" />
+  } @else if (error(); as message) {
+    <p class="error">{{ message }}</p>
+  } @else if (!hasRows()) {
+    <p class="empty">{{ emptyLabel() }}</p>
+  } @else {
+    @if (podium().length > 0) {
+      <ol class="podium" [style.--steps]="podium().length" aria-label="Podium">
+        @for (step of podium(); track step.key) {
+          <li
+            class="podium-step"
+            [class]="'place-' + step.place"
+            [class.is-highlighted]="step.isHighlighted"
+          >
+            <span class="medal" [attr.aria-label]="'Rang ' + step.rankLabel">{{
+              step.rankLabel
+            }}</span>
+            <strong class="podium-names">
+              @for (name of step.names; track $index) {
+                <span class="podium-name">{{ name }}</span>
+              }
+              @if (step.hiddenCount > 0) {
+                <span class="podium-more">+{{ step.hiddenCount }}</span>
+              }
+            </strong>
+            <span class="podium-summary">{{ step.summary }}</span>
+          </li>
+        }
+      </ol>
+    }
+
+    <div
+      class="tables"
+      [class.two-columns]="listColumns() === 2"
+      [class.fill]="fillHeight()"
+      [appFitCount]="rowRem"
+      [fitReserved]="headRem"
+      [fitColumns]="listColumns()"
+      (fitCountChange)="onFitCount($event)"
+    >
+      @for (rows of tables(); track $index) {
+        <table class="rank-table">
+          <thead>
+            <tr>
+              <th class="col-rank" scope="col">
+                <span class="rank-label">Rang</span><span class="rank-label-short">#</span>
+              </th>
+              <th class="col-name" scope="col">{{ table().nameLabel }}</th>
+              @for (column of table().columns; track column.label) {
+                <th class="col-stat" scope="col">
+                  <abbr [title]="column.title">{{ column.label }}</abbr>
+                </th>
+              }
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of rows; track item.key) {
+              @if (item.kind === 'section') {
+                <tr class="section-row">
+                  <th scope="colgroup" [attr.colspan]="columnCount()">{{ item.label }}</th>
+                </tr>
+              } @else {
+                <tr [class.is-highlighted]="item.row.id === highlightedId()">
+                  <td class="col-rank">{{ item.row.rankLabel }}</td>
+                  <td class="col-name">
+                    <span class="max-two-lines">{{ item.row.name }}</span>
+                  </td>
+                  @for (cell of item.row.cells; track $index) {
+                    <td
+                      class="col-stat"
+                      [class.tone-positive]="cell.tone === 'positive'"
+                      [class.tone-negative]="cell.tone === 'negative'"
+                    >
+                      {{ cell.value }}
+                    </td>
+                  }
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      }
+    </div>
+
+    @if (table().legend; as legend) {
+      <p class="legend">{{ legend }}</p>
+    }
+  }
+</ng-template>

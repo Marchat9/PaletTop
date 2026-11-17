@@ -1,0 +1,18 @@
+@if (isVisible()) {
+  <div class="page-progress" role="status" [attr.aria-label]="'Page ' + position()">
+    @if (label(); as text) {
+      <span class="label">{{ text }}</span>
+    }
+    <span class="track" aria-hidden="true">
+      @for (key of barKeys(); track key) {
+        <span class="fill" [style.animation-duration]="duration()"></span>
+      }
+    </span>
+    <span class="dots" aria-hidden="true">
+      @for (dot of dots(); track dot) {
+        <span class="dot" [class.is-current]="dot === page()"></span>
+      }
+    </span>
+    <span class="position" aria-hidden="true">{{ position() }}</span>
+  </div>
+}

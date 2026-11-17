@@ -7,6 +7,12 @@
   flex-direction: column;
   gap: 1.4rem;
 
+  // Projected into the leaderboard, above the table.
+  .ranking-download {
+    display: flex;
+    justify-content: flex-end;
+  }
+
   /* Loading State */
   .loading-state {
     display: flex;

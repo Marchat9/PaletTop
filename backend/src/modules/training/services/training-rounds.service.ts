@@ -25,6 +25,7 @@ import { activeMembers } from '../utils/team-member.utils';
 import { TrainingLeaderboardService } from './training-leaderboard.service';
 import { TrainingSessionAuthService } from './training-session-auth.service';
 import { TrainingRealtimeGateway } from '../training-realtime.gateway';
+import { plateNumbers } from '../domain/matchmaking/plate-numbers';
 
 const DEFAULT_LEVEL_HISTORY_DEPTH = 5;
 
@@ -205,7 +206,10 @@ export class TrainingRoundsService {
                 await teamMemberRepo.save(memberRows);
             }
 
-            const matchRows = plan.matches.map((m) =>
+            const plates = plateNumbers(
+                plan.matches.map((m) => ({ isBye: m.opponentRef === null })),
+            );
+            const matchRows = plan.matches.map((m, index) =>
                 matchRepo.create({
                     round: savedRound,
                     session,
@@ -213,6 +217,7 @@ export class TrainingRoundsService {
                     teamA: teamById.get(refToTeamId.get(m.teamRef)!)!,
                     teamB: m.opponentRef ? teamById.get(refToTeamId.get(m.opponentRef)!)! : null,
                     isBye: m.opponentRef === null,
+                    plateNumber: plates[index],
                 }),
             );
             await matchRepo.save(matchRows);

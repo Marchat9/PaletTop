@@ -44,6 +44,10 @@ export class TrainingMatch {
     @Column({ default: false })
     isBye!: boolean;
 
+    /** Plate the match is played on, from 1; none for a bye (and for rounds drawn before plates). */
+    @Column({ type: 'int', nullable: true })
+    plateNumber!: number | null;
+
     @Column({ default: 0 })
     scoreA!: number;
 

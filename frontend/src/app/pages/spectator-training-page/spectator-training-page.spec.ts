@@ -30,6 +30,7 @@ import {
   selectTrainingRoundsIsLoading,
 } from 'src/app/store/training/training.selectors';
 import { SpectatorTrainingPage } from './spectator-training-page';
+import { selectSpectatorShowPodium } from 'src/app/store/app-config/app-config.selectors';
 
 function session(overrides: Partial<TrainingSessionPublicDto> = {}): TrainingSessionPublicDto {
   return {
@@ -44,12 +45,20 @@ function session(overrides: Partial<TrainingSessionPublicDto> = {}): TrainingSes
   } as TrainingSessionPublicDto;
 }
 
-function round(roundNumber: number): TrainingRoundDto {
+function round(roundNumber: number, ...statuses: string[]): TrainingRoundDto {
   return {
     id: `r${roundNumber}`,
     roundNumber,
     status: 'OPEN',
-    matches: [],
+    matches: statuses.map((status, index) => ({
+      id: `m${roundNumber}-${index}`,
+      status,
+      isBye: false,
+      scoreA: 0,
+      scoreB: 0,
+      teamA: { id: 'A', kind: 'EPHEMERAL', members: [{ id: 'p1', name: 'Julie' }] },
+      teamB: { id: 'B', kind: 'EPHEMERAL', members: [{ id: 'p2', name: 'Loïc' }] },
+    })),
   } as unknown as TrainingRoundDto;
 }
 
@@ -86,10 +95,13 @@ function setup(
           { selector: selectTrainingLeaderboardIsLoading, value: false },
           {
             selector: selectTrainingClubLeaderboard,
-            value: [{ memberId: 'M1', name: 'Jean Dubois', wins: 5, points: 61 }],
+            value: [
+              { memberId: 'M1', name: 'Jean Dubois', wins: 5, points: 61, sessionsPlayed: 3 },
+            ],
           },
           { selector: selectTrainingClubLeaderboardIsLoading, value: false },
           { selector: selectTrainingClubLeaderboardError, value: null },
+          { selector: selectSpectatorShowPodium, value: true },
         ],
       }),
     ],
@@ -141,34 +153,89 @@ describe('SpectatorTrainingPage', () => {
   });
 
   it('affiche les matchs du dernier round et le classement côte à côte', () => {
-    const { fixture } = setup({ session: session(), rounds: [round(1), round(2)] });
+    const { fixture } = setup({
+      session: session(),
+      rounds: [round(1, 'VALIDATED'), round(2, 'VALIDATED', 'ONGOING')],
+    });
     const element = fixture.nativeElement as HTMLElement;
 
-    expect(element.querySelector('.column.matches app-session-round')).not.toBeNull();
-    expect(element.querySelector('.column.ranking app-session-leaderboard')).not.toBeNull();
-    expect(element.textContent).toContain('Round : 2');
+    expect(element.querySelector('.board.split .matches app-live-match-board')).not.toBeNull();
+    expect(element.querySelector('.board.split .ranking app-leaderboard')).not.toBeNull();
+    expect(element.querySelector('.matches')?.textContent).toContain('Julie');
+    expect(element.textContent).toContain('Round 2 · 1 / 2 matchs validés');
     expect(element.textContent).toContain('Séance en cours');
   });
 
-  it('annonce une séance en configuration tant qu’aucun round n’est généré', () => {
-    const { fixture } = setup({ session: session(), rounds: [] });
-    const text = (fixture.nativeElement as HTMLElement).textContent;
+  it('montre le classement seul entre deux rounds, le round annoncé terminé', () => {
+    const { fixture } = setup({ session: session(), rounds: [round(1, 'VALIDATED')] });
+    const element = fixture.nativeElement as HTMLElement;
 
-    expect(text).toContain('La séance est en cours de configuration');
-    expect(text).not.toContain('Inscrivez les joueurs présents');
+    expect(element.querySelector('app-live-match-board')).toBeNull();
+    expect(element.querySelector('.board:not(.split) .ranking app-leaderboard')).not.toBeNull();
+    expect(element.textContent).toContain('Round 1 · terminé');
   });
 
-  it('remplace les matchs par le classement du club une fois la séance clôturée', () => {
+  describe('avec un exempt, qui reste en attente', () => {
+    function withBye(roundNumber: number, ...statuses: string[]): TrainingRoundDto {
+      const built = round(roundNumber, ...statuses, 'PENDING');
+      const bye = built.matches[built.matches.length - 1];
+      Object.assign(bye, { isBye: true, teamB: null, plateNumber: null });
+      return built;
+    }
+
+    it('ne le compte pas parmi les matchs du round et l’affiche sans plaque', () => {
+      const { fixture } = setup({
+        session: session(),
+        rounds: [withBye(1, 'VALIDATED', 'ONGOING')],
+      });
+      const element = fixture.nativeElement as HTMLElement;
+
+      expect(element.textContent).toContain('Round 1 · 1 / 2 matchs validés');
+      expect(element.querySelector('.is-bye .plate')?.textContent).toContain('Plaque -');
+    });
+
+    it('annonce le round terminé quand tous les vrais matchs sont validés', () => {
+      const { fixture } = setup({
+        session: session(),
+        rounds: [withBye(1, 'VALIDATED', 'VALIDATED')],
+      });
+      const element = fixture.nativeElement as HTMLElement;
+
+      expect(element.textContent).toContain('Round 1 · terminé');
+    });
+  });
+
+  it('liste les joueurs présents tant qu’aucun round n’est généré', () => {
+    const { fixture } = setup({
+      session: session({
+        participants: [
+          { id: 'p2', name: 'Loïc', status: 'PRESENT' },
+          { id: 'p1', name: 'Julie', status: 'PRESENT' },
+          { id: 'p3', name: 'Parti', status: 'LEFT' },
+        ],
+      } as Partial<TrainingSessionPublicDto>),
+      rounds: [],
+    });
+    const element = fixture.nativeElement as HTMLElement;
+
+    expect(element.textContent).toContain('La séance va bientôt commencer');
+    expect(Array.from(element.querySelectorAll('.chip')).map((chip) => chip.textContent)).toEqual([
+      'Julie',
+      'Loïc',
+    ]);
+  });
+
+  it('montre la séance et le club côte à côte une fois la séance clôturée', () => {
     const { fixture, dispatchSpy } = setup({
       session: session({ status: 'CLOSED' }),
       rounds: [round(1)],
     });
     const element = fixture.nativeElement as HTMLElement;
 
-    expect(element.querySelector('.column.matches')).toBeNull();
-    expect(element.querySelector('.column.club app-club-leaderboard-table')).not.toBeNull();
-    expect(element.querySelector('.column.club')?.textContent).toContain('Jean Dubois');
-    expect(element.querySelector('.column.ranking app-session-leaderboard')).not.toBeNull();
+    expect(element.querySelector('app-live-match-board')).toBeNull();
+    expect(element.querySelector('.board .club app-leaderboard')).not.toBeNull();
+    expect(element.querySelector('.board .club')?.textContent).toContain('Jean Dubois');
+    expect(element.querySelector('.board .ranking app-leaderboard')).not.toBeNull();
     expect(element.textContent).toContain('Séance terminée');
     expect(dispatchSpy).toHaveBeenCalledWith(
       loadTrainingClubLeaderboard({ sessionCode: '123456' }),

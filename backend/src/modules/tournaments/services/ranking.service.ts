@@ -1,6 +1,5 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { TournamentMatch } from 'src/entities/tounament-match.entity';
-import { MatchStatus } from 'src/enum/status.enum';
 import { TournamentRepository } from 'src/modules/tournaments/repositories/tournament.repository';
 import { RealtimeGateway } from 'src/modules/realtime/realtime.gateway';
 import { MatchHistoryDto } from '../responses/match-history.dto';
@@ -110,11 +109,9 @@ export class RankingService {
         if (!tournament) throw new NotFoundException('Tournoi introuvable');
 
         const sessions = await this.sessionRepo.findAllByTournament(tournament.id);
-        const validatedMatches = sessions
-            .flatMap((s) => s.matches)
-            .filter((m) => m.status === MatchStatus.VALIDATED);
+        const allMatches = sessions.flatMap((s) => s.matches);
 
         const strategy = this.strategyFactory.create(tournament.configuration.competitionMode);
-        return strategy.computeStandings(tournament, validatedMatches);
+        return strategy.computeStandings(tournament, allMatches);
     }
 }

@@ -103,6 +103,7 @@ export class TournamentsController {
                 tournamentCode,
                 dto,
             );
+            await this.tournamentsService.broadcastTeamNames(tournamentCode);
             return toAdminTournamentDto(updatedTournament);
         } catch (error: unknown) {
             if (error instanceof HttpException) {

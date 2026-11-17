@@ -3,7 +3,8 @@ import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { Button } from '../../shared/button/button';
 import { GlobalRankingEntry } from 'src/app/models/global-ranking.model';
 import { ScoreCalculation } from 'src/app/models/tournament-configuration-detail.model';
-import { RankingCard } from 'src/app/shared/ranking-card/ranking-card';
+import { Leaderboard } from 'src/app/shared/leaderboard/leaderboard';
+import { toTournamentLeaderboard } from 'src/app/utils/leaderboard.util';
 
 export interface RankData {
   tournamentName: string;
@@ -16,7 +17,7 @@ export interface RankData {
 @Component({
   selector: 'app-rank-popup',
   standalone: true,
-  imports: [Button, RankingCard],
+  imports: [Button, Leaderboard],
   templateUrl: './rank-popup.html',
   styleUrl: './rank-popup.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -24,6 +25,7 @@ export interface RankData {
 export class RankPopupComponent {
   readonly dialogRef = inject(DialogRef<boolean>);
   readonly data = inject<RankData>(DIALOG_DATA);
+  readonly table = toTournamentLeaderboard(this.data.ranking, this.data.scoreCalculation);
 
   onConfirm(): void {
     this.dialogRef.close(true);

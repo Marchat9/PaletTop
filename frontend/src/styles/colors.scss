@@ -70,6 +70,12 @@
 
   --gradient-brass: linear-gradient(135deg, #e9c349 0%, #bb9820 100%);
 
+  // Podium medals (gold, silver, bronze) and the text written on them.
+  --color-medal-gold: #e9c349;
+  --color-medal-silver: #c8ccd4;
+  --color-medal-bronze: #c9925b;
+  --color-on-medal: #0e141c;
+
   // Team colours (red and blue palets): identity of the game, not of the theme. They are therefore
   // not redefined in the light theme - they always carry light text.
   --color-team-red: #9f0d0d;
@@ -145,4 +151,9 @@
   --color-status-error-border: rgb(214 64 51 / 38%);
 
   --gradient-brass: linear-gradient(135deg, #c99a00 0%, #9c7400 100%);
+
+  --color-medal-gold: #c99a00;
+  --color-medal-silver: #9aa1ab;
+  --color-medal-bronze: #b07a43;
+  --color-on-medal: #1a1a1a;
 }

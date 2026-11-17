@@ -31,6 +31,9 @@ export const wsHistoryUpdated = createAction(
   props<{ history: MatchHistoryDto[] }>(),
 );
 
+/** Registered teams changed (names only): the spectator waiting screen lists them. */
+export const wsTeamsUpdated = createAction('[WS] Teams Updated', props<{ teamNames: string[] }>());
+
 export const wsRankingUpdated = createAction(
   '[WS] Ranking Updated',
   props<{ ranking: GlobalRankingEntry[] }>(),

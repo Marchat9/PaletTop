@@ -3,6 +3,7 @@ import {
   wsMatchUpdated,
   wsRankingUpdated,
   wsSessionUpdated,
+  wsTeamsUpdated,
   wsTournamentUpdated,
 } from 'src/app/store/realtime/realtime.actions';
 import {
@@ -49,6 +50,13 @@ export const spectatorReducer = createReducer(
             phaseName: tournament.tournamentStatus?.phaseName ?? '',
           }
         : state.tournament.data,
+    },
+  })),
+  on(wsTeamsUpdated, (state, { teamNames }) => ({
+    ...state,
+    tournament: {
+      ...state.tournament,
+      data: state.tournament.data ? { ...state.tournament.data, teamNames } : state.tournament.data,
     },
   })),
   on(wsRankingUpdated, (state, { ranking }) => ({

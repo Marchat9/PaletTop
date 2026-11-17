@@ -108,13 +108,26 @@ describe('TrainingLeaderboardService.getClubLeaderboard', () => {
         return { service, sessionRepo, matchRepo, current };
     }
 
+    function inSession(sessionId: string, played: TrainingMatch): TrainingMatch {
+        return { ...played, session: { id: sessionId } } as TrainingMatch;
+    }
+
     it('additionne victoires et points de chaque membre sur les séances du club', async () => {
         // Session 1: Jean (M1) wins 13-7 against Marie (M2). Session 2: Marie wins 13-11.
         // A member plays under a new participant row each session: the member id ties them.
         const { service, sessionRepo, matchRepo, current } = makeClubService([
-            match([named('p1-s1', 'M1', 'Jean')], 13, [named('p2-s1', 'M2', 'Marie')], 7),
-            match([named('p2-s2', 'M2', 'Marie')], 13, [named('p1-s2', 'M1', 'Jean')], 11),
-            match([named('p2-s2b', 'M2', 'Marie')], 13, [named('p3', 'M3', 'Luc')], 2),
+            inSession(
+                'S1',
+                match([named('p1-s1', 'M1', 'Jean')], 13, [named('p2-s1', 'M2', 'Marie')], 7),
+            ),
+            inSession(
+                'S2',
+                match([named('p2-s2', 'M2', 'Marie')], 13, [named('p1-s2', 'M1', 'Jean')], 11),
+            ),
+            inSession(
+                'S2',
+                match([named('p2-s2b', 'M2', 'Marie')], 13, [named('p3', 'M3', 'Luc')], 2),
+            ),
         ]);
 
         const leaderboard = await service.getClubLeaderboard('123456');
@@ -122,22 +135,30 @@ describe('TrainingLeaderboardService.getClubLeaderboard', () => {
         expect(sessionRepo.findIdsByTrainingUpTo).toHaveBeenCalledWith(current);
         expect(matchRepo.findValidatedBySessions).toHaveBeenCalledWith(['S1', 'S2']);
         expect(leaderboard).toEqual([
-            { memberId: 'M2', name: 'Marie', wins: 2, points: 33 },
-            { memberId: 'M1', name: 'Jean', wins: 1, points: 24 },
-            { memberId: 'M3', name: 'Luc', wins: 0, points: 2 },
+            { memberId: 'M2', name: 'Marie', wins: 2, points: 33, sessionsPlayed: 2 },
+            { memberId: 'M1', name: 'Jean', wins: 1, points: 24, sessionsPlayed: 2 },
+            { memberId: 'M3', name: 'Luc', wins: 0, points: 2, sessionsPlayed: 1 },
         ]);
     });
 
     it('laisse les invités de côté, sans fausser les membres qui ont joué avec eux', async () => {
         const { service } = makeClubService([
-            match([named('p1', 'M1', 'Jean'), named('guest')], 13, [named('p2', 'M2', 'Marie')], 4),
+            inSession(
+                'S1',
+                match(
+                    [named('p1', 'M1', 'Jean'), named('guest')],
+                    13,
+                    [named('p2', 'M2', 'Marie')],
+                    4,
+                ),
+            ),
         ]);
 
         const leaderboard = await service.getClubLeaderboard('123456');
 
         expect(leaderboard).toEqual([
-            { memberId: 'M1', name: 'Jean', wins: 1, points: 13 },
-            { memberId: 'M2', name: 'Marie', wins: 0, points: 4 },
+            { memberId: 'M1', name: 'Jean', wins: 1, points: 13, sessionsPlayed: 1 },
+            { memberId: 'M2', name: 'Marie', wins: 0, points: 4, sessionsPlayed: 1 },
         ]);
     });
 });
