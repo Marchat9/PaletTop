@@ -13,6 +13,13 @@ export interface SpectatorTournamentDto {
     teamNames: string[];
 }
 
+/** Team names in natural order: « Équipe 2 » before « Équipe 11 ». */
+export function sortTeamNames(teams: { name: string }[]): string[] {
+    return teams
+        .map((team) => team.name)
+        .sort((a, b) => a.localeCompare(b, 'fr', { numeric: true, sensitivity: 'base' }));
+}
+
 export function toSpectatorTournamentDto(
     tournament: Tournament,
     phaseName: string,
@@ -24,8 +31,6 @@ export function toSpectatorTournamentDto(
         status: tournament.status,
         phaseName,
         scoreCalculation: tournament.configuration.scoreCalculation,
-        teamNames: (tournament.teams ?? [])
-            .map((team) => team.name)
-            .sort((a, b) => a.localeCompare(b, 'fr', { numeric: true, sensitivity: 'base' })),
+        teamNames: sortTeamNames(tournament.teams ?? []),
     };
 }

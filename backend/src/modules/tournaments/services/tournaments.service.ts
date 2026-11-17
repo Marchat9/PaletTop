@@ -1,3 +1,4 @@
+import { RealtimeGateway } from 'src/modules/realtime/realtime.gateway';
 import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { Player } from 'src/entities/player.entity';
 import { Team } from 'src/entities/team.entity';
@@ -5,6 +6,7 @@ import { Tournament } from 'src/entities/tournament.entity';
 import { TournamentStatus } from 'src/enum/status.enum';
 import { TournamentTeamDto } from 'src/modules/tournaments/dto/team-tournament.dto';
 import {
+    sortTeamNames,
     SpectatorTournamentDto,
     toSpectatorTournamentDto,
 } from 'src/modules/tournaments/responses/spectator-tournament.dto';
@@ -37,6 +39,7 @@ export class TournamentsService {
         private readonly tournamentAuthService: TournamentAuthService,
         private readonly sessionService: SessionService,
         private readonly strategyFactory: TournamentStrategyFactory,
+        private readonly gateway: RealtimeGateway,
     ) {}
 
     async findAll(): Promise<Tournament[]> {
@@ -69,6 +72,23 @@ export class TournamentsService {
         const strategy = this.strategyFactory.create(tournament.configuration.competitionMode);
         const status = await this.sessionService.buildTournamentStatus(strategy, tournament);
         return toSpectatorTournamentDto(tournament, status?.phaseName || '');
+    }
+
+    /**
+     * Sends the registered teams to the tournament room after a team change: the spectator waiting
+     * screen lists them. A failure is only logged, the team change itself went through.
+     */
+    async broadcastTeamNames(tournamentCode: string): Promise<void> {
+        try {
+            const tournament = await this.tournamentRepo.findWithRelations(
+                { code: tournamentCode },
+                { withTeams: true },
+            );
+            if (!tournament) return;
+            this.gateway.emitTeamsUpdated(tournamentCode, sortTeamNames(tournament.teams ?? []));
+        } catch (error) {
+            this.logger.error(`Teams broadcast failed for tournament ${tournamentCode}`, error);
+        }
     }
 
     async create(tournamentCreation: CreateTournamentDto): Promise<Tournament> {

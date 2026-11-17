@@ -27,6 +27,7 @@ import {
   wsMatchUpdated,
   wsRankingUpdated,
   wsSessionUpdated,
+  wsTeamsUpdated,
   wsTournamentUpdated,
   wsTrainingLeaderboardUpdated,
   wsTrainingMatchUpdated,
@@ -192,6 +193,9 @@ export class RealtimeEffects {
       this.wsService
         .on<GlobalRankingEntry[]>('ranking:updated')
         .pipe(map((ranking) => wsRankingUpdated({ ranking }))),
+      this.wsService
+        .on<{ teamNames: string[] }>('teams:updated')
+        .pipe(map(({ teamNames }) => wsTeamsUpdated({ teamNames }))),
     );
   }
 }

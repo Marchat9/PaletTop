@@ -62,6 +62,7 @@ export class TeamController {
                 currentTeam.id,
                 dto.teamData,
             );
+            await this.tournamentsService.broadcastTeamNames(tournamentCode);
 
             return toTeamDto(newTeam);
         } catch (error: unknown) {
@@ -90,6 +91,7 @@ export class TeamController {
             );
 
             await this.tournamentsService.deleteTeamById(currentTeam.id);
+            await this.tournamentsService.broadcastTeamNames(tournamentCode);
         } catch (error: unknown) {
             if (error instanceof HttpException) {
                 throw error;

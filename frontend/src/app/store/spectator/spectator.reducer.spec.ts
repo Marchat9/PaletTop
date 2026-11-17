@@ -5,6 +5,7 @@ import { PlayerMatchDto } from 'src/app/models/player-match.model';
 import {
   wsMatchUpdated,
   wsRankingUpdated,
+  wsTeamsUpdated,
   wsSessionUpdated,
   wsTournamentUpdated,
 } from 'src/app/store/realtime/realtime.actions';
@@ -116,6 +117,17 @@ describe('spectatorReducer', () => {
   it('replaces the ranking wholesale on wsRankingUpdated', () => {
     const state = spectatorReducer(initialSpectatorState, wsRankingUpdated({ ranking: RANKING }));
     expect(state.ranking).toEqual(RANKING);
+  });
+
+  it('lists the new registered teams on wsTeamsUpdated', () => {
+    const loaded = spectatorReducer(
+      initialSpectatorState,
+      loadSpectatorTournamentSuccess({ tournament: TOURNAMENT, sessions: [], ranking: [] }),
+    );
+
+    const state = spectatorReducer(loaded, wsTeamsUpdated({ teamNames: ['Équipe 1', 'Équipe 2'] }));
+
+    expect(state.tournament.data?.teamNames).toEqual(['Équipe 1', 'Équipe 2']);
   });
 
   it('refreshes the tournament status on wsTournamentUpdated', () => {

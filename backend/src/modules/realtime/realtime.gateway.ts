@@ -206,6 +206,11 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
         this.server.to(`tournament:${code}:team:${teamCode}`).emit('history:updated', history);
     }
 
+    /** Registered teams changed: names only (never their codes), for the spectator waiting screen. */
+    emitTeamsUpdated(code: string, teamNames: string[]): void {
+        this.server.to(`tournament:${code}`).emit('teams:updated', { teamNames });
+    }
+
     emitRankingUpdated(code: string, ranking: unknown[]): void {
         this.server.to(`tournament:${code}`).emit('ranking:updated', ranking);
     }
