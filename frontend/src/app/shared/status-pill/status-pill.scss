@@ -57,4 +57,12 @@
     font-size: 0.75rem;
     letter-spacing: 0.14em;
   }
+
+  // A projected screen: read from the back of the room, on a single line.
+  &.xl {
+    padding: 0.4rem 0.9rem;
+    font-size: 0.95rem;
+    letter-spacing: 0.08em;
+    white-space: nowrap;
+  }
 }

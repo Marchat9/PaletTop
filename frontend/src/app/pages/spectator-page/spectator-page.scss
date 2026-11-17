@@ -1,4 +1,4 @@
-@use './spectator-layout' as spectator;
+@use '../../shared/spectator-layout/spectator-layout' as spectator;
 
 :host {
   @include spectator.host;

@@ -15,11 +15,15 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { SpectateTrainingPopup } from 'src/app/modales/spectate-training-popup/spectate-training-popup';
 import { Button } from 'src/app/shared/button/button';
-import { Icon } from 'src/app/shared/icon/icon';
+import { Nullable } from 'src/app/models/nullable.model';
 import { Leaderboard } from 'src/app/shared/leaderboard/leaderboard';
 import { LiveMatchBoard } from 'src/app/shared/live-match-board/live-match-board';
 import { PageProgress } from 'src/app/shared/page-progress/page-progress';
-import { QrCode } from 'src/app/shared/qr-code/qr-code';
+import { PageState } from 'src/app/shared/page-state/page-state';
+import { SpectatorHeader } from 'src/app/shared/spectator-header/spectator-header';
+import { SpectatorBadge } from 'src/app/shared/spectator-header/spectator-header.model';
+import { SpectatorWaiting } from 'src/app/shared/spectator-waiting/spectator-waiting';
+import { SpectatorWinner } from 'src/app/shared/spectator-winner/spectator-winner';
 import { Switch } from 'src/app/shared/switch/switch';
 import { setLocalStorageData } from 'src/app/store/app-config/app-config.actions';
 import {
@@ -50,6 +54,7 @@ import { AutoPager } from 'src/app/utils/auto-pager.util';
 import { isSpectatorSessionCode } from 'src/app/utils/code-format.util';
 import {
   leaderboardItems,
+  pageRankLabel,
   toClubLeaderboard,
   toSessionLeaderboard,
 } from 'src/app/utils/leaderboard.util';
@@ -58,6 +63,7 @@ import {
   orderForBoard,
   playedMatches,
   spectatorPhase,
+  spectatorRoundBadge,
   toTrainingLiveMatches,
 } from 'src/app/utils/spectator.util';
 import { environment } from 'src/environments/environment';
@@ -78,7 +84,18 @@ export type SpectatorTrainingTab = 'ranking' | 'matches' | 'club';
  */
 @Component({
   selector: 'app-spectator-training-page',
-  imports: [DatePipe, Leaderboard, LiveMatchBoard, PageProgress, QrCode, Switch, Icon, Button],
+  imports: [
+    DatePipe,
+    Leaderboard,
+    LiveMatchBoard,
+    PageProgress,
+    PageState,
+    SpectatorHeader,
+    SpectatorWaiting,
+    SpectatorWinner,
+    Switch,
+    Button,
+  ],
   templateUrl: './spectator-training-page.html',
   styleUrl: './spectator-training-page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -135,6 +152,24 @@ export class SpectatorTrainingPage {
   );
   public readonly matchCount = computed(() => this.playedRoundMatches().length);
 
+  // ======= Header =======
+  public readonly statusBadge = computed<Nullable<SpectatorBadge>>(() => {
+    if (!this.session()) {
+      return null;
+    }
+    switch (this.phase()) {
+      case 'waiting':
+        return { label: 'Séance pas encore commencée', tone: 'draft' };
+      case 'finished':
+        return { label: `Séance terminée · ${this.roundCount()} rounds`, tone: 'success' };
+      default:
+        return { label: 'Séance en cours', tone: 'ongoing' };
+    }
+  });
+  public readonly roundBadge = computed<Nullable<SpectatorBadge>>(() =>
+    spectatorRoundBadge(this.phase(), this.roundNumber(), this.validatedCount(), this.matchCount()),
+  );
+
   // ======= Content =======
   public readonly liveMatches = computed(() =>
     orderForBoard(toTrainingLiveMatches(this.currentRound()?.matches ?? [])),
@@ -189,6 +224,18 @@ export class SpectatorTrainingPage {
   );
   public readonly matchPageMs = MATCH_PAGE_MS;
   public readonly rankingPageMs = RANKING_PAGE_MS;
+  public readonly rankingPageMsProgress = this.rankingPageMs - 500; // let 0.5 secs to max
+  /** « Rangs 4 – 15 »: what the page of each leaderboard shows. */
+  public readonly rankingPageLabel = computed(() =>
+    pageRankLabel(this.sessionItems(), this.rankingPager.start(), this.rankingPageSize()),
+  );
+  public readonly clubPageLabel = computed(() =>
+    pageRankLabel(
+      leaderboardItems(this.clubLeaderboardTable().rows, false),
+      this.clubPager.start(),
+      this.clubPageSize(),
+    ),
+  );
 
   // ======= Layout =======
   public readonly isMobile = signal(false);

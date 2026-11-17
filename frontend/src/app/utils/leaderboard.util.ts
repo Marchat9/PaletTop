@@ -272,3 +272,18 @@ export function itemTables(
     return chunk;
   });
 }
+
+/** « Rangs 4 – 15 »: what a page of a paginated leaderboard shows; null on an empty page. */
+export function pageRankLabel(
+  items: LeaderboardItem[],
+  start: number,
+  size: number,
+): Nullable<string> {
+  const rows = items
+    .slice(start, start + size)
+    .flatMap((item) => (item.kind === 'row' ? [item.row] : []));
+  if (rows.length === 0) {
+    return null;
+  }
+  return `Rangs ${rows[0].rank} – ${rows[rows.length - 1].rank}`;
+}

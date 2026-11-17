@@ -1,0 +1,33 @@
+<div class="waiting">
+  @if (!isMobile()) {
+    <section class="panel follow">
+      <span class="panel-label">Suivre en direct</span>
+      <app-qr-code [url]="url()" [size]="220" alt="Lien de cette page" />
+      <span class="code-label">Code</span>
+      <strong class="code">{{ code() }}</strong>
+      <span class="hint">{{ followHint() }}</span>
+    </section>
+  }
+  <section class="panel roster">
+    <div class="roster-header">
+      <span class="panel-label">{{ rosterLabel() }}</span>
+      <strong class="roster-count">{{ names().length }}</strong>
+    </div>
+    <ul class="chips">
+      @for (name of names(); track $index) {
+        <li class="chip">{{ name }}</li>
+      } @empty {
+        <li class="empty">{{ emptyLabel() }}</li>
+      }
+    </ul>
+    <p class="soon">
+      <span class="pulse" aria-hidden="true"></span>
+      {{ soonLabel() }}
+    </p>
+    @if (isMobile()) {
+      <p class="share">
+        Code à partager <strong class="code">{{ code() }}</strong>
+      </p>
+    }
+  </section>
+</div>

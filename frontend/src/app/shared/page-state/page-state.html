@@ -1,0 +1,14 @@
+<section class="page-state" [class]="tone()" [attr.role]="role()">
+  <div class="state-message">
+    <app-icon [name]="resolvedIcon()" iconClass="state-icon" [ariaHidden]="true" />
+    <div class="state-text">
+      <p class="message">{{ message() }}</p>
+      @if (description()) {
+        <p class="description">{{ description() }}</p>
+      }
+    </div>
+  </div>
+  <div class="state-actions">
+    <ng-content />
+  </div>
+</section>

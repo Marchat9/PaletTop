@@ -1,0 +1,26 @@
+<div class="spectator-header">
+  <h1 class="page-title">
+    <span>{{ kind() }} : </span>
+    {{ title() ?? '—' }}
+  </h1>
+  <div class="page-status">
+    @if (status(); as badge) {
+      <app-status-pill size="xl" [tone]="badge.tone">{{ badge.label }}</app-status-pill>
+    }
+  </div>
+  <div #side class="page-side" [class.stacked]="stacked()">
+    @if (round(); as badge) {
+      <app-status-pill size="xl" [tone]="badge.tone">{{ badge.label }}</app-status-pill>
+    }
+    @if (code()) {
+      <app-status-pill size="xl">Code : {{ code() }}</app-status-pill>
+    }
+    @if (showPodiumSwitch()) {
+      <app-switch
+        label="Podium"
+        [checked]="showPodium()"
+        (checkedChange)="podiumChange.emit($event)"
+      />
+    }
+  </div>
+</div>
