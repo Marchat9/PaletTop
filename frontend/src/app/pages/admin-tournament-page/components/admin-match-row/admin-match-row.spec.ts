@@ -73,7 +73,8 @@ describe('AdminMatchRow', () => {
   it('shows the plate, each team with its score, and highlights the winner', () => {
     const { root } = render();
 
-    expect(root.querySelector('.plate')?.textContent?.trim()).toBe('6');
+    expect(root.querySelector('.plate .plate-label')?.textContent?.trim()).toBe('Plaque');
+    expect(root.querySelector('.plate .plate-number')?.textContent?.trim()).toBe('6');
     expect(root.querySelector('.score-a')?.textContent?.trim()).toBe('6');
     expect(root.querySelector('.score-b')?.textContent?.trim()).toBe('13');
     expect(root.querySelector('.team-b')?.classList).toContain('winner');

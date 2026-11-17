@@ -10,7 +10,10 @@
     [attr.aria-label]="editLabel()"
     (keydown)="onEditKeydown($event)"
   >
-    <span class="plate" aria-hidden="true">{{ match().plateNumber }}</span>
+    <span class="plate"
+      ><span class="plate-label">Plaque</span
+      ><span class="plate-number">{{ match().plateNumber }}</span></span
+    >
     <span class="team team-a">{{ match().teamA.name }}</span>
     <app-score-stepper
       class="score-a"
@@ -66,7 +69,10 @@
 }
 
 <ng-template #matchLine>
-  <span class="plate" aria-hidden="true">{{ match().plateNumber }}</span>
+  <span class="plate"
+    ><span class="plate-label">Plaque</span
+    ><span class="plate-number">{{ match().plateNumber }}</span></span
+  >
   <span class="team team-a" [class.winner]="isWinnerA()"
     >{{ match().teamA.name }}
     @if (isOngoing()) {
