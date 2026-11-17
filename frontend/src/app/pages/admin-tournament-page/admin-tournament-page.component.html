@@ -21,13 +21,18 @@
       (startTournament)="startTournament()"
     />
 
-    <app-match-sessions-card
-      [tournament]="tournament() ?? null"
-      [sessions]="sessions()"
-      [nextLoading]="nextLoading()"
+    <app-current-round-card
+      [roundNumber]="currentRoundNumber()"
+      [groups]="currentRoundGroups()"
+      [showMatches]="showCurrentRound()"
+      [pointsPerGame]="pointsPerGame()"
       [scoreUpdateLoading]="scoreUpdateLoading()"
+      [message]="currentRoundMessage()"
+      [showNextButton]="isActive()"
+      [canGenerateNext]="canGenerateNewSession()"
+      [nextLoading]="nextLoading()"
       (scoreUpdate)="adminScoreUpdate($event)"
-      (nextSession)="nextSession()"
+      (nextRound)="nextSession()"
     />
 
     <app-leaderboard
@@ -48,11 +53,10 @@
       }
     </app-leaderboard>
 
-    <app-tournament-rounds-history
-      [sessions]="sessions()"
-      [pointsPerGame]="tournament()?.configuration?.pointsPerGame ?? 13"
-      [competitionMode]="tournament()?.configuration?.competitionMode ?? 'standard'"
-      [canEdit]="canEditRoundsHistory()"
+    <app-rounds-history
+      [rounds]="roundHistories()"
+      [pointsPerGame]="pointsPerGame()"
+      description="Revoir les matchs joués et corriger un score des rounds tirés au sort."
       [scoreUpdateLoading]="scoreUpdateLoading()"
       [canDownload]="canDownloadMatches()"
       [downloadLoading]="isMatchesExporting()"

@@ -2,10 +2,11 @@ import { TestBed } from '@angular/core/testing';
 import { describe, expect, it } from 'vitest';
 import { SessionActions } from './session-actions';
 
-function setup(closeError: string | null) {
+function setup(closeError: string | null, canCloseSession = true) {
   const fixture = TestBed.createComponent(SessionActions);
   fixture.componentRef.setInput('isSessionOpen', true);
   fixture.componentRef.setInput('closeError', closeError);
+  fixture.componentRef.setInput('canCloseSession', canCloseSession);
   fixture.detectChanges();
   return fixture.nativeElement as HTMLElement;
 }
@@ -21,5 +22,16 @@ describe('SessionActions', () => {
 
   it("n'affiche rien tant que la clôture n'a pas été refusée", () => {
     expect(setup(null).querySelector('[role="alert"]')).toBeNull();
+  });
+
+  it('only enables the closing once every match of the round is validated', () => {
+    const closeButton = (element: HTMLElement) =>
+      [...element.querySelectorAll('.button')].find((button) =>
+        button.textContent?.includes('Clôturer la séance'),
+      );
+
+    expect(closeButton(setup(null, false))?.getAttribute('aria-disabled')).toBe('true');
+    TestBed.resetTestingModule();
+    expect(closeButton(setup(null, true))?.getAttribute('aria-disabled')).toBe('false');
   });
 });

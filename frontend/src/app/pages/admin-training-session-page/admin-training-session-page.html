@@ -37,28 +37,34 @@
 
     <app-session-actions
       [isSessionOpen]="isSessionOpen()"
-      [canGenerateRound]="canGenerateRound()"
+      [canCloseSession]="canCloseSession()"
       [generateBlockedReason]="generateBlockedReason()"
       [generateBlockedIsAlert]="generateBlockedIsAlert()"
       [nextRoundPreview]="nextRoundPreview()"
-      [generateLoading]="generateRoundLoading()"
       [closeLoading]="closeSessionLoading()"
       [closeError]="closeSessionError()"
       (openCheckin)="openCheckin()"
-      (generateRound)="generateRound()"
       [canPlayMyMatches]="!!adminParticipant()"
       [playMyMatchesDisabled]="playMyMatchesDisabled()"
       (closeSession)="closeSession()"
       (playMyMatches)="playMyMatches()"
     />
 
-    <app-session-round
-      [round]="currentRound()"
-      [pointsPerGame]="session()?.pointsPerGame ?? 13"
-      [isSessionOpen]="isSessionOpen()"
+    <app-current-round-card
+      [roundNumber]="currentRound()?.roundNumber ?? null"
+      [groups]="currentRoundGroups()"
+      [showMatches]="!!currentRound()"
+      [pointsPerGame]="pointsPerGame()"
+      [editable]="isCurrentRoundEditable()"
+      [scoreUpdateLoading]="scoreLoading()"
+      [message]="currentRoundMessage()"
       [isLoading]="roundsLoading()"
-      [scoreLoading]="scoreLoading()"
-      (updateScore)="updateScore($event)"
+      [showNextButton]="isSessionOpen()"
+      nextLabel="Générer le round suivant"
+      [canGenerateNext]="canGenerateRound()"
+      [nextLoading]="generateRoundLoading()"
+      (scoreUpdate)="updateScore($event)"
+      (nextRound)="generateRound()"
     />
 
     <app-session-participants
@@ -95,9 +101,11 @@
       />
     </app-leaderboard>
 
-    <app-session-rounds-history
-      [rounds]="previousRounds()"
-      [pointsPerGame]="session()?.pointsPerGame ?? 13"
+    <app-rounds-history
+      [rounds]="roundHistories()"
+      [pointsPerGame]="pointsPerGame()"
+      description="Revoir les matchs des rounds précédents de la séance."
+      searchPlaceholder="Filtrer par joueur ou équipe"
     />
   </div>
 </div>

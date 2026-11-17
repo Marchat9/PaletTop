@@ -1,18 +1,7 @@
 import { PlayerMatchResult, PlayerMatchView } from 'src/app/models/player-match-view.model';
 import { Nullable } from 'src/app/models/nullable.model';
 import { TrainingMatchDto, TrainingTeamDto } from 'src/app/store/training/training.models';
-
-/** An ephemeral team has no name: it is designated by its players. */
-export function teamLabel(team: Nullable<TrainingTeamDto>): string {
-  if (!team) {
-    return '—';
-  }
-  return team.name || team.members.map((member) => member.name).join(' · ');
-}
-
-export function isInTeam(team: Nullable<TrainingTeamDto>, participantId: string): boolean {
-  return (team?.members ?? []).some((member) => member.id === participantId);
-}
+import { isInTeam, teamLabel } from 'src/app/utils/training-team.util';
 
 /** The team of the participant in this match, to list their team-mates. */
 export function myTeam(

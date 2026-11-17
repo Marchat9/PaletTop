@@ -2,11 +2,15 @@ import { normalizeCode } from 'src/app/utils/code-format.util';
 import { newId } from 'src/app/utils/unique-id.util';
 import { buildRankingPdf, rankingPdfFileName } from 'src/app/utils/pdf/ranking-pdf.util';
 import { buildMatchesPdf, matchesPdfFileName } from 'src/app/utils/pdf/matches-pdf.util';
-import { buildRoundHistoryViews } from './components/tournament-rounds-history/rounds-history.utils';
+import {
+  buildRoundHistoryViews,
+  toTournamentRoundHistories,
+} from 'src/app/utils/rounds-history.util';
+import { toTournamentAdminMatchGroups } from 'src/app/utils/match-groups.util';
 import { PdfExportService } from 'src/app/services/pdf-export.service';
 import { TournamentStatus } from 'src/app/models/tournament-status.enum';
 import { TournamentNextStep } from './components/tournament-next-step/tournament-next-step';
-import { TournamentRoundsHistory } from './components/tournament-rounds-history/tournament-rounds-history';
+import { RoundsHistory } from 'src/app/shared/rounds-history/rounds-history';
 import { Dialog } from '@angular/cdk/dialog';
 import { CommonModule } from '@angular/common';
 import {
@@ -63,7 +67,9 @@ import {
   selectStartTournamentLoading,
   selectTournamentUpdateConfigLoading,
 } from 'src/app/store/tournament/tournament.selectors';
-import { MatchSessionsCardComponent } from './components/match-sessions-card/match-sessions-card';
+import { CurrentRoundCard } from 'src/app/shared/current-round-card/current-round-card';
+import { MatchesSessionDto } from 'src/app/models/matches-session.model';
+import { Nullable } from 'src/app/models/nullable.model';
 import { TournamentConfigurationCardComponent } from './components/tournament-configuration-card/tournament-configuration-card.component';
 import { TournamentHeaderComponent } from './components/tournament-header/tournament-header.component';
 import { TournamentTeamConfigurationCard } from './components/tournament-team-configuration-card/tournament-team-configuration-card';
@@ -84,11 +90,11 @@ import { onResyncRequested } from 'src/app/utils/resync-on-reconnect.util';
     TournamentHeaderComponent,
     TournamentConfigurationCardComponent,
     TournamentTeamConfigurationCard,
-    MatchSessionsCardComponent,
+    CurrentRoundCard,
     TournamentNextStep,
     Leaderboard,
     Button,
-    TournamentRoundsHistory,
+    RoundsHistory,
     AnimateOnChangeDirective,
   ],
   templateUrl: './admin-tournament-page.component.html',
@@ -152,6 +158,48 @@ export class AdminTournamentPageComponent implements OnInit {
   public readonly canEditRoundsHistory = computed(
     () => this.tournament()?.status !== TournamentStatus.CANCELLED,
   );
+
+  public readonly pointsPerGame = computed(() =>
+    Number(this.tournament()?.configuration?.pointsPerGame ?? 13),
+  );
+  public readonly isActive = computed(() => this.tournament()?.status === TournamentStatus.ACTIVE);
+  public readonly canGenerateNewSession = computed(
+    () => this.tournament()?.tournamentStatus?.canGenerateNewSession ?? false,
+  );
+  public readonly currentSession = computed<Nullable<MatchesSessionDto>>(() => {
+    const list = this.sessions();
+    return !list?.length
+      ? null
+      : list.reduce((latest, s) => (s.sessionNumber > latest.sessionNumber ? s : latest));
+  });
+  public readonly currentRoundNumber = computed(() =>
+    this.isActive() ? (this.currentSession()?.sessionNumber ?? null) : null,
+  );
+  public readonly currentRoundGroups = computed(() =>
+    toTournamentAdminMatchGroups(this.currentSession()?.matches ?? []),
+  );
+  public readonly showCurrentRound = computed(() => this.isActive() && !!this.currentSession());
+  /** Where the tournament stands while no round is listed. */
+  public readonly currentRoundMessage = computed(() => {
+    switch (this.tournament()?.status) {
+      case TournamentStatus.DRAFT:
+        return "Le tournoi n'a pas encore démarré : les rounds apparaîtront ici une fois lancé depuis la carte « Prochaine étape ».";
+      case TournamentStatus.FINISHED:
+        return '🎉 Le tournoi est terminé, félicitation à tout le monde. 🎉';
+      case TournamentStatus.CANCELLED:
+        return "Le tournoi est annulé. Contactez l'administrateur pour plus d'informations.";
+      default:
+        return null;
+    }
+  });
+  public readonly roundHistories = computed(() => {
+    const tournament = this.tournament();
+    return toTournamentRoundHistories(
+      this.sessions() ?? [],
+      tournament?.configuration?.competitionMode ?? 'standard',
+      this.canEditRoundsHistory(),
+    );
+  });
 
   // Data
   public readonly hiddenFields: TournamentConfigurationField[] = environment.tournamentConfiguration
@@ -366,7 +414,6 @@ export class AdminTournamentPageComponent implements OnInit {
         sessions,
         tournament.configuration.competitionMode,
         false,
-        '',
       );
       await this.pdfExport.download(
         buildMatchesPdf(tournament, rounds, window.location.origin),

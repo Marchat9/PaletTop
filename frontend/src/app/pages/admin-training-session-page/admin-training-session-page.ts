@@ -79,16 +79,19 @@ import {
   selectTrainingRoundsIsLoading,
 } from 'src/app/store/training/training.selectors';
 import { describeRoundPreview, previewRound } from 'src/app/utils/round-preview.util';
-import { TrainingScoreUpdate, TrainingTeamCreation } from './admin-training-session-page.models';
+import { TrainingTeamCreation } from './admin-training-session-page.models';
+import { ScoreUpdate } from 'src/app/models/score-update.model';
+import { CurrentRoundCard } from 'src/app/shared/current-round-card/current-round-card';
+import { RoundsHistory } from 'src/app/shared/rounds-history/rounds-history';
+import { toTrainingAdminMatchGroups } from 'src/app/utils/match-groups.util';
+import { toTrainingRoundHistories } from 'src/app/utils/rounds-history.util';
 import { SessionActions } from './components/session-actions/session-actions';
-import { isInTeam } from '../player-training-session-page/player-training-session-page.utils';
+import { isInTeam, teamLabel } from 'src/app/utils/training-team.util';
 import { SessionHeader } from './components/session-header/session-header';
 import { Leaderboard } from 'src/app/shared/leaderboard/leaderboard';
 import { Button } from 'src/app/shared/button/button';
 import { toSessionLeaderboard } from 'src/app/utils/leaderboard.util';
 import { SessionParticipants } from './components/session-participants/session-participants';
-import { SessionRound } from './components/session-round/session-round';
-import { SessionRoundsHistory } from './components/session-rounds-history/session-rounds-history';
 import { SessionTeams } from './components/session-teams/session-teams';
 import { newId } from 'src/app/utils/unique-id.util';
 
@@ -100,12 +103,12 @@ import { newId } from 'src/app/utils/unique-id.util';
     AnimateOnChangeDirective,
     SessionHeader,
     SessionActions,
-    SessionRound,
+    CurrentRoundCard,
     SessionParticipants,
     SessionTeams,
     Leaderboard,
     Button,
-    SessionRoundsHistory,
+    RoundsHistory,
   ],
   templateUrl: './admin-training-session-page.html',
   styleUrl: './admin-training-session-page.scss',
@@ -189,7 +192,22 @@ export class AdminTrainingSessionPage implements OnInit, OnDestroy {
     [...this.rounds()].sort((a, b) => a.roundNumber - b.roundNumber),
   );
   public readonly currentRound = computed(() => this.sortedRounds().at(-1) ?? null);
-  public readonly previousRounds = computed(() => this.sortedRounds().slice(0, -1).reverse());
+  public readonly roundHistories = computed(() =>
+    toTrainingRoundHistories(this.sortedRounds().slice(0, -1)),
+  );
+  public readonly currentRoundGroups = computed(() =>
+    toTrainingAdminMatchGroups(this.currentRound()?.matches ?? []),
+  );
+  /** Only an open round of an open session takes a score correction. */
+  public readonly isCurrentRoundEditable = computed(
+    () => this.isSessionOpen() && this.currentRound()?.status === 'OPEN',
+  );
+  public readonly pointsPerGame = computed(() => this.session()?.pointsPerGame ?? 13);
+  public readonly currentRoundMessage = computed(() =>
+    this.isSessionOpen()
+      ? 'Aucun round généré. Inscrivez les joueurs présents, puis générez le premier round : les équipes seront formées automatiquement selon les réglages de la séance.'
+      : "Aucun round n'a été joué pendant cette séance.",
+  );
 
   /** Nothing left to play for the admin: no round yet, or their match of this round is validated. */
   public readonly playMyMatchesDisabled = computed(() => {
@@ -210,6 +228,10 @@ export class AdminTrainingSessionPage implements OnInit, OnDestroy {
     () =>
       this.currentRound()?.matches.filter((match) => !match.isBye && match.status !== 'VALIDATED')
         .length ?? 0,
+  );
+  /** The session closes once every match of the current round is validated (or before any round). */
+  public readonly canCloseSession = computed(
+    () => this.isSessionOpen() && this.ongoingMatchCount() === 0,
   );
   // A refused closing no longer applies once every match of the round is validated.
   public readonly closeSessionError = computed(() =>
@@ -531,10 +553,9 @@ export class AdminTrainingSessionPage implements OnInit, OnDestroy {
       return;
     }
 
-    const teamLabel = team.name || team.members.map((member) => member.name).join(' · ');
     const data: ConfirmationData = {
       title: "Dissoudre l'équipe",
-      message: `${teamLabel} ne jouera plus ensemble. Les joueurs seront appariés individuellement aux prochains rounds.`,
+      message: `${teamLabel(team)} ne jouera plus ensemble. Les joueurs seront appariés individuellement aux prochains rounds.`,
       confirmLabel: 'Dissoudre',
     };
 
@@ -562,7 +583,7 @@ export class AdminTrainingSessionPage implements OnInit, OnDestroy {
     this.store.dispatch(generateTrainingRound({ sessionCode }));
   }
 
-  public updateScore(update: TrainingScoreUpdate): void {
+  public updateScore(update: ScoreUpdate): void {
     const sessionCode = this.sessionCode();
     if (!sessionCode) {
       return;

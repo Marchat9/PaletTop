@@ -49,7 +49,7 @@ describe('TournamentNextStep', () => {
         },
       } as unknown as Partial<TournamentDto>),
     );
-    expect(host.querySelector('.step-detail.is-blocked')?.textContent).toContain(
+    expect(host.querySelector('app-inline-notice.step-detail')?.textContent).toContain(
       '4 équipes contre 4',
     );
   });

@@ -1,8 +1,8 @@
 import { LiveMatchView, SpectatorPhase } from 'src/app/models/live-match.model';
 import { SessionMatchDto } from 'src/app/models/matches-session.model';
-import { computeMatchGroups } from 'src/app/pages/admin-tournament-page/components/match-sessions-card/session-matches/session-matches.utils';
-import { teamLabel } from 'src/app/pages/player-training-session-page/player-training-session-page.utils';
+import { computeMatchGroups } from 'src/app/utils/match-groups.util';
 import { TrainingMatchDto } from 'src/app/store/training/training.models';
+import { teamLabel } from 'src/app/utils/training-team.util';
 
 /** What the spectator phase is deduced from. */
 export interface SpectatorPhaseSource {

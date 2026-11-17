@@ -50,10 +50,6 @@
     .step-detail {
       font-size: 0.875rem;
       color: var(--color-on-surface-variant);
-
-      &.is-blocked {
-        color: var(--color-error);
-      }
     }
 
     .link {

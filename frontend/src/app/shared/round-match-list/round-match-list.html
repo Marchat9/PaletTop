@@ -1,0 +1,30 @@
+<div class="matches-section">
+  @for (group of groups(); track group.label) {
+    <div class="pool-group">
+      @if (group.label) {
+        <div class="pool-header">
+          <app-icon name="emoji_events" iconClass="pool-icon" />
+          {{ group.label }}
+        </div>
+      }
+
+      <div class="match-list" [appStagger]="staggerKey()">
+        @for (match of group.matches; track match.id) {
+          <app-admin-match-row
+            [match]="match"
+            [pointsPerGame]="pointsPerGame()"
+            [editable]="editable() && !match.isBye"
+            [editing]="editingMatchId() === match.id"
+            [saving]="saving()"
+            [showLiveStatus]="showLiveStatus()"
+            (editRequested)="startEdit(match.id)"
+            (editCancelled)="cancelEdit()"
+            (scoreSubmitted)="saveEdit($event)"
+          />
+        }
+      </div>
+    </div>
+  } @empty {
+    <p class="empty">Aucun match dans ce round.</p>
+  }
+</div>

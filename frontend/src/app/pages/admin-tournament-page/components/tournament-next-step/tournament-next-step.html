@@ -62,7 +62,9 @@
           <div class="step-text">
             <span class="step-title">Démarrer le tournoi</span>
             @if (startBlocker()) {
-              <span class="step-detail is-blocked">{{ startBlocker() }}</span>
+              <app-inline-notice class="step-detail" tone="alert" role="status">{{
+                startBlocker()
+              }}</app-inline-notice>
             } @else {
               <span class="step-detail">
                 Les poules et le premier round seront générés. Les équipes ne pourront plus être

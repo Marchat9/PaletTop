@@ -5,6 +5,7 @@ import { TournamentStatus } from 'src/app/models/tournament-status.enum';
 import { Button } from 'src/app/shared/button/button';
 import { Card } from 'src/app/shared/card/card';
 import { Icon } from 'src/app/shared/icon/icon';
+import { InlineNotice } from 'src/app/shared/inline-notice/inline-notice';
 import { TournamentDto } from 'src/app/store/tournament/tournament.models';
 import { championshipStartBlocker } from 'src/app/utils/championship-start.util';
 import { canImportTeams } from '../tournament-team-configuration-card/team-config/team-import.utils';
@@ -18,7 +19,7 @@ export const MIN_TEAMS_TO_START = 2;
  */
 @Component({
   selector: 'app-tournament-next-step',
-  imports: [Card, Button, Icon],
+  imports: [Card, Button, Icon, InlineNotice],
   templateUrl: './tournament-next-step.html',
   styleUrl: './tournament-next-step.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -1,0 +1,110 @@
+@if (match().isBye) {
+  <div class="match-row is-bye">
+    <span class="team">{{ match().teamA }}</span>
+    <span class="bye-badge">Exempté</span>
+  </div>
+} @else if (editing()) {
+  <div
+    class="match-row is-editing"
+    role="group"
+    [attr.aria-label]="editLabel()"
+    (keydown)="onEditKeydown($event)"
+  >
+    @if (match().plateNumber !== null) {
+      <span class="plate"
+        ><span class="plate-label">Plaque</span
+        ><span class="plate-number">{{ match().plateNumber }}</span></span
+      >
+    }
+    <span class="team team-a">{{ match().teamA }}</span>
+    <app-score-stepper
+      class="score-a"
+      [value]="draftScoreA()"
+      [max]="pointsPerGame()"
+      [teamName]="match().teamA"
+      (valueChange)="draftScoreA.set($event)"
+    />
+    <span class="score-sep" aria-hidden="true">–</span>
+    <app-score-stepper
+      class="score-b"
+      [value]="draftScoreB()"
+      [max]="pointsPerGame()"
+      [teamName]="match().teamB ?? ''"
+      (valueChange)="draftScoreB.set($event)"
+    />
+    <span class="team team-b">{{ match().teamB }}</span>
+    <div class="edit-actions">
+      <button
+        type="button"
+        class="action-btn cancel"
+        aria-label="Annuler"
+        title="Annuler"
+        (click)="editCancelled.emit()"
+      >
+        <app-icon name="close" [ariaHidden]="true" />
+      </button>
+      <button
+        type="button"
+        class="action-btn save"
+        aria-label="Enregistrer"
+        title="Enregistrer"
+        [disabled]="!hasChanges() || saving()"
+        (click)="submit()"
+      >
+        <app-icon [name]="saving() ? 'progress_activity' : 'check'" [ariaHidden]="true" />
+      </button>
+    </div>
+  </div>
+} @else if (editable()) {
+  <button
+    type="button"
+    class="match-row is-editable"
+    [attr.aria-label]="editLabel()"
+    (click)="requestEdit()"
+  >
+    <ng-container [ngTemplateOutlet]="matchLine" />
+  </button>
+} @else {
+  <div class="match-row">
+    <ng-container [ngTemplateOutlet]="matchLine" />
+  </div>
+}
+
+<ng-template #matchLine>
+  @if (match().plateNumber !== null) {
+    <span class="plate"
+      ><span class="plate-label">Plaque</span
+      ><span class="plate-number">{{ match().plateNumber }}</span></span
+    >
+  }
+  <span class="team team-a" [class.winner]="isWinnerA()"
+    >{{ match().teamA }}
+    @if (isOngoing()) {
+      <span class="live-dot" title="En cours"></span>
+    }
+  </span>
+  <span class="score score-a" [class.winner]="isWinnerA()" [appAnimateOnChange]="scoreKey()">{{
+    match().scoreA
+  }}</span>
+  <span class="score-sep" aria-hidden="true">–</span>
+  <span class="score score-b" [class.winner]="isWinnerB()" [appAnimateOnChange]="scoreKey()">{{
+    match().scoreB
+  }}</span>
+  <span class="team team-b" [class.winner]="isWinnerB()">{{ match().teamB }}</span>
+  @if (showLiveStatus()) {
+    <span class="match-meta">
+      <app-status-pill [tone]="statusTone()">
+        <app-match-status [status]="match().status" />
+      </app-status-pill>
+      <app-match-timer
+        [startedAt]="match().startedAt"
+        [finishedAt]="match().finishedAt"
+        [status]="match().status"
+      />
+    </span>
+  }
+  @if (editable()) {
+    <app-icon name="edit" iconClass="edit-icon" [ariaHidden]="true" />
+    <app-icon name="chevron_right" iconClass="chevron-icon" [ariaHidden]="true" />
+  }
+</ng-template>

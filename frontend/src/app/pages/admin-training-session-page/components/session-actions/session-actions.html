@@ -8,15 +8,6 @@
         [large]="true"
         (clicked)="openCheckin.emit()"
       />
-      <app-button
-        title="Générer le round suivant"
-        icon="skip_next"
-        variant="secondary"
-        [large]="true"
-        [loading]="generateLoading()"
-        [disabled]="!canGenerateRound()"
-        (clicked)="generateRound.emit()"
-      />
       @if (canPlayMyMatches()) {
         <app-button
           title="Jouer mes matchs"
@@ -33,39 +24,33 @@
         icon="lock"
         variant="tertiary"
         [loading]="closeLoading()"
+        [disabled]="!canCloseSession()"
         (clicked)="closeSession.emit()"
       />
     </div>
 
     @if (!generateBlockedReason() && nextRoundPreview(); as preview) {
-      <p class="preview" role="status" [appAnimateOnChange]="preview" animation="fade-in">
-        <app-icon name="visibility" iconClass="preview-icon" [ariaHidden]="true" />
-        {{ preview }}
-      </p>
+      <app-inline-notice
+        icon="visibility"
+        role="status"
+        [appAnimateOnChange]="preview"
+        animation="fade-in"
+        >{{ preview }}</app-inline-notice
+      >
     }
 
     @if (closeError(); as error) {
-      <p class="blocked blocked--alert" role="alert">
-        <app-icon name="warning" iconClass="blocked-icon" [ariaHidden]="true" />
-        {{ error }}
-      </p>
+      <app-inline-notice tone="alert" role="alert">{{ error }}</app-inline-notice>
     }
 
     @if (generateBlockedReason(); as reason) {
-      <p
-        class="blocked"
+      <app-inline-notice
         role="status"
-        [class.blocked--alert]="generateBlockedIsAlert()"
+        [tone]="generateBlockedIsAlert() ? 'alert' : 'info'"
         [appAnimateOnChange]="reason"
         animation="fade-in"
+        >{{ reason }}</app-inline-notice
       >
-        <app-icon
-          [name]="generateBlockedIsAlert() ? 'warning' : 'info'"
-          iconClass="blocked-icon"
-          [ariaHidden]="true"
-        />
-        {{ reason }}
-      </p>
     }
   </div>
 }

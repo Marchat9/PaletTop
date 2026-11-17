@@ -7,6 +7,7 @@ import {
   TrainingParticipantAdminDto,
   TrainingTeamDto,
 } from 'src/app/store/training/training.models';
+import { teamLabel, teamMembersLabel } from 'src/app/utils/training-team.util';
 import { TrainingTeamCreation } from '../../admin-training-session-page.models';
 
 @Component({
@@ -33,16 +34,27 @@ export class SessionTeams {
   protected readonly fixedTeams = computed(() =>
     this.teams().filter((team) => team.kind === 'FIXED'),
   );
+  protected readonly fixedTeamCards = computed(() =>
+    this.fixedTeams().map((team) => ({
+      team,
+      label: teamLabel(team),
+      membersLabel: teamMembersLabel(team),
+    })),
+  );
+  protected readonly participantChips = computed(() => {
+    const selected = new Set(this.selectedIds());
+    return this.availableParticipants().map((participant) => ({
+      id: participant.id,
+      name: participant.name,
+      selected: selected.has(participant.id),
+    }));
+  });
   protected readonly canCreate = computed(() => this.selectedIds().length > 0);
 
   protected toggleCreating(): void {
     this.isCreating.update((value) => !value);
     this.selectedIds.set([]);
     this.teamName.set('');
-  }
-
-  protected isSelected(participantId: string): boolean {
-    return this.selectedIds().includes(participantId);
   }
 
   protected toggleParticipant(participantId: string): void {
@@ -67,9 +79,5 @@ export class SessionTeams {
       name: this.teamName().trim() || undefined,
     });
     this.toggleCreating();
-  }
-
-  protected teamMembersLabel(team: TrainingTeamDto): string {
-    return team.members.map((member) => member.name).join(' · ');
   }
 }
