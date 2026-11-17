@@ -19,10 +19,18 @@ import { PlayerTeamMatchPageComponent } from 'src/app/pages/player-team-match-pa
 import { PlayerTrainingSessionPage } from 'src/app/pages/player-training-session-page/player-training-session-page';
 import { AppVisibilityService } from 'src/app/services/app-visibility.service';
 import { WebSocketService } from 'src/app/services/websocket.service';
+import * as appConfigSelectors from 'src/app/store/app-config/app-config.selectors';
 import { effects, reducers } from 'src/app/store/app-store';
+import * as matchHistorySelectors from 'src/app/store/match-history/match-history.selectors';
+import * as matchSelectors from 'src/app/store/match/match.selectors';
 import { selectMatchAwaitingResync } from 'src/app/store/match/match.selectors';
+import * as rankingSelectors from 'src/app/store/ranking/ranking.selectors';
+import * as sessionSelectors from 'src/app/store/session/session.selectors';
+import * as teamSelectors from 'src/app/store/team/team.selectors';
+import * as tournamentSelectors from 'src/app/store/tournament/tournament.selectors';
 import { TournamentDto } from 'src/app/store/tournament/tournament.models';
 import { TrainingCurrentMatchDto } from 'src/app/store/training/training.models';
+import * as trainingSelectors from 'src/app/store/training/training.selectors';
 import { selectTrainingParticipantAwaitingResync } from 'src/app/store/training/training.selectors';
 
 /**
@@ -194,13 +202,53 @@ function setup() {
   return { http, store, reconnected$, resumed$, pending, answer, failNetwork, answerOthers };
 }
 
+interface OverridableSelector {
+  release: () => void;
+  clearResult: () => void;
+}
+
+function isOverridableSelector(value: unknown): value is OverridableSelector {
+  return (
+    typeof value === 'function' &&
+    typeof (value as Partial<OverridableSelector>).release === 'function' &&
+    typeof (value as Partial<OverridableSelector>).clearResult === 'function'
+  );
+}
+
+/**
+ * MockStore's overrideSelector pins a result on the shared memoized selector, and it outlives
+ * the spec that set it when spec files share a worker (e.g. the player pages' specs pin the lock
+ * to false). This spec runs the real store: drop any leftover override before each test.
+ */
+function clearLeakedSelectorOverrides(): void {
+  [
+    appConfigSelectors,
+    matchSelectors,
+    matchHistorySelectors,
+    rankingSelectors,
+    sessionSelectors,
+    teamSelectors,
+    tournamentSelectors,
+    trainingSelectors,
+  ]
+    .flatMap((module) => Object.values(module))
+    .filter(isOverridableSelector)
+    .forEach((selector) => {
+      selector.clearResult();
+      selector.release();
+    });
+}
+
 function backToForeground(resumed$: Subject<void>): void {
   resumed$.next();
   vi.advanceTimersByTime(RESYNC_DEBOUNCE);
 }
 
 describe('Score entry lock around a resync (integration)', () => {
-  beforeEach(() => vi.useFakeTimers());
+  beforeEach(() => {
+    clearLeakedSelectorOverrides();
+    vi.useFakeTimers();
+  });
   afterEach(() => {
     vi.useRealTimers();
     TestBed.resetTestingModule();
