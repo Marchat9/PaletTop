@@ -1,51 +1,33 @@
-<app-card>
-  <div class="training-header">
-    <div class="top-row">
-      <span class="eyebrow">Groupe d'entraînement</span>
-      <app-button
-        title="Se déconnecter"
-        icon="account_circle_off"
-        variant="error"
-        (clicked)="disconnect.emit()"
-      />
-    </div>
+<app-admin-page-header
+  eyebrow="Groupe d'entraînement"
+  icon="school"
+  [title]="training()?.name ?? null"
+  [code]="training()?.code ?? null"
+  [metrics]="metrics()"
+>
+  <ng-container headerActions>
+    <app-button title="Modifier" icon="edit" variant="secondary" (clicked)="edit.emit()" />
+    <app-button-icon
+      icon="more_vert"
+      aria-label="Actions du groupe d'entraînement"
+      [matMenuTriggerFor]="headerMenu"
+    />
+    <mat-menu #headerMenu="matMenu" class="default-burger-menu-display" xPosition="before">
+      <button mat-menu-item class="menu-item" (click)="edit.emit()">
+        <app-icon name="edit" [ariaHidden]="true" />
+        <span class="menu-label">Modifier le groupe</span>
+      </button>
+      <button mat-menu-item class="menu-item danger" (click)="disconnect.emit()">
+        <app-icon name="account_circle_off" [ariaHidden]="true" />
+        <span class="menu-label">Se déconnecter</span>
+      </button>
+    </mat-menu>
+  </ng-container>
 
-    <div class="identity">
-      <div class="title">
-        <app-icon name="school" iconClass="icon" [ariaHidden]="true" />
-        <h1>{{ training()?.name }}</h1>
-        <app-button title="Modifier" icon="edit" variant="tertiary" (clicked)="edit.emit()" />
-      </div>
-      <span class="code-line">
-        @if (training()?.description) {
-          <span class="badge-club">
-            <app-icon name="notes" iconClass="icon" [ariaHidden]="true" />
-            {{ training()?.description }}
-          </span>
-        }
-        <span
-          >Code : <span class="badge-code">{{ training()?.code }}</span></span
-        >
-      </span>
-    </div>
-
-    <dl class="meta">
-      <div>
-        <dt>Membres</dt>
-        <dd>{{ training()?.members?.length ?? 0 }}</dd>
-      </div>
-      <div>
-        <dt>Séances</dt>
-        <dd>{{ sessionCount() }}</dd>
-      </div>
-      <div>
-        <dt>Dernière séance</dt>
-        <dd>{{ lastSessionDate() ? (lastSessionDate() | date: 'dd/MM/yyyy') : '—' }}</dd>
-      </div>
-      <div>
-        <dt>Créé le</dt>
-        <dd>{{ training()?.createdAt | date: 'dd/MM/yyyy' }}</dd>
-      </div>
-    </dl>
-  </div>
-</app-card>
+  @if (training()?.description) {
+    <span class="badge-description">
+      <app-icon name="notes" iconClass="icon" [ariaHidden]="true" />
+      {{ training()?.description }}
+    </span>
+  }
+</app-admin-page-header>

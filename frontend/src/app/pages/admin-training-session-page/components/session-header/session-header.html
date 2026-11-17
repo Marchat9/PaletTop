@@ -1,38 +1,18 @@
-<app-card>
-  <div class="session-header">
-    <div class="top-row">
-      <div class="identity">
-        <span class="eyebrow">Séance d'entraînement</span>
-        <div class="title">
-          <app-icon name="sports_score" iconClass="icon" [ariaHidden]="true" />
-          <h1>{{ session()?.date | date: 'EEEE d MMMM y' }}</h1>
-        </div>
-      </div>
+<app-admin-page-header
+  eyebrow="Séance d'entraînement"
+  icon="sports_score"
+  [title]="session() ? (session()!.date | date: 'EEEE d MMMM y') : null"
+  [capitalizeTitle]="true"
+  [code]="session()?.code ?? null"
+  codeLabel="Code de la séance"
+  [prominentCode]="true"
+  [statuses]="statuses()"
+  [metrics]="metrics()"
+>
+  <app-inline-notice
+    >Chaque joueur se connecte avec ce code, suivi de son code personnel à quatre
+    chiffres.</app-inline-notice
+  >
 
-      <div class="side">
-        @if (session()?.status; as status) {
-          <span class="status" [class.open]="isOpen()">
-            <app-icon
-              [name]="isOpen() ? 'play_circle' : 'lock'"
-              iconClass="status-icon"
-              [ariaHidden]="true"
-            />
-            {{ isOpen() ? 'Ouverte' : 'Clôturée' }}
-          </span>
-        }
-
-        <div class="session-code">
-          <span class="label">Code de la séance</span>
-          <span class="value">{{ session()?.code }}</span>
-        </div>
-      </div>
-    </div>
-
-    <p class="code-help">
-      <app-icon name="info" iconClass="help-icon" [ariaHidden]="true" />
-      Chaque joueur se connecte avec ce code, suivi de son code personnel à quatre chiffres.
-    </p>
-
-    <app-rule-pills [rules]="rules()" />
-  </div>
-</app-card>
+  <app-rule-pills [rules]="rules()" />
+</app-admin-page-header>

@@ -10,30 +10,7 @@
     animation="slide-in"
     [animateOnInit]="true"
   >
-    <app-session-header [session]="session()" />
-
-    <div class="metrics">
-      <app-metric-tile
-        [value]="presentParticipants().length.toString()"
-        label="Présents"
-        size="responsive"
-      />
-      <app-metric-tile
-        [value]="(currentRound()?.roundNumber ?? 0).toString()"
-        [label]="roundTileLabel()"
-        size="responsive"
-      />
-      <app-metric-tile
-        [value]="ongoingMatchCount().toString()"
-        label="Matchs à valider"
-        size="responsive"
-      />
-      <app-metric-tile
-        [value]="fixedTeamCount().toString()"
-        label="Équipes fixes"
-        size="responsive"
-      />
-    </div>
+    <app-session-header [session]="session()" [metrics]="headerMetrics()" />
 
     <app-session-actions
       [isSessionOpen]="isSessionOpen()"

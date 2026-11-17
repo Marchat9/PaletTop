@@ -29,7 +29,7 @@ import {
   ConfirmationPopupComponent,
 } from 'src/app/modales/confirmation-popup/confirmation-popup';
 import { Icon } from 'src/app/shared/icon/icon';
-import { MetricTileComponent } from 'src/app/shared/metric-tile/metric-tile';
+import { AdminHeaderMetric } from 'src/app/shared/admin-page-header/admin-page-header.model';
 import { AnimateOnChangeDirective } from 'src/app/shared/animate-on-change/animate-on-change.directive';
 import { addNotification } from 'src/app/store/app-config/app-config.actions';
 import { connectTrainingAdministrator } from 'src/app/store/training/training.admin.actions';
@@ -99,7 +99,6 @@ import { newId } from 'src/app/utils/unique-id.util';
   selector: 'app-admin-training-session-page',
   imports: [
     Icon,
-    MetricTileComponent,
     AnimateOnChangeDirective,
     SessionHeader,
     SessionActions,
@@ -243,6 +242,12 @@ export class AdminTrainingSessionPage implements OnInit, OnDestroy {
   public readonly fixedTeamCount = computed(
     () => this.session()?.teams.filter((team) => team.kind === 'FIXED').length ?? 0,
   );
+  public readonly headerMetrics = computed<AdminHeaderMetric[]>(() => [
+    { label: 'Présents', value: String(this.presentParticipants().length) },
+    { label: this.roundTileLabel(), value: String(this.currentRound()?.roundNumber ?? 0) },
+    { label: 'Matchs à valider', value: String(this.ongoingMatchCount()) },
+    { label: 'Équipes fixes', value: String(this.fixedTeamCount()) },
+  ]);
 
   /** Split settings of the session, as the preview reads them. */
   private readonly previewSettings = computed(() => {

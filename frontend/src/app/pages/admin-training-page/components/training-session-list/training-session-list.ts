@@ -5,11 +5,12 @@ import { Card } from 'src/app/shared/card/card';
 import { Icon } from 'src/app/shared/icon/icon';
 import { Skeleton } from 'src/app/shared/skeleton/skeleton';
 import { StaggerDirective } from 'src/app/shared/stagger/stagger.directive';
+import { StatusPill } from 'src/app/shared/status-pill/status-pill';
 import { TrainingSessionSummaryDto } from 'src/app/store/training/training.models';
 
 @Component({
   selector: 'app-training-session-list',
-  imports: [Card, Button, Icon, Skeleton, StaggerDirective, DatePipe],
+  imports: [Card, Button, Icon, Skeleton, StaggerDirective, StatusPill, DatePipe],
   templateUrl: './training-session-list.html',
   styleUrl: './training-session-list.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
