@@ -28,6 +28,16 @@ export function myTeam(
   return isInTeam(match.teamB, participantId) ? match.teamB : null;
 }
 
+/** Where to play first (« Plaque N°2 »), then the round; a bye has no plate. */
+function matchSubtitle(match: TrainingMatchDto, roundNumber: Nullable<number>): Nullable<string> {
+  const round = roundNumber ? `Round ${roundNumber}` : null;
+  if (match.isBye || !match.plateNumber) {
+    return round;
+  }
+  const plate = `Plaque N°${match.plateNumber}`;
+  return round ? `${plate} · ${round}` : plate;
+}
+
 /**
  * Projects the training match into the shared view. The side of the participant is deduced from
  * their belonging to one of the two teams - there is no stable team id from one round to the next.
@@ -50,7 +60,7 @@ export function toPlayerMatchView(
     iAmTeamA,
     startedAt: match.startedAt ?? null,
     finishedAt: match.finishedAt ?? null,
-    subtitle: roundNumber ? `Round ${roundNumber}` : null,
+    subtitle: matchSubtitle(match, roundNumber),
   };
 }
 

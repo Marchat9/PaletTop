@@ -237,6 +237,13 @@ describe('PlayerTrainingSessionPage', () => {
     expect(view?.subtitle).toBe('Round 3');
   });
 
+  it('indique la plaque du match avant le round', () => {
+    const match = buildCurrentMatch();
+    const { fixture } = setup({ ...match, match: { ...match.match!, plateNumber: 2 } });
+
+    expect(fixture.componentInstance.matchView()?.subtitle).toBe('Plaque N°2 · Round 3');
+  });
+
   it('liste les coéquipiers du round sans le joueur lui-même', () => {
     const { fixture } = setup();
 

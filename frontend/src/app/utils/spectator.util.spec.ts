@@ -145,4 +145,21 @@ describe('toTrainingLiveMatches', () => {
       plateNumber: null,
     });
   });
+
+  it('reprend la plaque du match quand elle est connue', () => {
+    const [match] = toTrainingLiveMatches([
+      {
+        id: 't2',
+        status: 'ONGOING',
+        isBye: false,
+        plateNumber: 3,
+        scoreA: 4,
+        scoreB: 2,
+        teamA: { id: 'A', kind: 'FIXED', name: 'Les Galets', members: [] },
+        teamB: { id: 'B', kind: 'FIXED', name: 'Les Plaqués', members: [] },
+      },
+    ] as unknown as TrainingMatchDto[]);
+
+    expect(match.plateNumber).toBe(3);
+  });
 });

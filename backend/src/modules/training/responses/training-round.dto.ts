@@ -10,6 +10,8 @@ export interface TrainingMatchDto {
     teamA: TrainingTeamDto;
     teamB: TrainingTeamDto | null;
     isBye: boolean;
+    /** Plate the match is played on; null for a bye or a round drawn before plates existed. */
+    plateNumber: number | null;
     scoreA: number;
     scoreB: number;
     startedAt?: string;
@@ -30,6 +32,7 @@ export function toTrainingMatchDto(match: TrainingMatch): TrainingMatchDto {
         teamA: toTrainingTeamDto(match.teamA, false), // activeOnly=false: a match shows who PLAYED, even if the team has since been dissolved.
         teamB: match.teamB ? toTrainingTeamDto(match.teamB, false) : null,
         isBye: match.isBye,
+        plateNumber: match.plateNumber ?? null,
         scoreA: match.scoreA,
         scoreB: match.scoreB,
         startedAt: match.startedAt?.toISOString(),

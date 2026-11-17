@@ -78,7 +78,7 @@ export function toTrainingLiveMatches(matches: TrainingMatchDto[]): LiveMatchVie
     id: match.id,
     status: match.status,
     isBye: match.isBye,
-    plateNumber: null,
+    plateNumber: match.plateNumber ?? null,
     groupLabel: null,
     teamA: teamLabel(match.teamA),
     teamB: match.teamB ? teamLabel(match.teamB) : null,

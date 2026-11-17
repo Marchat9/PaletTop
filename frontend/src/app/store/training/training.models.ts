@@ -108,6 +108,8 @@ export interface TrainingMatchDto {
   teamA: TrainingTeamDto;
   teamB: TrainingTeamDto | null;
   isBye: boolean;
+  /** Plate the match is played on; none for a bye or a round drawn before plates existed. */
+  plateNumber?: Nullable<number>;
   scoreA: number;
   scoreB: number;
   startedAt?: string;
