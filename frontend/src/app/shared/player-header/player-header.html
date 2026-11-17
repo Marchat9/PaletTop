@@ -1,0 +1,43 @@
+<section class="player-header">
+  <div class="top-row">
+    <div class="identity">
+      <span class="eyebrow">{{ eyebrow() }}</span>
+      @if (title(); as name) {
+        <div class="title">
+          @if (showAvatar()) {
+            <app-avatar [name]="name" />
+          }
+          <h1>{{ name }}</h1>
+        </div>
+      }
+      @if (infos().length > 0) {
+        <div class="infos">
+          @for (info of infos(); track info.value) {
+            <span class="info" [class.is-code]="info.isCode" [class.is-plain]="!info.label">
+              @if (info.icon) {
+                <app-icon [name]="info.icon" iconClass="info-icon" [ariaHidden]="true" />
+              }
+              @if (info.label) {
+                <span class="info-label">{{ info.label }}</span>
+              }
+              <span class="info-value">{{ info.value }}</span>
+            </span>
+          }
+        </div>
+      }
+    </div>
+
+    @if (status(); as current) {
+      <app-status-pill size="lg" [tone]="current.tone">
+        @if (current.icon) {
+          <app-icon [name]="current.icon" iconClass="status-icon" [ariaHidden]="true" />
+        }
+        {{ current.label }}
+      </app-status-pill>
+    }
+  </div>
+
+  @if (tiles().length > 0) {
+    <app-player-stats-tiles [tiles]="tiles()" (tileClicked)="tileClicked.emit($event)" />
+  }
+</section>

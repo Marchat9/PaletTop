@@ -28,7 +28,11 @@ import {
   historyToResults,
   toPlayerMatchView,
 } from 'src/app/pages/player-team-match-page/player-team-match-page.utils';
-import { PlayerByeCopy, PlayerValidationCopy } from 'src/app/models/player-match-view.model';
+import {
+  PlayerByeCopy,
+  PlayerStatTile,
+  PlayerValidationCopy,
+} from 'src/app/models/player-match-view.model';
 import { PlayerMatchCard } from 'src/app/shared/player-match-card/player-match-card';
 import { PlayerMatchHistory } from 'src/app/shared/player-match-history/player-match-history';
 import { Icon } from 'src/app/shared/icon/icon';
@@ -57,8 +61,14 @@ import {
   selectCurrentTournamentData,
 } from 'src/app/store/tournament/tournament.selectors';
 import { onResyncRequested } from 'src/app/utils/resync-on-reconnect.util';
-import { PlayerTeamHeaderComponent } from './player-team-header/player-team-header';
-import { PlayerTeamMembersComponent } from './player-team-members/player-team-members';
+import { PageState } from 'src/app/shared/page-state/page-state';
+import { PlayerFinalRank } from 'src/app/shared/player-final-rank/player-final-rank';
+import { PlayerHeader } from 'src/app/shared/player-header/player-header';
+import {
+  PlayerHeaderInfo,
+  PlayerHeaderStatus,
+} from 'src/app/shared/player-header/player-header.model';
+import { PlayerTeammates } from 'src/app/shared/player-teammates/player-teammates';
 import { newId } from 'src/app/utils/unique-id.util';
 
 export type TeamMatchStatus = 'NOT_STARTED' | 'CANCELLED' | 'FINISH';
@@ -67,8 +77,10 @@ export type TeamMatchStatus = 'NOT_STARTED' | 'CANCELLED' | 'FINISH';
   selector: 'app-player-team-match-page',
   standalone: true,
   imports: [
-    PlayerTeamHeaderComponent,
-    PlayerTeamMembersComponent,
+    PageState,
+    PlayerFinalRank,
+    PlayerHeader,
+    PlayerTeammates,
     PlayerMatchHistory,
     PlayerMatchCard,
     Icon,
@@ -213,6 +225,28 @@ export class PlayerTeamMatchPageComponent {
     const entry = this.ranking()?.find((r) => r.teamId === team.id);
     return entry ? String(entry.rank) : '—';
   });
+
+  // ======= Header =======
+  public readonly headerInfos = computed<PlayerHeaderInfo[]>(() => [
+    { label: 'Code tournoi', value: this.tournamentCode() },
+    { label: 'Code équipe', value: this.team()?.code ?? '—', isCode: true },
+  ]);
+  public readonly headerStatus = computed<Nullable<PlayerHeaderStatus>>(() => {
+    const phase = this.phaseName();
+    return phase ? { label: phase, tone: 'ongoing', icon: 'sports_score' } : null;
+  });
+  public readonly statTiles = computed<PlayerStatTile[]>(() => [
+    { key: 'wins', label: 'Victoires / matchs', value: this.wins() },
+    {
+      key: 'rank',
+      label: 'Classement',
+      value: this.nbTeams() ? `${this.rank()}/${this.nbTeams()}` : this.rank(),
+      clickable: true,
+    },
+  ]);
+  public readonly teamMembersSubtitle = computed(
+    () => `${this.team()?.players.length ?? 0} joueur(s) inscrit(s).`,
+  );
 
   constructor() {
     effect(() => {

@@ -28,7 +28,7 @@ import {
   ConfirmationData,
   ConfirmationPopupComponent,
 } from 'src/app/modales/confirmation-popup/confirmation-popup';
-import { Icon } from 'src/app/shared/icon/icon';
+import { BackLink } from 'src/app/shared/back-link/back-link';
 import { AdminHeaderMetric } from 'src/app/shared/admin-page-header/admin-page-header.model';
 import { AnimateOnChangeDirective } from 'src/app/shared/animate-on-change/animate-on-change.directive';
 import { addNotification } from 'src/app/store/app-config/app-config.actions';
@@ -98,7 +98,7 @@ import { newId } from 'src/app/utils/unique-id.util';
 @Component({
   selector: 'app-admin-training-session-page',
   imports: [
-    Icon,
+    BackLink,
     AnimateOnChangeDirective,
     SessionHeader,
     SessionActions,

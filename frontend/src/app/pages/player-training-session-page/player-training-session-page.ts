@@ -6,11 +6,13 @@ import {
   computed,
   effect,
   inject,
+  LOCALE_ID,
   OnDestroy,
   OnInit,
   signal,
   DestroyRef,
 } from '@angular/core';
+import { formatDate } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Store } from '@ngrx/store';
@@ -20,10 +22,20 @@ import {
   PlayerValidationCopy,
 } from 'src/app/models/player-match-view.model';
 import { AnimateOnChangeDirective } from 'src/app/shared/animate-on-change/animate-on-change.directive';
+import { BackLink } from 'src/app/shared/back-link/back-link';
 import { Icon } from 'src/app/shared/icon/icon';
 import { PlayerMatchCard } from 'src/app/shared/player-match-card/player-match-card';
 import { PlayerMatchHistory } from 'src/app/shared/player-match-history/player-match-history';
-import { PlayerStatsTiles } from 'src/app/shared/player-stats-tiles/player-stats-tiles';
+import { JoinTrainingPopup } from 'src/app/modales/join-training-popup/join-training-popup';
+import { Nullable } from 'src/app/models/nullable.model';
+import { PageState } from 'src/app/shared/page-state/page-state';
+import { PlayerFinalRank } from 'src/app/shared/player-final-rank/player-final-rank';
+import { PlayerHeader } from 'src/app/shared/player-header/player-header';
+import {
+  PlayerHeaderInfo,
+  PlayerHeaderStatus,
+} from 'src/app/shared/player-header/player-header.model';
+import { PlayerTeammates } from 'src/app/shared/player-teammates/player-teammates';
 import { onResyncRequested } from 'src/app/utils/resync-on-reconnect.util';
 import {
   loadTrainingParticipantCurrentMatch,
@@ -69,23 +81,23 @@ import {
   selectValidateTrainingMatchError,
   selectValidateTrainingMatchLoading,
 } from 'src/app/store/training/training.selectors';
-import { PlayerSessionHeader } from './components/player-session-header/player-session-header';
 import { toClubLeaderboard, toSessionLeaderboard } from 'src/app/utils/leaderboard.util';
 import { Button } from 'src/app/shared/button/button';
-import { PlayerSessionPartners } from './components/player-session-partners/player-session-partners';
 import { historyToResults, myTeam, toPlayerMatchView } from './player-training-session-page.utils';
 
 @Component({
   selector: 'app-player-training-session-page',
   imports: [
+    BackLink,
     Button,
     Icon,
     AnimateOnChangeDirective,
     PlayerMatchCard,
     PlayerMatchHistory,
-    PlayerStatsTiles,
-    PlayerSessionHeader,
-    PlayerSessionPartners,
+    PageState,
+    PlayerFinalRank,
+    PlayerHeader,
+    PlayerTeammates,
   ],
   templateUrl: './player-training-session-page.html',
   styleUrl: './player-training-session-page.scss',
@@ -99,6 +111,7 @@ export class PlayerTrainingSessionPage implements OnInit, OnDestroy {
   private readonly dialog = inject(Dialog);
   private readonly overlay = inject(Overlay);
   private readonly breakpointObserver = inject(BreakpointObserver);
+  private readonly locale = inject(LOCALE_ID);
 
   public readonly sessionCode = signal<string | null>(null);
   public readonly participantCode = signal<string | null>(null);
@@ -276,6 +289,32 @@ export class PlayerTrainingSessionPage implements OnInit, OnDestroy {
     return ranking ? `${ranking.rank}/${this.rankedCount()}` : null;
   });
 
+  // ======= Header =======
+  public readonly headerInfos = computed<PlayerHeaderInfo[]>(() => {
+    const session = this.session();
+    return [
+      ...(session
+        ? [
+            {
+              label: null,
+              value: formatDate(session.date, 'EEEE d MMMM', this.locale),
+              icon: 'event',
+            },
+          ]
+        : []),
+      { label: 'Mon code', value: this.participantCode() ?? '—', isCode: true },
+    ];
+  });
+  public readonly headerStatus = computed<Nullable<PlayerHeaderStatus>>(() => {
+    if (this.isSessionClosed()) {
+      return { label: 'Séance terminée', tone: 'pending', icon: 'lock' };
+    }
+    const round = this.roundNumber();
+    return round
+      ? { label: `Round ${round}`, tone: 'ongoing', icon: 'sports_score' }
+      : { label: 'En attente du premier round', tone: 'pending', icon: 'hourglass_empty' };
+  });
+
   public readonly byeCopy: PlayerByeCopy = {
     title: 'Au repos',
     message: 'Vous ne jouez pas ce round. Le prochain vous remettra en jeu.',
@@ -345,6 +384,29 @@ export class PlayerTrainingSessionPage implements OnInit, OnDestroy {
     this.router.navigate([
       `/admin/training/${this.adminTrainingCode()}/session/${this.sessionCode()}`,
     ]);
+  }
+
+  /** Wrong link: let the player type their codes again instead of leaving them on a dead end. */
+  public retypeCodes(): void {
+    this.dialog
+      .open<{ sessionCode: string; participantCode: string }>(JoinTrainingPopup, {
+        panelClass: 'dialog-panel',
+        backdropClass: 'dialog-backdrop',
+      })
+      .closed.subscribe((codes) => {
+        if (codes) {
+          // Same route with other params: go through the home page so the page is rebuilt.
+          void this.router
+            .navigateByUrl('/accueil', { skipLocationChange: true })
+            .then(() =>
+              this.router.navigate(['/player/training', codes.sessionCode, codes.participantCode]),
+            );
+        }
+      });
+  }
+
+  public goHome(): void {
+    void this.router.navigate(['/accueil']);
   }
 
   // ========= Actions =========

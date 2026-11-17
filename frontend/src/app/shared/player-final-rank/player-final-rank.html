@@ -1,0 +1,15 @@
+<div class="final-rank">
+  <div class="finish-icon">
+    <span class="confetti" aria-hidden="true">🎉</span>
+    <app-icon name="emoji_events" iconClass="cup-icon" [ariaHidden]="true" />
+    <span class="confetti" aria-hidden="true">🎉</span>
+  </div>
+  <div class="end-text">
+    <p class="headline">{{ headline() }}</p>
+    @if (rankLabel(); as label) {
+      <p class="rank-line">
+        Vous terminez <span class="rank-badge">{{ label }}</span>
+      </p>
+    }
+  </div>
+</div>

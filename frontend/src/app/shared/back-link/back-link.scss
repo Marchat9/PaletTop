@@ -1,0 +1,34 @@
+:host {
+  display: block;
+  align-self: flex-start;
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  // Touch target: height is gained without touching the side margins.
+  padding: 0.6rem 0.5rem 0.6rem 0.25rem;
+  border: 0;
+  border-radius: 0.5rem;
+  background: transparent;
+  color: var(--color-on-surface-variant);
+  font-family: var(--font-label);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+
+  &:hover {
+    color: var(--color-primary);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
+  ::ng-deep .back-icon {
+    font-size: 1rem;
+  }
+}

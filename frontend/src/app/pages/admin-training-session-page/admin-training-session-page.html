@@ -1,8 +1,8 @@
 <div class="admin-training-session-page">
-  <button type="button" class="back-link" (click)="backToTraining()">
-    <app-icon name="arrow_back" iconClass="back-icon" [ariaHidden]="true" />
-    {{ training()?.name || "Retour à l'entraînement" }}
-  </button>
+  <app-back-link
+    [label]="training()?.name || 'Retour à l\'entraînement'"
+    (clicked)="backToTraining()"
+  />
 
   <div
     class="session-body"

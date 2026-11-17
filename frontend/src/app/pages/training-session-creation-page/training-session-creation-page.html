@@ -1,8 +1,5 @@
 <div class="training-session-creation-page">
-  <button type="button" class="back-link" (click)="cancel()">
-    <app-icon name="arrow_back" iconClass="back-icon" [ariaHidden]="true" />
-    {{ training()?.name || "Retour à l'entraînement" }}
-  </button>
+  <app-back-link [label]="training()?.name || 'Retour à l\'entraînement'" (clicked)="cancel()" />
 
   <app-card>
     <div class="creation-form">
