@@ -58,11 +58,21 @@
     letter-spacing: 0.14em;
   }
 
-  // A projected screen: read from the back of the room, on a single line.
+  // A projected screen: read from the back of the room. On one line while it fits; a long label
+  // (« Séance pas encore commencée ») wraps, centred and balanced, rather than leave the screen.
   &.xl {
+    max-width: 100%;
     padding: 0.4rem 0.9rem;
     font-size: 0.95rem;
     letter-spacing: 0.08em;
-    white-space: nowrap;
+    text-align: center;
+    text-wrap: balance;
+    overflow-wrap: anywhere;
+
+    @media (width <= 580px) {
+      padding: 0.35rem 0.75rem;
+      font-size: 0.8rem;
+      letter-spacing: 0.06em;
+    }
   }
 }

@@ -231,7 +231,6 @@ export class PlayerTeamMatchPageComponent {
 
   // ======= Header =======
   public readonly headerInfos = computed<PlayerHeaderInfo[]>(() => [
-    { label: 'Code tournoi', value: this.tournamentCode() },
     { label: 'Code équipe', value: this.team()?.code ?? '—', isCode: true },
   ]);
   public readonly headerStatus = computed<Nullable<PlayerHeaderStatus>>(() => {

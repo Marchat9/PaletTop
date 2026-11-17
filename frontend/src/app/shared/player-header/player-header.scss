@@ -96,6 +96,16 @@
     }
   }
 
+  // Under the identity at their own width; on a phone they share the whole row.
+  app-player-stats-tiles {
+    align-self: flex-end;
+    max-width: 100%;
+
+    @media (width < 768px) {
+      align-self: stretch;
+    }
+  }
+
   app-status-pill ::ng-deep .status-pill {
     gap: 0.4rem;
   }

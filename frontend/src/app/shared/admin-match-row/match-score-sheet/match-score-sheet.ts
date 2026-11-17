@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { AdminMatchView } from 'src/app/models/admin-match.model';
 import { ScoreUpdate } from 'src/app/models/score-update.model';
 import { Button } from 'src/app/shared/button/button';
+import { SwipeToDismissDirective } from 'src/app/shared/swipe-to-dismiss/swipe-to-dismiss.directive';
 import { ScoreStepper } from '../score-stepper/score-stepper';
 
 export interface MatchScoreSheetData {
@@ -10,10 +11,13 @@ export interface MatchScoreSheetData {
   pointsPerGame: number;
 }
 
-/** Mobile bottom sheet correcting one match score; closes with the update, or nothing on cancel. */
+/**
+ * Mobile bottom sheet correcting one match score; closes with the update, or nothing on cancel
+ * (button, backdrop or swiped down).
+ */
 @Component({
   selector: 'app-match-score-sheet',
-  imports: [Button, ScoreStepper],
+  imports: [Button, ScoreStepper, SwipeToDismissDirective],
   templateUrl: './match-score-sheet.html',
   styleUrl: './match-score-sheet.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -1,4 +1,7 @@
-<div class="creation-section">
+<div class="creation-section" [class.sheet]="isSheet" [appSwipeToDismiss]="isSheet">
+  @if (isSheet) {
+    <span class="handle" aria-hidden="true"></span>
+  }
   <div class="section-header">
     <span class="eyebrow">Équipes</span>
     <span class="title">{{ isEditMode ? "Modifier l'équipe" : 'Ajouter une équipe' }}</span>
@@ -17,13 +20,15 @@
   }
 
   <div class="creation-body">
-    <p class="description">
-      {{
-        isEditMode
-          ? "Modifiez le nom d'équipe et/ou les joueurs puis validez."
-          : "Renseignez un nom d'équipe et/ou les joueurs puis validez."
-      }}
-    </p>
+    @if (!isSheet) {
+      <p class="description">
+        {{
+          isEditMode
+            ? "Modifiez le nom d'équipe et/ou les joueurs puis validez."
+            : "Renseignez un nom d'équipe et/ou les joueurs puis validez."
+        }}
+      </p>
+    }
 
     @if (canCreateTeam()) {
       <app-team-form

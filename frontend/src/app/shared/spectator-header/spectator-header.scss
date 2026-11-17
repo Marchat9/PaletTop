@@ -22,9 +22,17 @@
     font-size: 1.5rem;
   }
 
+  // The pills may not be wider than the screen: past it, their label wraps (see StatusPill xl).
+  app-status-pill {
+    max-width: 100%;
+    min-width: 0;
+  }
+
   .page-status {
     display: flex;
     justify-content: center;
+    max-width: 100%;
+    min-width: 0;
   }
 
   // On one line, or all stacked (see SpectatorHeader): never a badge left alone on a line.

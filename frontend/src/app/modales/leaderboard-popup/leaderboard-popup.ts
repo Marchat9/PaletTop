@@ -5,6 +5,7 @@ import { Nullable } from 'src/app/models/nullable.model';
 import { ScoreCalculation } from 'src/app/models/tournament-configuration-detail.model';
 import { Icon } from 'src/app/shared/icon/icon';
 import { Leaderboard } from 'src/app/shared/leaderboard/leaderboard';
+import { SwipeToDismissDirective } from 'src/app/shared/swipe-to-dismiss/swipe-to-dismiss.directive';
 import {
   selectRanking,
   selectRankingError,
@@ -23,6 +24,8 @@ import {
   toSessionLeaderboard,
   toTournamentLeaderboard,
 } from 'src/app/utils/leaderboard.util';
+import { LEADERBOARD_MOBILE_QUERY } from 'src/app/utils/leaderboard-dialog.util';
+import { matchesMedia } from 'src/app/shared/swipe-to-dismiss/swipe-to-dismiss.directive';
 
 /** Which leaderboard the popup shows. */
 export type LeaderboardPopupScope = 'tournament' | 'session' | 'club';
@@ -51,13 +54,15 @@ interface LeaderboardPopupPresentation {
  */
 @Component({
   selector: 'app-leaderboard-popup',
-  imports: [Leaderboard, Icon],
+  imports: [Leaderboard, Icon, SwipeToDismissDirective],
   templateUrl: './leaderboard-popup.html',
   styleUrl: './leaderboard-popup.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LeaderboardPopup {
   private readonly store = inject(Store);
+  /** Opened as a bottom sheet (see leaderboardDialogPlacement): it can then be swiped down. */
+  public readonly isSheet = matchesMedia(LEADERBOARD_MOBILE_QUERY);
   private readonly dialogRef = inject(DialogRef);
   private readonly data = inject<LeaderboardPopupData>(DIALOG_DATA);
 
