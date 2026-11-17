@@ -2,9 +2,9 @@ import { Dialog } from '@angular/cdk/dialog';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { Overlay } from '@angular/cdk/overlay';
 import {
-  TrainingLeaderboardPopup,
-  TrainingLeaderboardPopupData,
-} from 'src/app/modales/training-leaderboard-popup/training-leaderboard-popup';
+  LeaderboardPopup,
+  LeaderboardPopupData,
+} from 'src/app/modales/leaderboard-popup/leaderboard-popup';
 import {
   LEADERBOARD_MOBILE_QUERY,
   leaderboardDialogPlacement,
@@ -610,7 +610,7 @@ export class AdminTrainingSessionPage implements OnInit, OnDestroy {
     }
     this.store.dispatch(followTrainingClubLeaderboard({ sessionCode }));
     this.dialog
-      .open<void, TrainingLeaderboardPopupData>(TrainingLeaderboardPopup, {
+      .open<void, LeaderboardPopupData>(LeaderboardPopup, {
         data: { scope: 'club', highlightedId: this.adminParticipant()?.memberId ?? null },
         ...leaderboardDialogPlacement(
           this.overlay,

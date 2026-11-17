@@ -19,7 +19,10 @@ import {
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Store } from '@ngrx/store';
-import { RankData, RankPopupComponent } from 'src/app/modales/rank-popup/rank-popup';
+import {
+  LeaderboardPopup,
+  LeaderboardPopupData,
+} from 'src/app/modales/leaderboard-popup/leaderboard-popup';
 import { SessionStatus } from 'src/app/models/matches-session.model';
 import { Nullable } from 'src/app/models/nullable.model';
 import { PlayerMatchDto } from 'src/app/models/player-match.model';
@@ -349,21 +352,20 @@ export class PlayerTeamMatchPageComponent {
       return;
     }
 
-    const data: RankData = {
+    const data: LeaderboardPopupData = {
+      scope: 'tournament',
+      highlightedId: team.id,
       tournamentName,
-      teamId: team.id,
       scoreCalculation,
-      ranking: this.ranking(),
     };
 
-    this.dialog.open<boolean, RankData>(RankPopupComponent, {
+    this.dialog.open<void, LeaderboardPopupData>(LeaderboardPopup, {
       data,
       ...leaderboardDialogPlacement(
         this.overlay,
         this.breakpointObserver.isMatched(LEADERBOARD_MOBILE_QUERY),
-        'dialog-panel-large',
+        'dialog-panel',
       ),
-      disableClose: false,
     });
   }
 

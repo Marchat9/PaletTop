@@ -58,10 +58,10 @@ import { Dialog } from '@angular/cdk/dialog';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { Overlay } from '@angular/cdk/overlay';
 import {
-  TrainingLeaderboardPopup,
-  TrainingLeaderboardPopupData,
-  TrainingLeaderboardScope,
-} from 'src/app/modales/training-leaderboard-popup/training-leaderboard-popup';
+  LeaderboardPopup,
+  LeaderboardPopupData,
+  LeaderboardPopupScope,
+} from 'src/app/modales/leaderboard-popup/leaderboard-popup';
 import {
   LEADERBOARD_MOBILE_QUERY,
   leaderboardDialogPlacement,
@@ -477,8 +477,8 @@ export class PlayerTrainingSessionPage implements OnInit, OnDestroy {
     );
   }
 
-  private openLeaderboard(scope: TrainingLeaderboardScope, highlightedId: string | null) {
-    return this.dialog.open<void, TrainingLeaderboardPopupData>(TrainingLeaderboardPopup, {
+  private openLeaderboard(scope: LeaderboardPopupScope, highlightedId: string | null) {
+    return this.dialog.open<void, LeaderboardPopupData>(LeaderboardPopup, {
       data: { scope, highlightedId },
       ...leaderboardDialogPlacement(
         this.overlay,

@@ -1,14 +1,15 @@
-<div class="spectate-tournament-popup-container" (keydown.enter)="onJoin()">
-  <div class="header-row">
-    <h2 class="title">
-      <app-icon name="visibility" iconClass="icon" [ariaHidden]="true" /> Suivre un tournoi
+<div class="popup-container popup-surface" (keydown.enter)="onJoin()">
+  <div class="popup-header">
+    <h2 class="popup-title">
+      <app-icon name="visibility" iconClass="icon" [ariaHidden]="true" />
+      <span>Suivre un <span class="highlight">tournoi</span></span>
     </h2>
-    <button class="close-button" type="button" aria-label="Fermer" (click)="onCancel()">
+    <button class="popup-close" type="button" aria-label="Fermer" (click)="onCancel()">
       <app-icon name="close" />
     </button>
   </div>
 
-  <p class="subtitle">Saisissez le code du tournoi à suivre en tant que spectateur.</p>
+  <p class="popup-subtitle">Saisissez le code du tournoi à suivre en tant que spectateur.</p>
 
   <div class="field-group">
     <label class="field-label" for="tournament-code">Code du tournoi</label>

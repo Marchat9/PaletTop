@@ -8,6 +8,10 @@
   max-height: calc(100dvh - 2rem);
   overflow: hidden;
 
+  &.wide {
+    width: min(100vw - 2rem, 48rem);
+  }
+
   // A big club makes a long list: it scrolls, the header stays.
   .popup-body {
     min-height: 0;

@@ -11,13 +11,15 @@ import {
   selectTrainingLeaderboardIsLoading,
 } from 'src/app/store/training/training.selectors';
 import {
-  TrainingLeaderboardPopup,
-  TrainingLeaderboardPopupData,
-} from './training-leaderboard-popup';
+  selectRanking,
+  selectRankingError,
+  selectRankingIsLoading,
+} from 'src/app/store/ranking/ranking.selectors';
+import { LeaderboardPopup, LeaderboardPopupData } from './leaderboard-popup';
 
-function setup(data: TrainingLeaderboardPopupData, dialogRef = { close: vi.fn() }) {
+function setup(data: LeaderboardPopupData, dialogRef = { close: vi.fn() }) {
   TestBed.configureTestingModule({
-    imports: [TrainingLeaderboardPopup],
+    imports: [LeaderboardPopup],
     providers: [
       { provide: DialogRef, useValue: dialogRef },
       { provide: DIALOG_DATA, useValue: data },
@@ -41,16 +43,45 @@ function setup(data: TrainingLeaderboardPopupData, dialogRef = { close: vi.fn() 
           },
           { selector: selectTrainingLeaderboardIsLoading, value: false },
           { selector: selectTrainingLeaderboardError, value: null },
+          {
+            selector: selectRanking,
+            value: [
+              {
+                teamId: 'T1',
+                teamName: 'Les Galets',
+                rank: 1,
+                wins: 3,
+                matchesPlayed: 3,
+                pointsFor: 39,
+                pointsAgainst: 12,
+                goalAverage: 27,
+                tournamentPoints: 0,
+              },
+              {
+                teamId: 'T2',
+                teamName: 'Palet Club',
+                rank: 2,
+                wins: 1,
+                matchesPlayed: 3,
+                pointsFor: 25,
+                pointsAgainst: 30,
+                goalAverage: -5,
+                tournamentPoints: 0,
+              },
+            ],
+          },
+          { selector: selectRankingIsLoading, value: false },
+          { selector: selectRankingError, value: null },
         ],
       }),
     ],
   });
-  const fixture = TestBed.createComponent(TrainingLeaderboardPopup);
+  const fixture = TestBed.createComponent(LeaderboardPopup);
   fixture.detectChanges();
   return fixture.nativeElement as HTMLElement;
 }
 
-describe('TrainingLeaderboardPopup', () => {
+describe('LeaderboardPopup', () => {
   it('affiche le classement du club, sans surbrillance pour un non-membre, et se ferme', () => {
     const dialogRef = { close: vi.fn() };
     const element = setup({ scope: 'club', highlightedId: null }, dialogRef);
@@ -75,5 +106,17 @@ describe('TrainingLeaderboardPopup', () => {
     expect(element.textContent).toContain('Classement de la séance');
     expect(element.textContent).not.toContain('Jean');
     expect(element.querySelector('.is-highlighted')?.textContent).toContain('Pierre');
+  });
+
+  it('affiche le classement du tournoi sous son nom, avec l’équipe qui le lit', () => {
+    const element = setup({
+      scope: 'tournament',
+      highlightedId: 'T2',
+      tournamentName: 'Coupe du Laiton',
+      scoreCalculation: 'victory_ga',
+    });
+
+    expect(element.textContent).toContain('Coupe du Laiton');
+    expect(element.querySelector('.is-highlighted')?.textContent).toContain('Palet Club');
   });
 });
