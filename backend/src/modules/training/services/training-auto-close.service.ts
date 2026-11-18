@@ -1,9 +1,11 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { Transactional } from 'typeorm-transactional';
-import { ConfigService } from '@nestjs/config';
 import { SchedulerRegistry } from '@nestjs/schedule';
-import { registerIdleCron } from 'src/utils/register-idle-cron.util';
+import { Subscription } from 'rxjs';
+import { registerIdleCron, rescheduleIdleCron } from 'src/utils/register-idle-cron.util';
 import { TrainingAutoCloseConfig } from 'src/config/training-auto-close.config';
+import { AppSettingKey } from 'src/enum/app-setting.enum';
+import { AppSettingsService } from 'src/modules/app-settings/app-settings.service';
 import { TrainingSessionRepository } from '../repositories/training-session.repository';
 import { TrainingRoundRepository } from '../repositories/training-round.repository';
 import { hasUnfinishedMatch } from '../utils/round-status.utils';
@@ -11,39 +13,53 @@ import { TrainingRoundStatus } from 'src/enum/training.enum';
 import { TrainingRealtimeGateway } from '../training-realtime.gateway';
 import { TrainingSession } from 'src/entities/training-session.entity';
 
+const JOB_NAME = 'training-session-auto-close';
+
 @Injectable()
-export class TrainingAutoCloseService implements OnModuleInit {
+export class TrainingAutoCloseService implements OnModuleInit, OnModuleDestroy {
     private readonly logger = new Logger(TrainingAutoCloseService.name);
-    private readonly config: TrainingAutoCloseConfig;
+    private subscription?: Subscription;
 
     constructor(
-        private readonly configService: ConfigService,
+        private readonly appSettingsService: AppSettingsService,
         private readonly schedulerRegistry: SchedulerRegistry,
         private readonly trainingSessionRepo: TrainingSessionRepository,
         private readonly trainingRealtimeGateway: TrainingRealtimeGateway,
         private readonly trainingRoundRepo: TrainingRoundRepository,
-    ) {
-        this.config = this.configService.getOrThrow<TrainingAutoCloseConfig>('trainingAutoClose');
+    ) {}
+
+    async onModuleInit(): Promise<void> {
+        const config = await this.appSettingsService.get(AppSettingKey.TRAINING_AUTO_CLOSE);
+        this.schedule(config, false);
+        this.subscription = this.appSettingsService.watch(
+            AppSettingKey.TRAINING_AUTO_CLOSE,
+            (updated) => this.schedule(updated, true),
+        );
     }
 
-    onModuleInit(): void {
-        registerIdleCron(
+    onModuleDestroy(): void {
+        this.subscription?.unsubscribe();
+    }
+
+    private schedule(config: TrainingAutoCloseConfig, isReschedule: boolean): void {
+        const register = isReschedule ? rescheduleIdleCron : registerIdleCron;
+        register(
             this.logger,
             this.schedulerRegistry,
             {
-                enabled: this.config.enabled,
-                cronExpression: this.config.cronExpression,
-                jobName: 'training-session-auto-close',
-                disabledMessage:
-                    "Clôture automatique des sessions d'entraînement désactivée (TRAINING_AUTOCLOSE_ENABLED=false).",
-                scheduledMessage: `Clôture automatique des sessions d'entraînement planifiée (cron: "${this.config.cronExpression}").`,
+                enabled: config.enabled,
+                cronExpression: config.cronExpression,
+                jobName: JOB_NAME,
+                disabledMessage: "Clôture automatique des sessions d'entraînement désactivée.",
+                scheduledMessage: `Clôture automatique des sessions d'entraînement planifiée (cron: "${config.cronExpression}").`,
             },
             () => this.runAutoClose(),
         );
     }
 
     async runAutoClose(): Promise<void> {
-        const expired = await this.trainingSessionRepo.findExpiredOpen(this.config.idleHours);
+        const config = await this.appSettingsService.get(AppSettingKey.TRAINING_AUTO_CLOSE);
+        const expired = await this.trainingSessionRepo.findExpiredOpen(config.idleHours);
         if (!expired.length) return;
 
         const closable: TrainingSession[] = [];

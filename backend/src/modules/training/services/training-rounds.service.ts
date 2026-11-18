@@ -22,23 +22,12 @@ import { TrainingSessionRepository } from '../repositories/training-session.repo
 import { TrainingRoundDto, toTrainingRoundDto } from '../responses/training-round.dto';
 import { assertSessionOpen } from '../utils/session-guard.utils';
 import { activeMembers } from '../utils/team-member.utils';
+import { AppSettingKey } from 'src/enum/app-setting.enum';
+import { AppSettingsService } from 'src/modules/app-settings/app-settings.service';
 import { TrainingLeaderboardService } from './training-leaderboard.service';
 import { TrainingSessionAuthService } from './training-session-auth.service';
 import { TrainingRealtimeGateway } from '../training-realtime.gateway';
 import { plateNumbers } from '../domain/matchmaking/plate-numbers';
-
-const DEFAULT_LEVEL_HISTORY_DEPTH = 5;
-
-/**
- * How many of the group's previous sessions feed a player's level, on top of the current one.
- * Tunable via TRAINING_LEVEL_HISTORY_DEPTH; a missing or invalid value uses the default.
- */
-function levelHistoryDepth(): number {
-    const configured = Number(process.env.TRAINING_LEVEL_HISTORY_DEPTH);
-    return Number.isInteger(configured) && configured >= 0
-        ? configured
-        : DEFAULT_LEVEL_HISTORY_DEPTH;
-}
 
 @Injectable()
 export class TrainingRoundsService {
@@ -52,6 +41,7 @@ export class TrainingRoundsService {
         private readonly trainingRealtimeGateway: TrainingRealtimeGateway,
         @Inject(MATCHMAKING_PORT) private readonly matchmaking: MatchmakingPort,
         @InjectDataSource() private readonly dataSource: DataSource,
+        private readonly appSettingsService: AppSettingsService,
     ) {}
 
     async generateNextRound(sessionCode: string, password: string): Promise<TrainingRoundDto> {
@@ -124,7 +114,7 @@ export class TrainingRoundsService {
             levelByParticipant: await this.trainingLeaderboardService.getLevelByParticipant(
                 session,
                 rounds.flatMap((round) => round.matches ?? []),
-                levelHistoryDepth(),
+                await this.appSettingsService.get(AppSettingKey.TRAINING_LEVEL_HISTORY_DEPTH),
             ),
         };
 

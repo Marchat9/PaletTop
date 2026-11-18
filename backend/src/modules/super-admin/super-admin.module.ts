@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TournamentsModule } from '../tournaments/tournaments.module';
 import { TrainingModule } from '../training/training.module';
+import { SuperAdminAppSettingsController } from './super-admin-app-settings.controller';
 import { SuperAdminAuthGuard } from './super-admin-auth.guard';
 import { SuperAdminClubsController } from './super-admin-clubs.controller';
 import { SuperAdminClubsService } from './super-admin-clubs.service';
@@ -16,6 +17,7 @@ import { SuperAdminTrainingsController } from './super-admin-trainings.controlle
         SuperAdminTournamentsController,
         SuperAdminClubsController,
         SuperAdminTrainingsController,
+        SuperAdminAppSettingsController,
     ],
     providers: [SuperAdminService, SuperAdminClubsService, SuperAdminAuthGuard],
 })

@@ -8,10 +8,8 @@ import { addTransactionalDataSource } from 'typeorm-transactional';
 import { DataSource } from 'typeorm';
 import { HttpThrottlerGuard } from './utils/http-throttler.guard';
 import { getTypeOrmConfig } from './database/typeorm.config';
-import cleanupConfig from './config/cleanup.config';
 import superAdminConfig from './config/super-admin.config';
-import trainingAutoCloseConfig from './config/training-auto-close.config';
-import trainingCleanupConfig from './config/training-cleanup.config';
+import { AppSettingsModule } from './modules/app-settings/app-settings.module';
 import { TournamentsModule } from './modules/tournaments/tournaments.module';
 import { RealtimeModule } from './modules/realtime/realtime.module';
 import { CleanupModule } from './modules/cleanup/cleanup.module';
@@ -23,7 +21,7 @@ import { TrainingModule } from './modules/training/training.module';
     imports: [
         ConfigModule.forRoot({
             isGlobal: true,
-            load: [cleanupConfig, superAdminConfig, trainingAutoCloseConfig, trainingCleanupConfig],
+            load: [superAdminConfig],
         }),
         TypeOrmModule.forRootAsync({
             useFactory: getTypeOrmConfig,
@@ -41,6 +39,7 @@ import { TrainingModule } from './modules/training/training.module';
                 limit: Number(process.env.THROTTLE_LIMIT ?? 300),
             },
         ]),
+        AppSettingsModule,
         TournamentsModule,
         RealtimeModule,
         CleanupModule,
