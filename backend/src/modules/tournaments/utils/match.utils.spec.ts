@@ -32,6 +32,7 @@ function entry(teamId: string, rank: number): GlobalRankingEntry {
         goalAverage: 0,
         matchesPlayed: 0,
         tournamentPoints: 0,
+        buchholz: 0,
     };
 }
 
@@ -93,6 +94,7 @@ describe('generateMatchesByRanking', () => {
             teamB: null,
             scoreA: 0,
             scoreB: 0,
+            byeWin: false,
             status: MatchStatus.VALIDATED,
         });
         // The bye comes last so plates follow the ranking order.
@@ -126,5 +128,22 @@ describe('generateMatchesInPool', () => {
             );
             expect(matches.find((m) => m.isBye)?.teamA?.id).toBe('C');
         }
+    });
+
+    it('stores the drawn-round bye 0-0 as a win, so it leaves the goal average untouched', () => {
+        const matches = generateMatchesInPool(
+            pool,
+            teams(['A', 'B', 'C']).map((team) => Object.assign(team, { players: [] })),
+            tournamentWithConfig,
+            session,
+            constraintConfig,
+            [],
+        );
+        expect(matches.find((m) => m.isBye)).toMatchObject({
+            scoreA: 0,
+            scoreB: 0,
+            byeWin: true,
+            status: MatchStatus.VALIDATED,
+        });
     });
 });

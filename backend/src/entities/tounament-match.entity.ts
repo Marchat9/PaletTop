@@ -54,6 +54,14 @@ export class TournamentMatch {
     @Column({ default: false })
     isBye!: boolean;
 
+    /**
+     * A bye worth one win, stored 0-0 so that it adds nothing to the goal average or the sum of
+     * scores. False for the up-down ranking-round bye (worth nothing) and for legacy byes, stored
+     * `pointsPerGame`-0 before this flag existed.
+     */
+    @Column({ default: false })
+    byeWin!: boolean;
+
     @Column({ default: 0 })
     scoreA!: number;
 

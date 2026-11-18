@@ -11,6 +11,8 @@ export interface SessionMatchResponseDto {
     id: string;
     status: string;
     isBye: boolean;
+    /** A bye worth one win (shown as an exempt win). */
+    byeWin: boolean;
     scoreA: number;
     scoreB: number;
     plateNumber: number | null;
@@ -46,6 +48,7 @@ export function toSessionMatchResponseDto(match: TournamentMatch): SessionMatchR
         id: match.id,
         status: match.status,
         isBye: match.isBye,
+        byeWin: !!match.byeWin,
         scoreA: match.scoreA,
         scoreB: match.scoreB,
         plateNumber: match.plateNumber ?? null,

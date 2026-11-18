@@ -20,13 +20,17 @@ export function selectByeTeam(teams: Team[], pastMatches: TournamentMatch[]): Te
     return candidates[Math.floor(Math.random() * candidates.length)];
 }
 
+/**
+ * A bye is stored 0-0: `isWin` makes it worth one win (drawn rounds) without touching the goal
+ * average nor the sum of scores; otherwise it is worth nothing (up-down ranking round).
+ */
 export function buildByeMatchData(
     team: Team,
     tournament: Tournament,
     pool: TournamentPool | null,
     session: MatchesSession,
-    tournamentPointsPerGame: number,
     sessionNumber: number,
+    isWin: boolean,
 ): DeepPartial<TournamentMatch> {
     return {
         tournament,
@@ -36,7 +40,8 @@ export function buildByeMatchData(
         teamA: team,
         teamB: null,
         isBye: true,
-        scoreA: tournamentPointsPerGame,
+        byeWin: isWin,
+        scoreA: 0,
         scoreB: 0,
         status: MatchStatus.VALIDATED,
     };
