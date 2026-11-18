@@ -1,5 +1,6 @@
 export type CompetitionMode = 'standard' | 'up_down' | 'championship';
-export type ScoreCalculation = 'victory_ga' | 'score' | 'tournament_score';
+export type ScoreCalculation =
+  'victory_ga' | 'score' | 'tournament_score' | 'victory_buchholz_ga' | 'score_buchholz_ga';
 
 export interface TournamentConfigurationDetailsDto {
   maxTeamCapacity: number;

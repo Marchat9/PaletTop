@@ -6,6 +6,8 @@ export interface LiveMatchView {
   /** PENDING, ONGOING, ENDED (score entered, awaiting validation) or VALIDATED. */
   status: string;
   isBye: boolean;
+  /** A bye worth one win (tournaments): shown as an exempt win. */
+  byeWin?: boolean;
   plateNumber: Nullable<number>;
   /** Pool or bracket of a structured tournament (« Tableau principal »...). */
   groupLabel: Nullable<string>;

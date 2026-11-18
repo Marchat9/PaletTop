@@ -35,7 +35,9 @@ Plates are numbered 1, 2, 3… after each generation.
 In each pool, `generateMatchesInPool` (`../../utils/match.utils.ts`):
 
 - With an odd number of teams, the team with the fewest past byes gets a bye (random on a tie):
-  `scoreA = pointsPerGame`, `scoreB = 0`, `VALIDATED`, `isBye = true` (counts as a win).
+  stored `0-0`, `VALIDATED`, `isBye = true`, `byeWin = true`: one win, nothing added to the goal
+  average nor to the sum of scores, left out of the Buchholz. (Byes created before `byeWin`
+  existed were stored `pointsPerGame`-0 and keep counting that way.)
 - Pairs are drawn by `generatePairsWithContraints` (`../../utils/draw.utils.ts`). It tries
   constraint levels from strictest to loosest (no rematch, no same club, no partial same club…),
   starting with the levels allowed by the tournament config (`buildConstraintLadder`). The last

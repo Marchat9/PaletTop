@@ -24,6 +24,7 @@ function entries(count: number, name = (index: number) => `Equipe ${index}`): Gl
     goalAverage: index === 0 ? 19 : -4,
     matchesPlayed: 3,
     tournamentPoints: 9,
+    buchholz: 0,
   }));
 }
 
@@ -125,6 +126,37 @@ describe('buildRankingPdf', () => {
       'GA',
     ]);
     expect((table.table.body[1][3] as { text: string }).text).toBe('+19');
+  });
+
+  it('shows the Buchholz between the victories and the goal average, with its legend', () => {
+    const document = buildRankingPdf(tournament('victory_buchholz_ga'), entries(2), APP_URL);
+    const content = document.content as unknown[];
+    const table = lastTable(content);
+
+    expect(table.table.body[0].map((cell) => (cell as { text: string }).text)).toEqual([
+      '#',
+      'Équipe',
+      'V',
+      'Bch.',
+      'GA',
+    ]);
+    expect(JSON.stringify(content[content.length - 1])).toContain(
+      'Bch. = Score Buchholz (Somme des victoires des adversaires)',
+    );
+  });
+
+  it('shows the score, the Buchholz and the goal average in score + Buchholz mode', () => {
+    const table = lastTable(
+      buildRankingPdf(tournament('score_buchholz_ga'), entries(2), APP_URL).content as unknown[],
+    );
+
+    expect(table.table.body[0].map((cell) => (cell as { text: string }).text)).toEqual([
+      '#',
+      'Équipe',
+      'Score',
+      'Bch.',
+      'GA',
+    ]);
   });
 
   it('lays a long ranking out in two columns with a page break before each extra page', () => {

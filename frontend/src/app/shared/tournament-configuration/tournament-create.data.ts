@@ -46,6 +46,19 @@ export const scoreCalculationOptions: {
     description: 'Scores de chaque manche additionnés puis Goal Average',
   },
   {
+    value: 'victory_buchholz_ga',
+    icon: 'military_tech',
+    label: 'Victoire, Bch. & Goal Average',
+    description:
+      'Nombre de victoires, puis score Buchholz (somme des victoires des adversaires), puis Goal Average',
+  },
+  {
+    value: 'score_buchholz_ga',
+    icon: 'stacked_line_chart',
+    label: 'Somme des scores, Bch. & Goal Average',
+    description: 'Scores additionnés, puis score Buchholz, puis Goal Average',
+  },
+  {
     value: 'tournament_score',
     icon: 'workspace_premium',
     label: 'Points championnat',

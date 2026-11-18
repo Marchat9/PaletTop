@@ -56,6 +56,7 @@ function setup(data: LeaderboardPopupData, dialogRef = { close: vi.fn() }) {
                 pointsAgainst: 12,
                 goalAverage: 27,
                 tournamentPoints: 0,
+                buchholz: 0,
               },
               {
                 teamId: 'T2',
@@ -67,6 +68,7 @@ function setup(data: LeaderboardPopupData, dialogRef = { close: vi.fn() }) {
                 pointsAgainst: 30,
                 goalAverage: -5,
                 tournamentPoints: 0,
+                buchholz: 0,
               },
             ],
           },

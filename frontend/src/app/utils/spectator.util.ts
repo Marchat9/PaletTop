@@ -64,6 +64,7 @@ export function toTournamentLiveMatches(matches: SessionMatchDto[]): LiveMatchVi
       id: match.id,
       status: match.status,
       isBye: match.isBye,
+      byeWin: !!match.byeWin,
       plateNumber: match.plateNumber,
       groupLabel: group.label,
       teamA: match.teamA.name,

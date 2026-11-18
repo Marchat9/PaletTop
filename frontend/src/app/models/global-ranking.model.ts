@@ -14,6 +14,8 @@ export interface GlobalRankingEntry {
   goalAverage: number;
   matchesPlayed: number;
   tournamentPoints: number;
+  /** Score Buchholz: sum of the wins of the opponents met (byes excluded). */
+  buchholz: number;
   /** Section of the final standings of a structured tournament; absent or null: one ranking. */
   section?: Nullable<RankingSection>;
 }
