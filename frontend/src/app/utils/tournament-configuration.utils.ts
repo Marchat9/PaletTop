@@ -64,6 +64,7 @@ export function extractCompetitionConfiguration(
       return {
         numberOfRound: upDownConfigControls.numberOfRound.value,
         lastRoundByRanking: upDownConfigControls.lastRoundByRanking.value,
+        pairingMode: upDownConfigControls.pairingMode.value,
       };
     case 'championship':
       const championshipConfigControls = tournamentModeParameter.controls.championshipMode.controls;

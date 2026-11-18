@@ -1,4 +1,7 @@
-import { ScoreCalculation } from 'src/app/models/tournament-configuration-detail.model';
+import {
+  PairingMode,
+  ScoreCalculation,
+} from 'src/app/models/tournament-configuration-detail.model';
 
 export const competitionModeOptions: {
   value: string;
@@ -73,6 +76,28 @@ export const scoreCalculationOptions: {
         <span>Victoire = 6pts</span>
       </div>
     `,
+  },
+];
+
+export const pairingModeOptions: {
+  value: PairingMode;
+  label: string;
+  icon: string;
+  description: string;
+}[] = [
+  {
+    value: 'random',
+    icon: 'shuffle',
+    label: 'Entièrement aléatoire',
+    description:
+      'Chaque partie est tirée au sort, en respectant les règles de tirage (clubs, revanches).',
+  },
+  {
+    value: 'dutch',
+    icon: 'account_tree',
+    label: 'Système suisse (version hollandaise)',
+    description:
+      '1re partie tirée au sort. Ensuite, les équipes au même nombre de victoires se rencontrent : la moitié haute du groupe joue la moitié basse. Les meilleures équipes se retrouvent en fin de tournoi, sans revanche.',
   },
 ];
 

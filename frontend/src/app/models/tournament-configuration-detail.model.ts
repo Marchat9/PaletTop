@@ -26,9 +26,14 @@ export interface StructuredTournamentConfig extends SpecificTournamentConfig {
   numberOfPools?: number;
 }
 
+/** How the up-down rounds after the first one are paired. */
+export type PairingMode = 'random' | 'dutch';
+
 export interface UpDownTournamentConfig extends SpecificTournamentConfig {
   numberOfRound?: number;
   lastRoundByRanking?: boolean;
+  /** Missing on tournaments created before the option: random. */
+  pairingMode?: PairingMode;
 }
 
 export interface ChampionShipTournamentConfig extends SpecificTournamentConfig {

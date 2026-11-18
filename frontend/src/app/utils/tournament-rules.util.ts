@@ -100,6 +100,9 @@ function buildUpDownRules(config: UpDownTournamentConfig): TournamentRule[] {
       ? { icon: 'format_list_numbered', label: `${config.numberOfRound} parties` }
       : { icon: 'all_inclusive', label: 'Parties illimitées' },
   ];
+  if (config.pairingMode === 'dutch') {
+    rules.push({ icon: 'account_tree', label: 'Système suisse (version hollandaise)' });
+  }
   if (config.lastRoundByRanking) {
     rules.push({ icon: 'leaderboard', label: 'Dernière partie au classement' });
   }
