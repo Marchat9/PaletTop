@@ -26,6 +26,7 @@
 
   <app-tournament-configuration
     [columns]="2"
+    [scoreCalculationsByMode]="scoreCalculationsByMode()"
     (form)="tournamentForm.set($event)"
     (invalidFields)="onInvalidFields($event)"
   />

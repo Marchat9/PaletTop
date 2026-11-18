@@ -20,15 +20,6 @@
       </div>
     } -->
 
-    <div class="form-group">
-      <label class="form-label">Calcul des scores</label>
-      <app-input-card-radio
-        [columns]="3"
-        [options]="scoreCalculationOptions"
-        [formControl]="group().controls.scoreCalculation"
-      ></app-input-card-radio>
-    </div>
-
     @if (!hiddenFields().includes('pointsPerGame')) {
       <div class="form-group">
         <label class="form-label"

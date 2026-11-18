@@ -4,6 +4,7 @@ import { Store } from '@ngrx/store';
 import { filter, merge, Subject, takeUntil } from 'rxjs';
 import { ThemeMode } from 'src/app/models/theme-mode.model';
 import { addNotification, setTheme } from 'src/app/store/app-config/app-config.actions';
+import { loadPublicSettings } from 'src/app/store/app-settings/app-settings.actions';
 import { newId } from 'src/app/utils/unique-id.util';
 import { selectTheme } from 'src/app/store/app-config/app-config.selectors';
 import { AppState } from 'src/app/store/app-store';
@@ -31,6 +32,8 @@ export class App {
   private readonly appVisibility = inject(AppVisibilityService);
 
   constructor() {
+    // Public settings (e.g. score calculations offered per mode) are read by several pages.
+    this.store.dispatch(loadPublicSettings());
     this.watchAppVersion();
     if (environment.pwa.enabled) {
       this.processPwa();

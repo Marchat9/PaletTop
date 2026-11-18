@@ -4,28 +4,39 @@ import {
   DestroyRef,
   Injector,
   OnInit,
+  computed,
   effect,
   inject,
   input,
   output,
+  signal,
 } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { environment } from '@environment';
 import { Nullable } from 'src/app/models/nullable.model';
 import {
+  DEFAULT_SCORE_CALCULATIONS_BY_MODE,
+  ScoreCalculationsByMode,
+} from 'src/app/models/app-setting.model';
+import {
   ChampionShipTournamentConfig,
+  CompetitionMode,
+  ScoreCalculation,
   StructuredTournamentConfig,
   UpDownTournamentConfig,
 } from 'src/app/models/tournament-configuration-detail.model';
+import { InputCardRadioOption } from '../input-card-radio/input-card-radio';
 import { TournamentDto } from 'src/app/store/tournament/tournament.models';
 import { CODE_PATTERN } from 'src/app/utils/code-format.util';
 import {
   TournamentConfigurationField,
   TournamentConfigurationForm,
 } from './tournament-configuration-form.model';
+import { scoreCalculationOptions } from './tournament-create.data';
 import {
   applyCompetitionModeSideEffects,
+  offeredScoreCalculations,
   awayClubValidators,
   getInvalidFieldNames,
   homeClubValidators,
@@ -41,9 +52,9 @@ export const FIELD_LABELS: Record<string, string> = {
   'parameters.adminPassword': 'Mot de passe administrateur',
   'parameters.date': "Date de l'événement",
   'rules.maxTeamCapacity': 'Capacité Maximale',
-  'rules.scoreCalculation': 'Calcul des scores',
   'rules.pointsPerGame': 'Points par partie',
   'modeParameter.competitionMode': 'Mode de compétition',
+  'modeParameter.scoreCalculation': 'Calcul des scores',
   'modeParameter.championshipMode.homeTeam': 'Équipe à domicile',
   'modeParameter.championshipMode.awayTeam': "Équipe à l'extérieur",
 };
@@ -60,12 +71,28 @@ export class TournamentConfiguration implements OnInit {
   public readonly columns = input<number>(1);
   public readonly readonlyFields = input<TournamentConfigurationField[]>([]);
   public readonly hiddenFields = input<TournamentConfigurationField[]>([]);
+  /** Score calculations offered per competition mode (app setting, read by the page). */
+  public readonly scoreCalculationsByMode = input<ScoreCalculationsByMode>(
+    DEFAULT_SCORE_CALCULATIONS_BY_MODE,
+  );
 
   public readonly formReady = output<TournamentConfigurationForm>({ alias: 'form' });
   public readonly invalidFields = output<string[] | null>();
   public form!: TournamentConfigurationForm;
 
   private readonly teamCapacity = environment.tournamentConfiguration.maxTeamCapacity;
+
+  private readonly selectedCompetitionMode = signal<CompetitionMode>('standard');
+  /** Calculation stored on the edited tournament: kept selectable even if no longer offered. */
+  private readonly storedScoreCalculation = signal<ScoreCalculation | null>(null);
+
+  public readonly scoreCalculationOptions = computed<InputCardRadioOption<ScoreCalculation>[]>(() =>
+    offeredScoreCalculations(
+      this.scoreCalculationsByMode(),
+      this.selectedCompetitionMode(),
+      this.storedScoreCalculation(),
+    ).flatMap((value) => scoreCalculationOptions.filter((option) => option.value === value)),
+  );
 
   private readonly injector = inject(Injector);
   private readonly destroyRef = inject(DestroyRef);
@@ -81,6 +108,12 @@ export class TournamentConfiguration implements OnInit {
       (tournament?.configuration.competitionConfiguration as ChampionShipTournamentConfig) ?? {};
 
     const initialCompetitionMode = tournament?.configuration.competitionMode ?? 'standard';
+    this.selectedCompetitionMode.set(initialCompetitionMode);
+    this.storedScoreCalculation.set(tournament?.configuration.scoreCalculation ?? null);
+    const initialScoreCalculation =
+      tournament?.configuration.scoreCalculation ??
+      this.scoreCalculationsByMode()[initialCompetitionMode]?.[0] ??
+      'victory_ga';
 
     this.form = new FormGroup({
       parameters: new FormGroup({
@@ -111,10 +144,6 @@ export class TournamentConfiguration implements OnInit {
             validators: [Validators.required, Validators.min(2)],
           },
         ),
-        scoreCalculation: new FormControl(
-          tournament?.configuration?.scoreCalculation ?? 'victory_ga',
-          { nonNullable: true, validators: [Validators.required] },
-        ),
         pointsPerGame: new FormControl(tournament?.configuration?.pointsPerGame ?? 13, {
           nonNullable: true,
           validators: [Validators.required, Validators.min(1)],
@@ -138,6 +167,10 @@ export class TournamentConfiguration implements OnInit {
 
       modeParameter: new FormGroup({
         competitionMode: new FormControl(initialCompetitionMode, {
+          nonNullable: true,
+          validators: [Validators.required],
+        }),
+        scoreCalculation: new FormControl(initialScoreCalculation, {
           nonNullable: true,
           validators: [Validators.required],
         }),
@@ -236,6 +269,20 @@ export class TournamentConfiguration implements OnInit {
         }
 
         applyCompetitionModeSideEffects(this.form, mode, this.teamCapacity);
+        this.selectedCompetitionMode.set(mode);
+      },
+      { injector: this.injector },
+    );
+
+    // effect to keep the score calculation among the offered ones: on a mode change, or when the
+    // settings arrive after the form was built, an unavailable value moves to the first offered
+    effect(
+      () => {
+        const offered = this.scoreCalculationOptions().map((option) => option.value);
+        const control = this.form.controls.modeParameter.controls.scoreCalculation;
+        if (offered.length && !offered.includes(control.value)) {
+          control.setValue(offered[0]);
+        }
       },
       { injector: this.injector },
     );

@@ -1,3 +1,7 @@
+import {
+  ScoreCalculationsByMode,
+  DEFAULT_SCORE_CALCULATIONS_BY_MODE,
+} from 'src/app/models/app-setting.model';
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, input, output, signal } from '@angular/core';
 import { Nullable } from 'src/app/models/nullable.model';
@@ -25,6 +29,9 @@ export class ConfigurationFormComponent {
   public readonly saving = input(false);
   public readonly readonlyFields = input<TournamentConfigurationField[]>([]);
   public readonly hiddenFields = input<TournamentConfigurationField[]>([]);
+  public readonly scoreCalculationsByMode = input<ScoreCalculationsByMode>(
+    DEFAULT_SCORE_CALCULATIONS_BY_MODE,
+  );
 
   public readonly configurationSaved = output<TournamentConfigurationDto>();
   public readonly configurationCancelled = output<void>();

@@ -29,7 +29,7 @@ export function convertToTournamentConfigurationDetailsDto(
 
   return {
     maxTeamCapacity: rulesControls.maxTeamCapacity.value,
-    scoreCalculation: rulesControls.scoreCalculation.value,
+    scoreCalculation: modeParameterControls.scoreCalculation.value,
     pointsPerGame: rulesControls.pointsPerGame.value,
     rematch: rulesControls.rematch.value,
     matchAgainstFullSameClub: rulesControls.matchAgainstFullSameClub.value,
