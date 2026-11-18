@@ -162,7 +162,7 @@ function betterSwap(
     return best;
 }
 
-function isValidPair(
+export function isValidPair(
     teamA: Team,
     teamB: Team,
     counts: Map<string, number>,
@@ -192,7 +192,7 @@ function isValidPair(
 
 // Pre-computes a team-pair -> past-encounter-count map once per call, instead of
 // re-scanning the full pastMatches array on every matchCount() lookup.
-function buildMatchCountMap(pastMatches: TournamentMatch[]): Map<string, number> {
+export function buildMatchCountMap(pastMatches: TournamentMatch[]): Map<string, number> {
     const counts = new Map<string, number>();
     for (const m of pastMatches) {
         if (!m.teamA?.id || !m.teamB?.id) continue;

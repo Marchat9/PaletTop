@@ -8,7 +8,7 @@ import {
     TournamentCompetitionConfiguration,
     UpDownCompetitionConfiguration,
 } from 'src/entities/tournament-competition-configuration.entity';
-import { CompetitionMode } from 'src/enum/tounament.enum';
+import { CompetitionMode, PairingMode } from 'src/enum/tounament.enum';
 import { TournamentConfiguration } from 'src/entities/tournament-configuration.entity';
 import { ConstraintConfig } from 'src/model/constraint.model';
 
@@ -86,6 +86,7 @@ export function extractCompetitionConfiguration(
             return {
                 numberOfRound: upDownConfig.numberOfRound,
                 lastRoundByRanking: upDownConfig.lastRoundByRanking ?? false,
+                pairingMode: upDownConfig.pairingMode ?? PairingMode.RANDOM,
             };
         }
         case CompetitionMode.CHAMPIONSHIP: {

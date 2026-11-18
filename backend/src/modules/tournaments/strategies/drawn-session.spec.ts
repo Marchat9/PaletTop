@@ -53,6 +53,29 @@ describe('TournamentStrategy.isDrawnSession', () => {
         expect(strategy.isDrawnSession(allDrawn, 4)).toBe(true);
     });
 
+    it('up-down Dutch: only the first round is drawn, the others follow the results', () => {
+        const strategy = new UpDownTournamentStrategy({} as never, {} as never);
+        const dutch = tournament(CompetitionMode.UP_DOWN, {
+            numberOfRound: 4,
+            lastRoundByRanking: true,
+            pairingMode: 'dutch',
+        });
+        const legacy = tournament(CompetitionMode.UP_DOWN, { numberOfRound: 3 });
+
+        expect([1, 2, 3, 4].map((n) => strategy.isDrawnSession(dutch, n))).toEqual([
+            true,
+            false,
+            false,
+            false,
+        ]);
+        // No pairing mode stored (tournaments created before it): random draw, as before.
+        expect([1, 2, 3].map((n) => strategy.isDrawnSession(legacy, n))).toEqual([
+            true,
+            true,
+            true,
+        ]);
+    });
+
     it('championship: the fixed rotation never depends on a result', () => {
         const strategy = new ChampionshipTournamentStrategy({} as never, {} as never, {} as never);
         const championship = tournament(CompetitionMode.CHAMPIONSHIP, {

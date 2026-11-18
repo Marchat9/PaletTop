@@ -9,6 +9,33 @@ No real pools: all teams are in one technical pool and play a series of rounds.
 - **Last round by ranking** (`lastRoundByRanking`): if enabled and `numberOfRound` is at least 2,
   round `numberOfRound` is not drawn.
 
+## Pairing mode (`pairingMode`)
+
+| Value    | Label (UI)                           | Rounds 2+                                     |
+| -------- | ------------------------------------ | --------------------------------------------- |
+| `random` | Entièrement aléatoire                | Drawn (`generateMatchesInPool`), as round 1   |
+| `dutch`  | Système suisse (version hollandaise) | Dutch Swiss pairing (`dutch-pairing.utils.ts`) |
+
+A missing value (tournaments created before the option) reads as `random`. Round 1 is always
+drawn.
+
+### Dutch pairing
+
+1. **Bye** (odd count): the lowest-ranked team among those with the fewest byes; worth one win
+   with a neutral goal average (`byeWin`).
+2. **Score groups**: teams with the same number of **wins** (whatever the score calculation), most
+   wins first, ranking order inside.
+3. **Preferences**: inside a group, the top half plays the bottom half (1v5, 2v6, 3v7, 4v8 for 8
+   teams), then the other teams of the group, then the lower groups (a team floats down), then the
+   upper ones. With an odd group, its lowest team floats down to the top of the next group.
+4. **Search**: depth-first, highest-ranked unpaired team first, opponents in preference order;
+   the first complete pairing is kept (deterministic).
+5. **Constraints**, relaxed in this order (bounded search per level): no rematch + the tournament's
+   club constraint, no rematch, none.
+
+Dutch rounds depend on results: `isDrawnSession` is false for them, so their scores are locked
+once the round is closed.
+
 ## Last round by ranking
 
 When `isRankingRound(config, sessionNumber)` is true:
@@ -17,7 +44,8 @@ When `isRankingRound(config, sessionNumber)` is true:
 2. Teams are sorted by rank; exact ties are broken by team id (`orderTeamsByRanking`), so the
    result is reproducible.
 3. Each team plays its ranking neighbour: 1st vs 2nd, 3rd vs 4th… (`generateMatchesByRanking`).
-   Draw constraints are ignored.
+   Draw constraints are ignored. In `dutch` mode, each team meets instead its **closest neighbour
+   not met yet** (`generateNeighbourPairs`), a rematch only when nothing else is possible.
 4. With an odd number of teams, the last one gets a **bye worth nothing** (0-0): no win, no
    points, in both the global and the pool ranking.
 5. Plates follow the ranking (plate 1 = 1st vs 2nd).
@@ -28,6 +56,7 @@ When `isRankingRound(config, sessionNumber)` is true:
 | -------------------- | -------------------------------------------------------------- |
 | `numberOfRound`      | Number of rounds. Empty: unlimited, the admin ends it manually |
 | `lastRoundByRanking` | Last round by ranking. Needs `numberOfRound >= 2`              |
+| `pairingMode`        | `random` (default) or `dutch`                                  |
 
 ## Phase name (`phaseName`)
 

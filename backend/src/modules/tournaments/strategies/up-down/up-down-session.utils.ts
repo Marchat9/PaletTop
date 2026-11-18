@@ -1,5 +1,6 @@
 import { TournamentStatus } from 'src/enum/status.enum';
 import { UpDownCompetitionConfiguration } from 'src/entities/tournament-competition-configuration.entity';
+import { PairingMode } from 'src/enum/tounament.enum';
 
 const MODE_LABEL = 'Montée / Descente';
 
@@ -14,6 +15,26 @@ export function isRankingRound(
         config.numberOfRound !== null &&
         config.numberOfRound >= 2 &&
         sessionNumber === config.numberOfRound
+    );
+}
+
+/** Pairing mode of the tournament; tournaments created before it existed are RANDOM. */
+export function resolvePairingMode(config: UpDownCompetitionConfiguration): PairingMode {
+    return config.pairingMode ?? PairingMode.RANDOM;
+}
+
+/**
+ * True when this session is paired by the Dutch Swiss system: every round after the first one,
+ * except the ranking-based last round (paired by ranking neighbours).
+ */
+export function isDutchRound(
+    config: UpDownCompetitionConfiguration,
+    sessionNumber: number,
+): boolean {
+    return (
+        resolvePairingMode(config) === PairingMode.DUTCH &&
+        sessionNumber > 1 &&
+        !isRankingRound(config, sessionNumber)
     );
 }
 
