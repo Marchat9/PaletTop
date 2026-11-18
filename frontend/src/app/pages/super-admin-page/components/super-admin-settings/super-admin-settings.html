@@ -1,26 +1,224 @@
-<app-card-collapsible [isExpanded]="configurations().length > 0">
+<app-card-collapsible [isExpanded]="false">
   <div header class="card-header">
     <app-icon name="settings" iconClass="icon" />
     <div class="card-header-title">Paramètres de l'application</div>
   </div>
+
   <div content class="settings-content">
-    <p class="settings-hint">
-      Emplacement permettant d'activer ou désactiver les réglages de l'application depuis cette
-      page.
-    </p>
-    @for (item of configurations(); track item.settingKey) {
-      <div class="toggle-row">
-        <div>
-          <div class="toggle-label">{{ item.name }}</div>
-          <div class="toggle-hint">
-            {{ item.description }}
+    @let settingMeta = meta();
+    @if (!settings().length) {
+      <p class="settings-hint">Chargement des paramètres…</p>
+    }
+
+    @if (scoreCalculationsByMode().length) {
+      <section class="setting-block">
+        <h3 class="setting-title">Calculs des scores proposés par mode de compétition</h3>
+        <p class="settings-hint">
+          Les organisateurs ne voient que les calculs cochés pour le mode choisi. Les tournois
+          existants gardent leur calcul, même s'il n'est plus proposé.
+        </p>
+        @for (mode of scoreCalculationsByMode(); track mode.mode) {
+          <div class="setting-mode">
+            <span class="setting-mode-label">{{ mode.label }}</span>
+            <app-input-card-checkbox
+              [columns]="3"
+              [minSelected]="1"
+              [options]="scoreCalculationOptions"
+              [value]="mode.selected"
+              (valueChange)="onScoreCalculationsChange(mode.mode, $event)"
+            />
           </div>
+        }
+        <p class="settings-hint">Au moins un calcul par mode.</p>
+        @if (settingMeta.score_calculations_by_mode; as footerMeta) {
+          <app-setting-footer
+            [meta]="footerMeta"
+            (save)="onSave('score_calculations_by_mode')"
+            (reset)="onReset('score_calculations_by_mode')"
+          />
+        }
+      </section>
+    }
+
+    @if (tournamentCleanup() || trainingCleanup() || trainingAutoClose()) {
+      <h3 class="settings-section-title">Paramètres techniques</h3>
+      <p class="settings-hint">
+        Les changements s'appliquent sans redémarrage. Les variables d'environnement ne servent qu'à
+        l'initialisation.
+      </p>
+    }
+
+    @if (tournamentCleanup(); as cleanup) {
+      <section class="setting-block">
+        <h3 class="setting-title">Nettoyage des tournois</h3>
+        <app-switch
+          label="Nettoyage automatique"
+          description="Suppression définitive des tournois selon les règles ci-dessous."
+          [checked]="cleanup.enabled"
+          (checkedChange)="onTournamentCleanupChange({ enabled: $event })"
+        />
+        <div class="setting-field">
+          <label class="setting-label" for="tournament-cleanup-cron">Planification (cron)</label>
+          <app-input-text
+            id="tournament-cleanup-cron"
+            [value]="cleanup.cronExpression"
+            [disabled]="!cleanup.enabled"
+            (valueChange)="onTournamentCleanupChange({ cronExpression: $event })"
+          />
+          <p class="settings-hint">
+            minute heure jour mois jour-semaine, ex. 0 3 * * * = tous les jours à 3h
+          </p>
         </div>
-        <label class="switch">
-          <input type="checkbox" [checked]="item.currentValue" />
-          <span class="switch-track"></span>
-        </label>
-      </div>
+        @for (rule of tournamentCleanupRules(); track rule.name) {
+          <div class="setting-rule">
+            <app-switch
+              [label]="rule.label"
+              [disabled]="!cleanup.enabled"
+              [checked]="rule.rule.enabled"
+              (checkedChange)="onTournamentCleanupRuleChange(rule.name, { enabled: $event })"
+            />
+            <div class="setting-field">
+              <label class="setting-label" [for]="'cleanup-retention-' + rule.name">
+                Conservation (jours)
+              </label>
+              <app-input-number
+                [id]="'cleanup-retention-' + rule.name"
+                [min]="1"
+                [value]="rule.rule.retentionDays"
+                [disabled]="!cleanup.enabled || !rule.rule.enabled"
+                (valueChange)="onTournamentCleanupRuleChange(rule.name, { retentionDays: $event })"
+              />
+            </div>
+            @if (rule.maxFutureDays !== null) {
+              <div class="setting-field">
+                <label class="setting-label" for="cleanup-draft-max-future">
+                  Date prévue au-delà de (jours)
+                </label>
+                <app-input-number
+                  id="cleanup-draft-max-future"
+                  [min]="1"
+                  [value]="rule.maxFutureDays"
+                  [disabled]="!cleanup.enabled || !rule.rule.enabled"
+                  (valueChange)="onDraftMaxFutureDaysChange($event)"
+                />
+              </div>
+            }
+          </div>
+        }
+        @if (settingMeta.tournament_cleanup; as footerMeta) {
+          <app-setting-footer
+            [meta]="footerMeta"
+            (save)="onSave('tournament_cleanup')"
+            (reset)="onReset('tournament_cleanup')"
+          />
+        }
+      </section>
+    }
+
+    @if (trainingCleanup(); as cleanup) {
+      <section class="setting-block">
+        <h3 class="setting-title">Nettoyage des entraînements</h3>
+        <app-switch
+          label="Nettoyage automatique"
+          description="Suppression des sessions clôturées sans joueur ou sans round."
+          [checked]="cleanup.enabled"
+          (checkedChange)="onTrainingCleanupChange({ enabled: $event })"
+        />
+        <div class="setting-field">
+          <label class="setting-label" for="training-cleanup-cron">Planification (cron)</label>
+          <app-input-text
+            id="training-cleanup-cron"
+            [value]="cleanup.cronExpression"
+            [disabled]="!cleanup.enabled"
+            (valueChange)="onTrainingCleanupChange({ cronExpression: $event })"
+          />
+        </div>
+        <div class="setting-field">
+          <label class="setting-label" for="training-cleanup-retention">
+            Conservation (jours)
+          </label>
+          <app-input-number
+            id="training-cleanup-retention"
+            [min]="1"
+            [value]="cleanup.retentionDays"
+            [disabled]="!cleanup.enabled"
+            (valueChange)="onTrainingCleanupChange({ retentionDays: $event })"
+          />
+        </div>
+        @if (settingMeta.training_cleanup; as footerMeta) {
+          <app-setting-footer
+            [meta]="footerMeta"
+            (save)="onSave('training_cleanup')"
+            (reset)="onReset('training_cleanup')"
+          />
+        }
+      </section>
+    }
+
+    @if (trainingAutoClose(); as autoClose) {
+      <section class="setting-block">
+        <h3 class="setting-title">Fermeture automatique des sessions d'entraînement</h3>
+        <app-switch
+          label="Fermeture automatique"
+          description="Clôture des sessions restées ouvertes sans activité."
+          [checked]="autoClose.enabled"
+          (checkedChange)="onTrainingAutoCloseChange({ enabled: $event })"
+        />
+        <div class="setting-field">
+          <label class="setting-label" for="training-autoclose-cron">Planification (cron)</label>
+          <app-input-text
+            id="training-autoclose-cron"
+            [value]="autoClose.cronExpression"
+            [disabled]="!autoClose.enabled"
+            (valueChange)="onTrainingAutoCloseChange({ cronExpression: $event })"
+          />
+        </div>
+        <div class="setting-field">
+          <label class="setting-label" for="training-autoclose-idle">
+            Inactivité avant fermeture (heures)
+          </label>
+          <app-input-number
+            id="training-autoclose-idle"
+            [min]="1"
+            [value]="autoClose.idleHours"
+            [disabled]="!autoClose.enabled"
+            (valueChange)="onTrainingAutoCloseChange({ idleHours: $event })"
+          />
+        </div>
+        @if (settingMeta.training_auto_close; as footerMeta) {
+          <app-setting-footer
+            [meta]="footerMeta"
+            (save)="onSave('training_auto_close')"
+            (reset)="onReset('training_auto_close')"
+          />
+        }
+      </section>
+    }
+
+    @if (levelHistoryDepth() !== null) {
+      <section class="setting-block">
+        <h3 class="setting-title">Historique du niveau (entraînement)</h3>
+        <div class="setting-field">
+          <label class="setting-label" for="training-level-depth">Sessions précédentes</label>
+          <app-input-number
+            id="training-level-depth"
+            [min]="0"
+            [value]="levelHistoryDepth()"
+            (valueChange)="onLevelHistoryDepthChange($event)"
+          />
+          <p class="settings-hint">
+            Nombre de sessions précédentes du groupe prises en compte pour le niveau d'un joueur (0
+            = session en cours uniquement).
+          </p>
+        </div>
+        @if (settingMeta.training_level_history_depth; as footerMeta) {
+          <app-setting-footer
+            [meta]="footerMeta"
+            (save)="onSave('training_level_history_depth')"
+            (reset)="onReset('training_level_history_depth')"
+          />
+        }
+      </section>
     }
   </div>
 </app-card-collapsible>

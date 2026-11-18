@@ -2,6 +2,12 @@ import { Dialog } from '@angular/cdk/dialog';
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { MockStore, provideMockStore } from '@ngrx/store/testing';
+import { initialAppSettingsState } from 'src/app/store/app-settings/app-settings.reducer';
+import {
+  loadSuperAdminSettings,
+  resetSetting,
+  updateSetting,
+} from 'src/app/store/app-settings/app-settings.actions';
 import { of } from 'rxjs';
 import { TournamentStatus } from 'src/app/models/tournament-status.enum';
 import { ConfirmationPopupComponent } from 'src/app/modales/confirmation-popup/confirmation-popup';
@@ -113,6 +119,7 @@ function setup(
       { provide: Dialog, useValue: dialogMock },
       provideMockStore({
         initialState: {
+          appSettings: initialAppSettingsState,
           superadmin: { authentication: { data: password, isLoading: false, error: null } },
           metrics: { data: null, isLoading: false, error: null },
           superAdminTournaments: {
@@ -196,6 +203,26 @@ describe('SuperAdminPageComponent', () => {
       searchSuperAdminTrainings({ criteria: TRAINING_CRITERIA }),
     );
     expect(store.dispatch).toHaveBeenCalledWith(searchSuperAdminClubs({ criteria: CLUB_CRITERIA }));
+    expect(store.dispatch).toHaveBeenCalledWith(loadSuperAdminSettings());
+  });
+
+  it('saves a setting edited in the settings card', () => {
+    const { fixture, store } = setup('secret');
+
+    fixture.componentInstance.onSettingSave({ key: 'training_level_history_depth', value: 3 });
+
+    expect(store.dispatch).toHaveBeenCalledWith(
+      updateSetting({ key: 'training_level_history_depth', value: 3 }),
+    );
+  });
+
+  it('resets a setting only once the confirmation popup is accepted', () => {
+    const { fixture, store, dialogMock } = setup('secret');
+
+    fixture.componentInstance.onSettingReset('tournament_cleanup');
+
+    expect(dialogMock.open).toHaveBeenCalledWith(ConfirmationPopupComponent, expect.anything());
+    expect(store.dispatch).toHaveBeenCalledWith(resetSetting({ key: 'tournament_cleanup' }));
   });
 
   it('refresh() re-dispatches metrics and all tables using their current criteria', () => {

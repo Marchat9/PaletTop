@@ -1,0 +1,30 @@
+<div class="card-radio-group" role="group" [style.--card-radio-basis]="99 / columns() + '%'">
+  @for (card of cards(); track card.option.value) {
+    <button
+      type="button"
+      class="card-radio-button"
+      [class.selected]="card.selected"
+      [class.locked]="card.locked"
+      [attr.aria-pressed]="card.selected"
+      [attr.aria-disabled]="card.locked"
+      (click)="onToggle(card)"
+    >
+      @if (card.option.icon) {
+        <app-icon [name]="card.option.icon!" iconClass="icon" [ariaHidden]="true" />
+      }
+
+      <div class="card-radio-content">
+        <p class="card-radio-name">{{ card.option.label }}</p>
+        @if (card.option.description) {
+          <p class="card-radio-description">{{ card.option.description }}</p>
+        }
+      </div>
+
+      <app-icon
+        [name]="card.selected ? 'check_box' : 'check_box_outline_blank'"
+        iconClass="icon"
+        [ariaHidden]="true"
+      />
+    </button>
+  }
+</div>

@@ -32,75 +32,60 @@
     color: var(--color-on-surface-variant);
   }
 
-  .toggle-row {
+  .settings-section-title {
+    margin: 0.75rem 0 0;
+    font-family: var(--font-headline);
+    font-size: 1.1rem;
+    color: var(--color-on-surface);
+  }
+
+  .setting-block {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    padding: 0.75rem 0.9rem;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 0.9rem;
     border-radius: 0.6rem;
     border: 1px solid var(--color-border-default);
     background: var(--color-surface-container-high);
 
-    .toggle-label {
-      font-size: 0.9rem;
+    .setting-title {
+      margin: 0;
+      font-size: 0.95rem;
       font-weight: 600;
       color: var(--color-on-surface);
     }
 
-    .toggle-hint {
-      font-size: 0.8rem;
-      color: var(--color-on-surface-variant);
-    }
-  }
+    .setting-mode {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
 
-  .switch {
-    position: relative;
-    display: inline-flex;
-    flex-shrink: 0;
-    width: 2.75rem;
-    height: 1.6rem;
-    cursor: not-allowed;
-
-    input {
-      position: absolute;
-      inset: 0;
-      margin: 0;
-      opacity: 0;
-      cursor: not-allowed;
-    }
-
-    .switch-track {
-      position: absolute;
-      inset: 0;
-      border-radius: 999px;
-      background: var(--color-surface-container-lowest);
-      border: 1px solid var(--color-border-default);
-      opacity: 0.6;
-      transition: background 0.15s ease;
-
-      &::after {
-        content: '';
-        position: absolute;
-        top: 50%;
-        left: 0.2rem;
-        transform: translateY(-50%);
-        width: 1.15rem;
-        height: 1.15rem;
-        border-radius: 50%;
-        background: var(--color-outline);
-        transition:
-          transform 0.15s ease,
-          background 0.15s ease;
+      .setting-mode-label {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--color-on-surface-variant);
       }
     }
 
-    input:checked + .switch-track {
-      background: var(--color-primary-container);
+    .setting-rule {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      gap: 0.75rem;
+      padding-top: 0.5rem;
+      border-top: 1px solid var(--color-border-default);
+    }
 
-      &::after {
-        background: var(--color-primary);
-        transform: translateY(-50%) translateX(1.15rem);
+    .setting-field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+      min-width: 12rem;
+
+      .setting-label {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--color-on-surface);
       }
     }
   }
