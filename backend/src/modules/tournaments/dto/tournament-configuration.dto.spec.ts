@@ -97,6 +97,14 @@ describe('TournamentConfigurationDto', () => {
             expect(validate(upDown({ numberOfRound: 2, lastRoundByRanking: true }))).toEqual([]);
         });
 
+        it('accepte le mode d’appariement aléatoire ou hollandais, et rejette les autres', () => {
+            expect(validate(upDown({ pairingMode: 'random' }))).toEqual([]);
+            expect(validate(upDown({ pairingMode: 'dutch', numberOfRound: 4 }))).toEqual([]);
+            expect(validate(upDown({ pairingMode: 'monrad' }))).toContain(
+                'competitionConfiguration',
+            );
+        });
+
         it('accepte l’option décochée sans nombre de parties', () => {
             expect(validate(upDown({ lastRoundByRanking: false }))).toEqual([]);
         });

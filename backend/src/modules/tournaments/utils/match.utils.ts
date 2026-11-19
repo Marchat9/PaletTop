@@ -98,6 +98,47 @@ export function orderTeamsByRanking(teams: Team[], ranking: GlobalRankingEntry[]
 }
 
 /**
+ * Matches of already decided pairs, in the given order (plates follow it), then the bye of
+ * `byeTeam` last: worth one win (`byeIsWin`) or nothing.
+ */
+export function generateMatchesFromPairs(
+    pool: TournamentPool,
+    pairs: [Team, Team][],
+    byeTeam: Team | null,
+    byeIsWin: boolean,
+    tournament: Tournament,
+    session: MatchesSession,
+): DeepPartial<TournamentMatch>[] {
+    const tournamentRef: Tournament = toTournamentRef(tournament);
+    const sessionRef: MatchesSession = toSessionRef(session);
+
+    const allMatches: DeepPartial<TournamentMatch>[] = pairs.map(([teamA, teamB]) => ({
+        tournament: tournamentRef,
+        session: sessionRef,
+        sessionNumber: session.sessionNumber,
+        pool,
+        teamA: toTeamRef(teamA),
+        teamB: toTeamRef(teamB),
+        isBye: false,
+        status: MatchStatus.PENDING,
+    }));
+
+    if (byeTeam) {
+        allMatches.push(
+            buildByeMatchData(
+                toTeamRef(byeTeam),
+                tournamentRef,
+                pool,
+                sessionRef,
+                session.sessionNumber,
+                byeIsWin,
+            ),
+        );
+    }
+    return allMatches;
+}
+
+/**
  * Pairs each team with its ranking neighbour (1st vs 2nd, 3rd vs 4th, ...), ignoring the draw
  * constraints. With an odd number of teams, the last-ranked one gets a bye worth nothing (0-0).
  * Matches keep the ranking order so plate numbers follow it (plate 1 = 1st vs 2nd).
@@ -108,35 +149,10 @@ export function generateMatchesByRanking(
     tournament: Tournament,
     session: MatchesSession,
 ): DeepPartial<TournamentMatch>[] {
-    const allMatches: DeepPartial<TournamentMatch>[] = [];
-
-    const tournamentRef: Tournament = toTournamentRef(tournament);
-    const sessionRef: MatchesSession = toSessionRef(session);
-
+    const pairs: [Team, Team][] = [];
     for (let i = 0; i + 1 < rankedTeams.length; i += 2) {
-        allMatches.push({
-            tournament: tournamentRef,
-            session: sessionRef,
-            sessionNumber: session.sessionNumber,
-            pool: pool,
-            teamA: toTeamRef(rankedTeams[i]),
-            teamB: toTeamRef(rankedTeams[i + 1]),
-            isBye: false,
-            status: MatchStatus.PENDING,
-        });
+        pairs.push([rankedTeams[i], rankedTeams[i + 1]]);
     }
-
-    if (rankedTeams.length % 2 !== 0) {
-        allMatches.push(
-            buildByeMatchData(
-                toTeamRef(rankedTeams[rankedTeams.length - 1]),
-                tournamentRef,
-                pool,
-                sessionRef,
-                session.sessionNumber,
-                false,
-            ),
-        );
-    }
-    return allMatches;
+    const byeTeam = rankedTeams.length % 2 !== 0 ? rankedTeams[rankedTeams.length - 1] : null;
+    return generateMatchesFromPairs(pool, pairs, byeTeam, false, tournament, session);
 }

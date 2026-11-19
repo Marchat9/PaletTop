@@ -91,6 +91,19 @@ describe('buildRoundHistoryViews', () => {
     ]);
   });
 
+  it('labels the up-down rounds paired by results as Swiss rounds, the ranking one apart', () => {
+    const dutch = [
+      session(1, SessionStatus.CLOSED, true, [match('a', 'A', 'B')]),
+      session(2, SessionStatus.CLOSED, false, [match('b', 'A', 'B')]),
+      session(3, SessionStatus.CLOSED, false, [match('c', 'A', 'B')]),
+    ];
+    const config = { pairingMode: 'dutch' as const, numberOfRound: 3, lastRoundByRanking: true };
+
+    expect(
+      buildRoundHistoryViews(dutch, 'up_down', true, config).map((view) => view.label),
+    ).toEqual(['Au classement', 'Système suisse', 'Tirage au sort']);
+  });
+
   it('keeps only the matches and rounds of the searched team, accents and case ignored', () => {
     const rounds = toTournamentRoundHistories(SESSIONS, 'standard', true);
     const views = filterRoundHistories(rounds, 'equipe 7');

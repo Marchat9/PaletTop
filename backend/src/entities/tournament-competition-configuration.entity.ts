@@ -1,4 +1,5 @@
 import { Column } from 'typeorm';
+import { PairingMode } from 'src/enum/tounament.enum';
 
 export abstract class TournamentCompetitionConfiguration {}
 
@@ -31,6 +32,10 @@ export class UpDownCompetitionConfiguration extends TournamentCompetitionConfigu
 
     @Column({ default: false })
     lastRoundByRanking?: boolean;
+
+    /** Missing on tournaments created before the pairing mode existed: read as RANDOM. */
+    @Column({ type: 'enum', enum: PairingMode, default: PairingMode.RANDOM })
+    pairingMode?: PairingMode;
 }
 
 export class ChampionShipCompetitionConfiguration extends TournamentCompetitionConfiguration {

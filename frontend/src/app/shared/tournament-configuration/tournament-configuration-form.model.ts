@@ -16,4 +16,5 @@ export type TournamentConfigurationField =
   | keyof TournamentConfigurationDetailsDto
   | 'rematch'
   | 'matchAgainstFullSameClub'
-  | 'matchAgainstPartialSameClub';
+  | 'matchAgainstPartialSameClub'
+  | 'pairingMode';

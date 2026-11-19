@@ -9,11 +9,12 @@ import { isLastRoundByRankingAllowed } from '../../tournament-configuration.util
 import * as configuration from '../../tournament-create.data';
 import { UpDownTournamentForm } from './up-down-tournament-form.model';
 import { Switch } from 'src/app/shared/switch/switch';
+import { InputCardRadio } from 'src/app/shared/input-card-radio/input-card-radio';
 import { map, startWith, switchMap } from 'rxjs';
 
 @Component({
   selector: 'app-up-down-tournament',
-  imports: [ReactiveFormsModule, InputNumber, Switch],
+  imports: [ReactiveFormsModule, InputCardRadio, InputNumber, Switch],
   templateUrl: './up-down-tournament.html',
   styleUrls: ['../../shared-config.scss', './up-down-tournament.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -24,6 +25,7 @@ export class UpDownTournament {
   public readonly hiddenFields = input<TournamentConfigurationField[]>([]);
 
   public readonly competitionModeOptions = configuration.competitionModeOptions;
+  public readonly pairingModeOptions = configuration.pairingModeOptions;
   public readonly principalBracketSizeOptions: InputSelectOption[] = [
     { value: '', label: 'Automatique' },
     ...environment.tournamentConfiguration.principalBracketSize.options.map((v) => ({

@@ -1,6 +1,7 @@
 import { plainToInstance, Type } from 'class-transformer';
 import {
     IsBoolean,
+    IsEnum,
     IsInt,
     IsNotEmpty,
     IsOptional,
@@ -12,7 +13,7 @@ import {
     ValidatorConstraint,
     ValidatorConstraintInterface,
 } from 'class-validator';
-import { CompetitionMode } from 'src/enum/tounament.enum';
+import { CompetitionMode, PairingMode } from 'src/enum/tounament.enum';
 
 export abstract class SpecificTournamentConfig {}
 
@@ -72,6 +73,10 @@ export class UpDownTournamentConfig extends SpecificTournamentConfig {
     @IsOptional()
     @Validate(LastRoundByRankingConstraint)
     lastRoundByRanking?: boolean;
+
+    @IsEnum(PairingMode)
+    @IsOptional()
+    pairingMode?: PairingMode;
 }
 
 @ValidatorConstraint({ name: 'differentFromHomeClub', async: false })

@@ -76,6 +76,24 @@ describe('buildTournamentRules', () => {
     expect(result).not.toContain('Dernière partie au classement');
   });
 
+  it('indique le système suisse hollandais quand il est choisi', () => {
+    const dutch = labels(
+      configuration({
+        competitionMode: 'up_down',
+        competitionConfiguration: { numberOfRound: 4, pairingMode: 'dutch' },
+      }),
+    );
+    expect(dutch).toContain('Système suisse (version hollandaise)');
+
+    const random = labels(
+      configuration({
+        competitionMode: 'up_down',
+        competitionConfiguration: { numberOfRound: 4, pairingMode: 'random' },
+      }),
+    );
+    expect(random).not.toContain('Système suisse (version hollandaise)');
+  });
+
   it('indique les deux clubs du championnat', () => {
     const result = labels(
       configuration({

@@ -1,5 +1,6 @@
 import { InternalServerErrorException, Logger } from '@nestjs/common';
 import { MatchesSession } from 'src/entities/matches-session.entity';
+import { Team } from 'src/entities/team.entity';
 import { TournamentMatch } from 'src/entities/tounament-match.entity';
 import { UpDownCompetitionConfiguration } from 'src/entities/tournament-competition-configuration.entity';
 import { TournamentPool } from 'src/entities/tournament-pool.entity';
@@ -17,10 +18,12 @@ import { TournamentStatusInfo } from '../../../tournaments/responses/tournament-
 import { TournamentStrategy } from '../tournament-strategy.abstract';
 import {
     generateMatchesByRanking,
+    generateMatchesFromPairs,
     generateMatchesInPool,
     orderTeamsByRanking,
 } from 'src/modules/tournaments/utils/match.utils';
-import { computePhaseName, isRankingRound } from './up-down-session.utils';
+import { generateDutchPairs } from './dutch-pairing.utils';
+import { computePhaseName, isDutchRound, isRankingRound } from './up-down-session.utils';
 
 export class UpDownTournamentStrategy extends TournamentStrategy {
     private readonly logger = new Logger(UpDownTournamentStrategy.name);
@@ -49,32 +52,66 @@ export class UpDownTournamentStrategy extends TournamentStrategy {
         }
 
         const poolRef = { id: pool.id } as TournamentPool;
-        const partialMatches: DeepPartial<TournamentMatch>[] = isRankingRound(
-            this.getConfig(tournament),
-            session.sessionNumber,
-        )
-            ? generateMatchesByRanking(
-                  poolRef,
-                  orderTeamsByRanking(
-                      pool.teams,
-                      this.computeGlobalRanking(tournament, pastMatches),
-                  ),
-                  tournament,
-                  session,
-              )
-            : generateMatchesInPool(
-                  poolRef,
-                  pool.teams,
-                  tournament,
-                  session,
-                  constraintConfig,
-                  pastMatches,
-              );
+        const partialMatches = this.buildSessionMatches(
+            tournament,
+            session,
+            poolRef,
+            pool.teams,
+            constraintConfig,
+            pastMatches,
+        );
 
         const matches = partialMatches.map((match) => this.matchRepo.create(match));
 
         const assignedMatches = this.assignPlateNumbers(matches);
         return await this.matchRepo.save(assignedMatches);
+    }
+
+    /**
+     * Random draw, Dutch Swiss pairing, or ranking-based last round (1v2, 3v4... strictly by
+     * ranking, whatever the pairing mode).
+     */
+    private buildSessionMatches(
+        tournament: Tournament,
+        session: MatchesSession,
+        pool: TournamentPool,
+        teams: Team[],
+        constraintConfig: ConstraintConfig,
+        pastMatches: TournamentMatch[],
+    ): DeepPartial<TournamentMatch>[] {
+        const config = this.getConfig(tournament);
+
+        if (
+            isRankingRound(config, session.sessionNumber) ||
+            isDutchRound(config, session.sessionNumber)
+        ) {
+            const ranking = this.computeGlobalRanking(tournament, pastMatches);
+            const rankedTeams = orderTeamsByRanking(teams, ranking);
+
+            if (isDutchRound(config, session.sessionNumber)) {
+                const winsByTeam = new Map(ranking.map((entry) => [entry.teamId, entry.wins]));
+                const { pairs, byeTeam } = generateDutchPairs(
+                    rankedTeams,
+                    winsByTeam,
+                    pastMatches,
+                    constraintConfig,
+                );
+                this.logger.log(
+                    `Tournament ${tournament.code}: session ${session.sessionNumber} paired by the Dutch Swiss system`,
+                );
+                return generateMatchesFromPairs(pool, pairs, byeTeam, true, tournament, session);
+            }
+            return generateMatchesByRanking(pool, rankedTeams, tournament, session);
+        }
+
+        return generateMatchesInPool(
+            pool,
+            teams,
+            tournament,
+            session,
+            constraintConfig,
+            pastMatches,
+        );
     }
 
     override async assignTeamsToFirstPools(tournament: Tournament): Promise<TournamentPool[]> {
@@ -117,9 +154,13 @@ export class UpDownTournamentStrategy extends TournamentStrategy {
         };
     }
 
-    /** Every round is drawn, except the optional last one paired by ranking. */
+    /**
+     * Drawn rounds only: the ranking-based last round and the Dutch rounds (paired from the
+     * results) are not, so their scores are locked once the round is closed.
+     */
     override isDrawnSession(tournament: Tournament, sessionNumber: number): boolean {
-        return !isRankingRound(this.getConfig(tournament), sessionNumber);
+        const config = this.getConfig(tournament);
+        return !isRankingRound(config, sessionNumber) && !isDutchRound(config, sessionNumber);
     }
 
     private getConfig(tournament: Tournament): UpDownCompetitionConfiguration {

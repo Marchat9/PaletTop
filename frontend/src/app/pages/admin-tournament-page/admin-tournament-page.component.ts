@@ -1,3 +1,4 @@
+import { UpDownTournamentConfig } from 'src/app/models/tournament-configuration-detail.model';
 import { selectScoreCalculationsByMode } from 'src/app/store/app-settings/app-settings.selectors';
 import { normalizeCode } from 'src/app/utils/code-format.util';
 import { newId } from 'src/app/utils/unique-id.util';
@@ -199,6 +200,7 @@ export class AdminTournamentPageComponent implements OnInit {
       this.sessions() ?? [],
       tournament?.configuration?.competitionMode ?? 'standard',
       this.canEditRoundsHistory(),
+      tournament?.configuration?.competitionConfiguration as UpDownTournamentConfig | undefined,
     );
   });
 
@@ -417,6 +419,7 @@ export class AdminTournamentPageComponent implements OnInit {
         sessions,
         tournament.configuration.competitionMode,
         false,
+        tournament.configuration.competitionConfiguration as UpDownTournamentConfig,
       );
       await this.pdfExport.download(
         buildMatchesPdf(tournament, rounds, window.location.origin),

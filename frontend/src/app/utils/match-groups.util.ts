@@ -37,7 +37,10 @@ export function computeMatchGroups(matches: SessionMatchDto[]): MatchPoolGroup[]
     groupMap.get(key)!.matches.push(match);
   }
 
-  return [...groupMap.values()].sort((a, b) => a.order - b.order);
+  const groups = [...groupMap.values()].sort((a, b) => a.order - b.order);
+  // A single pool is the whole round: its « Poule 1 » label says nothing.
+  const isSinglePool = groups.length === 1 && !sorted[0]?.group;
+  return isSinglePool ? [{ ...groups[0], label: null }] : groups;
 }
 
 export function toAdminMatchView(match: SessionMatchDto): AdminMatchView {
