@@ -1,9 +1,12 @@
 services:
     db:
         image: postgres:16-alpine
+        # Server time zone too: an existing volume keeps the one it was initialised with otherwise.
+        command: ['postgres', '-c', 'timezone=${TZ:-Europe/Paris}', '-c', 'log_timezone=${TZ:-Europe/Paris}']
         container_name: palettop-db
         restart: unless-stopped
         environment:
+            TZ: ${TZ:-Europe/Paris}
             POSTGRES_DB: ${DB_NAME}
             POSTGRES_USER: ${DB_USER}
             POSTGRES_PASSWORD: ${DB_PASSWORD}
@@ -28,6 +31,7 @@ services:
             db:
                 condition: service_healthy
         environment:
+            TZ: ${TZ:-Europe/Paris}
             NODE_ENV: production
             PORT: 3000
             DB_HOST: db
@@ -68,6 +72,7 @@ services:
             backend:
                 condition: service_healthy
         environment:
+            TZ: ${TZ:-Europe/Paris}
             API_BASE_URL: ${API_BASE_URL}
             # Public URL of the site, written into index.html at startup (optional).
             SITE_URL: ${SITE_URL:-}

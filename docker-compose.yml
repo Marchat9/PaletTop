@@ -1,9 +1,12 @@
 services:
     db:
         image: postgres:16-alpine
+        # Server time zone too: an existing volume keeps the one it was initialised with otherwise.
+        command: ['postgres', '-c', 'timezone=${TZ:-Europe/Paris}', '-c', 'log_timezone=${TZ:-Europe/Paris}']
         container_name: palet-db
         restart: unless-stopped
         environment:
+            TZ: ${TZ:-Europe/Paris}
             POSTGRES_DB: ${DB_NAME:-palet}
             POSTGRES_USER: ${DB_USER:-postgres}
             POSTGRES_PASSWORD: ${DB_PASSWORD-postgres}
@@ -28,6 +31,7 @@ services:
             db:
                 condition: service_healthy
         environment:
+            TZ: ${TZ:-Europe/Paris}
             PORT: 3000
             DB_HOST: db
             DB_PORT: 5432
