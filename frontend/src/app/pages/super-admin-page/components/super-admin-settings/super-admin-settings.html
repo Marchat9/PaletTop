@@ -65,9 +65,7 @@
             [disabled]="!cleanup.enabled"
             (valueChange)="onTournamentCleanupChange({ cronExpression: $event })"
           />
-          <p class="settings-hint">
-            minute heure jour mois jour-semaine, ex. 0 3 * * * = tous les jours à 3h
-          </p>
+          <app-cron-fields [expression]="cleanup.cronExpression" />
         </div>
         @for (rule of tournamentCleanupRules(); track rule.name) {
           <div class="setting-rule">
@@ -132,6 +130,7 @@
             [disabled]="!cleanup.enabled"
             (valueChange)="onTrainingCleanupChange({ cronExpression: $event })"
           />
+          <app-cron-fields [expression]="cleanup.cronExpression" />
         </div>
         <div class="setting-field">
           <label class="setting-label" for="training-cleanup-retention">
@@ -172,6 +171,7 @@
             [disabled]="!autoClose.enabled"
             (valueChange)="onTrainingAutoCloseChange({ cronExpression: $event })"
           />
+          <app-cron-fields [expression]="autoClose.cronExpression" />
         </div>
         <div class="setting-field">
           <label class="setting-label" for="training-autoclose-idle">

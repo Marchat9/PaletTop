@@ -1,0 +1,21 @@
+<div class="cron-fields">
+  <ol class="cron-field-list">
+    @for (field of fields(); track field.label) {
+      <li class="cron-field">
+        <span class="cron-value">{{ field.value }}</span>
+        <span class="cron-label">{{ field.label }}</span>
+        <span class="cron-meaning">{{ field.meaning }}</span>
+      </li>
+    }
+  </ol>
+  @if (!isWellFormed()) {
+    <p class="cron-warning">
+      5 valeurs attendues, séparées par un espace : minute heure jour-du-mois mois
+      jour-de-la-semaine.
+    </p>
+  }
+  <p class="cron-legend">
+    * = toutes les valeurs · */n = toutes les n · a-b = de a à b · a,b = a et b · jour de la semaine
+    : 0 = dimanche, 1 = lundi…
+  </p>
+</div>

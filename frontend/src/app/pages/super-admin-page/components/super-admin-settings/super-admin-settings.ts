@@ -31,6 +31,7 @@ import {
   competitionModeOptions,
   scoreCalculationOptions,
 } from 'src/app/shared/tournament-configuration/tournament-create.data';
+import { CronFieldsComponent } from './cron-fields/cron-fields';
 import { SettingFooterComponent, SettingMeta } from './setting-footer/setting-footer';
 
 export interface AppSettingChange {
@@ -76,6 +77,7 @@ function sourceLabel(detail: AppSettingDetailDto): string {
   selector: 'app-super-admin-settings',
   imports: [
     CardCollapsible,
+    CronFieldsComponent,
     Icon,
     InputCardCheckbox,
     SettingFooterComponent,
