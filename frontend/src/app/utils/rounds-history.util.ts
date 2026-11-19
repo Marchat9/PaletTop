@@ -9,7 +9,10 @@ import {
   MatchPoolGroup,
   SessionStatus,
 } from 'src/app/models/matches-session.model';
-import { CompetitionMode } from 'src/app/models/tournament-configuration-detail.model';
+import {
+  CompetitionMode,
+  UpDownTournamentConfig,
+} from 'src/app/models/tournament-configuration-detail.model';
 import { TrainingRoundDto } from 'src/app/store/training/training.models';
 import {
   computeMatchGroups,
@@ -32,7 +35,21 @@ function normalize(value: string): string {
   return value.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
 }
 
-function roundLabel(session: MatchesSessionDto, mode: CompetitionMode): string {
+/** Up-down round paired by results: every round after the first in Dutch mode, but the last by ranking. */
+function isSwissRound(
+  session: MatchesSessionDto,
+  config: UpDownTournamentConfig | undefined,
+): boolean {
+  const isRankingRound =
+    !!config?.lastRoundByRanking && session.sessionNumber === config.numberOfRound;
+  return config?.pairingMode === 'dutch' && !session.isDrawnRound && !isRankingRound;
+}
+
+function roundLabel(
+  session: MatchesSessionDto,
+  mode: CompetitionMode,
+  upDownConfig: UpDownTournamentConfig | undefined,
+): string {
   const brackets = [
     ...new Set(
       session.matches
@@ -46,7 +63,10 @@ function roundLabel(session: MatchesSessionDto, mode: CompetitionMode): string {
   }
   switch (mode) {
     case 'up_down':
-      return session.isDrawnRound ? 'Tirage au sort' : 'Au classement';
+      if (session.isDrawnRound) {
+        return 'Tirage au sort';
+      }
+      return isSwissRound(session, upDownConfig) ? 'Système suisse' : 'Au classement';
     case 'championship':
       return 'Championnat';
     default:
@@ -63,6 +83,7 @@ export function buildRoundHistoryViews(
   sessions: MatchesSessionDto[],
   mode: CompetitionMode,
   canEdit: boolean,
+  upDownConfig?: UpDownTournamentConfig,
 ): RoundHistoryView[] {
   return sessions
     .filter((session) => session.status === SessionStatus.CLOSED)
@@ -70,7 +91,7 @@ export function buildRoundHistoryViews(
     .map((session) => ({
       id: session.id,
       sessionNumber: session.sessionNumber,
-      label: roundLabel(session, mode),
+      label: roundLabel(session, mode, upDownConfig),
       matchCountLabel: matchCountLabel(session.matches.filter((match) => !match.isBye).length),
       editable: canEdit && session.isDrawnRound,
       groups: computeMatchGroups(session.matches),
@@ -82,8 +103,9 @@ export function toTournamentRoundHistories(
   sessions: MatchesSessionDto[],
   mode: CompetitionMode,
   canEdit: boolean,
+  upDownConfig?: UpDownTournamentConfig,
 ): AdminRoundHistory[] {
-  return buildRoundHistoryViews(sessions, mode, canEdit).map((view) => ({
+  return buildRoundHistoryViews(sessions, mode, canEdit, upDownConfig).map((view) => ({
     id: view.id,
     roundNumber: view.sessionNumber,
     label: view.label,
