@@ -1,3 +1,7 @@
+import {
+  ScoreCalculationsByMode,
+  DEFAULT_SCORE_CALCULATIONS_BY_MODE,
+} from 'src/app/models/app-setting.model';
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { Nullable } from 'src/app/models/nullable.model';
 import { CardCollapsible } from 'src/app/shared/card-collapsible/card-collapsible';
@@ -21,6 +25,9 @@ export class TournamentConfigurationCardComponent {
   public readonly saveLoading = input<boolean>(false);
   public readonly readonlyFields = input<TournamentConfigurationField[]>([]);
   public readonly hiddenFields = input<TournamentConfigurationField[]>([]);
+  public readonly scoreCalculationsByMode = input<ScoreCalculationsByMode>(
+    DEFAULT_SCORE_CALCULATIONS_BY_MODE,
+  );
 
   public readonly saveConfiguration = output<TournamentConfigurationDto>();
   // ==============================

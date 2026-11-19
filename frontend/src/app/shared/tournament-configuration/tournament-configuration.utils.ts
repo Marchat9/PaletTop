@@ -5,7 +5,11 @@ import {
   ValidationErrors,
   Validators,
 } from '@angular/forms';
-import { CompetitionMode } from 'src/app/models/tournament-configuration-detail.model';
+import { ScoreCalculationsByMode } from 'src/app/models/app-setting.model';
+import {
+  CompetitionMode,
+  ScoreCalculation,
+} from 'src/app/models/tournament-configuration-detail.model';
 import { FIELD_LABELS } from './tournament-configuration';
 import { TournamentConfigurationForm } from './tournament-configuration-form.model';
 
@@ -59,6 +63,17 @@ export function differentFromHomeClub(control: AbstractControl): ValidationError
   return normalize(homeClub) && normalize(homeClub) === normalize(awayClub)
     ? { sameClub: true }
     : null;
+}
+
+// Score calculations shown for a mode: the offered ones (app setting), plus the calculation the
+// edited tournament already uses, so that it still shows as selected if no longer offered.
+export function offeredScoreCalculations(
+  byMode: ScoreCalculationsByMode,
+  mode: CompetitionMode,
+  stored: ScoreCalculation | null,
+): ScoreCalculation[] {
+  const offered = byMode[mode] ?? [];
+  return stored && !offered.includes(stored) ? [...offered, stored] : offered;
 }
 
 // The ranking-based last round needs at least one drawn round before it, so at least 2 rounds.

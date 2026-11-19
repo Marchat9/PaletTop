@@ -18,6 +18,7 @@
   <div class="item">
     <app-tournament-mode-parameter
       [group]="form.controls.modeParameter"
+      [scoreCalculationOptions]="scoreCalculationOptions()"
       [readonlyFields]="readonlyFields()"
       [hiddenFields]="hiddenFields()"
     />

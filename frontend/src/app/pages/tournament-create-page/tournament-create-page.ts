@@ -1,3 +1,4 @@
+import { selectScoreCalculationsByMode } from 'src/app/store/app-settings/app-settings.selectors';
 import { normalizeCode } from 'src/app/utils/code-format.util';
 import { CommonModule, NgOptimizedImage } from '@angular/common';
 import { ChangeDetectionStrategy, Component, effect, inject, signal } from '@angular/core';
@@ -29,6 +30,7 @@ export class TournamentCreatePageComponent {
   private readonly store = inject(Store);
 
   public readonly isCreationLoading = this.store.selectSignal(selectTournamentCreationIsLoading);
+  public readonly scoreCalculationsByMode = this.store.selectSignal(selectScoreCalculationsByMode);
   public readonly creationError = this.store.selectSignal(selectTournamentCreationError);
 
   public readonly tournamentForm = signal<Nullable<TournamentConfigurationForm>>(null);

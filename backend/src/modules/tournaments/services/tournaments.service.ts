@@ -4,6 +4,9 @@ import { Player } from 'src/entities/player.entity';
 import { Team } from 'src/entities/team.entity';
 import { Tournament } from 'src/entities/tournament.entity';
 import { TournamentStatus } from 'src/enum/status.enum';
+import { AppSettingKey } from 'src/enum/app-setting.enum';
+import { CompetitionMode, ScoreCalculation } from 'src/enum/tounament.enum';
+import { AppSettingsService } from 'src/modules/app-settings/app-settings.service';
 import { TournamentTeamDto } from 'src/modules/tournaments/dto/team-tournament.dto';
 import {
     sortTeamNames,
@@ -40,7 +43,28 @@ export class TournamentsService {
         private readonly sessionService: SessionService,
         private readonly strategyFactory: TournamentStrategyFactory,
         private readonly gateway: RealtimeGateway,
+        private readonly appSettingsService: AppSettingsService,
     ) {}
+
+    /**
+     * The score calculation must be one of those offered for the competition mode (app setting
+     * set by the super-admin). Not checked when an update keeps both unchanged, so a tournament
+     * keeps a calculation that was offered when it was created.
+     */
+    private async assertScoreCalculationOffered(
+        competitionMode: CompetitionMode,
+        scoreCalculation: ScoreCalculation,
+    ): Promise<void> {
+        const offered = await this.appSettingsService.get(AppSettingKey.SCORE_CALCULATIONS_BY_MODE);
+        if (!offered[competitionMode]?.includes(scoreCalculation)) {
+            this.logger.warn(
+                `Score calculation '${scoreCalculation}' refused for mode '${competitionMode}'`,
+            );
+            throw new BadRequestException(
+                "Ce calcul des scores n'est pas disponible pour ce mode de compétition.",
+            );
+        }
+    }
 
     async findAll(): Promise<Tournament[]> {
         const tournaments = await this.tournamentRepo.findAll();
@@ -93,6 +117,7 @@ export class TournamentsService {
 
     async create(tournamentCreation: CreateTournamentDto): Promise<Tournament> {
         const config = tournamentCreation.configuration;
+        await this.assertScoreCalculationOffered(config.competitionMode, config.scoreCalculation);
 
         const tournament = this.tournamentRepo.create({
             name: tournamentCreation.name,
@@ -278,6 +303,14 @@ export class TournamentsService {
                     `Le code de tournoi '${dto.code}' extiste déjà, veuillez renseigner un autre code.`,
                 );
             }
+        }
+
+        const { competitionMode, scoreCalculation } = dto.configuration;
+        if (
+            competitionMode !== tournament.configuration.competitionMode ||
+            scoreCalculation !== tournament.configuration.scoreCalculation
+        ) {
+            await this.assertScoreCalculationOffered(competitionMode, scoreCalculation);
         }
 
         const mergedTournament: Tournament = {

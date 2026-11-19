@@ -61,6 +61,10 @@
     flex-shrink: 0;
   }
 
+  &.locked {
+    cursor: not-allowed;
+  }
+
   &.selected {
     background: var(--color-primary);
     border-color: var(--color-primary);

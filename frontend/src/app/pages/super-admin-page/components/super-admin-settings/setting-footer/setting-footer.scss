@@ -1,0 +1,20 @@
+.setting-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--color-border-default);
+
+  .setting-source {
+    margin: 0;
+    font-size: 0.8rem;
+    color: var(--color-on-surface-variant);
+  }
+
+  .setting-actions {
+    display: flex;
+    gap: 0.5rem;
+  }
+}

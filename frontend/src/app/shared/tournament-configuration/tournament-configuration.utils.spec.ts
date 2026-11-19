@@ -3,6 +3,7 @@ import { TournamentConfigurationForm } from './tournament-configuration-form.mod
 import {
   differentFromHomeClub,
   isLastRoundByRankingAllowed,
+  offeredScoreCalculations,
   syncLastRoundByRankingAvailability,
 } from './tournament-configuration.utils';
 
@@ -78,5 +79,25 @@ describe('differentFromHomeClub', () => {
       differentFromHomeClub(championshipGroup('Club A', 'Club B').controls.awayTeam),
     ).toBeNull();
     expect(differentFromHomeClub(championshipGroup('', '').controls.awayTeam)).toBeNull();
+  });
+});
+
+describe('offeredScoreCalculations', () => {
+  const byMode = {
+    standard: ['victory_ga' as const, 'score' as const],
+    up_down: ['score' as const],
+    championship: ['tournament_score' as const],
+  };
+
+  it('offers the calculations of the selected mode, in the setting order', () => {
+    expect(offeredScoreCalculations(byMode, 'standard', null)).toEqual(['victory_ga', 'score']);
+  });
+
+  it('keeps the calculation of an edited tournament even when no longer offered', () => {
+    expect(offeredScoreCalculations(byMode, 'up_down', 'victory_ga')).toEqual([
+      'score',
+      'victory_ga',
+    ]);
+    expect(offeredScoreCalculations(byMode, 'up_down', 'score')).toEqual(['score']);
   });
 });

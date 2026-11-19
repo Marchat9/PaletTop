@@ -68,6 +68,7 @@
       [tournament]="tournament() ?? null"
       [hiddenFields]="hiddenFields"
       [readonlyFields]="readonlyFields"
+      [scoreCalculationsByMode]="scoreCalculationsByMode()"
       [saveLoading]="isUpdateConfigLoading()"
       (saveConfiguration)="updateTournamentConfiguration($event)"
     />

@@ -7,16 +7,32 @@ function makeService(empty: Partial<TrainingSession>[], enabled = true) {
         findClosedWithoutParticipantOrRound: vi.fn(() => Promise.resolve(empty)),
         deleteMany: vi.fn(() => Promise.resolve()),
     };
-    const schedulerRegistry = { addCronJob: vi.fn() };
-    const configService = {
-        getOrThrow: vi.fn(() => ({ enabled, cronExpression: '0 6 * * 1', retentionDays: 7 })),
+    const schedulerRegistry = {
+        addCronJob: vi.fn(),
+        doesExist: vi.fn(() => false),
+        deleteCronJob: vi.fn(),
+    };
+    let watcher: ((value: unknown) => void) | undefined;
+    const appSettingsService = {
+        get: vi.fn(() =>
+            Promise.resolve({ enabled, cronExpression: '0 6 * * 1', retentionDays: 7 }),
+        ),
+        watch: vi.fn((_key: string, listener: (value: unknown) => void) => {
+            watcher = listener;
+            return { unsubscribe: vi.fn() };
+        }),
     };
     const service = new TrainingCleanupService(
-        configService as never,
+        appSettingsService as never,
         schedulerRegistry as never,
         sessionRepo as never,
     );
-    return { service, sessionRepo, schedulerRegistry };
+    return {
+        service,
+        sessionRepo,
+        schedulerRegistry,
+        emitChange: (value: unknown) => watcher?.(value),
+    };
 }
 
 describe('TrainingCleanupService', () => {
@@ -40,9 +56,9 @@ describe('TrainingCleanupService', () => {
         expect(sessionRepo.deleteMany).not.toHaveBeenCalled();
     });
 
-    it('schedules the job only when enabled', () => {
+    it('schedules the job only when enabled', async () => {
         const enabled = makeService([], true);
-        enabled.service.onModuleInit();
+        await enabled.service.onModuleInit();
         expect(enabled.schedulerRegistry.addCronJob).toHaveBeenCalledWith(
             'training-session-cleanup',
             expect.anything(),
@@ -52,7 +68,24 @@ describe('TrainingCleanupService', () => {
         job.stop();
 
         const disabled = makeService([], false);
-        disabled.service.onModuleInit();
+        await disabled.service.onModuleInit();
         expect(disabled.schedulerRegistry.addCronJob).not.toHaveBeenCalled();
+    });
+
+    it('reschedules the job when the super-admin changes the setting', async () => {
+        const { service, schedulerRegistry, emitChange } = makeService([], false);
+        await service.onModuleInit();
+        schedulerRegistry.doesExist.mockReturnValue(true);
+
+        emitChange({ enabled: true, cronExpression: '0 4 * * *', retentionDays: 3 });
+
+        expect(schedulerRegistry.deleteCronJob).toHaveBeenCalledWith('training-session-cleanup');
+        expect(schedulerRegistry.addCronJob).toHaveBeenCalledTimes(1);
+        const job = schedulerRegistry.addCronJob.mock.calls[0][1] as { stop: () => void };
+        job.stop();
+
+        emitChange({ enabled: false, cronExpression: '0 4 * * *', retentionDays: 3 });
+        expect(schedulerRegistry.deleteCronJob).toHaveBeenCalledTimes(2);
+        expect(schedulerRegistry.addCronJob).toHaveBeenCalledTimes(1);
     });
 });

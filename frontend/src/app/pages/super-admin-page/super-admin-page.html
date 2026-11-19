@@ -73,5 +73,10 @@
     (mergeSelectionRequested)="onClubMergeRequested($event)"
   />
 
-  <app-super-admin-settings />
+  <app-super-admin-settings
+    [settings]="appSettings()"
+    [savingKey]="savingSettingKey()"
+    (settingSave)="onSettingSave($event)"
+    (settingReset)="onSettingReset($event)"
+  />
 </div>

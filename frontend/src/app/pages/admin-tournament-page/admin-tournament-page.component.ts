@@ -1,3 +1,4 @@
+import { selectScoreCalculationsByMode } from 'src/app/store/app-settings/app-settings.selectors';
 import { normalizeCode } from 'src/app/utils/code-format.util';
 import { newId } from 'src/app/utils/unique-id.util';
 import { buildRankingPdf, rankingPdfFileName } from 'src/app/utils/pdf/ranking-pdf.util';
@@ -200,6 +201,8 @@ export class AdminTournamentPageComponent implements OnInit {
       this.canEditRoundsHistory(),
     );
   });
+
+  public readonly scoreCalculationsByMode = this.store.selectSignal(selectScoreCalculationsByMode);
 
   // Data
   public readonly hiddenFields: TournamentConfigurationField[] = environment.tournamentConfiguration

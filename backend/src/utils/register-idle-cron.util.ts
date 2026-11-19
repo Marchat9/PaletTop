@@ -30,3 +30,20 @@ export function registerIdleCron(
     job.start();
     logger.log(options.scheduledMessage);
 }
+
+/**
+ * Replaces a job after its settings changed: the running job (if any) is stopped and removed,
+ * then registered again with the new settings when still enabled.
+ */
+export function rescheduleIdleCron(
+    logger: Logger,
+    schedulerRegistry: SchedulerRegistry,
+    options: RegisterIdleCronOptions,
+    run: () => Promise<void>,
+): void {
+    if (schedulerRegistry.doesExist('cron', options.jobName)) {
+        schedulerRegistry.deleteCronJob(options.jobName);
+        logger.log(`Job "${options.jobName}" arrêté pour être reprogrammé`);
+    }
+    registerIdleCron(logger, schedulerRegistry, options, run);
+}

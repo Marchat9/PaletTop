@@ -30,7 +30,9 @@ function makeService(latestRound: TrainingRound | null) {
     };
     const service = new TrainingAutoCloseService(
         {
-            getOrThrow: vi.fn(() => ({ enabled: false, cronExpression: '', idleHours: 24 })),
+            get: vi.fn(() =>
+                Promise.resolve({ enabled: false, cronExpression: '', idleHours: 24 }),
+            ),
         } as never,
         {} as never,
         sessionRepo as never,

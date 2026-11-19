@@ -1,0 +1,25 @@
+<div class="setting-footer">
+  <p class="setting-source">
+    {{ meta().sourceLabel }}
+    @if (meta().appVersion) {
+      · v{{ meta().appVersion }}
+    }
+    @if (meta().updatedAt) {
+      · {{ meta().updatedAt | date: 'dd/MM/yyyy HH:mm' }}
+    }
+  </p>
+  <div class="setting-actions">
+    <app-button
+      title="Réinitialiser"
+      variant="tertiary"
+      [disabled]="meta().isSaving"
+      (clicked)="reset.emit()"
+    />
+    <app-button
+      title="Enregistrer"
+      [loading]="meta().isSaving"
+      [disabled]="!meta().isDirty || meta().isSaving"
+      (clicked)="save.emit()"
+    />
+  </div>
+</div>

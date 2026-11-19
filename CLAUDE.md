@@ -40,7 +40,11 @@ docker compose up --build        # From the repo root: PostgreSQL + backend + fr
 - **NestJS** with TypeORM + PostgreSQL (port 3000)
 - Entities live in `src/entities/` and are auto-discovered via glob
 - Business logic organized in `src/modules/`: `tournaments`, `training`, `realtime`,
-  `super-admin`, `cleanup`, `health`
+  `super-admin`, `cleanup`, `health`, `app-settings`
+- App settings (`src/modules/app-settings/`): key/value settings typed in
+  `app-setting.definitions.ts` (scope, default, env vars, validation), stored in `app_setting` and
+  editable by the super-admin; env vars only initialise them (e.g. cleanup and training jobs, score
+  calculations offered per competition mode)
 - Tournament modes (standard, up-down, championship) are strategies in
   `src/modules/tournaments/strategies/` (see the READMEs there)
 - DB config in `src/database/typeorm.config.ts` with two modes:
@@ -55,6 +59,7 @@ docker compose up --build        # From the repo root: PostgreSQL + backend + fr
   - `appConfig` — theme, notifications, localStorage cache
   - `tournament` — current tournament data and API call state
   - `training` — training group, session, rounds, leaderboard and participant view
+  - `appSettings` — public app settings (loaded at startup) and, for the super-admin, every setting
   - `realtime` — websocket connection and broadcast actions (tournament and training streams are kept separate: they share event names with different payloads)
 - Store structure: `src/app/store/{feature}/{feature}.actions/reducer/effects/selectors.ts`
 - Effects call services (`src/app/services/`) which hit the backend API

@@ -5,6 +5,8 @@ import { ActivatedRoute, convertToParamMap, ParamMap, Router } from '@angular/ro
 import { Actions } from '@ngrx/effects';
 import { Action } from '@ngrx/store';
 import { MockStore, provideMockStore } from '@ngrx/store/testing';
+import { DEFAULT_SCORE_CALCULATIONS_BY_MODE } from 'src/app/models/app-setting.model';
+import { selectScoreCalculationsByMode } from 'src/app/store/app-settings/app-settings.selectors';
 import { BehaviorSubject, Observable, of, Subject } from 'rxjs';
 import { describe, expect, it, vi } from 'vitest';
 import { TeamConfigEventType } from 'src/app/models/team-config.model';
@@ -112,6 +114,7 @@ function setup({
       { provide: PdfExportService, useValue: pdfExport },
       provideMockStore({
         selectors: [
+          { selector: selectScoreCalculationsByMode, value: DEFAULT_SCORE_CALCULATIONS_BY_MODE },
           { selector: selectCurrentTournamentData, value: buildTournament(status) },
           {
             selector: selectCurrentTournamentAdminInformations,

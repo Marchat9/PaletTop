@@ -2,7 +2,8 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
 import { environment } from '@environment';
 import { Card } from '../../card/card';
-import { InputCardRadio } from '../../input-card-radio/input-card-radio';
+import { ScoreCalculation } from 'src/app/models/tournament-configuration-detail.model';
+import { InputCardRadio, InputCardRadioOption } from '../../input-card-radio/input-card-radio';
 import { InputSelectOption } from '../../input-select/input-select';
 import { TournamentConfigurationField } from '../tournament-configuration-form.model';
 import * as configuration from '../tournament-create.data';
@@ -31,6 +32,8 @@ export class TournamentModeParameter {
   public readonly group = input.required<TournamentModeParameterForm>();
   public readonly readonlyFields = input<TournamentConfigurationField[]>([]);
   public readonly hiddenFields = input<TournamentConfigurationField[]>([]);
+  /** Score calculations of the selected mode (filtered by the parent). */
+  public readonly scoreCalculationOptions = input<InputCardRadioOption<ScoreCalculation>[]>([]);
 
   public readonly competitionModeOptions = configuration.competitionModeOptions;
   public readonly principalBracketSizeOptions: InputSelectOption[] = [

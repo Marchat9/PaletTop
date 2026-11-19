@@ -1,61 +1,79 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { SchedulerRegistry } from '@nestjs/schedule';
-import { registerIdleCron } from 'src/utils/register-idle-cron.util';
+import { Subscription } from 'rxjs';
+import { registerIdleCron, rescheduleIdleCron } from 'src/utils/register-idle-cron.util';
 import { CleanupConfig } from 'src/config/cleanup.config';
 import { Tournament } from 'src/entities/tournament.entity';
+import { AppSettingKey } from 'src/enum/app-setting.enum';
+import { AppSettingsService } from 'src/modules/app-settings/app-settings.service';
 import { TournamentRepository } from 'src/modules/tournaments/repositories/tournament.repository';
 
+const JOB_NAME = 'tournament-cleanup';
+
 @Injectable()
-export class CleanupService implements OnModuleInit {
+export class CleanupService implements OnModuleInit, OnModuleDestroy {
     private readonly logger = new Logger(CleanupService.name);
-    private readonly config: CleanupConfig;
+    private subscription?: Subscription;
 
     constructor(
-        private readonly configService: ConfigService,
+        private readonly appSettingsService: AppSettingsService,
         private readonly schedulerRegistry: SchedulerRegistry,
         private readonly tournamentRepo: TournamentRepository,
-    ) {
-        this.config = this.configService.getOrThrow<CleanupConfig>('cleanup');
+    ) {}
+
+    async onModuleInit(): Promise<void> {
+        const config = await this.appSettingsService.get(AppSettingKey.TOURNAMENT_CLEANUP);
+        this.schedule(config, false);
+        // The super-admin may change the schedule at runtime: the job follows without a restart.
+        this.subscription = this.appSettingsService.watch(
+            AppSettingKey.TOURNAMENT_CLEANUP,
+            (updated) => this.schedule(updated, true),
+        );
     }
 
-    onModuleInit(): void {
-        registerIdleCron(
+    onModuleDestroy(): void {
+        this.subscription?.unsubscribe();
+    }
+
+    private schedule(config: CleanupConfig, isReschedule: boolean): void {
+        const register = isReschedule ? rescheduleIdleCron : registerIdleCron;
+        register(
             this.logger,
             this.schedulerRegistry,
             {
-                enabled: this.config.enabled,
-                cronExpression: this.config.cronExpression,
-                jobName: 'tournament-cleanup',
-                disabledMessage:
-                    'Nettoyage automatique des tournois désactivé (CLEANUP_ENABLED=false).',
-                scheduledMessage: `Nettoyage automatique des tournois planifié (cron: "${this.config.cronExpression}").`,
+                enabled: config.enabled,
+                cronExpression: config.cronExpression,
+                jobName: JOB_NAME,
+                disabledMessage: 'Nettoyage automatique des tournois désactivé.',
+                scheduledMessage: `Nettoyage automatique des tournois planifié (cron: "${config.cronExpression}").`,
             },
             () => this.runCleanup(),
         );
     }
 
     async runCleanup(): Promise<void> {
+        // Read on each run: rule toggles and retention days changed meanwhile apply right away.
+        const config = await this.appSettingsService.get(AppSettingKey.TOURNAMENT_CLEANUP);
         this.logger.log('==== Démarrage du nettoyage des tournois ====');
 
-        if (this.config.completed.enabled) {
+        if (config.completed.enabled) {
             await this.cleanupRule('terminés', () =>
-                this.tournamentRepo.findExpiredCompleted(this.config.completed.retentionDays),
+                this.tournamentRepo.findExpiredCompleted(config.completed.retentionDays),
             );
         }
 
-        if (this.config.draft.enabled) {
+        if (config.draft.enabled) {
             await this.cleanupRule('brouillons', () =>
                 this.tournamentRepo.findExpiredDrafts(
-                    this.config.draft.retentionDays,
-                    this.config.draft.maxFutureDays,
+                    config.draft.retentionDays,
+                    config.draft.maxFutureDays,
                 ),
             );
         }
 
-        if (this.config.active.enabled) {
+        if (config.active.enabled) {
             await this.cleanupRule('actifs', () =>
-                this.tournamentRepo.findExpiredActive(this.config.active.retentionDays),
+                this.tournamentRepo.findExpiredActive(config.active.retentionDays),
             );
         }
 

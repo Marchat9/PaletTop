@@ -20,6 +20,16 @@ import { SuperAdminTournamentSummaryDto } from 'src/app/services/super-admin-tou
 import { SuperAdminTrainingSummaryDto } from 'src/app/services/super-admin-training.service';
 import { Button } from 'src/app/shared/button/button';
 import { MetricTileComponent } from 'src/app/shared/metric-tile/metric-tile';
+import { AppSettingKey } from 'src/app/models/app-setting.model';
+import {
+  loadSuperAdminSettings,
+  resetSetting,
+  updateSetting,
+} from 'src/app/store/app-settings/app-settings.actions';
+import {
+  selectAppSettingDetails,
+  selectSavingAppSettingKey,
+} from 'src/app/store/app-settings/app-settings.selectors';
 import { loadMetrics } from 'src/app/store/metrics/metrics.actions';
 import { selectMetrics } from 'src/app/store/metrics/metrics.selectors';
 import {
@@ -43,7 +53,10 @@ import { selectSuperAdminTrainingsList } from 'src/app/store/superadmin-training
 import { clearSuperAdminSession } from 'src/app/store/superadmin/superadmin.actions';
 import { selectSuperAdminPassword } from 'src/app/store/superadmin/superadmin.selectors';
 import { SuperAdminClubTableComponent } from './components/super-admin-club-table/super-admin-club-table';
-import { SuperAdminSettingsComponent } from './components/super-admin-settings/super-admin-settings';
+import {
+  AppSettingChange,
+  SuperAdminSettingsComponent,
+} from './components/super-admin-settings/super-admin-settings';
 import { SuperAdminTournamentTableComponent } from './components/super-admin-tournament-table/super-admin-tournament-table';
 import { SuperAdminTrainingTableComponent } from './components/super-admin-training-table/super-admin-training-table';
 
@@ -75,6 +88,8 @@ export class SuperAdminPageComponent implements OnInit, OnDestroy {
   public readonly tournaments = this.store.selectSignal(selectSuperAdminTournamentsList);
   public readonly trainings = this.store.selectSignal(selectSuperAdminTrainingsList);
   public readonly clubs = this.store.selectSignal(selectSuperAdminClubsList);
+  public readonly appSettings = this.store.selectSignal(selectAppSettingDetails);
+  public readonly savingSettingKey = this.store.selectSignal(selectSavingAppSettingKey);
 
   // Template references TournamentStatus.ACTIVE/.DRAFT/.FINISHED directly (not
   // string literals like 'ACTIVE') — TypeScript string enums are nominal types,
@@ -101,6 +116,30 @@ export class SuperAdminPageComponent implements OnInit, OnDestroy {
     this.store.dispatch(searchSuperAdminTournaments({ criteria: this.tournaments().criteria }));
     this.store.dispatch(searchSuperAdminTrainings({ criteria: this.trainings().criteria }));
     this.store.dispatch(searchSuperAdminClubs({ criteria: this.clubs().criteria }));
+    this.store.dispatch(loadSuperAdminSettings());
+  }
+
+  onSettingSave({ key, value }: AppSettingChange): void {
+    this.store.dispatch(updateSetting({ key, value }));
+  }
+
+  onSettingReset(key: AppSettingKey): void {
+    this.dialog
+      .open<boolean>(ConfirmationPopupComponent, {
+        data: {
+          title: 'Réinitialiser le paramètre',
+          message:
+            "Revenir à la valeur de la variable d'environnement, ou à défaut à la valeur par défaut ?",
+          confirmLabel: 'Réinitialiser',
+        },
+        ...DIALOG_OPTIONS,
+      })
+      .closed.pipe(first())
+      .subscribe((confirmed) => {
+        if (confirmed) {
+          this.store.dispatch(resetSetting({ key }));
+        }
+      });
   }
 
   onStatTileClick(status: TournamentStatus): void {
