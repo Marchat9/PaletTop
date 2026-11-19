@@ -5,25 +5,28 @@
   </div>
 
   <div class="card-content padding">
-    <!-- Competition Mode -->
-    <div class="form-group">
-      <label class="form-label">Mode de Compétition <span class="mandatory">*</span></label>
-      <app-input-card-radio
-        [options]="competitionModeOptions"
-        [formControl]="group().controls.competitionMode"
-      ></app-input-card-radio>
-    </div>
-
-    @if (!hiddenFields().includes('scoreCalculation')) {
+    <!-- Competition mode and score calculation: side by side, stacked on mobile -->
+    <div class="mode-and-score">
       <div class="form-group">
-        <label class="form-label">Calcul des scores <span class="mandatory">*</span></label>
+        <label class="form-label">Mode de Compétition <span class="mandatory">*</span></label>
         <app-input-card-radio
-          [columns]="3"
-          [options]="scoreCalculationOptions()"
-          [formControl]="group().controls.scoreCalculation"
+          [columns]="1"
+          [options]="competitionModeOptions"
+          [formControl]="group().controls.competitionMode"
         ></app-input-card-radio>
       </div>
-    }
+
+      @if (!hiddenFields().includes('scoreCalculation')) {
+        <div class="form-group">
+          <label class="form-label">Calcul des scores <span class="mandatory">*</span></label>
+          <app-input-card-radio
+            [columns]="2"
+            [options]="scoreCalculationOptions()"
+            [formControl]="group().controls.scoreCalculation"
+          ></app-input-card-radio>
+        </div>
+      }
+    </div>
 
     <div class="separator"></div>
 

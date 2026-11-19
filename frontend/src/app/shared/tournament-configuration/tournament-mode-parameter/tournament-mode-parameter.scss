@@ -1,6 +1,44 @@
+.mode-and-score {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+
+  // Score cards: two per row while each keeps this width, one per row below.
+  --card-radio-min-width: 14rem;
+
+  // Thin line between the two groups: horizontal when stacked, vertical side by side.
+  > .form-group + .form-group {
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--color-outline-variant);
+  }
+
+  @media (width >= 768px) {
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+
+    // Same padding on each side of the line: both groups keep the same width.
+    > .form-group:first-child:not(:only-child) {
+      padding-right: 1.5rem;
+    }
+
+    > .form-group + .form-group {
+      padding-top: 0;
+      padding-left: 1.5rem;
+      border-top: none;
+      border-left: 1px solid var(--color-outline-variant);
+    }
+
+    // Score calculation hidden: the competition mode keeps the whole width.
+    > .form-group:only-child {
+      grid-column: 1 / -1;
+    }
+  }
+}
+
 .separator {
   width: 100%;
   border: 1px dashed var(--color-primary);
+  margin: 1rem 0;
 }
 
 .no-competition-configured {
