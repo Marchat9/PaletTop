@@ -141,6 +141,15 @@ describe('AdminMatchRow', () => {
     expect(submitted).toEqual([{ matchId: 'm6', scoreA: 13, scoreB: 9 }]);
   });
 
+  it('validates an ended match as it is, without a changed score', () => {
+    const { root, submitted } = render({ editing: true, match: { ...MATCH, status: 'ENDED' } });
+    const save = root.querySelector('button.save') as HTMLButtonElement;
+
+    expect(save.disabled).toBe(false);
+    save.click();
+    expect(submitted).toEqual([{ matchId: 'm6', scoreA: 6, scoreB: 13 }]);
+  });
+
   it('cancels the correction with Escape and drops the draft when reopened', () => {
     const { fixture, root, row, cancels } = render({ editing: true });
     row.draftScoreA.set(11);

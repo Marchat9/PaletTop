@@ -114,6 +114,8 @@ export class AdminMatchRow {
       return;
     }
     if (this.breakpointObserver.isMatched(MOBILE_BREAKPOINT)) {
+  /** A changed score, or an ended match the admin validates as it is. */
+  public readonly canSave = computed(() => this.hasChanges() || this.match().status === 'ENDED');
       this.openScoreSheet();
     } else {
       this.editRequested.emit();
@@ -121,7 +123,7 @@ export class AdminMatchRow {
   }
 
   public submit(): void {
-    if (!this.hasChanges() || this.saving()) {
+    if (!this.canSave() || this.saving()) {
       return;
     }
     this.scoreSubmitted.emit({

@@ -48,7 +48,7 @@
         class="action-btn save"
         aria-label="Enregistrer"
         title="Enregistrer"
-        [disabled]="!hasChanges() || saving()"
+        [disabled]="!canSave() || saving()"
         (click)="submit()"
       >
         <app-icon [name]="saving() ? 'progress_activity' : 'check'" [ariaHidden]="true" />

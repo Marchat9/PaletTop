@@ -16,12 +16,12 @@ const MATCH: AdminMatchView = {
   finishedAt: null,
 };
 
-function render() {
+function render(match: AdminMatchView = MATCH) {
   const dialogRef = { close: vi.fn() };
   TestBed.configureTestingModule({
     providers: [
       { provide: DialogRef, useValue: dialogRef },
-      { provide: DIALOG_DATA, useValue: { match: MATCH, pointsPerGame: 13 } },
+      { provide: DIALOG_DATA, useValue: { match, pointsPerGame: 13 } },
     ],
   });
   const fixture = TestBed.createComponent(MatchScoreSheet);
@@ -60,7 +60,16 @@ describe('MatchScoreSheet', () => {
     const { sheet } = render();
 
     expect(sheet.hasChanges()).toBe(false);
+    expect(sheet.canSave()).toBe(false);
     sheet.draftScoreA.set(7);
     expect(sheet.hasChanges()).toBe(true);
+    expect(sheet.canSave()).toBe(true);
+  });
+
+  it('allows validating an ended match as it is', () => {
+    const { sheet } = render({ ...MATCH, status: 'ENDED' });
+
+    expect(sheet.hasChanges()).toBe(false);
+    expect(sheet.canSave()).toBe(true);
   });
 });

@@ -35,7 +35,7 @@
       variant="primary"
       icon="check"
       [large]="true"
-      [disabled]="!hasChanges()"
+      [disabled]="!canSave()"
       (clicked)="save()"
     />
   </div>
