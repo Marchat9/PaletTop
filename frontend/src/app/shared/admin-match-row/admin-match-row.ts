@@ -99,6 +99,13 @@ export class AdminMatchRow {
     const dot = LIVE_DOTS[this.match().status];
     return dot ? { className: `live-dot live-dot--${dot.modifier}`, label: dot.label } : null;
   });
+  public readonly byeLabel = computed(() => {
+    const match = this.match();
+    if (match.isRest) {
+      return 'Au repos ce round';
+    }
+    return match.byeWin ? 'Exempté (victoire)' : 'Exempté';
+  });
   public readonly scoreKey = computed(() => `${this.match().scoreA}-${this.match().scoreB}`);
   public readonly statusTone = computed(() => matchStatusTone(this.match().status));
   public readonly editLabel = computed(
@@ -107,6 +114,8 @@ export class AdminMatchRow {
   public readonly hasChanges = computed(
     () => this.draftScoreA() !== this.match().scoreA || this.draftScoreB() !== this.match().scoreB,
   );
+  /** A changed score, or an ended match the admin validates as it is. */
+  public readonly canSave = computed(() => this.hasChanges() || this.match().status === 'ENDED');
 
   /** Mobile: bottom sheet. Desktop: the line itself turns into the correction. */
   public requestEdit(): void {
@@ -114,8 +123,6 @@ export class AdminMatchRow {
       return;
     }
     if (this.breakpointObserver.isMatched(MOBILE_BREAKPOINT)) {
-  /** A changed score, or an ended match the admin validates as it is. */
-  public readonly canSave = computed(() => this.hasChanges() || this.match().status === 'ENDED');
       this.openScoreSheet();
     } else {
       this.editRequested.emit();

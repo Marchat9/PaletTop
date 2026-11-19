@@ -1,7 +1,7 @@
 @if (match().isBye) {
   <div class="match-row is-bye">
     <span class="team">{{ match().teamA }}</span>
-    <span class="bye-badge">{{ match().byeWin ? 'Exempté (victoire)' : 'Exempté' }}</span>
+    <span class="bye-badge">{{ byeLabel() }}</span>
   </div>
 } @else if (editing()) {
   <div

@@ -172,4 +172,10 @@ describe('AdminMatchRow', () => {
     expect(root.querySelector('.bye-badge')?.textContent).toContain('Exempté');
     expect(root.querySelector('button')).toBeNull();
   });
+
+  it('shows a training rest as a rest, not as an exempt', () => {
+    const { root } = render({ match: { ...MATCH, isBye: true, isRest: true, teamB: null } });
+
+    expect(root.querySelector('.bye-badge')?.textContent?.trim()).toBe('Au repos ce round');
+  });
 });
