@@ -20,7 +20,7 @@
         }
         <span class="status">
           @if (match.isBye) {
-            {{ match.isRest ? 'Au repos' : match.byeWin ? 'Exempté (victoire)' : 'Exempté' }}
+            {{ match.byeLabel }}
           } @else {
             <app-match-status [status]="match.status" />
           }
