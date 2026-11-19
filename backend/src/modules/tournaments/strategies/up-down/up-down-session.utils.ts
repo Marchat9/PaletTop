@@ -25,7 +25,7 @@ export function resolvePairingMode(config: UpDownCompetitionConfiguration): Pair
 
 /**
  * True when this session is paired by the Dutch Swiss system: every round after the first one,
- * except the ranking-based last round (paired by ranking neighbours).
+ * except the ranking-based last round (1v2, 3v4... by ranking).
  */
 export function isDutchRound(
     config: UpDownCompetitionConfiguration,

@@ -1,19 +1,22 @@
 import { describe, expect, it } from 'vitest';
 import { Team } from 'src/entities/team.entity';
 import { TournamentMatch } from 'src/entities/tounament-match.entity';
+import { ConstraintLevel } from 'src/enum/constraint-level.enum';
 import { ConstraintConfig } from 'src/model/constraint.model';
 import {
+    buildDutchLevels,
     buildScoreGroups,
     generateDutchPairs,
-    generateNeighbourPairs,
     selectDutchByeTeam,
 } from './dutch-pairing.utils';
 
 const NO_CLUB_CONSTRAINT: ConstraintConfig = {
     allowMatchAgainstFullSameClub: true,
     allowMatchAgainstPartialSameClub: true,
-    allowRematch: true,
+    allowRematch: false,
 };
+
+const ANY_PAIR_ALLOWED: ConstraintConfig = { ...NO_CLUB_CONSTRAINT, allowRematch: true };
 
 function teams(...ids: string[]): Team[] {
     return ids.map((id) => ({ id, name: id, players: [] }) as unknown as Team);
@@ -113,6 +116,19 @@ describe('generateDutchPairs', () => {
         ]);
     });
 
+    it('keeps the Dutch opponent, even already met, when the tournament allows rematches', () => {
+        const { pairs } = generateDutchPairs(
+            teams('A', 'B', 'C', 'D'),
+            wins({ A: 1, B: 1, C: 1, D: 1 }),
+            [played('A', 'C')],
+            ANY_PAIR_ALLOWED,
+        );
+        expect(ids(pairs)).toEqual([
+            ['A', 'C'],
+            ['B', 'D'],
+        ]);
+    });
+
     it('allows a rematch rather than failing when no rematch-free pairing exists', () => {
         const { pairs } = generateDutchPairs(
             teams('A', 'B'),
@@ -165,21 +181,23 @@ describe('generateDutchPairs', () => {
     });
 });
 
-describe('generateNeighbourPairs', () => {
-    it('pairs ranking neighbours, skipping an opponent already met', () => {
-        const ranked = teams('A', 'B', 'C', 'D');
-        const { pairs, byeTeam } = generateNeighbourPairs(ranked, [played('A', 'B')]);
-        expect(byeTeam).toBeNull();
-        expect(ids(pairs)).toEqual([
-            ['A', 'C'],
-            ['B', 'D'],
+describe('buildDutchLevels', () => {
+    it('starts from the tournament settings, rematch avoided only when forbidden', () => {
+        expect(buildDutchLevels(ANY_PAIR_ALLOWED)).toEqual([ConstraintLevel.NO_CONTRAINTE]);
+        expect(
+            buildDutchLevels({ ...ANY_PAIR_ALLOWED, allowMatchAgainstFullSameClub: false }),
+        ).toEqual([ConstraintLevel.NO_SAME_CLUB, ConstraintLevel.NO_CONTRAINTE]);
+        expect(buildDutchLevels(NO_CLUB_CONSTRAINT)).toEqual([
+            ConstraintLevel.NO_REMATCH,
+            ConstraintLevel.NO_CONTRAINTE,
         ]);
-    });
-
-    it('leaves the last-ranked team out with an odd count', () => {
-        const { pairs, byeTeam } = generateNeighbourPairs(teams('A', 'B', 'C'), []);
-        expect(byeTeam?.id).toBe('C');
-        expect(ids(pairs)).toEqual([['A', 'B']]);
+        expect(
+            buildDutchLevels({ ...NO_CLUB_CONSTRAINT, allowMatchAgainstPartialSameClub: false }),
+        ).toEqual([
+            ConstraintLevel.NO_REMATCH_NO_PARTIAL_SAME_CLUB,
+            ConstraintLevel.NO_REMATCH,
+            ConstraintLevel.NO_CONTRAINTE,
+        ]);
     });
 });
 

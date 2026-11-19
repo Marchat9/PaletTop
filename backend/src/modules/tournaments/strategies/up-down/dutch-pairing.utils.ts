@@ -105,11 +105,6 @@ export function buildDutchPreferences(groups: Team[][]): Preferences {
     return preferences;
 }
 
-/** Every other team, closest in the ranking first (ranking-based last round). */
-export function buildNeighbourPreferences(rankedTeams: Team[]): Preferences {
-    return new Map(rankedTeams.map((team, i) => [team.id, byDistance(rankedTeams, i)]));
-}
-
 /**
  * Depth-first search, highest-ranked unpaired team first, trying its opponents in preference
  * order: the first complete solution is the most preferred one. Null when none exists within the
@@ -144,18 +139,31 @@ function searchPairs(
     return search() ? pairs : null;
 }
 
-/** Club constraint of the tournament, combined with "no rematch". */
-function strictestLevel(config: ConstraintConfig): ConstraintLevel {
-    if (!config.allowMatchAgainstPartialSameClub) {
-        return ConstraintLevel.NO_REMATCH_NO_PARTIAL_SAME_CLUB;
+/**
+ * Levels to try, from the tournament settings (club and rematch constraints exactly as set, so an
+ * allowed rematch never bends the Dutch pairing) down to no constraint. When rematches are
+ * forbidden, the club constraints are relaxed first.
+ */
+export function buildDutchLevels(config: ConstraintConfig): ConstraintLevel[] {
+    const noPartialClub = !config.allowMatchAgainstPartialSameClub;
+    const noFullClub = !config.allowMatchAgainstFullSameClub;
+    if (config.allowRematch) {
+        if (noPartialClub)
+            return [ConstraintLevel.NO_PARTIAL_SAME_CLUB, ConstraintLevel.NO_CONTRAINTE];
+        if (noFullClub) return [ConstraintLevel.NO_SAME_CLUB, ConstraintLevel.NO_CONTRAINTE];
+        return [ConstraintLevel.NO_CONTRAINTE];
     }
-    if (!config.allowMatchAgainstFullSameClub) return ConstraintLevel.NO_REMATCH_NO_SAME_CLUB;
-    return ConstraintLevel.NO_REMATCH;
+    const settingsLevel = noPartialClub
+        ? ConstraintLevel.NO_REMATCH_NO_PARTIAL_SAME_CLUB
+        : noFullClub
+          ? ConstraintLevel.NO_REMATCH_NO_SAME_CLUB
+          : ConstraintLevel.NO_REMATCH;
+    return [...new Set([settingsLevel, ConstraintLevel.NO_REMATCH, ConstraintLevel.NO_CONTRAINTE])];
 }
 
 /**
- * Tries the levels from the strictest; the last one has no constraint and always succeeds (the
- * preference order then still keeps rematches as rare as it can).
+ * Tries the levels in order; the last one has no constraint and always succeeds, following the
+ * Dutch preference order.
  */
 function pairAtFirstPossibleLevel(
     rankedTeams: Team[],
@@ -164,7 +172,7 @@ function pairAtFirstPossibleLevel(
     pastMatches: TournamentMatch[],
 ): TeamPair[] {
     const counts = buildMatchCountMap(pastMatches);
-    for (const level of [...new Set(levels)]) {
+    for (const level of levels) {
         const pairs = searchPairs(rankedTeams, preferences, (a, b) =>
             isValidPair(a, b, counts, level),
         );
@@ -175,7 +183,7 @@ function pairAtFirstPossibleLevel(
 
 /**
  * Swiss system, Dutch variant: teams with the same number of wins meet, top half against bottom
- * half, without rematch when possible (club constraints are relaxed before rematches).
+ * half, within the club and rematch constraints of the tournament when possible.
  * `rankedTeams` follows the current ranking; `winsByTeam` gives the groups, whatever the score
  * calculation.
  */
@@ -191,26 +199,7 @@ export function generateDutchPairs(
     const pairs = pairAtFirstPossibleLevel(
         playing,
         preferences,
-        [strictestLevel(config), ConstraintLevel.NO_REMATCH, ConstraintLevel.NO_CONTRAINTE],
-        pastMatches,
-    );
-    return { pairs, byeTeam };
-}
-
-/**
- * Ranking-based last round of the Dutch mode: each team meets its closest ranking neighbour it has
- * not met yet. The last-ranked team sits out with an odd count (bye worth nothing).
- */
-export function generateNeighbourPairs(
-    rankedTeams: Team[],
-    pastMatches: TournamentMatch[],
-): PairingResult {
-    const byeTeam = rankedTeams.length % 2 === 1 ? rankedTeams[rankedTeams.length - 1] : null;
-    const playing = rankedTeams.filter((team) => team.id !== byeTeam?.id);
-    const pairs = pairAtFirstPossibleLevel(
-        playing,
-        buildNeighbourPreferences(playing),
-        [ConstraintLevel.NO_REMATCH, ConstraintLevel.NO_CONTRAINTE],
+        buildDutchLevels(config),
         pastMatches,
     );
     return { pairs, byeTeam };

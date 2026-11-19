@@ -22,14 +22,8 @@ import {
     generateMatchesInPool,
     orderTeamsByRanking,
 } from 'src/modules/tournaments/utils/match.utils';
-import { PairingMode } from 'src/enum/tounament.enum';
-import { generateDutchPairs, generateNeighbourPairs } from './dutch-pairing.utils';
-import {
-    computePhaseName,
-    isDutchRound,
-    isRankingRound,
-    resolvePairingMode,
-} from './up-down-session.utils';
+import { generateDutchPairs } from './dutch-pairing.utils';
+import { computePhaseName, isDutchRound, isRankingRound } from './up-down-session.utils';
 
 export class UpDownTournamentStrategy extends TournamentStrategy {
     private readonly logger = new Logger(UpDownTournamentStrategy.name);
@@ -74,8 +68,8 @@ export class UpDownTournamentStrategy extends TournamentStrategy {
     }
 
     /**
-     * Random draw, Dutch Swiss pairing, or ranking-based last round (1v2 in random mode, closest
-     * neighbour not met yet in Dutch mode).
+     * Random draw, Dutch Swiss pairing, or ranking-based last round (1v2, 3v4... strictly by
+     * ranking, whatever the pairing mode).
      */
     private buildSessionMatches(
         tournament: Tournament,
@@ -86,7 +80,6 @@ export class UpDownTournamentStrategy extends TournamentStrategy {
         pastMatches: TournamentMatch[],
     ): DeepPartial<TournamentMatch>[] {
         const config = this.getConfig(tournament);
-        const isDutch = resolvePairingMode(config) === PairingMode.DUTCH;
 
         if (
             isRankingRound(config, session.sessionNumber) ||
@@ -107,10 +100,6 @@ export class UpDownTournamentStrategy extends TournamentStrategy {
                     `Tournament ${tournament.code}: session ${session.sessionNumber} paired by the Dutch Swiss system`,
                 );
                 return generateMatchesFromPairs(pool, pairs, byeTeam, true, tournament, session);
-            }
-            if (isDutch) {
-                const { pairs, byeTeam } = generateNeighbourPairs(rankedTeams, pastMatches);
-                return generateMatchesFromPairs(pool, pairs, byeTeam, false, tournament, session);
             }
             return generateMatchesByRanking(pool, rankedTeams, tournament, session);
         }
