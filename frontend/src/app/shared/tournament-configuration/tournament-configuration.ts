@@ -208,7 +208,7 @@ export class TournamentConfiguration implements OnInit {
           lastRoundByRanking: new FormControl(upDownConfig.lastRoundByRanking ?? false, {
             nonNullable: true,
           }),
-          pairingMode: new FormControl(upDownConfig.pairingMode ?? 'random', {
+          pairingMode: new FormControl(upDownConfig.pairingMode ?? 'dutch', {
             nonNullable: true,
           }),
         }),
