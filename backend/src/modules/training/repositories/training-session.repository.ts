@@ -85,6 +85,8 @@ export class TrainingSessionRepository {
         threshold.setHours(threshold.getHours() - idleHours);
         return this.repo.find({
             where: { status: TrainingSessionStatus.OPEN, lastActivityAt: LessThan(threshold) },
+            // Named after its training in the job log.
+            relations: { training: true },
         });
     }
 
@@ -100,12 +102,15 @@ export class TrainingSessionRepository {
     /**
      * Closed sessions nobody played in: no participant at all (whatever their status), or no round
      * ever generated - closed for at least `retentionDays`. Open sessions are never returned.
+     * Their training and participants come along: the job log names the club and says why.
      */
     findClosedWithoutParticipantOrRound(retentionDays: number): Promise<TrainingSession[]> {
         const threshold = new Date();
         threshold.setDate(threshold.getDate() - retentionDays);
         return this.repo
             .createQueryBuilder('session')
+            .leftJoinAndSelect('session.training', 'training')
+            .leftJoinAndSelect('session.participants', 'participants')
             .where('session.status = :status', { status: TrainingSessionStatus.CLOSED })
             .andWhere('session.closedAt < :threshold', {
                 threshold,

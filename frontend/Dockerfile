@@ -33,6 +33,12 @@ RUN npm run build
 # ---- production: Nginx (non-root) serving the static build ----
 FROM nginxinc/nginx-unprivileged:alpine AS production
 
+# Time zones for the TZ variable set by docker compose (nginx logs). The image runs as the
+# unprivileged nginx user (uid 101).
+USER root
+RUN apk add --no-cache tzdata
+USER 101
+
 COPY --from=build --chown=nginx:nginx /app/dist/PaletTop/browser /usr/share/nginx/html
 COPY --chown=nginx:nginx nginx.conf /etc/nginx/conf.d/default.conf
 

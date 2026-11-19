@@ -9,6 +9,7 @@ import { TrainingSessionRepository } from '../repositories/training-session.repo
 
 const JOB_NAME = 'training-session-cleanup';
 
+import { trainingCleanupLogLines } from '../utils/training-job-log.utils';
 @Injectable()
 export class TrainingCleanupService implements OnModuleInit, OnModuleDestroy {
     private readonly logger = new Logger(TrainingCleanupService.name);
@@ -55,16 +56,11 @@ export class TrainingCleanupService implements OnModuleInit, OnModuleDestroy {
         const empty = await this.trainingSessionRepo.findClosedWithoutParticipantOrRound(
             config.retentionDays,
         );
-        if (!empty.length) {
-            this.logger.log("Aucune session d'entraînement vide à supprimer");
-            return;
+        if (empty.length) {
+            await this.trainingSessionRepo.deleteMany(empty.map((session) => session.id));
         }
-
-        await this.trainingSessionRepo.deleteMany(empty.map((session) => session.id));
-        this.logger.log(
-            `${empty.length} session(s) d'entraînement clôturée(s) sans joueur ou sans round supprimée(s) : [${empty
-                .map((session) => session.code)
-                .join(', ')}]`,
-        );
+        for (const line of trainingCleanupLogLines(empty, config.retentionDays)) {
+            this.logger.log(line);
+        }
     }
 }

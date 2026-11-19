@@ -38,8 +38,8 @@ function makeService(empty: Partial<TrainingSession>[], enabled = true) {
 describe('TrainingCleanupService', () => {
     it('deletes the closed sessions without player or without round', async () => {
         const { service, sessionRepo } = makeService([
-            { id: 's1', code: '123456' },
-            { id: 's2', code: '654321' },
+            { id: 's1', code: '123456', date: new Date('2026-11-12T19:00:00Z') },
+            { id: 's2', code: '654321', date: new Date('2026-11-05T19:00:00Z') },
         ]);
 
         await service.runCleanup();
