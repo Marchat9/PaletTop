@@ -1,3 +1,18 @@
+.mode-and-score {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+
+  @media (width >= 768px) {
+    grid-template-columns: 1fr 1fr;
+
+    // Score calculation hidden: the competition mode keeps the whole width.
+    > .form-group:only-child {
+      grid-column: 1 / -1;
+    }
+  }
+}
+
 .separator {
   width: 100%;
   border: 1px dashed var(--color-primary);
