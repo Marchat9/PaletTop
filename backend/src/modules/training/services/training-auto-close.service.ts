@@ -12,6 +12,11 @@ import { hasUnfinishedMatch } from '../utils/round-status.utils';
 import { TrainingRoundStatus } from 'src/enum/training.enum';
 import { TrainingRealtimeGateway } from '../training-realtime.gateway';
 import { TrainingSession } from 'src/entities/training-session.entity';
+import {
+    AutoCloseOutcome,
+    autoCloseLogLines,
+    sessionLogLabel,
+} from '../utils/training-job-log.utils';
 
 const JOB_NAME = 'training-session-auto-close';
 
@@ -60,27 +65,25 @@ export class TrainingAutoCloseService implements OnModuleInit, OnModuleDestroy {
     async runAutoClose(): Promise<void> {
         const config = await this.appSettingsService.get(AppSettingKey.TRAINING_AUTO_CLOSE);
         const expired = await this.trainingSessionRepo.findExpiredOpen(config.idleHours);
-        if (!expired.length) return;
 
-        const closable: TrainingSession[] = [];
+        const outcomes: AutoCloseOutcome[] = [];
         for (const session of expired) {
             try {
-                if (await this.closeIdleSession(session)) {
-                    closable.push(session);
-                }
+                outcomes.push(await this.closeIdleSession(session));
             } catch (error) {
                 // Rolled back alone: the other sessions are still closed, this one is retried on
                 // the next run.
-                this.logger.error(`Auto-close failed for training session ${session.code}`, error);
+                this.logger.error(`Auto-close failed for ${sessionLogLabel(session)}`, error);
             }
         }
-        if (!closable.length) return;
+        for (const line of autoCloseLogLines(outcomes, config.idleHours)) {
+            this.logger.log(line);
+        }
 
-        this.logger.log(
-            `${closable.length} session(s) d'entraînement clôturée(s) automatiquement : [${closable
-                .map((s) => s.code)
-                .join(', ')}]`,
-        );
+        const closable = outcomes
+            .filter((outcome) => outcome.kind !== 'leftOpen')
+            .map((outcome) => outcome.session);
+        if (!closable.length) return;
 
         const reloaded = await this.trainingSessionRepo.findAllByIdsWithRelations(
             closable.map((s) => s.id),
@@ -95,12 +98,12 @@ export class TrainingAutoCloseService implements OnModuleInit, OnModuleDestroy {
      * round closed could no longer be scored, without anything saying why.
      */
     @Transactional()
-    private async closeIdleSession(session: TrainingSession): Promise<boolean> {
-        if (!(await this.closeFinishedRound(session))) {
-            return false;
+    private async closeIdleSession(session: TrainingSession): Promise<AutoCloseOutcome> {
+        const outcome = await this.closeFinishedRound(session);
+        if (outcome.kind !== 'leftOpen') {
+            await this.trainingSessionRepo.closeMany([session.id]);
         }
-        await this.trainingSessionRepo.closeMany([session.id]);
-        return true;
+        return outcome;
     }
 
     /**
@@ -108,19 +111,15 @@ export class TrainingAutoCloseService implements OnModuleInit, OnModuleDestroy {
      * progress whose matches are all validated, that round is closed first. With a match still
      * unvalidated, the round and the session are both left open.
      */
-    private async closeFinishedRound(session: TrainingSession): Promise<boolean> {
+    private async closeFinishedRound(session: TrainingSession): Promise<AutoCloseOutcome> {
         const round = await this.trainingRoundRepo.findLatestBySession(session.id);
         if (!round || round.status !== TrainingRoundStatus.OPEN) {
-            return true;
+            return { kind: 'closed', session };
         }
         if (hasUnfinishedMatch(round)) {
-            this.logger.log(
-                `Session ${session.code} laissée ouverte : des matchs du round ${round.roundNumber} ne sont pas validés`,
-            );
-            return false;
+            return { kind: 'leftOpen', session, roundNumber: round.roundNumber };
         }
         await this.trainingRoundRepo.closeRound(round.id);
-        this.logger.log(`Round ${round.roundNumber} de la session ${session.code} clôturé`);
-        return true;
+        return { kind: 'closedWithRound', session, roundNumber: round.roundNumber };
     }
 }

@@ -10,6 +10,13 @@ import { TournamentRepository } from 'src/modules/tournaments/repositories/tourn
 
 const JOB_NAME = 'tournament-cleanup';
 
+import {
+    activeDetail,
+    completedDetail,
+    draftDetail,
+    TournamentCleanupGroup,
+    tournamentCleanupLogLines,
+} from './cleanup-log.utils';
 @Injectable()
 export class CleanupService implements OnModuleInit, OnModuleDestroy {
     private readonly logger = new Logger(CleanupService.name);
@@ -54,41 +61,52 @@ export class CleanupService implements OnModuleInit, OnModuleDestroy {
     async runCleanup(): Promise<void> {
         // Read on each run: rule toggles and retention days changed meanwhile apply right away.
         const config = await this.appSettingsService.get(AppSettingKey.TOURNAMENT_CLEANUP);
-        this.logger.log('==== Démarrage du nettoyage des tournois ====');
+        const groups: TournamentCleanupGroup[] = [];
 
         if (config.completed.enabled) {
-            await this.cleanupRule('terminés', () =>
-                this.tournamentRepo.findExpiredCompleted(config.completed.retentionDays),
-            );
+            groups.push({
+                rule: `Terminé depuis plus de ${config.completed.retentionDays} j`,
+                tournaments: await this.cleanupRule(() =>
+                    this.tournamentRepo.findExpiredCompleted(config.completed.retentionDays),
+                ),
+                detail: completedDetail,
+            });
         }
 
         if (config.draft.enabled) {
-            await this.cleanupRule('brouillons', () =>
-                this.tournamentRepo.findExpiredDrafts(
-                    config.draft.retentionDays,
-                    config.draft.maxFutureDays,
+            groups.push({
+                rule: `Brouillon de plus de ${config.draft.retentionDays} j prévu dans plus de ${config.draft.maxFutureDays} j ou avant sa création`,
+                tournaments: await this.cleanupRule(() =>
+                    this.tournamentRepo.findExpiredDrafts(
+                        config.draft.retentionDays,
+                        config.draft.maxFutureDays,
+                    ),
                 ),
-            );
+                detail: draftDetail,
+            });
         }
 
         if (config.active.enabled) {
-            await this.cleanupRule('actifs', () =>
-                this.tournamentRepo.findExpiredActive(config.active.retentionDays),
-            );
+            groups.push({
+                rule: `Actif depuis plus de ${config.active.retentionDays} j`,
+                tournaments: await this.cleanupRule(() =>
+                    this.tournamentRepo.findExpiredActive(config.active.retentionDays),
+                ),
+                detail: activeDetail,
+            });
         }
 
-        this.logger.log('==== Fin du nettoyage des tournois ====');
+        for (const line of tournamentCleanupLogLines(groups)) {
+            this.logger.log(line);
+        }
     }
 
-    private async cleanupRule(label: string, find: () => Promise<Tournament[]>): Promise<void> {
+    /** Deletes the tournaments one rule found, and returns them for the log. */
+    private async cleanupRule(find: () => Promise<Tournament[]>): Promise<Tournament[]> {
         const expired = await find();
-        if (!expired.length) return;
-
-        await this.tournamentRepo.deleteMany(expired.map((tournament) => tournament.id));
-        this.logger.log(
-            `${expired.length} tournoi(s) ${label} supprimé(s) : [${expired
-                .map((tournament) => tournament.code)
-                .join(', ')}]`,
-        );
+        if (expired.length) {
+            await this.tournamentRepo.deleteMany(expired.map((tournament) => tournament.id));
+        }
+        return expired;
     }
 }
