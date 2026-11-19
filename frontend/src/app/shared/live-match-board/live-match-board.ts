@@ -4,6 +4,12 @@ import { Nullable } from 'src/app/models/nullable.model';
 import { AnimateOnChangeDirective } from '../animate-on-change/animate-on-change.directive';
 import { FitCountDirective } from '../fit-count/fit-count.directive';
 import { MatchStatusComponent } from '../match-status/match-status';
+import { byeLabelOf } from 'src/app/utils/bye-label.util';
+
+/** A tile of the board: the match and, for a bye, what its badge says. */
+interface LiveMatchTile extends LiveMatchView {
+  byeLabel: string;
+}
 
 /** Height of a tile plus the gap below it, in rem: what a page is cut by. */
 export const LIVE_MATCH_TILE_REM = 6.6;
@@ -33,9 +39,10 @@ export class LiveMatchBoard {
 
   protected readonly tileRem = LIVE_MATCH_TILE_REM;
 
-  protected readonly visibleMatches = computed(() => {
+  protected readonly visibleMatches = computed<LiveMatchTile[]>(() => {
     const size = this.pageSize();
     const matches = this.matches();
-    return size ? matches.slice(this.pageStart(), this.pageStart() + size) : matches;
+    const visible = size ? matches.slice(this.pageStart(), this.pageStart() + size) : matches;
+    return visible.map((match) => ({ ...match, byeLabel: byeLabelOf(match) }));
   });
 }

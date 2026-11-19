@@ -20,6 +20,7 @@ import { MatchStatusComponent } from 'src/app/shared/match-status/match-status';
 import { MatchTimerComponent } from 'src/app/shared/match-timer/match-timer';
 import { matchStatusTone } from 'src/app/shared/status-pill/match-status-tone';
 import { StatusPill } from 'src/app/shared/status-pill/status-pill';
+import { byeLabelOf } from 'src/app/utils/bye-label.util';
 import { MatchScoreSheet, MatchScoreSheetData } from './match-score-sheet/match-score-sheet';
 import { ScoreStepper } from './score-stepper/score-stepper';
 
@@ -99,13 +100,7 @@ export class AdminMatchRow {
     const dot = LIVE_DOTS[this.match().status];
     return dot ? { className: `live-dot live-dot--${dot.modifier}`, label: dot.label } : null;
   });
-  public readonly byeLabel = computed(() => {
-    const match = this.match();
-    if (match.isRest) {
-      return 'Au repos ce round';
-    }
-    return match.byeWin ? 'Exempté (victoire)' : 'Exempté';
-  });
+  public readonly byeLabel = computed(() => byeLabelOf(this.match()));
   public readonly scoreKey = computed(() => `${this.match().scoreA}-${this.match().scoreB}`);
   public readonly statusTone = computed(() => matchStatusTone(this.match().status));
   public readonly editLabel = computed(
