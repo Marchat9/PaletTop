@@ -8,6 +8,8 @@ export interface AdminMatchView {
   isBye: boolean;
   /** A bye worth one win (tournaments): shown as an exempt win. */
   byeWin?: boolean;
+  /** A training player resting this round: worth nothing, shown as a rest. */
+  isRest?: boolean;
   /** Plate the match is played on; none for a bye, or a training round drawn before plates. */
   plateNumber: Nullable<number>;
   teamA: string;

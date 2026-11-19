@@ -32,6 +32,8 @@ export class MatchScoreSheet {
   public readonly hasChanges = computed(
     () => this.draftScoreA() !== this.match.scoreA || this.draftScoreB() !== this.match.scoreB,
   );
+  /** A changed score, or an ended match the admin validates as it is. */
+  public readonly canSave = computed(() => this.hasChanges() || this.match.status === 'ENDED');
 
   public save(): void {
     this.dialogRef.close({

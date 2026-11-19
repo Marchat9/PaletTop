@@ -162,4 +162,20 @@ describe('toTrainingLiveMatches', () => {
 
     expect(match.plateNumber).toBe(3);
   });
+
+  it('marque un joueur au repos comme un repos, pas comme un exempt', () => {
+    const [match] = toTrainingLiveMatches([
+      {
+        id: 't3',
+        status: 'PENDING',
+        isBye: true,
+        scoreA: 0,
+        scoreB: 0,
+        teamA: { id: 'A', kind: 'EPHEMERAL', members: [{ id: 'p1', name: 'Julie' }] },
+        teamB: null,
+      },
+    ] as unknown as TrainingMatchDto[]);
+
+    expect(match).toMatchObject({ isBye: true, isRest: true });
+  });
 });

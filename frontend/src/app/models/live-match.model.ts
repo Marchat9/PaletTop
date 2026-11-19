@@ -8,6 +8,8 @@ export interface LiveMatchView {
   isBye: boolean;
   /** A bye worth one win (tournaments): shown as an exempt win. */
   byeWin?: boolean;
+  /** A training player resting this round: worth nothing, shown as a rest. */
+  isRest?: boolean;
   plateNumber: Nullable<number>;
   /** Pool or bracket of a structured tournament (« Tableau principal »...). */
   groupLabel: Nullable<string>;

@@ -82,6 +82,7 @@ export function toTrainingAdminMatchGroups(matches: TrainingMatchDto[]): AdminMa
         id: match.id,
         status: match.status,
         isBye: match.isBye,
+        isRest: match.isBye,
         plateNumber: match.plateNumber ?? null,
         teamA: teamLabel(match.teamA),
         teamB: match.teamB ? teamLabel(match.teamB) : null,
