@@ -1,4 +1,5 @@
 import { TournamentMatch } from 'src/entities/tounament-match.entity';
+import { isByeWin } from '../utils/ranking-calculation.utils';
 
 export interface MatchHistoryDto {
     matchId: string;
@@ -8,6 +9,8 @@ export interface MatchHistoryDto {
     opponentName: string;
     opponentScore: number;
     outcome: 'win' | 'draw' | 'loss' | 'bye';
+    /** For a bye: worth one win (shown as an exempt win). */
+    byeWin: boolean;
 }
 
 export function toMatchHistoryDto(match: TournamentMatch, teamId: string): MatchHistoryDto {
@@ -24,6 +27,7 @@ export function toMatchHistoryDto(match: TournamentMatch, teamId: string): Match
             opponentName: '-',
             opponentScore: 0,
             outcome: 'bye',
+            byeWin: isByeWin(match),
         };
     }
 
@@ -40,5 +44,6 @@ export function toMatchHistoryDto(match: TournamentMatch, teamId: string): Match
         opponentName,
         opponentScore,
         outcome,
+        byeWin: false,
     };
 }

@@ -1,16 +1,12 @@
 import { NotImplementedException } from '@nestjs/common';
 import { MatchesSession } from 'src/entities/matches-session.entity';
-import { Team } from 'src/entities/team.entity';
 import { TournamentMatch } from 'src/entities/tounament-match.entity';
 import { Tournament } from 'src/entities/tournament.entity';
 import { MatchesSessionStatus, MatchStatus, TournamentStatus } from 'src/enum/status.enum';
 import { MatchHistoryDto, toMatchHistoryDto } from '../../tournaments/responses/match-history.dto';
 import { GlobalRankingEntry } from '../../tournaments/responses/ranking.dto';
 import { TournamentStatusInfo } from '../../tournaments/responses/tournament-status.dto';
-import {
-    computeEntryScore,
-    computeTournamentScorePoints,
-} from '../../tournaments/utils/score-calculation.utils';
+import { rankTeams } from '../../tournaments/utils/ranking-calculation.utils';
 import { TournamentPool } from 'src/entities/tournament-pool.entity';
 
 export abstract class TournamentStrategy {
@@ -39,25 +35,9 @@ export abstract class TournamentStrategy {
         return false;
     }
 
+    /** Aggregate ranking over the given matches, sorted by the tournament's score calculation. */
     computeGlobalRanking(tournament: Tournament, matches: TournamentMatch[]): GlobalRankingEntry[] {
-        const stats = this.computeStats(tournament.teams, matches);
-        const { scoreCalculation } = tournament.configuration;
-
-        stats.sort(
-            (a, b) =>
-                computeEntryScore(b, scoreCalculation) - computeEntryScore(a, scoreCalculation),
-        );
-
-        return stats.reduce<GlobalRankingEntry[]>((ranked, stat, index) => {
-            const isTiedWithPrevious =
-                index > 0 &&
-                computeEntryScore(stat, scoreCalculation) ===
-                    computeEntryScore(stats[index - 1], scoreCalculation);
-            const rank = isTiedWithPrevious ? ranked[index - 1].rank : index + 1;
-
-            ranked.push({ ...stat, rank });
-            return ranked;
-        }, []);
+        return rankTeams(tournament.teams, matches, tournament.configuration.scoreCalculation);
     }
 
     /**
@@ -150,43 +130,6 @@ export abstract class TournamentStrategy {
     }
 
     // ========= Helpers =========
-    protected computeStats(
-        teams: Team[],
-        matches: TournamentMatch[],
-    ): Omit<GlobalRankingEntry, 'rank'>[] {
-        return teams.map((team) => {
-            const teamMatches = matches.filter(
-                (m) => m.teamA.id === team.id || m.teamB?.id === team.id,
-            );
-
-            let wins = 0;
-            let pointsFor = 0;
-            let pointsAgainst = 0;
-            let tournamentPoints = 0;
-
-            for (const match of teamMatches) {
-                const isTeamA = match.teamA.id === team.id;
-                const score = isTeamA ? match.scoreA : match.scoreB;
-                const opponentScore = isTeamA ? match.scoreB : match.scoreA;
-                pointsFor += score;
-                pointsAgainst += opponentScore;
-                const won = score > opponentScore;
-                if (won) wins++;
-                tournamentPoints += computeTournamentScorePoints(won, score);
-            }
-
-            return {
-                teamId: team.id,
-                teamName: team.name,
-                wins,
-                pointsFor,
-                pointsAgainst,
-                goalAverage: pointsFor - pointsAgainst,
-                matchesPlayed: teamMatches.length,
-                tournamentPoints,
-            };
-        });
-    }
     protected currentSessionNumber(sessions: MatchesSession[]): number {
         return sessions.length ? Math.max(...sessions.map((s) => s.sessionNumber)) : 0;
     }

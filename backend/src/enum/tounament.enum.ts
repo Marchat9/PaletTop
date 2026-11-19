@@ -7,6 +7,8 @@ export enum ScoreCalculation {
     VICTORY_AND_GOAL_AVERAGE = 'victory_ga',
     SCORE = 'score',
     TOURNAMENT_SCORE = 'tournament_score',
+    VICTORY_BUCHHOLZ_GOAL_AVERAGE = 'victory_buchholz_ga',
+    SCORE_BUCHHOLZ_GOAL_AVERAGE = 'score_buchholz_ga',
 }
 export enum EliminationTableau {
     PRINCIPALE = 'principale',

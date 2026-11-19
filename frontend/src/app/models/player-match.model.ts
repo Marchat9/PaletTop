@@ -2,6 +2,8 @@ export interface PlayerMatchDto {
   id: string;
   status: string;
   isBye: boolean;
+  /** A bye worth one win (tournaments): shown as an exempt win. */
+  byeWin?: boolean;
   scoreA: number;
   scoreB: number;
   plateNumber: number | null;
@@ -21,4 +23,6 @@ export interface MatchHistoryDto {
   opponentName: string;
   opponentScore: number;
   outcome: 'win' | 'draw' | 'loss' | 'bye';
+  /** A bye worth one win (tournaments): shown as an exempt win. */
+  byeWin?: boolean;
 }

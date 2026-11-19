@@ -187,7 +187,10 @@ function readScoreCalculationsFromEnv(
 
 export const DEFAULT_SCORE_CALCULATIONS_BY_MODE: ScoreCalculationsByMode = {
     [CompetitionMode.STANDARD]: [ScoreCalculation.VICTORY_AND_GOAL_AVERAGE, ScoreCalculation.SCORE],
-    [CompetitionMode.UP_DOWN]: [ScoreCalculation.VICTORY_AND_GOAL_AVERAGE, ScoreCalculation.SCORE],
+    [CompetitionMode.UP_DOWN]: [
+        ScoreCalculation.VICTORY_BUCHHOLZ_GOAL_AVERAGE,
+        ScoreCalculation.SCORE_BUCHHOLZ_GOAL_AVERAGE,
+    ],
     [CompetitionMode.CHAMPIONSHIP]: [ScoreCalculation.TOURNAMENT_SCORE],
 };
 

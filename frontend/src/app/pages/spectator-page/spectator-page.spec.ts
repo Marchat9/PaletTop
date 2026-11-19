@@ -71,6 +71,7 @@ const RANKING = [
     goalAverage: 26,
     matchesPlayed: 3,
     tournamentPoints: 9,
+    buchholz: 0,
   },
 ];
 

@@ -45,6 +45,8 @@ export interface SessionMatchDto {
   id: string;
   status: string;
   isBye: boolean;
+  /** A bye worth one win (tournaments): shown as an exempt win. */
+  byeWin?: boolean;
   scoreA: number;
   scoreB: number;
   plateNumber: Nullable<number>;
@@ -69,6 +71,8 @@ export interface PoolRankingEntry {
   pointsFor: number;
   pointsAgainst: number;
   goalAverage: number;
+  /** Score Buchholz: sum of the wins of the opponents met (byes excluded). */
+  buchholz: number;
 }
 
 export interface PoolRanking {

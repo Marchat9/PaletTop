@@ -6,6 +6,8 @@ export interface AdminMatchView {
   /** PENDING, ONGOING, ENDED (score entered, awaiting validation) or VALIDATED. */
   status: string;
   isBye: boolean;
+  /** A bye worth one win (tournaments): shown as an exempt win. */
+  byeWin?: boolean;
   /** Plate the match is played on; none for a bye, or a training round drawn before plates. */
   plateNumber: Nullable<number>;
   teamA: string;

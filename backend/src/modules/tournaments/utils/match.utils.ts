@@ -57,8 +57,8 @@ export function generateMatchesInPool(
                 tournamentRef,
                 pool,
                 sessionRef,
-                tournament.configuration.pointsPerGame,
                 session.sessionNumber,
+                true,
             ),
         );
         currentTeams.splice(
@@ -133,8 +133,8 @@ export function generateMatchesByRanking(
                 tournamentRef,
                 pool,
                 sessionRef,
-                0,
                 session.sessionNumber,
+                false,
             ),
         );
     }

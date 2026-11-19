@@ -52,6 +52,36 @@ function rankingPdfMode(scoreCalculation: ScoreCalculation | undefined): Ranking
         nameCharsPerLine: 28,
         legend: 'Score = somme des scores · GA = Goal average',
       };
+    case 'victory_buchholz_ga':
+      return {
+        stats: [
+          { label: 'V', width: 22, value: (entry) => `${entry.wins}` },
+          { label: 'Bch.', width: 28, value: (entry) => `${entry.buchholz}` },
+          {
+            label: 'GA',
+            width: 26,
+            value: (entry) => `${entry.goalAverage > 0 ? '+' : ''}${entry.goalAverage}`,
+          },
+        ],
+        nameCharsPerLine: 24,
+        legend:
+          'V = victoires · Bch. = Score Buchholz (Somme des victoires des adversaires) · GA = Goal average',
+      };
+    case 'score_buchholz_ga':
+      return {
+        stats: [
+          { label: 'Score', width: 34, value: (entry) => `${entry.pointsFor}` },
+          { label: 'Bch.', width: 28, value: (entry) => `${entry.buchholz}` },
+          {
+            label: 'GA',
+            width: 26,
+            value: (entry) => `${entry.goalAverage > 0 ? '+' : ''}${entry.goalAverage}`,
+          },
+        ],
+        nameCharsPerLine: 22,
+        legend:
+          'Score = somme des scores · Bch. = Score Buchholz (Somme des victoires des adversaires) · GA = Goal average',
+      };
     case 'tournament_score':
       return {
         stats: [{ label: 'Pts Tournoi', width: 48, value: (entry) => `${entry.tournamentPoints}` }],

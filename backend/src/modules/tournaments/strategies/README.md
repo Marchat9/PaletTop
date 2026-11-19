@@ -27,7 +27,7 @@ Mode-specific settings live in `tournament.configuration.competitionConfiguratio
 | `prepareTournamentStart`  | No-op                                                      | Optional     |
 | `canStartNextSession`     | Session OPEN and all its matches VALIDATED                 | Optional     |
 | `canCompleteTournament`   | Tournament ACTIVE and all matches VALIDATED                | Optional     |
-| `computeGlobalRanking`    | Sort by the tournament's `scoreCalculation`                | Optional     |
+| `computeGlobalRanking`    | `rankTeams` (`utils/ranking-calculation.utils.ts`)         | Optional     |
 | `computeStandings`        | Same as `computeGlobalRanking` (final ranking shown)       | Optional     |
 | `computeTeamHistory`      | VALIDATED matches of the team, mapped to `MatchHistoryDto` | Optional     |
 | `assignPlateNumbers`      | Plates 1, 2, 3… (byes get no plate)                        | Optional     |

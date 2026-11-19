@@ -76,6 +76,16 @@ import { newId } from 'src/app/utils/unique-id.util';
 
 export type TeamMatchStatus = 'NOT_STARTED' | 'CANCELLED' | 'FINISH';
 
+/**
+ * What a validated bye gave: a win with a neutral goal average, the legacy points of an old bye,
+ * or nothing (up-down ranking round).
+ */
+function byeAwardLabel(match: Nullable<PlayerMatchDto> | undefined): Nullable<string> {
+  if (!match) return null;
+  if (match.byeWin) return 'Victoire accordée';
+  return match.scoreA > 0 ? `Victoire accordée · +${match.scoreA} pts` : null;
+}
+
 @Component({
   selector: 'app-player-team-match-page',
   standalone: true,
@@ -186,7 +196,7 @@ export class PlayerTeamMatchPageComponent {
   public readonly byeCopy = computed<PlayerByeCopy>(() => ({
     title: 'Exempté',
     message: 'Votre équipe est exemptée pour ce round.',
-    awardLabel: `Victoire accordée · +${this.currentMatch()?.scoreA ?? 0} pts`,
+    awardLabel: byeAwardLabel(this.currentMatch()),
     pendingLabel: 'En attente de confirmation',
   }));
 

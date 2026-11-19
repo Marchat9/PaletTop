@@ -64,6 +64,7 @@ const RANKING: GlobalRankingEntry[] = [
     goalAverage: 6,
     matchesPlayed: 2,
     tournamentPoints: 6,
+    buchholz: 0,
   },
 ];
 

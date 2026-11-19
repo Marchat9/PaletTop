@@ -5,6 +5,8 @@ export interface PlayerMatchDto {
     id: string;
     status: MatchStatus;
     isBye: boolean;
+    /** A bye worth one win (shown as an exempt win). */
+    byeWin: boolean;
     scoreA: number;
     scoreB: number;
     plateNumber: number | null;
@@ -21,6 +23,7 @@ export function toPlayerMatchDto(match: TournamentMatch): PlayerMatchDto {
         id: match.id,
         status: match.status,
         isBye: match.isBye,
+        byeWin: !!match.byeWin,
         scoreA: match.scoreA,
         scoreB: match.scoreB,
         plateNumber: match.plateNumber,

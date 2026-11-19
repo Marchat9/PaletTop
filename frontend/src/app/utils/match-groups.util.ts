@@ -45,6 +45,7 @@ export function toAdminMatchView(match: SessionMatchDto): AdminMatchView {
     id: match.id,
     status: match.status,
     isBye: match.isBye,
+    byeWin: !!match.byeWin,
     plateNumber: match.plateNumber,
     teamA: match.teamA.name,
     teamB: match.teamB?.name ?? null,

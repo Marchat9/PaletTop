@@ -16,6 +16,8 @@ export interface PlayerMatchView {
   id: string;
   status: PlayerMatchStatus;
   isBye: boolean;
+  /** A bye worth one win (tournaments): shown as an exempt win. */
+  byeWin?: boolean;
   /** Label of my side: team name, or player names when the team has none. */
   myLabel: string;
   opponentLabel: string;
@@ -65,6 +67,8 @@ export interface PlayerMatchResult {
   opponentLabel: string;
   opponentScore: number;
   isBye: boolean;
+  /** A bye worth one win (tournaments): shown as an exempt win. */
+  byeWin?: boolean;
 }
 
 /** One statistic tile shown at the top of a player page. */

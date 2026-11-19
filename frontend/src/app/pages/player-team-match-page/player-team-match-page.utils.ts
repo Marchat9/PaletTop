@@ -14,6 +14,7 @@ export function historyToResults(history: MatchHistoryDto[]): PlayerMatchResult[
     opponentLabel: entry.opponentName,
     opponentScore: entry.opponentScore,
     isBye: entry.outcome === 'bye',
+    byeWin: !!entry.byeWin,
   }));
 }
 
@@ -28,6 +29,7 @@ export function toPlayerMatchView(match: PlayerMatchDto, teamId: string): Player
     id: match.id,
     status: match.status as PlayerMatchStatus,
     isBye: match.isBye,
+    byeWin: !!match.byeWin,
     myLabel: iAmTeamA ? match.teamA.name : (match.teamB?.name ?? '—'),
     opponentLabel: iAmTeamA ? (match.teamB?.name ?? '—') : match.teamA.name,
     myScore: iAmTeamA ? match.scoreA : match.scoreB,
