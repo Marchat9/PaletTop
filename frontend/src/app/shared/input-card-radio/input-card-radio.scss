@@ -5,7 +5,8 @@
 }
 
 .card-radio-button {
-  flex: 1 1 calc(var(--card-radio-basis, 50%) - 0.5rem);
+  // --card-radio-min-width (set by a parent) sends a card to its own line before it gets too narrow.
+  flex: 1 1 max(calc(var(--card-radio-basis, 50%) - 0.5rem), var(--card-radio-min-width, 0px));
   display: flex;
   align-items: center;
   justify-content: space-between;
