@@ -1,11 +1,12 @@
 import { Component, output } from '@angular/core';
 import { Card } from 'src/app/shared/card/card';
 import { Icon } from 'src/app/shared/icon/icon';
+import { ActionRow } from 'src/app/shared/action-row/action-row';
 import { Button } from 'src/app/shared/button/button';
 
 @Component({
   selector: 'app-section-tournament',
-  imports: [Card, Icon, Button],
+  imports: [Card, Icon, Button, ActionRow],
   templateUrl: './section-tournament.html',
   styleUrl: './section-tournament.scss',
 })

@@ -1,0 +1,63 @@
+:host {
+  display: block;
+}
+
+.action-row {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 2.4rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.55rem 0.4rem;
+  border: 0;
+  border-radius: 0.6rem;
+  background: none;
+  color: var(--color-on-surface);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+
+  @media (hover: hover) {
+    &:hover {
+      background: var(--color-hover-surface-default);
+    }
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
+  .icon-box {
+    width: 2.4rem;
+    height: 2.4rem;
+    display: grid;
+    place-items: center;
+    border-radius: 0.6rem;
+    background: var(--color-surface-container-high);
+
+    ::ng-deep .action-icon {
+      color: var(--color-primary);
+    }
+  }
+
+  .text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+
+    .title {
+      font-weight: 700;
+    }
+
+    .description {
+      font-size: 0.85rem;
+      color: var(--color-on-surface-variant);
+    }
+  }
+
+  ::ng-deep .chevron {
+    color: var(--color-outline);
+  }
+}

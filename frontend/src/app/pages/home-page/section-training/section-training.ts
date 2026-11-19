@@ -1,11 +1,12 @@
 import { ChangeDetectionStrategy, Component, output } from '@angular/core';
+import { ActionRow } from 'src/app/shared/action-row/action-row';
 import { Button } from 'src/app/shared/button/button';
 import { Card } from 'src/app/shared/card/card';
 import { Icon } from 'src/app/shared/icon/icon';
 
 @Component({
   selector: 'app-section-training',
-  imports: [Card, Icon, Button],
+  imports: [Card, Icon, Button, ActionRow],
   templateUrl: './section-training.html',
   styleUrl: './section-training.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
