@@ -1,8 +1,9 @@
 .home-page {
-  min-height: 100dvh;
+  --padding-bottom: 6rem;
+  min-height: calc(100dvh - var(--padding-bottom));
   max-width: 72rem;
   margin: 0 auto;
-  padding: 1.5rem 1.25rem 6.2rem;
+  padding: 1.5rem 1.25rem var(--padding-bottom);
 
   display: flex;
   flex-direction: row;

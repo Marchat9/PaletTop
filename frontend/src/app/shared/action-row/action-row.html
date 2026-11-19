@@ -1,0 +1,12 @@
+<button type="button" class="action-row" (click)="clicked.emit()">
+  <span class="icon-box" aria-hidden="true">
+    <app-icon [name]="icon()" iconClass="action-icon" [ariaHidden]="true" />
+  </span>
+  <span class="text">
+    <span class="title">{{ title() }}</span>
+    @if (description()) {
+      <span class="description">{{ description() }}</span>
+    }
+  </span>
+  <app-icon name="chevron_right" iconClass="chevron" [ariaHidden]="true" />
+</button>

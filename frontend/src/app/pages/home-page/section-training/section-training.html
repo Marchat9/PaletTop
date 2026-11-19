@@ -4,76 +4,42 @@
       <h3>Entraînements</h3>
       <app-icon name="school" iconClass="icon" />
     </div>
-    <div class="training-info">
-      <div class="join-training">
-        <div class="header">
-          <div class="sub-title">
-            <h3>Rejoindre un entraînement</h3>
-          </div>
-          <div class="description">
-            <span
-              >Faites chauffer vos <span class="palet">Palets</span> lors de séances
-              d'entraînement.</span
-            >
-          </div>
-        </div>
 
-        <div class="action">
-          <app-button
-            title="En tant que joueur"
-            icon="explore"
-            (clicked)="eventTrainingJoin.emit()"
-          />
-          <app-button
-            title="En tant que spectateur"
-            icon="visibility"
-            variant="secondary"
-            (clicked)="eventTrainingSpectate.emit()"
-          />
-        </div>
+    <div class="play">
+      <p class="description">
+        Faites chauffer vos <span class="palet">Palets</span> lors de séances d'entraînement.
+      </p>
+      <div class="action">
+        <app-button
+          title="Rejoindre en joueur"
+          icon="explore"
+          [large]="true"
+          (clicked)="eventTrainingJoin.emit()"
+        />
+        <app-button
+          title="Regarder en spectateur"
+          icon="visibility"
+          variant="secondary"
+          [large]="true"
+          (clicked)="eventTrainingSpectate.emit()"
+        />
       </div>
-      <div class="create-training">
-        <div class="header">
-          <div class="sub-title">
-            <h3>Administrez vos entraînements</h3>
-          </div>
-          <div class="description">
-            <span
-              >Créez un club ou groupe d'entraînement puis administrez vos séances d'<span
-                class="highlight"
-                >entraînements</span
-              ></span
-            >
-          </div>
-        </div>
+    </div>
 
-        <div class="action">
-          <app-button
-            title="Créer un club ou groupe d'entraînement"
-            [titleCanWrap]="true"
-            icon="group_add"
-            (clicked)="eventTrainingCreation.emit()"
-          />
-        </div>
-      </div>
-
-      <div class="admin-training">
-        <div class="header">
-          <div class="sub-title">
-            <h3>Administrer un groupe d'entraînement existant</h3>
-          </div>
-        </div>
-
-        <div class="action">
-          <app-button
-            title="Administrer un groupe d'entraînement"
-            [titleCanWrap]="true"
-            icon="admin_panel_settings"
-            variant="secondary"
-            (clicked)="eventTrainingAdministration.emit()"
-          />
-        </div>
-      </div>
+    <div class="organiser">
+      <span class="eyebrow">Espace organisateur</span>
+      <app-action-row
+        icon="group_add"
+        title="Créer un club ou un groupe"
+        description="Puis planifier vos séances"
+        (clicked)="eventTrainingCreation.emit()"
+      />
+      <app-action-row
+        icon="admin_panel_settings"
+        title="Administrer un groupe"
+        description="Séances, participants, résultats"
+        (clicked)="eventTrainingAdministration.emit()"
+      />
     </div>
   </div>
 </app-card>

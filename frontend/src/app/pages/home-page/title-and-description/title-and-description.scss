@@ -3,10 +3,12 @@
   display: flex;
   gap: 1.25rem;
   align-items: center;
-  padding: 0.8rem 0 2.4rem;
-  min-height: clamp(18rem, 38vw, 26rem);
-  min-height: 16rem;
-  padding-bottom: 1.4rem;
+  padding: 0.8rem 0 1.4rem;
+  min-height: 12rem;
+
+  @media (width < 480px) {
+    min-height: 10rem;
+  }
 
   .text-section {
     position: relative;

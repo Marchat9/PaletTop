@@ -28,7 +28,7 @@ describe('SectionTraining', () => {
 
     const button = Array.from(
       (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLElement>('app-button'),
-    ).find((element) => element.textContent?.includes('En tant que spectateur'));
+    ).find((element) => element.textContent?.includes('Regarder en spectateur'));
     button!.querySelector<HTMLElement>('.button')!.click();
 
     expect(spectate).toHaveBeenCalled();
