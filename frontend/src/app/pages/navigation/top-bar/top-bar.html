@@ -1,9 +1,17 @@
 <header class="hdr">
-  <div class="brand" routerLink="/">
-    <img class="logo" ngSrc="assets/images/palet_logo.webp" width="50" height="50" priority />
+  <!-- A real link: Ctrl/Cmd + click and middle click open the home page in a new tab. -->
+  <a class="brand" routerLink="/">
+    <img
+      class="logo"
+      ngSrc="assets/images/palet_logo.webp"
+      width="50"
+      height="50"
+      priority
+      alt=""
+    />
 
     <h1 class="title">{{ title() }}</h1>
-  </div>
+  </a>
 
   @if (showLinks()) {
     <nav class="nav" aria-label="Navigation principale">
