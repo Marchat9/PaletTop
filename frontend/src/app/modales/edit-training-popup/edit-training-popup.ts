@@ -45,12 +45,13 @@ export class EditTrainingPopup {
 
   public readonly canSubmit = computed(() => this.name().trim().length > 0);
 
-  private hasSubmitted = false;
+  // A signal: the effect must track it, or it would never read loading/error again.
+  private readonly hasSubmitted = signal(false);
 
   constructor() {
     // Close once the update the admin triggered here has gone through without error.
     effect(() => {
-      if (this.hasSubmitted && !this.loading() && !this.error()) {
+      if (this.hasSubmitted() && !this.loading() && !this.error()) {
         this.dialogRef.close();
       }
     });
@@ -72,7 +73,7 @@ export class EditTrainingPopup {
     if (!this.canSubmit()) {
       return;
     }
-    this.hasSubmitted = true;
+    this.hasSubmitted.set(true);
     this.store.dispatch(
       updateTrainingAdministratorInformations({
         code: this.code,
