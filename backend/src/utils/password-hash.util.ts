@@ -17,8 +17,11 @@ export const ARGON2_OPTIONS = {
     parallelism: 1,
 } as const;
 
-// `$argon2id$v=<n>$<params>$<salt>$<hash>`: the leading empty part plus 5 sections.
-const ARGON2ID_PHC_PATTERN = /^\$argon2id\$v=\d+\$[^$]+\$[A-Za-z0-9+/]+\$[A-Za-z0-9+/]+$/;
+// `$argon2id$v=<n>$m=<n>,t=<n>,p=<n>$<salt>$<hash>`, with a salt of at least 16 bytes (22 base64
+// chars) and a hash of at least 32 bytes (43 chars): a value truncated by a bad copy-paste or a
+// line wrap is rejected instead of passing as a hash that no password will ever match.
+const ARGON2ID_PHC_PATTERN =
+    /^\$argon2id\$v=\d+\$m=\d+,t=\d+,p=\d+\$[A-Za-z0-9+/]{22,}\$[A-Za-z0-9+/]{43,}$/;
 
 function toSecret(pepper?: string): Buffer | undefined {
     return pepper ? Buffer.from(pepper, 'utf8') : undefined;

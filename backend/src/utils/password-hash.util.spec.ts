@@ -107,6 +107,21 @@ describe('password-hash.util', () => {
             expect(isArgon2idHash(await hashPassword('Palet2026'))).toBe(true);
         });
 
+        it('rejects a hash truncated by even one character', async () => {
+            const hash = await hashPassword('Palet2026');
+
+            for (const cut of [1, 5, 10, 30]) {
+                expect(isArgon2idHash(hash.slice(0, -cut))).toBe(false);
+            }
+        });
+
+        it('rejects a hash whose parameter section is not m=..,t=..,p=..', () => {
+            const hash =
+                '$argon2id$v=19$garbage$MEb7/t5bTYYdVb13JPJkZw$E/SY7SL58fN+tZ7HNhdjxyRovuppg6kJwcP4HBZx6E0';
+
+            expect(isArgon2idHash(hash)).toBe(false);
+        });
+
         it('rejects anything else', () => {
             for (const value of [
                 '',

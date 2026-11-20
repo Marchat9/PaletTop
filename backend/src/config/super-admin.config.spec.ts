@@ -69,7 +69,7 @@ describe('superAdminConfig', () => {
 
     it('throws when SUPER_ADMIN_PASSWORD_HASH is not an argon2id hash, in every environment', () => {
         // A clear password, and what compose leaves of a hash whose $ were interpolated.
-        for (const value of ['PaletTopPassword', '=19=19456,t=2,p=1']) {
+        for (const value of ['PaletTopPassword', '=19=19456,t=2,p=1', CUSTOM_HASH.slice(0, -1)]) {
             for (const env of ['production', 'development']) {
                 process.env.NODE_ENV = env;
                 process.env.SUPER_ADMIN_PASSWORD_HASH = value;
