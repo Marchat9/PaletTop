@@ -15,9 +15,9 @@ function makeService(options: {
     training?: Training | null;
 }) {
     const trainingRepo = {
-        findAdminPasswordHash: vi.fn().mockResolvedValue(
-            options.storedHash === undefined ? STORED_HASH : options.storedHash,
-        ),
+        findAdminPasswordHash: vi
+            .fn()
+            .mockResolvedValue(options.storedHash === undefined ? STORED_HASH : options.storedHash),
         findForAdmin: vi
             .fn()
             .mockResolvedValue(options.training === undefined ? TRAINING : options.training),

@@ -14,9 +14,9 @@ function makeService(options: {
     tournament?: Tournament | null;
 }) {
     const tournamentRepo = {
-        findAdminPasswordHash: vi.fn().mockResolvedValue(
-            options.storedHash === undefined ? STORED_HASH : options.storedHash,
-        ),
+        findAdminPasswordHash: vi
+            .fn()
+            .mockResolvedValue(options.storedHash === undefined ? STORED_HASH : options.storedHash),
         findForAdmin: vi
             .fn()
             .mockResolvedValue(options.tournament === undefined ? TOURNAMENT : options.tournament),

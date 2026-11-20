@@ -15,9 +15,9 @@ function makeService(options: {
     session?: TrainingSession | null;
 }) {
     const sessionRepo = {
-        findTrainingAdminPasswordHash: vi.fn().mockResolvedValue(
-            options.storedHash === undefined ? STORED_HASH : options.storedHash,
-        ),
+        findTrainingAdminPasswordHash: vi
+            .fn()
+            .mockResolvedValue(options.storedHash === undefined ? STORED_HASH : options.storedHash),
         findForAdmin: vi
             .fn()
             .mockResolvedValue(options.session === undefined ? SESSION : options.session),
@@ -31,7 +31,7 @@ function makeService(options: {
 }
 
 describe('TrainingSessionAuthService.findWithAdminAuth', () => {
-    it("returns the session on a correct training admin password", async () => {
+    it('returns the session on a correct training admin password', async () => {
         const { service, sessionRepo, adminPassword } = makeService({});
 
         await expect(service.findWithAdminAuth('123456', 'secret')).resolves.toBe(SESSION);

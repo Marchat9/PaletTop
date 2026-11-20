@@ -62,9 +62,7 @@ describe('SuperAdminService', () => {
     it('rejects the hash value itself used as a password', async () => {
         const service = makeService();
 
-        await expect(service.login(passwordHash, '1.1.1.1')).rejects.toThrow(
-            UnauthorizedException,
-        );
+        await expect(service.login(passwordHash, '1.1.1.1')).rejects.toThrow(UnauthorizedException);
     });
 
     it('locks out after reaching the attempt threshold, returning 429', async () => {

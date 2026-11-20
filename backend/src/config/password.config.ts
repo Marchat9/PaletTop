@@ -19,7 +19,9 @@ export function resolvePasswordPepper(): string {
 
     if (!pepper) {
         if (process.env.NODE_ENV === 'production') {
-            throw new Error('PASSWORD_PEPPER must be set in production (no default value allowed).');
+            throw new Error(
+                'PASSWORD_PEPPER must be set in production (no default value allowed).',
+            );
         }
         logger.warn(
             'PASSWORD_PEPPER not set: falling back to the dev pepper (dev only, never use this in production).',
