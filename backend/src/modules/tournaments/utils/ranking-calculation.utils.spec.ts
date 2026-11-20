@@ -143,4 +143,39 @@ describe('rankTeams', () => {
         expect(ranked[0].teamId).toBe('A');
         expect(ranked[1].teamId).toBe('B');
     });
+
+    it('breaks a tie on wins and goal average with the points scored in « Victoire & GA »', () => {
+        const ranked = rankTeams(
+            teams('A', 'B', 'C', 'D'),
+            [match('A', 'C', 13, 5), match('B', 'D', 11, 3)],
+            ScoreCalculation.VICTORY_AND_GOAL_AVERAGE,
+        );
+        // Same wins, same GA (+8): A scored 13, B 11.
+        expect(ranked.slice(0, 2).map((s) => [s.teamId, s.rank])).toEqual([
+            ['A', 1],
+            ['B', 2],
+        ]);
+    });
+
+    it('breaks a tie on points scored and goal average with the wins in « Somme des scores »', () => {
+        const ranked = rankTeams(
+            teams('A', 'B', 'C', 'D'),
+            // A: 13 scored, GA +13, 1 win. B: 13 scored (7 + 6), GA +13, 2 wins.
+            [match('A', 'C', 13, 0), match('B', 'D', 7, 0), match('B', 'D', 6, 0)],
+            ScoreCalculation.SCORE,
+        );
+        expect(ranked.slice(0, 2).map((s) => s.teamId)).toEqual(['B', 'A']);
+    });
+
+    it('keeps teams on equal championship points tied', () => {
+        const ranked = rankTeams(
+            teams('A', 'B', 'C', 'D', 'E'),
+            // A: one win (6 pts). B: two losses at 11 (4 pts) and 6 (2 pts) = 6 pts, no win.
+            [match('A', 'C', 13, 0), match('D', 'B', 13, 11), match('E', 'B', 13, 6)],
+            ScoreCalculation.TOURNAMENT_SCORE,
+        );
+        const a = ranked.find((s) => s.teamId === 'A');
+        const b = ranked.find((s) => s.teamId === 'B');
+        expect(a?.rank).toBe(b?.rank);
+    });
 });

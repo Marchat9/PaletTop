@@ -24,10 +24,13 @@ export interface RankedTeamStats extends TeamRankingStats {
 /** A ranking criterion, always sorted in descending order. */
 type RankingCriterion = 'wins' | 'pointsFor' | 'goalAverage' | 'tournamentPoints' | 'buchholz';
 
-/** Criteria of each score calculation, in priority order. */
+/**
+ * Criteria of each score calculation, in priority order. The trailing criteria are tie-breakers
+ * only, so that teams share a rank as rarely as possible.
+ */
 const CRITERIA_BY_SCORE_CALCULATION: Record<ScoreCalculation, RankingCriterion[]> = {
-    [ScoreCalculation.VICTORY_AND_GOAL_AVERAGE]: ['wins', 'goalAverage'],
-    [ScoreCalculation.SCORE]: ['pointsFor', 'goalAverage'],
+    [ScoreCalculation.VICTORY_AND_GOAL_AVERAGE]: ['wins', 'goalAverage', 'pointsFor'],
+    [ScoreCalculation.SCORE]: ['pointsFor', 'goalAverage', 'wins'],
     [ScoreCalculation.TOURNAMENT_SCORE]: ['tournamentPoints'],
     [ScoreCalculation.VICTORY_BUCHHOLZ_GOAL_AVERAGE]: ['wins', 'buchholz', 'goalAverage'],
     [ScoreCalculation.SCORE_BUCHHOLZ_GOAL_AVERAGE]: ['pointsFor', 'buchholz', 'goalAverage'],

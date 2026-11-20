@@ -40,13 +40,13 @@ export const scoreCalculationOptions: {
     value: 'victory_ga',
     icon: 'calculate',
     label: 'Victoire & Goal Average',
-    description: 'Nombre de victoires puis Goal Average',
+    description: 'Nombre de victoires, puis Goal Average, puis points marqués',
   },
   {
     value: 'score',
     icon: 'swap_vert',
     label: 'Somme des scores & Goal Average',
-    description: 'Scores de chaque manche additionnés puis Goal Average',
+    description: 'Scores de chaque manche additionnés, puis Goal Average, puis victoires',
   },
   {
     value: 'victory_buchholz_ga',

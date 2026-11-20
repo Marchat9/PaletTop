@@ -17,5 +17,8 @@
     min-height: 0;
     overflow-y: auto;
     overscroll-behavior: contain;
+    // For scrollbar
+    padding-right: 10px;
+    margin-right: -10px;
   }
 }
