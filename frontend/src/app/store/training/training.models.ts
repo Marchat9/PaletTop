@@ -12,7 +12,16 @@ export type TrainingTeamComposition = 'RANDOM' | 'LEARNING';
 export interface TrainingMemberDto {
   id: string;
   name: string;
+  /** Participant code the member keeps for every session of the club. */
+  code: string;
 }
+
+/**
+ * Sent by the API when a club member joins a session before being checked in: same text as the
+ * backend (training-participant-view.service.ts), compared to show it instead of "incorrect code".
+ */
+export const TRAINING_MEMBER_NOT_CHECKED_IN_MESSAGE =
+  "Vous n'êtes pas encore pointé, rapprochez vous de l'admin du club";
 
 export interface AdminTrainingDto {
   id: string;
@@ -186,6 +195,7 @@ export interface TrainingRequestStatus {
   updateTraining: ApiCallStatus;
   addMember: ApiCallStatus;
   renameMember: ApiCallStatus;
+  regenerateMemberCode: ApiCallStatus;
   setAdminMember: ApiCallStatus;
   removeMember: ApiCallStatus;
   createSession: ApiCallStatus;

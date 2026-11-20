@@ -62,6 +62,21 @@ export const renameTrainingMemberFailure = createAction(
 );
 // -------------------------------------------------------
 
+// --------- Training Administrator Regenerate member code ---------
+export const regenerateTrainingMemberCode = createAction(
+  '[Training] Regenerate Training Member Code',
+  props<{ code: string; memberId: string }>(),
+);
+export const regenerateTrainingMemberCodeSuccess = createAction(
+  '[Training] Regenerate Training Member Code Success',
+  props<{ training: AdminTrainingDto }>(),
+);
+export const regenerateTrainingMemberCodeFailure = createAction(
+  '[Training] Regenerate Training Member Code Failure',
+  props<{ error: string }>(),
+);
+// -------------------------------------------------------
+
 // --------- Training Administrator Remove member ---------
 export const removeTrainingMember = createAction(
   '[Training] Remove Training Member',

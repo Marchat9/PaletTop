@@ -3,7 +3,10 @@ import { TestBed } from '@angular/core/testing';
 import { MockStore, provideMockStore } from '@ngrx/store/testing';
 import { describe, expect, it, vi } from 'vitest';
 import { loadTrainingParticipantCurrentMatch } from 'src/app/store/training/training.actions';
-import { TrainingParticipantSession } from 'src/app/store/training/training.models';
+import {
+  TRAINING_MEMBER_NOT_CHECKED_IN_MESSAGE,
+  TrainingParticipantSession,
+} from 'src/app/store/training/training.models';
 import {
   selectCurrentTrainingParticipantInformations,
   selectTrainingParticipantCurrentMatch,
@@ -12,7 +15,10 @@ import {
 } from 'src/app/store/training/training.selectors';
 import { JoinTrainingPopup } from './join-training-popup';
 
-function setup(savedCodes: TrainingParticipantSession | null = null) {
+function setup(
+  savedCodes: TrainingParticipantSession | null = null,
+  error: string | null = null,
+) {
   const dialogRef = { close: vi.fn() } as unknown as DialogRef;
 
   TestBed.configureTestingModule({
@@ -22,7 +28,7 @@ function setup(savedCodes: TrainingParticipantSession | null = null) {
       provideMockStore({
         selectors: [
           { selector: selectTrainingParticipantCurrentMatch, value: null },
-          { selector: selectTrainingParticipantCurrentMatchError, value: null },
+          { selector: selectTrainingParticipantCurrentMatchError, value: error },
           { selector: selectTrainingParticipantCurrentMatchIsLoading, value: false },
           { selector: selectCurrentTrainingParticipantInformations, value: savedCodes },
         ],
@@ -91,5 +97,25 @@ describe('JoinTrainingPopup', () => {
     fixture.componentInstance.onCancel();
 
     expect(dialogRef.close).toHaveBeenCalledWith();
+  });
+
+  it('tells a member who is not checked in yet to see the club admin', () => {
+    const { fixture } = setup(null, TRAINING_MEMBER_NOT_CHECKED_IN_MESSAGE);
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.isNotCheckedIn()).toBe(true);
+    const text = fixture.nativeElement.textContent as string;
+    expect(text).toContain(TRAINING_MEMBER_NOT_CHECKED_IN_MESSAGE);
+    expect(text).not.toContain('Code de séance ou code participant incorrect');
+  });
+
+  it('keeps the generic message for an unknown code', () => {
+    const { fixture } = setup(null, 'Code participant invalide pour cette séance.');
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.isNotCheckedIn()).toBe(false);
+    expect(fixture.nativeElement.textContent).toContain(
+      'Code de séance ou code participant incorrect',
+    );
   });
 });

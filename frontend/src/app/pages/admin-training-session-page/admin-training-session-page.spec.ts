@@ -46,8 +46,8 @@ function buildTraining(): AdminTrainingDto {
     name: 'Entraînement du jeudi',
     createdAt: new Date().toISOString(),
     members: [
-      { id: 'm1', name: 'Jean Dubois' },
-      { id: 'm2', name: 'Marie Lefèvre' },
+      { id: 'm1', name: 'Jean Dubois', code: '0001' },
+      { id: 'm2', name: 'Marie Lefèvre', code: '0002' },
     ],
     adminMemberId: null,
   };

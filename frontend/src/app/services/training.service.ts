@@ -84,6 +84,17 @@ export class TrainingService {
     );
   }
 
+  public regenerateMemberCode(
+    code: string,
+    memberId: string,
+    password: string,
+  ): Observable<AdminTrainingDto> {
+    return this.http.post<AdminTrainingDto>(
+      `${this.apiBaseUrl}/trainings/${encodeURIComponent(code)}/members/${memberId}/regenerate-code`,
+      { password },
+    );
+  }
+
   /** `memberId` null: the group no longer has a member who is also its admin. */
   public setAdminMember(
     code: string,

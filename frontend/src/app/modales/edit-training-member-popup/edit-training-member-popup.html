@@ -25,6 +25,25 @@
     </p>
   </div>
 
+  <div class="member-code">
+    <app-icon name="pin" iconClass="member-code-icon" [ariaHidden]="true" />
+    <div class="member-code-text">
+      <strong>Code joueur</strong>
+      <span class="code">{{ memberCode() }}</span>
+      <span>
+        Le membre utilisera ce code à chacune de ses séances. Après régénération, il devra saisir
+        le nouveau à sa prochaine séance.
+      </span>
+    </div>
+    <app-button
+      title="Régénérer"
+      variant="secondary"
+      icon="refresh"
+      [loading]="regenerateLoading()"
+      (clicked)="onRegenerateCode()"
+    ></app-button>
+  </div>
+
   <div class="admin-player">
     <app-icon name="admin_panel_settings" iconClass="admin-player-icon" [ariaHidden]="true" />
     <div class="admin-player-text">
@@ -39,6 +58,15 @@
       <span class="message">
         <app-icon name="error" [ariaHidden]="true" />
         {{ visibleError() }}
+      </span>
+    </div>
+  }
+
+  @if (visibleRegenerateError()) {
+    <div class="error-container">
+      <span class="message">
+        <app-icon name="error" [ariaHidden]="true" />
+        {{ visibleRegenerateError() }}
       </span>
     </div>
   }

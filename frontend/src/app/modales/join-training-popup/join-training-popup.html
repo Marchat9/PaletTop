@@ -41,7 +41,14 @@
     </p>
   </div>
 
-  @if (isUnknownSession()) {
+  @if (isUnknownSession() && isNotCheckedIn()) {
+    <div class="error-container">
+      <span class="message">
+        <app-icon name="error" [ariaHidden]="true" />
+        {{ isNotCheckedInMessage }}
+      </span>
+    </div>
+  } @else if (isUnknownSession()) {
     <div class="error-container">
       <span class="message">
         <app-icon name="error" [ariaHidden]="true" />

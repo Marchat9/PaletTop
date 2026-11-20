@@ -3,10 +3,15 @@ import { TestBed } from '@angular/core/testing';
 import { MockStore, provideMockStore } from '@ngrx/store/testing';
 import { describe, expect, it, vi } from 'vitest';
 import {
+  regenerateTrainingMemberCode,
   renameTrainingMember,
   setTrainingAdminMember,
 } from 'src/app/store/training/training.admin.actions';
+import { AdminTrainingDto } from 'src/app/store/training/training.models';
 import {
+  selectCurrentTrainingData,
+  selectRegenerateTrainingMemberCodeError,
+  selectRegenerateTrainingMemberCodeLoading,
   selectRenameTrainingMemberError,
   selectRenameTrainingMemberLoading,
   selectSetTrainingAdminMemberError,
@@ -16,11 +21,11 @@ import { EditTrainingMemberPopup, EditTrainingMemberPopupData } from './edit-tra
 
 const DATA: EditTrainingMemberPopupData = {
   trainingCode: 'CLUB-1',
-  member: { id: 'member-1', name: 'Thomas' },
+  member: { id: 'member-1', name: 'Thomas', code: '1111' },
   isAdminPlayer: false,
 };
 
-function setup(error: string | null = null) {
+function setup(error: string | null = null, training: AdminTrainingDto | null = null) {
   const dialogRef = { close: vi.fn() } as unknown as DialogRef;
 
   TestBed.configureTestingModule({
@@ -34,6 +39,9 @@ function setup(error: string | null = null) {
           { selector: selectRenameTrainingMemberError, value: error },
           { selector: selectSetTrainingAdminMemberLoading, value: false },
           { selector: selectSetTrainingAdminMemberError, value: null },
+          { selector: selectRegenerateTrainingMemberCodeLoading, value: false },
+          { selector: selectRegenerateTrainingMemberCodeError, value: null },
+          { selector: selectCurrentTrainingData, value: training },
         ],
       }),
     ],
@@ -136,5 +144,37 @@ describe('EditTrainingMemberPopup', () => {
     fixture.componentInstance.onRemove();
 
     expect(dialogRef.close).toHaveBeenCalledWith('remove');
+  });
+
+  it('regenerates the member code without closing the popup', () => {
+    const { fixture, store, dialogRef } = setup();
+    const dispatchSpy = vi.spyOn(store, 'dispatch');
+
+    fixture.componentInstance.onRegenerateCode();
+
+    expect(dispatchSpy).toHaveBeenCalledWith(
+      regenerateTrainingMemberCode({ code: 'CLUB-1', memberId: 'member-1' }),
+    );
+    expect(dialogRef.close).not.toHaveBeenCalled();
+  });
+
+  it('shows the member code from the store, so a regenerated code appears at once', () => {
+    const { fixture } = setup(null, {
+      id: 't1',
+      code: 'CLUB-1',
+      name: 'Club',
+      createdAt: '2026-01-01T18:00:00.000Z',
+      members: [{ id: 'member-1', name: 'Thomas', code: '9876' }],
+      adminMemberId: null,
+    });
+
+    expect(fixture.componentInstance.memberCode()).toBe('9876');
+    expect(fixture.nativeElement.textContent).toContain('9876');
+  });
+
+  it('falls back to the code it was opened with when the store has no such member', () => {
+    const { fixture } = setup();
+
+    expect(fixture.componentInstance.memberCode()).toBe('1111');
   });
 });

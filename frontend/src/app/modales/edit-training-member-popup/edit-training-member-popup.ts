@@ -9,11 +9,15 @@ import {
 } from '@angular/core';
 import { Store } from '@ngrx/store';
 import {
+  regenerateTrainingMemberCode,
   renameTrainingMember,
   setTrainingAdminMember,
 } from 'src/app/store/training/training.admin.actions';
 import { TrainingMemberDto } from 'src/app/store/training/training.models';
 import {
+  selectCurrentTrainingData,
+  selectRegenerateTrainingMemberCodeError,
+  selectRegenerateTrainingMemberCodeLoading,
   selectRenameTrainingMemberError,
   selectRenameTrainingMemberLoading,
   selectSetTrainingAdminMemberError,
@@ -55,6 +59,22 @@ export class EditTrainingMemberPopup {
   private readonly renameError = this.store.selectSignal(selectRenameTrainingMemberError);
   private readonly adminLoading = this.store.selectSignal(selectSetTrainingAdminMemberLoading);
   private readonly adminError = this.store.selectSignal(selectSetTrainingAdminMemberError);
+  private readonly training = this.store.selectSignal(selectCurrentTrainingData);
+  public readonly regenerateLoading = this.store.selectSignal(
+    selectRegenerateTrainingMemberCodeLoading,
+  );
+  private readonly regenerateError = this.store.selectSignal(
+    selectRegenerateTrainingMemberCodeError,
+  );
+
+  // Read from the store: a regenerated code shows up at once, without reopening the popup.
+  public readonly memberCode = computed(
+    () =>
+      this.training()?.members.find((m) => m.id === this.data.member.id)?.code ??
+      this.data.member.code,
+  );
+  // Only a regeneration asked from this popup shows its error.
+  private readonly regenerateRequested = signal(false);
 
   // What the last "Enregistrer" sent: only those requests count for the error and the closing.
   private readonly submitted = signal<{ rename: boolean; admin: boolean } | null>(null);
@@ -76,6 +96,9 @@ export class EditTrainingMemberPopup {
       (this.submitted()?.rename ? this.renameError() : null) ??
       (this.submitted()?.admin ? this.adminError() : null),
   );
+  public readonly visibleRegenerateError = computed(() =>
+    this.regenerateRequested() ? this.regenerateError() : null,
+  );
 
   public readonly canSubmit = computed(
     () => this.name().trim().length > 0 && (this.nameChanged() || this.adminChanged()),
@@ -96,6 +119,17 @@ export class EditTrainingMemberPopup {
 
   public onAdminPlayerChange(checked: boolean): void {
     this.isAdminPlayer.set(checked);
+  }
+
+  /** Independent of "Enregistrer": the new code is saved right away and the popup stays open. */
+  public onRegenerateCode(): void {
+    if (this.regenerateLoading()) {
+      return;
+    }
+    this.regenerateRequested.set(true);
+    this.store.dispatch(
+      regenerateTrainingMemberCode({ code: this.data.trainingCode, memberId: this.data.member.id }),
+    );
   }
 
   public onCancel(): void {
