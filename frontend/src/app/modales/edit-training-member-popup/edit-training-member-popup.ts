@@ -23,6 +23,7 @@ import {
   selectSetTrainingAdminMemberError,
   selectSetTrainingAdminMemberLoading,
 } from 'src/app/store/training/training.selectors';
+import { AnimateOnChangeDirective } from 'src/app/shared/animate-on-change/animate-on-change.directive';
 import { Button } from 'src/app/shared/button/button';
 import { Icon } from 'src/app/shared/icon/icon';
 import { InputText } from 'src/app/shared/input-text/input-text';
@@ -44,7 +45,7 @@ export type EditTrainingMemberPopupResult = 'remove';
 @Component({
   selector: 'app-edit-training-member-popup',
   standalone: true,
-  imports: [Button, InputText, Icon, Switch, SwipeToDismissDirective],
+  imports: [Button, InputText, Icon, Switch, SwipeToDismissDirective, AnimateOnChangeDirective],
   templateUrl: './edit-training-member-popup.html',
   styleUrl: './edit-training-member-popup.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -77,6 +78,8 @@ export class EditTrainingMemberPopup {
       this.training()?.members.find((m) => m.id === this.data.member.id)?.code ??
       this.data.member.code,
   );
+  // One tile per digit, like the boxes the member types it in at check-in.
+  public readonly memberCodeDigits = computed(() => this.memberCode().split(''));
   // Only a regeneration asked from this popup shows its error.
   private readonly regenerateRequested = signal(false);
 

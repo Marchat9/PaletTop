@@ -33,23 +33,33 @@
     </p>
   </div>
 
-  <div class="member-code">
-    <app-icon name="pin" iconClass="member-code-icon" [ariaHidden]="true" />
-    <div class="member-code-text">
-      <strong>Code joueur</strong>
-      <span class="code">{{ memberCode() }}</span>
-      <span>
-        Le membre utilisera ce code à chacune de ses séances. Après régénération, il devra saisir le
-        nouveau à sa prochaine séance.
+  <div class="field-group">
+    <span class="field-label">Code joueur</span>
+    <div class="member-code">
+      <!-- Read as one value by screen readers, not digit by digit. -->
+      <span
+        class="code-digits"
+        role="img"
+        [attr.aria-label]="'Code joueur ' + memberCode()"
+        [appAnimateOnChange]="memberCode()"
+        animation="fade-in"
+      >
+        @for (digit of memberCodeDigits(); track $index) {
+          <span class="digit">{{ digit }}</span>
+        }
       </span>
+      <app-button
+        title="Régénérer"
+        variant="secondary"
+        icon="refresh"
+        [loading]="regenerateLoading()"
+        (clicked)="onRegenerateCode()"
+      ></app-button>
     </div>
-    <app-button
-      title="Régénérer"
-      variant="secondary"
-      icon="refresh"
-      [loading]="regenerateLoading()"
-      (clicked)="onRegenerateCode()"
-    ></app-button>
+    <p class="field-help">
+      <app-icon name="info" [ariaHidden]="true" />
+      Saisi à chaque séance. Un nouveau code remplace l’ancien dès la prochaine.
+    </p>
   </div>
 
   <div class="admin-player">

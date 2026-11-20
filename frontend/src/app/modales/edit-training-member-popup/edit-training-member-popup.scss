@@ -63,45 +63,44 @@
     }
   }
 
-  // Same frame as the admin player row: the code, what it is for, and its regeneration.
+  // The code in digit tiles, like the boxes the member types it in at check-in, and its
+  // regeneration on the same line.
   .member-code {
     display: flex;
     align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
     gap: 0.75rem;
-    margin-bottom: 0.75rem;
-    padding: 0.75rem 0.9rem;
+    padding: 0.6rem 0.6rem 0.6rem 0.75rem;
     border-radius: 0.8rem;
     background: var(--color-surface-container-low);
     border: 1px solid var(--color-border-subtle);
 
-    ::ng-deep .member-code-icon {
-      flex-shrink: 0;
-      color: var(--color-primary);
-    }
-
-    .member-code-text {
+    .code-digits {
+      flex: 1 1 0;
       display: flex;
-      flex: 1 1 auto;
-      flex-direction: column;
-      gap: 0.15rem;
-      min-width: 0;
+      justify-content: center;
+      gap: 0.4rem;
 
-      .code {
-        color: var(--color-on-surface);
-        font-size: 1.5rem;
+      .digit {
+        display: grid;
+        place-items: center;
+        width: 2.5rem;
+        height: 2.9rem;
+        border-radius: 0.55rem;
+        background: var(--color-surface);
+        border: 1px solid var(--color-outline-variant);
+        color: var(--color-primary);
+        font-size: 1.4rem;
         font-weight: 700;
         font-variant-numeric: tabular-nums;
-        letter-spacing: 0.3em;
-      }
-
-      span:not(.code) {
-        color: var(--color-on-surface-variant);
-        font-size: 0.8rem;
+        line-height: 1;
       }
     }
 
     app-button {
       flex-shrink: 0;
+      flex: 1 1 0;
     }
   }
 
