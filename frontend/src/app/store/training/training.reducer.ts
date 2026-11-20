@@ -458,7 +458,7 @@ export const trainingReducer = createReducer(
     },
   })),
 
-  // Regenerate member code: only the members are taken, like the rename (see above).
+  // Regenerate member code: the API returns this member only, swapped in place in the list.
   on(regenerateTrainingMemberCode, (state) => ({
     ...state,
     requestStatus: {
@@ -466,11 +466,14 @@ export const trainingReducer = createReducer(
       regenerateMemberCode: { isLoading: true, error: null },
     },
   })),
-  on(regenerateTrainingMemberCodeSuccess, (state, { training }) => ({
+  on(regenerateTrainingMemberCodeSuccess, (state, { member }) => ({
     ...state,
     training: {
       ...state.training,
-      data: state.training.data ? { ...state.training.data, members: training.members } : training,
+      data: state.training.data && {
+        ...state.training.data,
+        members: state.training.data.members.map((m) => (m.id === member.id ? member : m)),
+      },
     },
     requestStatus: {
       ...state.requestStatus,

@@ -214,7 +214,7 @@ describe('TrainingsService.regenerateMemberCode', () => {
 
         const result = await service.regenerateMemberCode('CLUB-1', 'member-1', PASSWORD);
 
-        expect(result.members.find((m) => m.id === 'member-1')!.code).toBe('3333');
+        expect(result).toEqual({ id: 'member-1', name: expect.any(String), code: '3333' });
         expect(memberRepo.save).toHaveBeenCalledWith({ id: 'member-1', code: '3333' });
         random.mockRestore();
     });
@@ -230,7 +230,7 @@ describe('TrainingsService.regenerateMemberCode', () => {
         const result = await service.regenerateMemberCode('CLUB-1', 'member-1', PASSWORD);
 
         expect(sessionRepo.findOpenParticipantCodes).toHaveBeenCalledWith('training-1');
-        expect(result.members.find((m) => m.id === 'member-1')!.code).toBe('4444');
+        expect(result.code).toBe('4444');
         random.mockRestore();
     });
 

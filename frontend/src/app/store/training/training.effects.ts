@@ -761,7 +761,7 @@ export class TrainingEffects {
       withLatestFrom(this.store.select(selectCurrentTrainingAdminInformations)),
       concatMap(([{ code, memberId }, adminInfo]) =>
         this.trainingService.regenerateMemberCode(code, memberId, adminInfo?.password ?? '').pipe(
-          switchMap((training) => of(regenerateTrainingMemberCodeSuccess({ training }))),
+          switchMap((member) => of(regenerateTrainingMemberCodeSuccess({ member }))),
           catchError((error) =>
             of(regenerateTrainingMemberCodeFailure({ error: convertErrorToString(error) })),
           ),

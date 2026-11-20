@@ -313,7 +313,10 @@ describe('trainingReducer', () => {
       code: 'CLUB-1',
       name: 'Club du jeudi',
       createdAt: '2026-01-01T18:00:00.000Z',
-      members: [{ id: 'm1', name: 'Mathieu', code: '1111' }],
+      members: [
+        { id: 'm1', name: 'Mathieu', code: '1111' },
+        { id: 'm2', name: 'Lucie', code: '3333' },
+      ],
       adminMemberId: 'm1',
     };
     const loaded = {
@@ -321,19 +324,18 @@ describe('trainingReducer', () => {
       training: { ...initialTrainingState.training, data: before },
     };
 
-    it('replaces the members only and clears the loading', () => {
+    it('replaces the regenerated member only and clears the loading', () => {
       const state = [
         regenerateTrainingMemberCode({ code: 'CLUB-1', memberId: 'm1' }),
         regenerateTrainingMemberCodeSuccess({
-          training: {
-            ...before,
-            adminMemberId: null,
-            members: [{ id: 'm1', name: 'Mathieu', code: '2222' }],
-          },
+          member: { id: 'm1', name: 'Mathieu', code: '2222' },
         }),
       ].reduce(trainingReducer, loaded);
 
-      expect(state.training.data?.members[0].code).toBe('2222');
+      expect(state.training.data?.members).toEqual([
+        { id: 'm1', name: 'Mathieu', code: '2222' },
+        { id: 'm2', name: 'Lucie', code: '3333' },
+      ]);
       expect(state.training.data?.adminMemberId).toBe('m1');
       expect(state.requestStatus.regenerateMemberCode).toEqual({ isLoading: false, error: null });
     });

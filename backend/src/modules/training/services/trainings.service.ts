@@ -12,7 +12,12 @@ import { UpdateTrainingDto } from '../dto/update-training.dto';
 import { TrainingMemberRepository } from '../repositories/training-member.repository';
 import { TrainingRepository } from '../repositories/training.repository';
 import { TrainingSessionRepository } from '../repositories/training-session.repository';
-import { AdminTrainingDto, toAdminTrainingDto } from '../responses/admin-training.dto';
+import {
+    AdminTrainingDto,
+    TrainingMemberDto,
+    toAdminTrainingDto,
+    toTrainingMemberDto,
+} from '../responses/admin-training.dto';
 import { TrainingRealtimeGateway } from '../training-realtime.gateway';
 import { TrainingAuthService } from './training-auth.service';
 import { sameName } from '../utils/same-name.utils';
@@ -127,12 +132,13 @@ export class TrainingsService {
     /**
      * Draws a new code for a member, e.g. once theirs has leaked. Only future check-ins use it: a
      * member already present in an open session keeps playing with the code of that session.
+     * Only this member is returned: nothing else of the club changes.
      */
     async regenerateMemberCode(
         code: string,
         memberId: string,
         password: string,
-    ): Promise<AdminTrainingDto> {
+    ): Promise<TrainingMemberDto> {
         const training = await this.trainingAuthService.findWithAdminAuth(code, password, true);
         const member = this.findMemberOrThrow(training, memberId);
         // The current code is excluded too: a regeneration must change it.
@@ -141,7 +147,7 @@ export class TrainingsService {
         await this.trainingMemberRepo.save({ id: member.id, code: newCode });
         member.code = newCode;
         this.logger.log(`Code of member '${member.name}' regenerated in training '${code}'`);
-        return toAdminTrainingDto(training);
+        return toTrainingMemberDto(member);
     }
 
     async setAdminMember(code: string, dto: SetTrainingAdminMemberDto): Promise<AdminTrainingDto> {

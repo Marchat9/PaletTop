@@ -28,7 +28,6 @@ import {
   regenerateTrainingMemberCodeFailure,
   regenerateTrainingMemberCodeSuccess,
 } from './training.admin.actions';
-import { AdminTrainingDto } from './training.models';
 import {
   selectCurrentTrainingAdminInformations,
   selectFollowedTrainingClubLeaderboardSession,
@@ -121,14 +120,12 @@ describe('TrainingEffects', () => {
       return { trainingService, emitted };
     }
 
-    it('sends the admin password and stores the returned training', () => {
-      const training = { id: 't1', members: [{ id: 'm1', name: 'Jean', code: '4242' }] };
-      const { trainingService, emitted } = setupRegeneration(() => of(training));
+    it('sends the admin password and stores the returned member', () => {
+      const member = { id: 'm1', name: 'Jean', code: '4242' };
+      const { trainingService, emitted } = setupRegeneration(() => of(member));
 
       expect(trainingService.regenerateMemberCode).toHaveBeenCalledWith('CLUB-1', 'm1', 'secret');
-      expect(emitted).toEqual([
-        regenerateTrainingMemberCodeSuccess({ training: training as unknown as AdminTrainingDto }),
-      ]);
+      expect(emitted).toEqual([regenerateTrainingMemberCodeSuccess({ member })]);
     });
 
     it('turns an API refusal into a failure carrying its message', () => {

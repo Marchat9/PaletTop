@@ -1,6 +1,6 @@
 import { createAction, props } from '@ngrx/store';
 import { Nullable } from 'src/app/models/nullable.model';
-import { AdminTrainingDto } from './training.models';
+import { AdminTrainingDto, TrainingMemberDto } from './training.models';
 
 // --------- Training Administrator Connection ---------
 export const connectTrainingAdministrator = createAction(
@@ -69,7 +69,7 @@ export const regenerateTrainingMemberCode = createAction(
 );
 export const regenerateTrainingMemberCodeSuccess = createAction(
   '[Training] Regenerate Training Member Code Success',
-  props<{ training: AdminTrainingDto }>(),
+  props<{ member: TrainingMemberDto }>(),
 );
 export const regenerateTrainingMemberCodeFailure = createAction(
   '[Training] Regenerate Training Member Code Failure',
