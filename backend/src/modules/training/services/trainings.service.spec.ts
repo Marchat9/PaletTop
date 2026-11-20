@@ -35,6 +35,7 @@ function makeService(openSessionCodes: string[] = [], adminMemberId: string | nu
 
     const sessionRepo = {
         findOpenCodesWithMember: vi.fn(() => Promise.resolve(openSessionCodes)),
+        findOpenParticipantCodes: vi.fn((): Promise<string[]> => Promise.resolve([])),
         findByCodeOrThrow: vi.fn((code: string) =>
             Promise.resolve({ id: `id-${code}`, code } as TrainingSession),
         ),
@@ -172,6 +173,22 @@ describe('TrainingsService.addMember', () => {
         expect(result.members.map((m) => m.name)).toContain('Léa');
     });
 
+    it('gives a new member a code no participant uses in an open session of the club', async () => {
+        const random = vi
+            .spyOn(Math, 'random')
+            .mockReturnValueOnce(0.33335)
+            .mockReturnValue(0.44445);
+        const { service, sessionRepo } = makeService();
+        // A regenerated member still plays the open session with their old code.
+        sessionRepo.findOpenParticipantCodes.mockResolvedValue(['3333']);
+
+        const result = await service.addMember('CLUB-1', { password: PASSWORD, name: 'Lucie' });
+
+        expect(sessionRepo.findOpenParticipantCodes).toHaveBeenCalledWith('training-1');
+        expect(result.members.find((m) => m.name === 'Lucie')!.code).toBe('4444');
+        random.mockRestore();
+    });
+
     it('gives a new member a 4-digit code not used by another member of the club', async () => {
         const { service, memberRepo } = makeService();
 
@@ -199,6 +216,21 @@ describe('TrainingsService.regenerateMemberCode', () => {
 
         expect(result.members.find((m) => m.id === 'member-1')!.code).toBe('3333');
         expect(memberRepo.save).toHaveBeenCalledWith({ id: 'member-1', code: '3333' });
+        random.mockRestore();
+    });
+
+    it('regenerates a code no participant uses in an open session of the club', async () => {
+        const random = vi
+            .spyOn(Math, 'random')
+            .mockReturnValueOnce(0.33335)
+            .mockReturnValue(0.44445);
+        const { service, sessionRepo } = makeService();
+        sessionRepo.findOpenParticipantCodes.mockResolvedValue(['3333']);
+
+        const result = await service.regenerateMemberCode('CLUB-1', 'member-1', PASSWORD);
+
+        expect(sessionRepo.findOpenParticipantCodes).toHaveBeenCalledWith('training-1');
+        expect(result.members.find((m) => m.id === 'member-1')!.code).toBe('4444');
         random.mockRestore();
     });
 

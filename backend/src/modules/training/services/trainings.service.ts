@@ -65,7 +65,7 @@ export class TrainingsService {
         const member = this.trainingMemberRepo.create({
             training,
             name: dto.name,
-            code: generateNumericCode(training.members.map((m) => m.code)),
+            code: await this.drawMemberCode(training),
         });
         const saved = await this.trainingMemberRepo.save(member);
         training.members = [...training.members, saved];
@@ -136,7 +136,7 @@ export class TrainingsService {
         const training = await this.trainingAuthService.findWithAdminAuth(code, password, true);
         const member = this.findMemberOrThrow(training, memberId);
         // The current code is excluded too: a regeneration must change it.
-        const newCode = generateNumericCode(training.members.map((m) => m.code));
+        const newCode = await this.drawMemberCode(training);
 
         await this.trainingMemberRepo.save({ id: member.id, code: newCode });
         member.code = newCode;
@@ -159,6 +159,21 @@ export class TrainingsService {
                 : `Admin player cleared in training '${code}'`,
         );
         return toAdminTrainingDto(training);
+    }
+
+    /**
+     * A code used by no member of the club, nor by any participant of its open sessions: after a
+     * regeneration, the member keeps playing an open session with their old code, which must not
+     * be handed to another member who would then fail to check in (codes are unique per session).
+     */
+    private async drawMemberCode(training: Training): Promise<string> {
+        const openParticipantCodes = await this.trainingSessionRepo.findOpenParticipantCodes(
+            training.id,
+        );
+        return generateNumericCode([
+            ...training.members.map((m) => m.code),
+            ...openParticipantCodes,
+        ]);
     }
 
     private findMemberOrThrow(training: Training, memberId: string): TrainingMember {
