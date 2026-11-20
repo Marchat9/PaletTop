@@ -29,6 +29,7 @@ import {
     toSuperAdminTournamentSummaryDto,
 } from './responses/super-admin-tournament-summary.dto';
 import { SuperAdminAuthGuard } from './super-admin-auth.guard';
+import { AdminPasswordService } from 'src/modules/admin-password/admin-password.service';
 
 @Controller('super-admin/tournaments')
 @UseGuards(SuperAdminAuthGuard)
@@ -38,6 +39,7 @@ export class SuperAdminTournamentsController {
 
     constructor(
         private readonly tournamentRepo: TournamentRepository,
+        private readonly adminPassword: AdminPasswordService,
         readonly configService: ConfigService,
     ) {
         this.maxPageSize = configService.getOrThrow<SuperAdminConfig>('superAdmin').maxPageSize;
@@ -102,8 +104,14 @@ export class SuperAdminTournamentsController {
         @Param('id', ParseUUIDPipe) id: string,
         @Body() dto: SuperAdminResourcePasswordDto,
     ): Promise<void> {
-        return runGuarded(this.logger, 'Erreur lors de la réinitialisation du mot de passe.', () =>
-            this.tournamentRepo.updateAdminPassword(id, dto.newPassword),
+        return runGuarded(
+            this.logger,
+            'Erreur lors de la réinitialisation du mot de passe.',
+            async () =>
+                this.tournamentRepo.updateAdminPassword(
+                    id,
+                    await this.adminPassword.hash(dto.newPassword),
+                ),
         );
     }
 }

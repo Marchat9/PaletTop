@@ -28,6 +28,7 @@ import { TeamRepository } from '../repositories/team.repository';
 import { TournamentRepository } from '../repositories/tournament.repository';
 import { TeamDto, toTeamDto } from '../responses/admin-tournament.dto';
 import { TournamentAuthService } from './tournament-auth.service';
+import { AdminPasswordService } from 'src/modules/admin-password/admin-password.service';
 
 @Injectable()
 export class TournamentsService {
@@ -44,6 +45,7 @@ export class TournamentsService {
         private readonly strategyFactory: TournamentStrategyFactory,
         private readonly gateway: RealtimeGateway,
         private readonly appSettingsService: AppSettingsService,
+        private readonly adminPassword: AdminPasswordService,
     ) {}
 
     /**
@@ -122,7 +124,7 @@ export class TournamentsService {
         const tournament = this.tournamentRepo.create({
             name: tournamentCreation.name,
             code: tournamentCreation.code,
-            adminPassword: tournamentCreation.adminPassword,
+            adminPassword: await this.adminPassword.hash(tournamentCreation.adminPassword),
             date: tournamentCreation.date,
             description: tournamentCreation.description,
             status: TournamentStatus.DRAFT,

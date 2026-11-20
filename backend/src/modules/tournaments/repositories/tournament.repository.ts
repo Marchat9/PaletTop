@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { LessThan, Repository } from 'typeorm';
+import { LessThan, Repository, SelectQueryBuilder } from 'typeorm';
 import { deleteManyByIds, updateAdminPasswordById } from 'src/utils/admin-crud.util';
 import { paginateAdminSearch } from 'src/utils/admin-search.util';
 import { Team } from 'src/entities/team.entity';
@@ -16,6 +16,20 @@ export interface TournamentLoadOptions {
     withMatches?: boolean;
     withSessions?: boolean;
     withPools?: boolean;
+}
+
+/** Identifies a tournament by its code, or by its id when no code is given. */
+export interface TournamentLookup {
+    code?: string;
+    id?: string;
+}
+
+function applyLookup(queryBuilder: SelectQueryBuilder<Tournament>, where: TournamentLookup): void {
+    if (where.code) {
+        queryBuilder.where('tournament.code = :code', { code: where.code });
+    } else {
+        queryBuilder.where('tournament.id = :id', { id: where.id });
+    }
 }
 
 const ADMIN_TOURNAMENT_SORTABLE_COLUMNS: Record<string, string> = {
@@ -52,24 +66,31 @@ export class TournamentRepository {
     }
 
     /**
-     * Loads a tournament once the admin password has been checked.
-     *
-     * Returns null when the tournament is unknown or the password is wrong.
+     * Light query returning only the stored admin password hash (column is `select: false`), so
+     * that a wrong password is rejected before any team, match or pool is loaded.
+     * Returns null when the tournament is unknown.
      */
-    async findWithAuth(
-        where: { code?: string; id?: string },
-        password: string,
-        options: TournamentLoadOptions = {},
-    ): Promise<Tournament | null> {
+    async findAdminPasswordHash(where: TournamentLookup): Promise<string | null> {
         const queryBuilder = this.repo
             .createQueryBuilder('tournament')
-            .where('tournament.adminPassword = :password', { password });
+            .select('tournament.id')
+            .addSelect('tournament.adminPassword');
+        applyLookup(queryBuilder, where);
 
-        if (where.code) {
-            queryBuilder.andWhere('tournament.code = :code', { code: where.code });
-        } else {
-            queryBuilder.andWhere('tournament.id = :id', { id: where.id });
-        }
+        const tournament = await queryBuilder.getOne();
+        return tournament?.adminPassword ?? null;
+    }
+
+    /**
+     * Loads a tournament for an admin whose password has already been verified
+     * (see TournamentAuthService). Returns null when the tournament is unknown.
+     */
+    async findForAdmin(
+        where: TournamentLookup,
+        options: TournamentLoadOptions = {},
+    ): Promise<Tournament | null> {
+        const queryBuilder = this.repo.createQueryBuilder('tournament');
+        applyLookup(queryBuilder, where);
 
         if (options.withTeams) {
             queryBuilder
