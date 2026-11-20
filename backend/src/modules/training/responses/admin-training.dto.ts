@@ -4,6 +4,8 @@ import { TrainingMember } from 'src/entities/training-member.entity';
 export interface TrainingMemberDto {
     id: string;
     name: string;
+    // Participant code the member keeps for every session of the club (admin only).
+    code: string;
 }
 
 export interface AdminTrainingDto {
@@ -17,7 +19,7 @@ export interface AdminTrainingDto {
 }
 
 export function toTrainingMemberDto(member: TrainingMember): TrainingMemberDto {
-    return { id: member.id, name: member.name };
+    return { id: member.id, name: member.name, code: member.code };
 }
 
 export function toAdminTrainingDto(training: Training): AdminTrainingDto {

@@ -16,6 +16,7 @@ import { AdminTrainingDto, toAdminTrainingDto } from '../responses/admin-trainin
 import { TrainingRealtimeGateway } from '../training-realtime.gateway';
 import { TrainingAuthService } from './training-auth.service';
 import { sameName } from '../utils/same-name.utils';
+import { generateNumericCode } from 'src/utils/numeric-code.util';
 import { TrainingLeaderboardService } from './training-leaderboard.service';
 
 @Injectable()
@@ -61,7 +62,11 @@ export class TrainingsService {
     async addMember(code: string, dto: AddTrainingMemberDto): Promise<AdminTrainingDto> {
         const training = await this.trainingAuthService.findWithAdminAuth(code, dto.password, true);
         this.assertNameAvailable(training, dto.name);
-        const member = this.trainingMemberRepo.create({ training, name: dto.name });
+        const member = this.trainingMemberRepo.create({
+            training,
+            name: dto.name,
+            code: generateNumericCode(training.members.map((m) => m.code)),
+        });
         const saved = await this.trainingMemberRepo.save(member);
         training.members = [...training.members, saved];
         this.logger.log(`Member '${saved.name}' added to training '${code}'`);

@@ -15,8 +15,8 @@ function makeService(openSessionCodes: string[] = [], adminMemberId: string | nu
         createdAt: CREATED_AT,
         adminMemberId,
         members: [
-            { id: 'member-1', name: 'Thomas', createdAt: CREATED_AT },
-            { id: 'member-2', name: 'Thomas Durand', createdAt: CREATED_AT },
+            { id: 'member-1', name: 'Thomas', code: '1111', createdAt: CREATED_AT },
+            { id: 'member-2', name: 'Thomas Durand', code: '2222', createdAt: CREATED_AT },
         ],
     } as Training;
 
@@ -170,6 +170,19 @@ describe('TrainingsService.addMember', () => {
         const result = await service.addMember('CLUB-1', { password: PASSWORD, name: 'Léa' });
 
         expect(result.members.map((m) => m.name)).toContain('Léa');
+    });
+
+    it('gives a new member a 4-digit code not used by another member of the club', async () => {
+        const { service, memberRepo } = makeService();
+
+        const result = await service.addMember('CLUB-1', { password: PASSWORD, name: 'Lucie' });
+
+        const added = result.members.find((m) => m.name === 'Lucie')!;
+        expect(added.code).toMatch(/^\d{4}$/);
+        expect(['1111', '2222']).not.toContain(added.code);
+        expect(memberRepo.create).toHaveBeenCalledWith(
+            expect.objectContaining({ code: added.code }),
+        );
     });
 });
 
