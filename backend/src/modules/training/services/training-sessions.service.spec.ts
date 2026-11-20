@@ -20,6 +20,7 @@ vi.mock('typeorm-transactional', () => ({
 const MEMBER = {
     id: 'member-1',
     name: 'Jean Dubois',
+    code: '7777',
     training: { id: 'training-1' },
 } as TrainingMember;
 
@@ -93,9 +94,31 @@ describe('TrainingSessionsService.checkin', () => {
         expect(result.participants).toHaveLength(1);
         expect(result.participants[0]).toMatchObject({
             id: 'p1',
+            // Not the member code '7777': the returning row keeps the code it was checked in with.
             code: '4821',
             status: TrainingParticipantStatus.PRESENT,
         });
+    });
+
+    it('gives a member checking in for the first time their club code', async () => {
+        const { service } = makeService([]);
+
+        const result = await service.checkin('1234', { password: 'pwd', memberId: MEMBER.id });
+
+        expect(result.participants[0].code).toBe('7777');
+    });
+
+    it('never gives a guest the code of a club member', async () => {
+        const random = vi
+            .spyOn(Math, 'random')
+            .mockReturnValueOnce(0.77775)
+            .mockReturnValue(0.12345);
+        const { service } = makeService([]);
+
+        const result = await service.checkin('1234', { password: 'pwd', name: 'Visiteur' });
+
+        expect(result.participants[0].code).toBe('1234');
+        random.mockRestore();
     });
 
     it('reprend la première ligne quand un membre est déjà parti plusieurs fois', async () => {

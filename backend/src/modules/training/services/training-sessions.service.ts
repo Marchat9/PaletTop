@@ -231,7 +231,12 @@ export class TrainingSessionsService {
         // precedence over a guest, who would lose the history and the member profile), and the
         // guests present. Two identical names would show "Alice · Alice" in the rounds and nobody
         // could tell them apart in the leaderboard.
-        if (!member) {
+        // A member keeps their club code in every session. A guest gets a new one, never a club
+        // member's: that member could not check in afterwards (codes are unique per session).
+        let code: string;
+        if (member) {
+            code = member.code;
+        } else {
             const members = await this.trainingMemberRepo.findByTraining(session.training.id);
             const homonym = [
                 ...members.map((m) => ({ name: m.name, isMember: true })),
@@ -250,14 +255,18 @@ export class TrainingSessionsService {
                         : `${homonym.name} est déjà présent(e) : ajoutez une initiale pour les distinguer.`,
                 );
             }
+
+            code = generateNumericCode([
+                ...session.participants.map((p) => p.code),
+                ...members.map((m) => m.code),
+            ]);
         }
 
-        const existingCodes = session.participants.map((p) => p.code);
         const participant = this.trainingParticipantRepo.create({
             session,
             member,
             name: name!,
-            code: generateNumericCode(existingCodes),
+            code,
             status: TrainingParticipantStatus.PRESENT,
         });
         const saved = await this.trainingParticipantRepo.save(participant);
