@@ -27,12 +27,15 @@ import { Button } from 'src/app/shared/button/button';
 import { Icon } from 'src/app/shared/icon/icon';
 import { InputText } from 'src/app/shared/input-text/input-text';
 import { Switch } from 'src/app/shared/switch/switch';
+import { SwipeToDismissDirective } from 'src/app/shared/swipe-to-dismiss/swipe-to-dismiss.directive';
 
 export interface EditTrainingMemberPopupData {
   trainingCode: string;
   member: TrainingMemberDto;
   /** This member is the admin who also plays. */
   isAdminPlayer: boolean;
+  /** Opened as a mobile bottom sheet: it shows a handle and can be swiped down. */
+  isSheet?: boolean;
 }
 
 /** `remove`: the admin asked to remove the member, the page takes over with its confirmation. */
@@ -41,7 +44,7 @@ export type EditTrainingMemberPopupResult = 'remove';
 @Component({
   selector: 'app-edit-training-member-popup',
   standalone: true,
-  imports: [Button, InputText, Icon, Switch],
+  imports: [Button, InputText, Icon, Switch, SwipeToDismissDirective],
   templateUrl: './edit-training-member-popup.html',
   styleUrl: './edit-training-member-popup.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -51,6 +54,7 @@ export class EditTrainingMemberPopup {
   private readonly dialogRef = inject(DialogRef<EditTrainingMemberPopupResult>);
   private readonly data = inject<EditTrainingMemberPopupData>(DIALOG_DATA);
 
+  public readonly isSheet = !!this.data.isSheet;
   public readonly name = signal(this.data.member.name);
   // Saved with the name on "Enregistrer": "Annuler" leaves both untouched.
   public readonly isAdminPlayer = signal(this.data.isAdminPlayer);

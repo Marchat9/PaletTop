@@ -1,4 +1,12 @@
-<div class="popup-container popup-surface" (keydown.enter)="onSubmit()">
+<div
+  class="popup-container popup-surface"
+  [class.sheet]="isSheet"
+  [appSwipeToDismiss]="isSheet"
+  (keydown.enter)="onSubmit()"
+>
+  @if (isSheet) {
+    <span class="handle" aria-hidden="true"></span>
+  }
   <div class="popup-header">
     <h2 class="popup-title">
       <app-icon name="person" iconClass="icon" [ariaHidden]="true" />
@@ -31,8 +39,8 @@
       <strong>Code joueur</strong>
       <span class="code">{{ memberCode() }}</span>
       <span>
-        Le membre utilisera ce code à chacune de ses séances. Après régénération, il devra saisir
-        le nouveau à sa prochaine séance.
+        Le membre utilisera ce code à chacune de ses séances. Après régénération, il devra saisir le
+        nouveau à sa prochaine séance.
       </span>
     </div>
     <app-button

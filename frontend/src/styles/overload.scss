@@ -222,3 +222,26 @@ span.highlight {
   }
 }
 // ###################################
+
+// ###################################
+// Form popups opened as a bottom sheet on mobile (e.g. editing a club member): the popup root
+// carries `.popup-surface.sheet` and styles itself, the panel only drops the dialog frame.
+.popup-sheet-panel {
+  display: block;
+  width: 100%;
+  max-width: 100vw;
+
+  .cdk-dialog-container {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    outline: none;
+  }
+
+  .cdk-dialog-container:focus,
+  .cdk-dialog-container:focus-visible {
+    outline: none;
+  }
+}
+// ###################################
