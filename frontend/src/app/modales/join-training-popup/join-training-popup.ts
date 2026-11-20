@@ -12,7 +12,6 @@ import { Store } from '@ngrx/store';
 import { Button } from 'src/app/shared/button/button';
 import { CodeNumberInputComponent } from 'src/app/shared/code-number-input/code-number-input';
 import { Icon } from 'src/app/shared/icon/icon';
-import { TRAINING_MEMBER_NOT_CHECKED_IN_MESSAGE } from 'src/app/store/training/training.models';
 import {
   loadTrainingParticipantCurrentMatch,
   resetTraining,
@@ -59,12 +58,6 @@ export class JoinTrainingPopup {
   readonly trainingError = this.store.selectSignal(selectTrainingParticipantCurrentMatchError);
   readonly trainingLoading = this.store.selectSignal(
     selectTrainingParticipantCurrentMatchIsLoading,
-  );
-
-  // A club member's code, typed before the check-in: told to see the admin instead of "incorrect".
-  readonly isNotCheckedInMessage = TRAINING_MEMBER_NOT_CHECKED_IN_MESSAGE;
-  readonly isNotCheckedIn = computed(
-    () => this.trainingError() === TRAINING_MEMBER_NOT_CHECKED_IN_MESSAGE,
   );
 
   constructor() {

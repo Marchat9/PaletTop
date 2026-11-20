@@ -16,13 +16,6 @@ export interface TrainingMemberDto {
   code: string;
 }
 
-/**
- * Sent by the API when a club member joins a session before being checked in: same text as the
- * backend (training-participant-view.service.ts), compared to show it instead of "incorrect code".
- */
-export const TRAINING_MEMBER_NOT_CHECKED_IN_MESSAGE =
-  "Vous n'êtes pas encore pointé, rapprochez vous de l'admin du club";
-
 export interface AdminTrainingDto {
   id: string;
   code: string;

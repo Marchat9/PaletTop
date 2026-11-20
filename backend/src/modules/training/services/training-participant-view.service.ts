@@ -1,9 +1,8 @@
-import { ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { TrainingParticipant } from 'src/entities/training-participant.entity';
 import { TrainingSession } from 'src/entities/training-session.entity';
 import { TrainingTeam } from 'src/entities/training-team.entity';
 import { TrainingMatchRepository } from '../repositories/training-match.repository';
-import { TrainingMemberRepository } from '../repositories/training-member.repository';
 import { TrainingRoundRepository } from '../repositories/training-round.repository';
 import { TrainingSessionRepository } from '../repositories/training-session.repository';
 import { TrainingCurrentMatchDto } from '../responses/training-current-match.dto';
@@ -17,7 +16,6 @@ export class TrainingParticipantViewService {
         private readonly trainingSessionRepo: TrainingSessionRepository,
         private readonly trainingRoundRepo: TrainingRoundRepository,
         private readonly trainingMatchRepo: TrainingMatchRepository,
-        private readonly trainingMemberRepo: TrainingMemberRepository,
     ) {}
 
     async getCurrentMatch(
@@ -86,17 +84,6 @@ export class TrainingParticipantViewService {
         const session = await this.trainingSessionRepo.findByCodeOrThrow(sessionCode);
         const participant = session.participants.find((p) => p.code === participantCode);
         if (!participant) {
-            // A club member's code is valid before the check-in: say so, instead of "invalid".
-            const members = await this.trainingMemberRepo.findByTraining(session.training.id);
-            const member = members.find((m) => m.code === participantCode);
-            if (member) {
-                this.logger.warn(
-                    `Member '${member.name}' joined training session ${sessionCode} before being checked in`,
-                );
-                throw new ForbiddenException(
-                    "Vous n'êtes pas encore pointé, rapprochez vous de l'admin du club",
-                );
-            }
             this.logger.warn(`Invalid participant code for training session ${sessionCode}`);
             throw new NotFoundException('Code participant invalide pour cette séance.');
         }
