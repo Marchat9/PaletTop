@@ -142,10 +142,10 @@ describe('toClubLeaderboard', () => {
     ]);
 
     expect(table.nameLabel).toBe('Membre');
-    expect(table.columns.map((column) => column.label)).toEqual(['Séances', 'V', 'Pts']);
+    expect(table.columns.map((column) => column.label)).toEqual(['Nb séances', 'V', 'Pts']);
     expect(table.rows[0].cells.map((cell) => cell.value)).toEqual(['2', '3', '39']);
     expect(table.rows.map((entry) => entry.rankLabel)).toEqual(['1', '2']);
-    expect(table.rows[0].summary).toBe('39 pts');
+    expect(table.rows[0].summary).toBe('3 V · 39 pts');
   });
 });
 
