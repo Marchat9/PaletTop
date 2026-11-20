@@ -118,7 +118,7 @@
 
     &.place-1 {
       min-height: 7rem;
-      outline: 1px solid var(--color-status-draft-border);
+      outline: 1px solid var(--color-primary);
       // Drawn inside the step: the containers that clip their overflow cut an outer border.
       outline-offset: -1px;
 
@@ -129,6 +129,8 @@
 
     &.place-2 {
       min-height: 6rem;
+      outline: 1px solid var(--color-status-draft-border);
+      outline-offset: -1px;
 
       .medal {
         background: var(--color-medal-silver);

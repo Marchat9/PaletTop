@@ -211,7 +211,7 @@ export function toClubLeaderboard(entries: TrainingClubLeaderboardEntryDto[]): L
   return {
     nameLabel: 'Membre',
     columns: [
-      { label: 'Séances', title: 'Séances jouées' },
+      { label: 'Nb séances', title: 'Séances jouées' },
       { label: 'V', title: 'Victoires' },
       { label: 'Pts', title: 'Points' },
     ],
@@ -222,7 +222,7 @@ export function toClubLeaderboard(entries: TrainingClubLeaderboardEntryDto[]): L
         rank: ranks[index],
         name: entry.name,
         cells: [plain(entry.sessionsPlayed), plain(entry.wins), plain(entry.points)],
-        summary: `${entry.points} pts`,
+        summary: `${entry.wins} V · ${entry.points} pts`,
         section: null,
       })),
     ),
