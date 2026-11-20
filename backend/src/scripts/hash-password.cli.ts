@@ -4,7 +4,11 @@ import { runHashPassword } from './hash-password';
 /** Reads a line without echoing it, so the password stays out of the screen and shell history. */
 function promptHidden(): Promise<string> {
     return new Promise((resolve) => {
-        const rl = createInterface({ input: process.stdin, output: process.stdout, terminal: true });
+        const rl = createInterface({
+            input: process.stdin,
+            output: process.stdout,
+            terminal: true,
+        });
         process.stdout.write('Password: ');
         // readline has no public "mute" option: silence its echo while the line is typed.
         (rl as unknown as { _writeToOutput: (text: string) => void })._writeToOutput = () =>
