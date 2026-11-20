@@ -1,5 +1,7 @@
 import { normalizeCode } from 'src/app/utils/code-format.util';
 import { Dialog } from '@angular/cdk/dialog';
+import { BreakpointObserver } from '@angular/cdk/layout';
+import { Overlay } from '@angular/cdk/overlay';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -42,6 +44,7 @@ import {
   EditTrainingPopup,
   EditTrainingPopupData,
 } from 'src/app/modales/edit-training-popup/edit-training-popup';
+import { LEADERBOARD_MOBILE_QUERY } from 'src/app/utils/leaderboard-dialog.util';
 import { TrainingHeader } from './components/training-header/training-header';
 import { TrainingRosterCard } from './components/training-roster-card/training-roster-card';
 import { TrainingSessionList } from './components/training-session-list/training-session-list';
@@ -58,6 +61,8 @@ export class AdminTrainingPage implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly router = inject(Router);
   private readonly store = inject(Store);
+  private readonly overlay = inject(Overlay);
+  private readonly breakpointObserver = inject(BreakpointObserver);
   private readonly dialog = inject(Dialog);
 
   public readonly trainingCode = signal<string | null>(null);
@@ -191,14 +196,22 @@ export class AdminTrainingPage implements OnInit {
       return;
     }
 
+    // Same limit as the leaderboards: below it, the popup opens from the bottom and swipes down.
+    const isSheet = this.breakpointObserver.isMatched(LEADERBOARD_MOBILE_QUERY);
     this.dialog
       .open<EditTrainingMemberPopupResult, EditTrainingMemberPopupData>(EditTrainingMemberPopup, {
         data: {
           trainingCode,
           member,
           isAdminPlayer: this.training()?.adminMemberId === member.id,
+          isSheet,
         },
-        panelClass: 'dialog-panel',
+        ...(isSheet
+          ? {
+              positionStrategy: this.overlay.position().global().bottom('0').width('100%'),
+              panelClass: 'popup-sheet-panel',
+            }
+          : { panelClass: 'dialog-panel' }),
         backdropClass: 'dialog-backdrop-light',
         disableClose: false,
       })

@@ -20,6 +20,9 @@ import {
   connectTrainingAdministrator,
   connectTrainingAdministratorFailure,
   connectTrainingAdministratorSuccess,
+  regenerateTrainingMemberCode,
+  regenerateTrainingMemberCodeFailure,
+  regenerateTrainingMemberCodeSuccess,
   removeTrainingMember,
   removeTrainingMemberFailure,
   removeTrainingMemberSuccess,
@@ -137,6 +140,7 @@ export const initialTrainingState: TrainingState = {
     updateTraining: { isLoading: false, error: null },
     addMember: { isLoading: false, error: null },
     renameMember: { isLoading: false, error: null },
+    regenerateMemberCode: { isLoading: false, error: null },
     setAdminMember: { isLoading: false, error: null },
     removeMember: { isLoading: false, error: null },
     createSession: { isLoading: false, error: null },
@@ -451,6 +455,36 @@ export const trainingReducer = createReducer(
     requestStatus: {
       ...state.requestStatus,
       renameMember: { isLoading: false, error },
+    },
+  })),
+
+  // Regenerate member code: the API returns this member only, swapped in place in the list.
+  on(regenerateTrainingMemberCode, (state) => ({
+    ...state,
+    requestStatus: {
+      ...state.requestStatus,
+      regenerateMemberCode: { isLoading: true, error: null },
+    },
+  })),
+  on(regenerateTrainingMemberCodeSuccess, (state, { member }) => ({
+    ...state,
+    training: {
+      ...state.training,
+      data: state.training.data && {
+        ...state.training.data,
+        members: state.training.data.members.map((m) => (m.id === member.id ? member : m)),
+      },
+    },
+    requestStatus: {
+      ...state.requestStatus,
+      regenerateMemberCode: { isLoading: false, error: null },
+    },
+  })),
+  on(regenerateTrainingMemberCodeFailure, (state, { error }) => ({
+    ...state,
+    requestStatus: {
+      ...state.requestStatus,
+      regenerateMemberCode: { isLoading: false, error },
     },
   })),
 

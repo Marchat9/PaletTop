@@ -12,10 +12,16 @@ import { UpdateTrainingDto } from '../dto/update-training.dto';
 import { TrainingMemberRepository } from '../repositories/training-member.repository';
 import { TrainingRepository } from '../repositories/training.repository';
 import { TrainingSessionRepository } from '../repositories/training-session.repository';
-import { AdminTrainingDto, toAdminTrainingDto } from '../responses/admin-training.dto';
+import {
+    AdminTrainingDto,
+    TrainingMemberDto,
+    toAdminTrainingDto,
+    toTrainingMemberDto,
+} from '../responses/admin-training.dto';
 import { TrainingRealtimeGateway } from '../training-realtime.gateway';
 import { TrainingAuthService } from './training-auth.service';
 import { sameName } from '../utils/same-name.utils';
+import { generateNumericCode } from 'src/utils/numeric-code.util';
 import { TrainingLeaderboardService } from './training-leaderboard.service';
 
 @Injectable()
@@ -61,7 +67,11 @@ export class TrainingsService {
     async addMember(code: string, dto: AddTrainingMemberDto): Promise<AdminTrainingDto> {
         const training = await this.trainingAuthService.findWithAdminAuth(code, dto.password, true);
         this.assertNameAvailable(training, dto.name);
-        const member = this.trainingMemberRepo.create({ training, name: dto.name });
+        const member = this.trainingMemberRepo.create({
+            training,
+            name: dto.name,
+            code: await this.drawMemberCode(training),
+        });
         const saved = await this.trainingMemberRepo.save(member);
         training.members = [...training.members, saved];
         this.logger.log(`Member '${saved.name}' added to training '${code}'`);
@@ -119,6 +129,27 @@ export class TrainingsService {
         return toAdminTrainingDto(training);
     }
 
+    /**
+     * Draws a new code for a member, e.g. once theirs has leaked. Only future check-ins use it: a
+     * member already present in an open session keeps playing with the code of that session.
+     * Only this member is returned: nothing else of the club changes.
+     */
+    async regenerateMemberCode(
+        code: string,
+        memberId: string,
+        password: string,
+    ): Promise<TrainingMemberDto> {
+        const training = await this.trainingAuthService.findWithAdminAuth(code, password, true);
+        const member = this.findMemberOrThrow(training, memberId);
+        // The current code is excluded too: a regeneration must change it.
+        const newCode = await this.drawMemberCode(training);
+
+        await this.trainingMemberRepo.save({ id: member.id, code: newCode });
+        member.code = newCode;
+        this.logger.log(`Code of member '${member.name}' regenerated in training '${code}'`);
+        return toTrainingMemberDto(member);
+    }
+
     async setAdminMember(code: string, dto: SetTrainingAdminMemberDto): Promise<AdminTrainingDto> {
         const training = await this.trainingAuthService.findWithAdminAuth(code, dto.password, true);
         const memberId = dto.memberId ?? null;
@@ -134,6 +165,21 @@ export class TrainingsService {
                 : `Admin player cleared in training '${code}'`,
         );
         return toAdminTrainingDto(training);
+    }
+
+    /**
+     * A code used by no member of the club, nor by any participant of its open sessions: after a
+     * regeneration, the member keeps playing an open session with their old code, which must not
+     * be handed to another member who would then fail to check in (codes are unique per session).
+     */
+    private async drawMemberCode(training: Training): Promise<string> {
+        const openParticipantCodes = await this.trainingSessionRepo.findOpenParticipantCodes(
+            training.id,
+        );
+        return generateNumericCode([
+            ...training.members.map((m) => m.code),
+            ...openParticipantCodes,
+        ]);
     }
 
     private findMemberOrThrow(training: Training, memberId: string): TrainingMember {

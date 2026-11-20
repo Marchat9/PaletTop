@@ -73,6 +73,14 @@ export const selectRenameTrainingMemberError = createSelector(
   selectTrainingState,
   (state) => state.requestStatus.renameMember.error,
 );
+export const selectRegenerateTrainingMemberCodeLoading = createSelector(
+  selectTrainingState,
+  (state) => state.requestStatus.regenerateMemberCode.isLoading,
+);
+export const selectRegenerateTrainingMemberCodeError = createSelector(
+  selectTrainingState,
+  (state) => state.requestStatus.regenerateMemberCode.error,
+);
 export const selectSetTrainingAdminMemberLoading = createSelector(
   selectTrainingState,
   (state) => state.requestStatus.setAdminMember.isLoading,

@@ -8,6 +8,27 @@
   width: min(100vw - 2rem, 29rem);
   overflow: hidden;
 
+  // Mobile bottom sheet (see `.popup-sheet-panel` in styles/overload.scss): full width, tighter,
+  // with the handle it is swiped down by.
+  &.sheet {
+    width: 100%;
+    max-height: 90dvh;
+    overflow-y: auto;
+    gap: 1.25rem;
+    padding: 0.6rem 1.25rem calc(1.25rem + env(safe-area-inset-bottom, 0px));
+    border-radius: 1.2rem 1.2rem 0 0;
+
+    .handle {
+      flex: none;
+      align-self: center;
+      width: 2.5rem;
+      height: 0.25rem;
+      margin-bottom: -0.5rem;
+      border-radius: 999px;
+      background: var(--color-outline-variant);
+    }
+  }
+
   // Same row as the rules of the session creation page: what it does on the left, the switch on
   // the right.
   .admin-player {
@@ -39,6 +60,47 @@
 
     app-switch {
       flex-shrink: 0;
+    }
+  }
+
+  // The code in digit tiles, like the boxes the member types it in at check-in, and its
+  // regeneration on the same line.
+  .member-code {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    padding: 0.6rem 0.6rem 0.6rem 0.75rem;
+    border-radius: 0.8rem;
+    background: var(--color-surface-container-low);
+    border: 1px solid var(--color-border-subtle);
+
+    .code-digits {
+      flex: 1 1 0;
+      display: flex;
+      justify-content: center;
+      gap: 0.4rem;
+
+      .digit {
+        display: grid;
+        place-items: center;
+        width: 2.5rem;
+        height: 2.9rem;
+        border-radius: 0.55rem;
+        background: var(--color-surface);
+        border: 1px solid var(--color-outline-variant);
+        color: var(--color-primary);
+        font-size: 1.4rem;
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+        line-height: 1;
+      }
+    }
+
+    app-button {
+      flex-shrink: 0;
+      flex: 1 1 0;
     }
   }
 

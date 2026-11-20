@@ -15,8 +15,8 @@ function makeService(openSessionCodes: string[] = [], adminMemberId: string | nu
         createdAt: CREATED_AT,
         adminMemberId,
         members: [
-            { id: 'member-1', name: 'Thomas', createdAt: CREATED_AT },
-            { id: 'member-2', name: 'Thomas Durand', createdAt: CREATED_AT },
+            { id: 'member-1', name: 'Thomas', code: '1111', createdAt: CREATED_AT },
+            { id: 'member-2', name: 'Thomas Durand', code: '2222', createdAt: CREATED_AT },
         ],
     } as Training;
 
@@ -35,6 +35,7 @@ function makeService(openSessionCodes: string[] = [], adminMemberId: string | nu
 
     const sessionRepo = {
         findOpenCodesWithMember: vi.fn(() => Promise.resolve(openSessionCodes)),
+        findOpenParticipantCodes: vi.fn((): Promise<string[]> => Promise.resolve([])),
         findByCodeOrThrow: vi.fn((code: string) =>
             Promise.resolve({ id: `id-${code}`, code } as TrainingSession),
         ),
@@ -170,6 +171,75 @@ describe('TrainingsService.addMember', () => {
         const result = await service.addMember('CLUB-1', { password: PASSWORD, name: 'Léa' });
 
         expect(result.members.map((m) => m.name)).toContain('Léa');
+    });
+
+    it('gives a new member a code no participant uses in an open session of the club', async () => {
+        const random = vi
+            .spyOn(Math, 'random')
+            .mockReturnValueOnce(0.33335)
+            .mockReturnValue(0.44445);
+        const { service, sessionRepo } = makeService();
+        // A regenerated member still plays the open session with their old code.
+        sessionRepo.findOpenParticipantCodes.mockResolvedValue(['3333']);
+
+        const result = await service.addMember('CLUB-1', { password: PASSWORD, name: 'Lucie' });
+
+        expect(sessionRepo.findOpenParticipantCodes).toHaveBeenCalledWith('training-1');
+        expect(result.members.find((m) => m.name === 'Lucie')!.code).toBe('4444');
+        random.mockRestore();
+    });
+
+    it('gives a new member a 4-digit code not used by another member of the club', async () => {
+        const { service, memberRepo } = makeService();
+
+        const result = await service.addMember('CLUB-1', { password: PASSWORD, name: 'Lucie' });
+
+        const added = result.members.find((m) => m.name === 'Lucie')!;
+        expect(added.code).toMatch(/^\d{4}$/);
+        expect(['1111', '2222']).not.toContain(added.code);
+        expect(memberRepo.create).toHaveBeenCalledWith(
+            expect.objectContaining({ code: added.code }),
+        );
+    });
+});
+
+describe('TrainingsService.regenerateMemberCode', () => {
+    it("regenerates a member's code with one used by no member of the club", async () => {
+        const random = vi
+            .spyOn(Math, 'random')
+            .mockReturnValueOnce(0.11115)
+            .mockReturnValueOnce(0.22225)
+            .mockReturnValue(0.33335);
+        const { service, memberRepo } = makeService();
+
+        const result = await service.regenerateMemberCode('CLUB-1', 'member-1', PASSWORD);
+
+        expect(result).toEqual({ id: 'member-1', name: expect.any(String), code: '3333' });
+        expect(memberRepo.save).toHaveBeenCalledWith({ id: 'member-1', code: '3333' });
+        random.mockRestore();
+    });
+
+    it('regenerates a code no participant uses in an open session of the club', async () => {
+        const random = vi
+            .spyOn(Math, 'random')
+            .mockReturnValueOnce(0.33335)
+            .mockReturnValue(0.44445);
+        const { service, sessionRepo } = makeService();
+        sessionRepo.findOpenParticipantCodes.mockResolvedValue(['3333']);
+
+        const result = await service.regenerateMemberCode('CLUB-1', 'member-1', PASSWORD);
+
+        expect(sessionRepo.findOpenParticipantCodes).toHaveBeenCalledWith('training-1');
+        expect(result.code).toBe('4444');
+        random.mockRestore();
+    });
+
+    it('refuses to regenerate the code of an unknown member', async () => {
+        const { service } = makeService();
+
+        await expect(
+            service.regenerateMemberCode('CLUB-1', 'member-unknown', PASSWORD),
+        ).rejects.toBeInstanceOf(NotFoundException);
     });
 });
 

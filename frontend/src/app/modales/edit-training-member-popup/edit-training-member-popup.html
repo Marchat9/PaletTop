@@ -1,4 +1,12 @@
-<div class="popup-container popup-surface" (keydown.enter)="onSubmit()">
+<div
+  class="popup-container popup-surface"
+  [class.sheet]="isSheet"
+  [appSwipeToDismiss]="isSheet"
+  (keydown.enter)="onSubmit()"
+>
+  @if (isSheet) {
+    <span class="handle" aria-hidden="true"></span>
+  }
   <div class="popup-header">
     <h2 class="popup-title">
       <app-icon name="person" iconClass="icon" [ariaHidden]="true" />
@@ -25,6 +33,35 @@
     </p>
   </div>
 
+  <div class="field-group">
+    <span class="field-label">Code joueur</span>
+    <div class="member-code">
+      <!-- Read as one value by screen readers, not digit by digit. -->
+      <span
+        class="code-digits"
+        role="img"
+        [attr.aria-label]="'Code joueur ' + memberCode()"
+        [appAnimateOnChange]="memberCode()"
+        animation="fade-in"
+      >
+        @for (digit of memberCodeDigits(); track $index) {
+          <span class="digit">{{ digit }}</span>
+        }
+      </span>
+      <app-button
+        title="Régénérer"
+        variant="secondary"
+        icon="refresh"
+        [loading]="regenerateLoading()"
+        (clicked)="onRegenerateCode()"
+      ></app-button>
+    </div>
+    <p class="field-help">
+      <app-icon name="info" [ariaHidden]="true" />
+      Saisi à chaque séance. Un nouveau code remplace l’ancien dès la prochaine.
+    </p>
+  </div>
+
   <div class="admin-player">
     <app-icon name="admin_panel_settings" iconClass="admin-player-icon" [ariaHidden]="true" />
     <div class="admin-player-text">
@@ -39,6 +76,15 @@
       <span class="message">
         <app-icon name="error" [ariaHidden]="true" />
         {{ visibleError() }}
+      </span>
+    </div>
+  }
+
+  @if (visibleRegenerateError()) {
+    <div class="error-container">
+      <span class="message">
+        <app-icon name="error" [ariaHidden]="true" />
+        {{ visibleRegenerateError() }}
       </span>
     </div>
   }

@@ -161,6 +161,18 @@ export class TrainingSessionRepository {
         return rows.map((row) => row.code);
     }
 
+    /** Codes of every participant (present or gone) of the training's open sessions. */
+    async findOpenParticipantCodes(trainingId: string): Promise<string[]> {
+        const rows = await this.repo
+            .createQueryBuilder('session')
+            .select('DISTINCT participant.code', 'code')
+            .innerJoin('session.participants', 'participant')
+            .where('session.training_id = :trainingId', { trainingId })
+            .andWhere('session.status = :status', { status: TrainingSessionStatus.OPEN })
+            .getRawMany<{ code: string }>();
+        return rows.map((row) => row.code);
+    }
+
     /** Most recent first; on the same day, the last one created first. */
     findAllByTraining(trainingId: string): Promise<TrainingSession[]> {
         return this.repo

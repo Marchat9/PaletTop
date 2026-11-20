@@ -1,3 +1,4 @@
+import { NotFoundException } from '@nestjs/common';
 import { describe, expect, it, vi } from 'vitest';
 import { TrainingMatchRepository } from '../repositories/training-match.repository';
 import { TrainingRoundRepository } from '../repositories/training-round.repository';
@@ -29,5 +30,20 @@ describe('TrainingParticipantViewService.getCurrentMatch', () => {
         const result = await setup(null).getCurrentMatch('1234', '4821');
 
         expect(result.participant.memberId).toBeNull();
+    });
+});
+
+describe('TrainingParticipantViewService participant lookup', () => {
+    // Security: the answer must not tell whether a code belongs to a club member (who keeps it
+    // for every session) or to nobody, otherwise member codes could be found by trying codes.
+    it('answers a code missing from the session with the generic invalid code error', async () => {
+        const error = await setup(null)
+            .getCurrentMatch('1234', '5555')
+            .catch((e: unknown) => e);
+
+        expect(error).toBeInstanceOf(NotFoundException);
+        expect((error as NotFoundException).message).toBe(
+            'Code participant invalide pour cette séance.',
+        );
     });
 });

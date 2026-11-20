@@ -31,6 +31,8 @@ import {
 } from './training.session.actions';
 import { generateTrainingRoundSuccess } from './training.round.actions';
 import {
+  regenerateTrainingMemberCode,
+  regenerateTrainingMemberCodeSuccess,
   renameTrainingMemberSuccess,
   setTrainingAdminMemberSuccess,
 } from './training.admin.actions';
@@ -275,12 +277,12 @@ describe('trainingReducer', () => {
       code: 'CLUB-1',
       name: 'Club du jeudi',
       createdAt: '2026-01-01T18:00:00.000Z',
-      members: [{ id: 'm1', name: 'Mathieu' }],
+      members: [{ id: 'm1', name: 'Mathieu', code: '1111' }],
       adminMemberId: null,
     };
     // Each response was built by the server before the other request was saved.
     const renamed = renameTrainingMemberSuccess({
-      training: { ...before, members: [{ id: 'm1', name: 'Mathieu A.' }] },
+      training: { ...before, members: [{ id: 'm1', name: 'Mathieu A.', code: '1111' }] },
     });
     const adminSet = setTrainingAdminMemberSuccess({
       training: { ...before, adminMemberId: 'm1' },
@@ -302,6 +304,40 @@ describe('trainingReducer', () => {
 
       expect(state.training.data?.adminMemberId).toBe('m1');
       expect(state.training.data?.members[0].name).toBe('Mathieu A.');
+    });
+  });
+
+  describe('member code regeneration', () => {
+    const before: AdminTrainingDto = {
+      id: 't1',
+      code: 'CLUB-1',
+      name: 'Club du jeudi',
+      createdAt: '2026-01-01T18:00:00.000Z',
+      members: [
+        { id: 'm1', name: 'Mathieu', code: '1111' },
+        { id: 'm2', name: 'Lucie', code: '3333' },
+      ],
+      adminMemberId: 'm1',
+    };
+    const loaded = {
+      ...initialTrainingState,
+      training: { ...initialTrainingState.training, data: before },
+    };
+
+    it('replaces the regenerated member only and clears the loading', () => {
+      const state = [
+        regenerateTrainingMemberCode({ code: 'CLUB-1', memberId: 'm1' }),
+        regenerateTrainingMemberCodeSuccess({
+          member: { id: 'm1', name: 'Mathieu', code: '2222' },
+        }),
+      ].reduce(trainingReducer, loaded);
+
+      expect(state.training.data?.members).toEqual([
+        { id: 'm1', name: 'Mathieu', code: '2222' },
+        { id: 'm2', name: 'Lucie', code: '3333' },
+      ]);
+      expect(state.training.data?.adminMemberId).toBe('m1');
+      expect(state.requestStatus.regenerateMemberCode).toEqual({ isLoading: false, error: null });
     });
   });
 

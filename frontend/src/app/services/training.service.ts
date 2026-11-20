@@ -10,6 +10,7 @@ import {
   TrainingClubLeaderboardEntryDto,
   TrainingLeaderboardEntryDto,
   TrainingMatchDto,
+  TrainingMemberDto,
   TrainingRoundDto,
   TrainingSessionAdminDto,
   TrainingSessionConfigurationDto,
@@ -81,6 +82,17 @@ export class TrainingService {
     return this.http.patch<AdminTrainingDto>(
       `${this.apiBaseUrl}/trainings/${encodeURIComponent(code)}/members/${memberId}`,
       { password, name },
+    );
+  }
+
+  public regenerateMemberCode(
+    code: string,
+    memberId: string,
+    password: string,
+  ): Observable<TrainingMemberDto> {
+    return this.http.post<TrainingMemberDto>(
+      `${this.apiBaseUrl}/trainings/${encodeURIComponent(code)}/members/${memberId}/regenerate-code`,
+      { password },
     );
   }
 

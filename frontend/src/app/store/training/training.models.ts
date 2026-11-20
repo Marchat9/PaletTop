@@ -12,6 +12,8 @@ export type TrainingTeamComposition = 'RANDOM' | 'LEARNING';
 export interface TrainingMemberDto {
   id: string;
   name: string;
+  /** Participant code the member keeps for every session of the club. */
+  code: string;
 }
 
 export interface AdminTrainingDto {
@@ -186,6 +188,7 @@ export interface TrainingRequestStatus {
   updateTraining: ApiCallStatus;
   addMember: ApiCallStatus;
   renameMember: ApiCallStatus;
+  regenerateMemberCode: ApiCallStatus;
   setAdminMember: ApiCallStatus;
   removeMember: ApiCallStatus;
   createSession: ApiCallStatus;

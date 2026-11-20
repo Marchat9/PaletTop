@@ -59,6 +59,9 @@ import {
   connectTrainingAdministrator,
   connectTrainingAdministratorFailure,
   connectTrainingAdministratorSuccess,
+  regenerateTrainingMemberCode,
+  regenerateTrainingMemberCodeFailure,
+  regenerateTrainingMemberCodeSuccess,
   removeTrainingMember,
   removeTrainingMemberFailure,
   removeTrainingMemberSuccess,
@@ -752,6 +755,21 @@ export class TrainingEffects {
     ),
   );
 
+  regenerateTrainingMemberCode$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(regenerateTrainingMemberCode),
+      withLatestFrom(this.store.select(selectCurrentTrainingAdminInformations)),
+      concatMap(([{ code, memberId }, adminInfo]) =>
+        this.trainingService.regenerateMemberCode(code, memberId, adminInfo?.password ?? '').pipe(
+          switchMap((member) => of(regenerateTrainingMemberCodeSuccess({ member }))),
+          catchError((error) =>
+            of(regenerateTrainingMemberCodeFailure({ error: convertErrorToString(error) })),
+          ),
+        ),
+      ),
+    ),
+  );
+
   trainingActionErrors$ = createEffect(() =>
     this.actions$.pipe(
       ofType(
@@ -762,6 +780,7 @@ export class TrainingEffects {
         updateTrainingAdministratorInformationsFailure,
         addTrainingMemberFailure,
         renameTrainingMemberFailure,
+        regenerateTrainingMemberCodeFailure,
         removeTrainingMemberFailure,
         setTrainingAdminMemberFailure,
         createTrainingSessionFailure,

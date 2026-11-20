@@ -5,10 +5,12 @@ import {
     JoinColumn,
     ManyToOne,
     PrimaryGeneratedColumn,
+    Unique,
 } from 'typeorm';
 import { Training } from './training.entity';
 
 @Entity('training_member')
+@Unique('UQ_training_member_training_code', ['training', 'code'])
 export class TrainingMember {
     @PrimaryGeneratedColumn('uuid')
     id!: string;
@@ -22,6 +24,10 @@ export class TrainingMember {
 
     @Column({ length: 100 })
     name!: string;
+
+    // Copied on each check-in of the member: the same participant code for every session.
+    @Column({ length: 4 })
+    code!: string;
 
     @CreateDateColumn({ type: 'timestamptz' })
     createdAt!: Date;

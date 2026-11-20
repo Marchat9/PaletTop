@@ -24,6 +24,12 @@ import {
   refreshTrainingClubLeaderboard,
 } from './training.session.actions';
 import {
+  regenerateTrainingMemberCode,
+  regenerateTrainingMemberCodeFailure,
+  regenerateTrainingMemberCodeSuccess,
+} from './training.admin.actions';
+import {
+  selectCurrentTrainingAdminInformations,
   selectFollowedTrainingClubLeaderboardSession,
   selectTrainingParticipantCurrentMatch,
   selectTrainingRounds,
@@ -83,6 +89,58 @@ describe('TrainingEffects', () => {
         validateTrainingMatchConflict.type,
         loadTrainingParticipantCurrentMatch.type,
         '[App Config] Add Notification',
+      ]);
+    });
+  });
+
+  describe('member code regeneration', () => {
+    function setupRegeneration(regenerateMemberCode: () => unknown) {
+      const actions$ = new ReplaySubject<Action>(1);
+      const trainingService = { regenerateMemberCode: vi.fn(regenerateMemberCode) };
+      TestBed.configureTestingModule({
+        providers: [
+          TrainingEffects,
+          provideMockActions(() => actions$),
+          provideMockStore({
+            selectors: [
+              {
+                selector: selectCurrentTrainingAdminInformations,
+                value: { code: 'CLUB-1', password: 'secret' },
+              },
+            ],
+          }),
+          { provide: TrainingService, useValue: trainingService },
+        ],
+      });
+      const emitted: Action[] = [];
+      TestBed.inject(TrainingEffects).regenerateTrainingMemberCode$.subscribe((action) =>
+        emitted.push(action),
+      );
+      actions$.next(regenerateTrainingMemberCode({ code: 'CLUB-1', memberId: 'm1' }));
+      return { trainingService, emitted };
+    }
+
+    it('sends the admin password and stores the returned member', () => {
+      const member = { id: 'm1', name: 'Jean', code: '4242' };
+      const { trainingService, emitted } = setupRegeneration(() => of(member));
+
+      expect(trainingService.regenerateMemberCode).toHaveBeenCalledWith('CLUB-1', 'm1', 'secret');
+      expect(emitted).toEqual([regenerateTrainingMemberCodeSuccess({ member })]);
+    });
+
+    it('turns an API refusal into a failure carrying its message', () => {
+      const { emitted } = setupRegeneration(() =>
+        throwError(
+          () =>
+            new HttpErrorResponse({
+              status: 404,
+              error: { statusCode: 404, message: 'Membre introuvable pour cet entraînement.' },
+            }),
+        ),
+      );
+
+      expect(emitted).toEqual([
+        regenerateTrainingMemberCodeFailure({ error: 'Membre introuvable pour cet entraînement.' }),
       ]);
     });
   });
