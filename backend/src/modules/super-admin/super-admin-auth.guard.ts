@@ -7,7 +7,7 @@ import { SuperAdminService } from './super-admin.service';
 export class SuperAdminAuthGuard implements CanActivate {
     constructor(private readonly superAdminService: SuperAdminService) {}
 
-    canActivate(context: ExecutionContext): boolean {
+    async canActivate(context: ExecutionContext): Promise<boolean> {
         const request = context.switchToHttp().getRequest<Request>();
         const password = (request.body as Record<string, unknown> | undefined)?.password;
 
@@ -16,7 +16,7 @@ export class SuperAdminAuthGuard implements CanActivate {
         }
 
         const ip = resolveClientIp(request.headers['cf-connecting-ip'], request.ip);
-        this.superAdminService.login(password, ip);
+        await this.superAdminService.login(password, ip);
         return true;
     }
 }

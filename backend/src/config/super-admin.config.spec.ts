@@ -1,12 +1,18 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Logger } from '@nestjs/common';
-import superAdminConfig from './super-admin.config';
+import { verifyPassword } from 'src/utils/password-hash.util';
+import superAdminConfig, { DEV_SUPER_ADMIN_PASSWORD_HASH } from './super-admin.config';
+
+// Hash of 'CustomSecret' (argon2id, OWASP parameters).
+const CUSTOM_HASH =
+    '$argon2id$v=19$m=19456,t=2,p=1$pGtwdURTNUuVMBrbYjLnpA$X2AaA6bTrUy/tZBv7mzq5hdUxVaHiCe9/3sJAv7SmkE';
 
 describe('superAdminConfig', () => {
     const originalEnv = { ...process.env };
 
     beforeEach(() => {
         delete process.env.SUPER_ADMIN_PASSWORD;
+        delete process.env.SUPER_ADMIN_PASSWORD_HASH;
         delete process.env.SUPER_ADMIN_MAX_ATTEMPTS;
         delete process.env.SUPER_ADMIN_LOCKOUT_BASE_DELAY_SECONDS;
         delete process.env.SUPER_ADMIN_LOCKOUT_MAX_DELAY_SECONDS;
@@ -19,36 +25,60 @@ describe('superAdminConfig', () => {
         vi.restoreAllMocks();
     });
 
-    it('falls back to the default password outside production, with a warning', () => {
+    it('falls back to the hash of PaletTopPassword outside production, with a warning', async () => {
         const warnSpy = vi.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
 
         const config = superAdminConfig();
 
-        expect(config.password).toBe('PaletTopPassword');
-        expect(warnSpy).toHaveBeenCalled();
+        expect(config.passwordHash).toBe(DEV_SUPER_ADMIN_PASSWORD_HASH);
+        await expect(verifyPassword(config.passwordHash, 'PaletTopPassword')).resolves.toBe(true);
+        expect(String(warnSpy.mock.calls[0][0])).toContain('PaletTopPassword');
     });
 
-    it('uses SUPER_ADMIN_PASSWORD when set, without warning', () => {
+    it('uses SUPER_ADMIN_PASSWORD_HASH when set, without warning', () => {
         const warnSpy = vi.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
-        process.env.SUPER_ADMIN_PASSWORD = 'CustomSecret';
+        process.env.SUPER_ADMIN_PASSWORD_HASH = CUSTOM_HASH;
 
         const config = superAdminConfig();
 
-        expect(config.password).toBe('CustomSecret');
+        expect(config.passwordHash).toBe(CUSTOM_HASH);
         expect(warnSpy).not.toHaveBeenCalled();
     });
 
-    it('throws at startup when SUPER_ADMIN_PASSWORD is unset in production', () => {
-        process.env.NODE_ENV = 'production';
-
-        expect(() => superAdminConfig()).toThrow();
-    });
-
-    it('does not throw in production when SUPER_ADMIN_PASSWORD is set', () => {
-        process.env.NODE_ENV = 'production';
+    it('ignores the removed SUPER_ADMIN_PASSWORD variable', () => {
+        vi.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
         process.env.SUPER_ADMIN_PASSWORD = 'CustomSecret';
 
+        expect(superAdminConfig().passwordHash).toBe(DEV_SUPER_ADMIN_PASSWORD_HASH);
+    });
+
+    it('throws at startup when SUPER_ADMIN_PASSWORD_HASH is unset in production', () => {
+        process.env.NODE_ENV = 'production';
+
+        expect(() => superAdminConfig()).toThrow(
+            'SUPER_ADMIN_PASSWORD_HASH must be set in production (no default value allowed).',
+        );
+    });
+
+    it('does not throw in production when SUPER_ADMIN_PASSWORD_HASH is set', () => {
+        process.env.NODE_ENV = 'production';
+        process.env.SUPER_ADMIN_PASSWORD_HASH = CUSTOM_HASH;
+
         expect(() => superAdminConfig()).not.toThrow();
+    });
+
+    it('throws when SUPER_ADMIN_PASSWORD_HASH is not an argon2id hash, in every environment', () => {
+        // A clear password, and what compose leaves of a hash whose $ were interpolated.
+        for (const value of ['PaletTopPassword', '=19=19456,t=2,p=1']) {
+            for (const env of ['production', 'development']) {
+                process.env.NODE_ENV = env;
+                process.env.SUPER_ADMIN_PASSWORD_HASH = value;
+
+                expect(() => superAdminConfig()).toThrow(
+                    'SUPER_ADMIN_PASSWORD_HASH is not a valid argon2id hash',
+                );
+            }
+        }
     });
 
     it('uses default thresholds when override env vars are unset', () => {
