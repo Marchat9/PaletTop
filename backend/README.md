@@ -42,7 +42,8 @@ cp .env.example .env   # adjust DB_* values if not using the defaults below
 `.env.example` also lists optional settings, with their defaults: automatic cleanup of old
 tournaments (`CLEANUP_*`), automatic closing of idle training sessions (`TRAINING_AUTOCLOSE_*`),
 weekly deletion of closed training sessions left empty (`TRAINING_CLEANUP_*`), and the
-super-admin login (`SUPER_ADMIN_*`). `SUPER_ADMIN_PASSWORD` is required when `NODE_ENV=production`.
+super-admin login (`SUPER_ADMIN_*`). `SUPER_ADMIN_PASSWORD_HASH` (generated with
+`npm run hash-password`) and `PASSWORD_PEPPER` are required when `NODE_ENV=production`.
 
 ### Running
 
@@ -98,7 +99,8 @@ Build it yourself with `docker build --target production .`.
 
 To run that published image against a fresh PostgreSQL instance without building anything
 locally, use the root [`docker-compose-prod.yml`](../docker-compose-prod.yml). It reads
-`DB_NAME`, `DB_USER`, `DB_PASSWORD`, `SUPER_ADMIN_PASSWORD` and `API_BASE_URL` from `.env`:
+`DB_NAME`, `DB_USER`, `DB_PASSWORD`, `SUPER_ADMIN_PASSWORD_HASH` (in single quotes: it contains
+`$`), `PASSWORD_PEPPER` and `API_BASE_URL` from `.env`:
 
 ```bash
 docker compose -f docker-compose-prod.yml up -d
