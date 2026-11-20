@@ -72,6 +72,17 @@ export class TrainingController {
         );
     }
 
+    @Post(':code/members/:memberId/regenerate-code')
+    regenerateMemberCode(
+        @Param('code') code: string,
+        @UuidParam('memberId') memberId: string,
+        @Body() dto: TrainingPasswordDto,
+    ): Promise<AdminTrainingDto> {
+        return runGuarded(this.logger, 'Erreur lors de la régénération du code du membre.', () =>
+            this.trainingsService.regenerateMemberCode(code, memberId, dto.password),
+        );
+    }
+
     @Delete(':code/members/:memberId')
     removeMember(
         @Param('code') code: string,

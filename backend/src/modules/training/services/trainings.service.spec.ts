@@ -186,6 +186,31 @@ describe('TrainingsService.addMember', () => {
     });
 });
 
+describe('TrainingsService.regenerateMemberCode', () => {
+    it("regenerates a member's code with one used by no member of the club", async () => {
+        const random = vi
+            .spyOn(Math, 'random')
+            .mockReturnValueOnce(0.11115)
+            .mockReturnValueOnce(0.22225)
+            .mockReturnValue(0.33335);
+        const { service, memberRepo } = makeService();
+
+        const result = await service.regenerateMemberCode('CLUB-1', 'member-1', PASSWORD);
+
+        expect(result.members.find((m) => m.id === 'member-1')!.code).toBe('3333');
+        expect(memberRepo.save).toHaveBeenCalledWith({ id: 'member-1', code: '3333' });
+        random.mockRestore();
+    });
+
+    it('refuses to regenerate the code of an unknown member', async () => {
+        const { service } = makeService();
+
+        await expect(
+            service.regenerateMemberCode('CLUB-1', 'member-unknown', PASSWORD),
+        ).rejects.toBeInstanceOf(NotFoundException);
+    });
+});
+
 describe('TrainingsService.setAdminMember', () => {
     it('désigne un membre du groupe comme admin joueur', async () => {
         const { service, trainingRepo } = makeService();

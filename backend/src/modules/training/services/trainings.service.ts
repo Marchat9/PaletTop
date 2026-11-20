@@ -124,6 +124,26 @@ export class TrainingsService {
         return toAdminTrainingDto(training);
     }
 
+    /**
+     * Draws a new code for a member, e.g. once theirs has leaked. Only future check-ins use it: a
+     * member already present in an open session keeps playing with the code of that session.
+     */
+    async regenerateMemberCode(
+        code: string,
+        memberId: string,
+        password: string,
+    ): Promise<AdminTrainingDto> {
+        const training = await this.trainingAuthService.findWithAdminAuth(code, password, true);
+        const member = this.findMemberOrThrow(training, memberId);
+        // The current code is excluded too: a regeneration must change it.
+        const newCode = generateNumericCode(training.members.map((m) => m.code));
+
+        await this.trainingMemberRepo.save({ id: member.id, code: newCode });
+        member.code = newCode;
+        this.logger.log(`Code of member '${member.name}' regenerated in training '${code}'`);
+        return toAdminTrainingDto(training);
+    }
+
     async setAdminMember(code: string, dto: SetTrainingAdminMemberDto): Promise<AdminTrainingDto> {
         const training = await this.trainingAuthService.findWithAdminAuth(code, dto.password, true);
         const memberId = dto.memberId ?? null;
