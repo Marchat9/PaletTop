@@ -28,6 +28,7 @@ import { SuperAdminResourcePasswordDto } from './dto/super-admin-resource-passwo
 import { SuperAdminTrainingSearchDto } from './dto/super-admin-training-search.dto';
 import { PaginatedDto } from './responses/paginated.dto';
 import { SuperAdminAuthGuard } from './super-admin-auth.guard';
+import { AdminPasswordService } from 'src/modules/admin-password/admin-password.service';
 
 @Controller('super-admin/trainings')
 @UseGuards(SuperAdminAuthGuard)
@@ -37,6 +38,7 @@ export class SuperAdminTrainingsController {
 
     constructor(
         private readonly trainingRepo: TrainingRepository,
+        private readonly adminPassword: AdminPasswordService,
         readonly configService: ConfigService,
     ) {
         this.maxPageSize = configService.getOrThrow<SuperAdminConfig>('superAdmin').maxPageSize;
@@ -97,8 +99,14 @@ export class SuperAdminTrainingsController {
         @Param('id', ParseUUIDPipe) id: string,
         @Body() dto: SuperAdminResourcePasswordDto,
     ): Promise<void> {
-        return runGuarded(this.logger, 'Erreur lors de la réinitialisation du mot de passe.', () =>
-            this.trainingRepo.updateAdminPassword(id, dto.newPassword),
+        return runGuarded(
+            this.logger,
+            'Erreur lors de la réinitialisation du mot de passe.',
+            async () =>
+                this.trainingRepo.updateAdminPassword(
+                    id,
+                    await this.adminPassword.hash(dto.newPassword),
+                ),
         );
     }
 }

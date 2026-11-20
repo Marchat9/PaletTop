@@ -83,7 +83,7 @@ export class TrainingMatchRepository {
     /**
      * Two queries rather than a single joined query builder: filter on teamA/teamB.members through
      * a direct JOIN, then reuse `.find()` to reload the deep relations cleanly (like
-     * TournamentRepository.findWithAuth, to avoid a cross product of rows).
+     * TournamentRepository.findForAdmin, to avoid a cross product of rows).
      */
     async findByParticipant(sessionId: string, participantId: string): Promise<TrainingMatch[]> {
         const rows = await this.repo

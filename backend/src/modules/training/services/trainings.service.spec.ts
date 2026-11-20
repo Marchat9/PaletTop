@@ -49,7 +49,16 @@ function makeService(openSessionCodes: string[] = [], adminMemberId: string | nu
         save: vi.fn((member: TrainingMember) => Promise.resolve(member)),
         remove: vi.fn(() => Promise.resolve()),
     };
-    const trainingRepo = { setAdminMember: vi.fn(() => Promise.resolve()) };
+    const trainingRepo = {
+        setAdminMember: vi.fn(() => Promise.resolve()),
+        create: vi.fn((data: Partial<Training>) => ({
+            id: 'training-new',
+            createdAt: CREATED_AT,
+            ...data,
+        })),
+        save: vi.fn((data: Training) => Promise.resolve(data)),
+    };
+    const adminPassword = { hash: vi.fn(() => Promise.resolve('hashed')) };
     const leaderboardService = { getLeaderboardBySessionId: vi.fn(() => Promise.resolve([])) };
     const gateway = { emitSessionUpdatedFrom: vi.fn(), emitLeaderboardUpdated: vi.fn() };
 
@@ -61,6 +70,7 @@ function makeService(openSessionCodes: string[] = [], adminMemberId: string | nu
         leaderboardService as never,
         gateway as never,
         dataSource as never,
+        adminPassword as never,
     );
 
     return {
@@ -73,6 +83,19 @@ function makeService(openSessionCodes: string[] = [], adminMemberId: string | nu
         gateway,
     };
 }
+
+describe('TrainingsService.create', () => {
+    it('stores the hashed admin password, never the clear one', async () => {
+        const { service, trainingRepo } = makeService();
+
+        await service.create({ code: 'CLUB-2', name: 'Club', adminPassword: PASSWORD });
+
+        expect(trainingRepo.create).toHaveBeenCalledWith(
+            expect.objectContaining({ adminPassword: 'hashed' }),
+        );
+        expect(JSON.stringify(trainingRepo.create.mock.calls)).not.toContain(PASSWORD);
+    });
+});
 
 describe('TrainingsService.renameMember', () => {
     it('renomme le membre et toutes ses participations, séances passées comprises', async () => {

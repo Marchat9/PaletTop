@@ -54,11 +54,22 @@ export class TrainingRepository {
         return this.repo.findOneBy({ code });
     }
 
-    findWithAuth(code: string, password: string, withMembers = false): Promise<Training | null> {
+    /** Stored admin password hash only (column is `select: false`); null for an unknown code. */
+    async findAdminPasswordHash(code: string): Promise<string | null> {
+        const training = await this.repo
+            .createQueryBuilder('training')
+            .select('training.id')
+            .addSelect('training.adminPassword')
+            .where('training.code = :code', { code })
+            .getOne();
+        return training?.adminPassword ?? null;
+    }
+
+    /** Loads a training for an admin whose password has already been verified (TrainingAuthService). */
+    findForAdmin(code: string, withMembers = false): Promise<Training | null> {
         const queryBuilder = this.repo
             .createQueryBuilder('training')
-            .where('training.code = :code', { code })
-            .andWhere('training.adminPassword = :password', { password });
+            .where('training.code = :code', { code });
 
         if (withMembers) {
             queryBuilder.leftJoinAndSelect('training.members', 'member');
