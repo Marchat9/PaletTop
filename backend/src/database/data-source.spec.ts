@@ -25,5 +25,7 @@ describe('data-source (TypeORM CLI entry point)', () => {
         await import('./data-source');
 
         expect(process.env.PASSWORD_PEPPER).toBe('e'.repeat(44));
-    });
+        // Importing the data source loads TypeORM and every entity: ~1 s alone, several seconds
+        // under the parallel load of the full suite.
+    }, 30_000);
 });
