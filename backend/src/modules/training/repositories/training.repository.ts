@@ -137,7 +137,7 @@ export class TrainingRepository {
         return deleteManyByIds(this.repo, ids);
     }
 
-    updateAdminPassword(id: string, newPassword: string): Promise<void> {
-        return updateAdminPasswordById(this.repo, id, newPassword, 'Entraînement introuvable.');
+    updateAdminPassword(id: string, newPasswordHash: string): Promise<void> {
+        return updateAdminPasswordById(this.repo, id, newPasswordHash, 'Entraînement introuvable.');
     }
 }

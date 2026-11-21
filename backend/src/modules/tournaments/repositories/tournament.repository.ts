@@ -306,8 +306,8 @@ export class TournamentRepository {
         await this.repo.update(ids, { status, ...this.statusTimestamps(status) });
     }
 
-    updateAdminPassword(id: string, newPassword: string): Promise<void> {
-        return updateAdminPasswordById(this.repo, id, newPassword, 'Tournoi introuvable.');
+    updateAdminPassword(id: string, newPasswordHash: string): Promise<void> {
+        return updateAdminPasswordById(this.repo, id, newPasswordHash, 'Tournoi introuvable.');
     }
 
     private daysAgo(days: number): Date {
