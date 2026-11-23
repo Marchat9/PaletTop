@@ -5,7 +5,7 @@ import { StructuredCompetitionConfiguration } from 'src/entities/tournament-comp
 import { TournamentPool } from 'src/entities/tournament-pool.entity';
 import { Tournament } from 'src/entities/tournament.entity';
 import { MatchStatus, TournamentStatus } from 'src/enum/status.enum';
-import { LEGACY_GROUP_KEY } from './plan/group-keys';
+import { groupOrder } from './plan/group-keys';
 import { TournamentRepository } from 'src/modules/tournaments/repositories/tournament.repository';
 import { extractCompetitionConfiguration } from 'src/modules/tournaments/utils/tournament.utils';
 import { DeepPartial } from 'typeorm';
@@ -16,13 +16,14 @@ import { TournamentStatusInfo } from '../../../tournaments/responses/tournament-
 import { PoolService } from '../../../tournaments/services/pool.service';
 import {
     computePhaseName,
+    eliminationGroupKeys,
     generateEliminationMatches,
     generateQualifyingMatches,
-    toLegacyEliminationTables,
+    lastRoundNumber,
 } from './structured-session.utils';
 import { PlanSettings, StartOptions, TournamentStrategy } from '../tournament-strategy.abstract';
 import { StructuredPlanInput, TournamentPlan } from './plan/plan.types';
-import { computeStructuredPlan } from './plan/structured-plan';
+import { bracketKey, computeStructuredPlan, THIRD_PLACE_GROUP_KEY } from './plan/structured-plan';
 
 interface EliminationExit {
     table: string;
@@ -31,16 +32,9 @@ interface EliminationExit {
     ownScore: number;
 }
 
-// Block order of the tables in the final standings: principal final (1-2), third place (3-4),
-// challenge (5-…), consolante, challenge-consolante, then teams knocked out in the pools.
-const TABLE_STANDING_ORDER: Record<string, number> = {
-    [LEGACY_GROUP_KEY.PRINCIPALE]: 0,
-    [LEGACY_GROUP_KEY.THIRD_PLACE_MATCH]: 1,
-    [LEGACY_GROUP_KEY.CHALLENGE]: 2,
-    [LEGACY_GROUP_KEY.CONSOLANTE]: 3,
-    [LEGACY_GROUP_KEY.CHALLENGE_CONSOLANTE]: 4,
-};
-const POOL_ONLY_ORDER = 5;
+const MAIN_GROUP_KEY = bracketKey(0);
+// Teams knocked out before any table (or stopped after the qualifiers) come after every block.
+const POOL_ONLY_ORDER = Number.MAX_SAFE_INTEGER;
 
 const SINGLE_POOL = 1;
 
@@ -51,28 +45,25 @@ function withoutOptions(plan: Omit<TournamentPlan, 'options'>): Omit<TournamentP
 }
 
 /**
+ * Block of a table in the standings, in the group order (main, challenge main, A, challenge A…).
  * The 3rd-place match belongs to the principal bracket, right under the final: its players are
  * the semi-final losers, ahead of every earlier exit of the bracket. Ranked as a table of its own
  * (after the whole principal bracket), it put the quarter-final losers 3rd to 6th when there is no
  * consolation table to send them to.
  */
 function standingTable(exit: EliminationExit): number {
-    return exit.table === LEGACY_GROUP_KEY.THIRD_PLACE_MATCH
-        ? TABLE_STANDING_ORDER[LEGACY_GROUP_KEY.PRINCIPALE]
-        : TABLE_STANDING_ORDER[exit.table];
+    return groupOrder(exit.table === THIRD_PLACE_GROUP_KEY ? MAIN_GROUP_KEY : exit.table);
 }
 
-/** Section of the standings: the 3rd-place match is shown with the principal table. */
+/** Section of the standings: the group key, the 3rd-place match shown with the principal table. */
 function standingSection(exit: EliminationExit | undefined): RankingSection {
     if (!exit) return 'pools';
-    return exit.table === LEGACY_GROUP_KEY.THIRD_PLACE_MATCH
-        ? LEGACY_GROUP_KEY.PRINCIPALE
-        : exit.table;
+    return exit.table === THIRD_PLACE_GROUP_KEY ? MAIN_GROUP_KEY : exit.table;
 }
 
 /** Just under the final (played in the same round): finalists first, then the 3rd-place match. */
 function standingDepth(exit: EliminationExit): number {
-    return exit.table === LEGACY_GROUP_KEY.THIRD_PLACE_MATCH ? exit.session - 0.5 : exit.session;
+    return exit.table === THIRD_PLACE_GROUP_KEY ? exit.session - 0.5 : exit.session;
 }
 
 export class StructuredTournamentStrategy extends TournamentStrategy {
@@ -250,15 +241,18 @@ export class StructuredTournamentStrategy extends TournamentStrategy {
         const generationStartedAt = Date.now();
         if (isElimination) {
             const ranking = this.computeGlobalRanking(tournament, pastMatches);
+            const groupKeys = eliminationGroupKeys(config, session.sessionNumber);
+            this.logger.debug(
+                `Elimination session ${session.sessionNumber} of ${tournament.code}: groups ${groupKeys.join(', ')}`,
+            );
             const virtualPools: TournamentPool[] = await this.getOrCreateVirtualPools(
                 tournament.id,
-                Object.values(LEGACY_GROUP_KEY),
+                groupKeys,
             );
 
             partialMatches = generateEliminationMatches(
                 tournament,
-                // TEMPORARY (Task 7): remove the adapter once the generation follows the plan.
-                toLegacyEliminationTables(config, tournament.teams.length),
+                config,
                 session,
                 pastMatches,
                 ranking,
@@ -358,7 +352,7 @@ export class StructuredTournamentStrategy extends TournamentStrategy {
             const session = match.sessionNumber ?? 0;
             if (session <= qualifyingRounds) continue;
 
-            const table = match.pool?.name ?? LEGACY_GROUP_KEY.PRINCIPALE;
+            const table = match.pool?.name ?? MAIN_GROUP_KEY;
             for (const teamId of [match.teamA.id, match.teamB.id]) {
                 const current = exits.get(teamId);
                 if (!current || session > current.session) {
@@ -385,7 +379,7 @@ export class StructuredTournamentStrategy extends TournamentStrategy {
             if ((match.sessionNumber ?? 0) <= qualifyingRounds) continue;
             if (match.status !== MatchStatus.VALIDATED) continue;
 
-            const table = match.pool?.name ?? LEGACY_GROUP_KEY.PRINCIPALE;
+            const table = match.pool?.name ?? MAIN_GROUP_KEY;
             const session = match.sessionNumber!;
             const aWon = match.scoreA > match.scoreB;
             consider(match.teamA.id, { table, session, won: aWon, ownScore: match.scoreA });
@@ -404,32 +398,18 @@ export class StructuredTournamentStrategy extends TournamentStrategy {
         );
         const config = this.getConfig(tournament);
 
-        const numberOfQualifyingRounds = config.numberOfQualifyingRounds ?? 0;
         const currentSessionNumber = this.currentSessionNumber(sessions);
-        const isElimination = currentSessionNumber > numberOfQualifyingRounds;
         const allValidated = this.allMatchesValidated(sessions);
-        // TEMPORARY (Task 7): remove the adapter once the status follows the plan.
-        const { principalBracketSize } = toLegacyEliminationTables(
-            config,
-            tournament.teams?.length ?? 0,
-        );
-        const nbTeamStillInGame =
-            principalBracketSize /
-            Math.pow(2, Math.max(currentSessionNumber - (numberOfQualifyingRounds ?? 0) - 1, 0));
-        const isFinal = isElimination && nbTeamStillInGame <= 2;
+        // Every group of the plan's last round is played in that session: once all its matches
+        // are validated, every bracket has finished.
+        const isLastRound =
+            currentSessionNumber > 0 && currentSessionNumber >= lastRoundNumber(config);
 
         return {
             currentSession: currentSessionNumber,
-            phaseName: computePhaseName(
-                tournament.status,
-                isElimination,
-                nbTeamStillInGame,
-                currentSessionNumber,
-                config.hasThirdPlaceMatch,
-                numberOfQualifyingRounds,
-            ),
-            canFinishTournament: isElimination && allValidated && isFinal,
-            canGenerateNewSession: allValidated && !isFinal,
+            phaseName: computePhaseName(tournament.status, config, currentSessionNumber),
+            canFinishTournament: allValidated && isLastRound,
+            canGenerateNewSession: allValidated && !isLastRound,
         };
     }
 

@@ -9,26 +9,25 @@ best teams go into elimination brackets (principal, plus optional extra tables).
 
 ```
 startTournament()
-  ├── prepareTournamentStart()   → fix principalBracketSize
-  ├── assignTeamsToFirstPools()  → random split into numberOfPools pools
+  ├── prepareTournamentStart()   → freeze the plan (consolations, stopped teams)
+  ├── assignTeamsToFirstPools()  → a single qualifying pool
   └── generateSessionMatches()   → one call per session
         ├── session ≤ numberOfQualifyingRounds → generateQualifyingMatches (draw in each pool)
-        └── session > numberOfQualifyingRounds → generateEliminationMatches (brackets)
+        └── session > numberOfQualifyingRounds → generateEliminationMatches (plan round)
 ```
 
 Plates are numbered 1, 2, 3… after each generation.
 
 ## Configuration
 
-| Field                         | Description                                                                                         |
-| ----------------------------- | --------------------------------------------------------------------------------------------------- |
-| `numberOfPools`               | Number of qualifying pools                                                                          |
-| `numberOfQualifyingRounds`    | Number of pool rounds (default 4)                                                                   |
-| `principalBracketSize`        | Teams in the principal bracket. Must be a power of 2 ≤ team count, otherwise computed automatically |
-| `hasConsolanteTable`          | Bracket for teams ranked below the principal bracket                                                |
-| `hasChallengePrincipaleTable` | Bracket for teams losing the first principal round                                                  |
-| `hasChallengeConsolanteTable` | Bracket for teams losing the first consolante round                                                 |
-| `hasThirdPlaceMatch`          | Third-place match between the principal semi-final losers                                           |
+| Field                       | Description                                                          |
+| --------------------------- | -------------------------------------------------------------------- |
+| `numberOfQualifyingRounds`  | Number of qualifying rounds (single pool, default 4)                 |
+| `consolationCount`          | Consolation brackets under the main one (0 = main only)              |
+| `hasChallenges`             | One challenge per bracket, for its first-round losers                |
+| `hasThirdPlaceMatch`        | Third-place match between the main semi-final losers                 |
+| `eliminatedAfterQualifying` | Written at launch: the last X teams of the qualifiers stop           |
+| `plan`                      | Written at launch: the frozen plan the elimination rounds follow     |
 
 ## Qualifying rounds
 
@@ -45,33 +44,39 @@ In each pool, `generateMatchesInPool` (`../../utils/match.utils.ts`):
 
 ## Elimination
 
-Each table is filled from its own previous results, not from the global ranking:
+The elimination rounds follow the plan frozen at launch (`config.plan`, see `plan/`): the session
+`n` plays the groups of the plan round `n`, in the plan's order (Main, 3rd place, Challenge main,
+A, Challenge A, B…), which is the plate order. Each group is drawn with the constrained draw in a
+virtual pool named after its group key (`principale`, `third_place_match`, `challenge_principale`,
+`consolante_1`, `challenge_consolante_1`…). `EliminationTeamsResolver`
+(`elimination-teams.utils.ts`) gives each group its teams:
 
-- **Principal**: top `principalBracketSize` of the ranking, then its own winners.
-- **Consolante**: the rest of the ranking, then its own winners.
-- **Challenge / Challenge-consolante**: start one round later with the first-round losers of
-  the principal / consolante, then their own winners.
-- **Third place**: the two principal semi-final losers, played with the final.
+- **Main / consolations**: at elimination 1, their slice of the qualifying ranking over the
+  non-stopped teams (the last `eliminatedAfterQualifying` teams play no elimination match); then
+  their own winners (byes count as wins), plus the plan's `bestLosersIn` best losers after the
+  first round of an incomplete bracket.
+- **Challenges**: from elimination 2, the parent's first-round losers minus the best losers
+  brought back to the parent; then like any bracket.
+- **Third place**: the two main semi-final losers, played with the final.
 
-Each table uses a virtual pool named after its legacy group key.
+An odd group gives one bye to the team with the fewest byes, then the best ranked; it counts as
+a win. Best losers are ranked by `rankBestLosers` (`best-losers.utils.ts`): goal average of the
+lost match, cumulative ranking, previous matches' goal average walking back, then a random draw.
 
 ## Ranking
 
 - `computeGlobalRanking` (default) seeds the brackets.
-- `computeStandings` (override) gives the final ranking: grouped by table (principal, third
-  place, challenge, consolante, challenge-consolante, then teams out after the pools), then by
-  how far the team went, the score of its last match, and its seed.
+- `computeStandings` (override) gives the final ranking: grouped by table in the group order
+  (the 3rd place counted with the main), then teams out after the pools, then by how far the team
+  went, the score of its last match, and its seed.
 
-## Phase name (`phaseName`)
+## Phase name and end (`computeTournamentStatus`)
 
-| Tournament state            | Label                                   |
-| --------------------------- | --------------------------------------- |
-| Draft / cancelled           | _(empty)_                               |
-| Qualifying                  | `Phase qualificative x/N`               |
-| Elimination, > 4 teams left | `Phase éliminatoire`                    |
-| 4 teams left                | `Demi-Finale`                           |
-| 2 teams left                | `Finale` (`+ Petite Finale` if enabled) |
-| Completed                   | `Tournoi terminé`                       |
+The phase name is the label of the plan round being played (`Phase qualificative x/N`,
+`Élimination n`, `Quarts de finale`, `Demi-finales`, `Finale`, with `+ Petite Finale` when the
+3rd place match is played in that round); `Tournoi terminé` once completed, empty in draft. The
+tournament can finish once every match of the plan's last round is validated; a new session can
+be generated while the plan has rounds left.
 
 ## Injected dependencies
 

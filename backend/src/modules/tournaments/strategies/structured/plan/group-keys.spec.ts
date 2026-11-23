@@ -23,32 +23,15 @@ describe('groupOrder', () => {
             'challenge_consolante_2',
         ]);
     });
-
-    it('keeps the legacy names sorted as before', () => {
-        const legacy = [
-            'challenge_consolante',
-            'consolante',
-            'challenge',
-            'third_place_match',
-            'principale',
-        ];
-        expect([...legacy].sort((a, b) => groupOrder(a) - groupOrder(b))).toEqual([
-            'principale',
-            'third_place_match',
-            'challenge',
-            'consolante',
-            'challenge_consolante',
-        ]);
-    });
 });
 
 describe('groupLabel', () => {
-    it('labels index-based and legacy keys', () => {
+    it('labels index-based keys', () => {
         expect(groupLabel('principale')).toBe('Principale');
         expect(groupLabel('challenge_principale')).toBe('Challenge principale');
         expect(groupLabel('consolante_1')).toBe('Consolante A');
         expect(groupLabel('challenge_consolante_2')).toBe('Challenge consolante B');
-        expect(groupLabel('consolante')).toBe('Consolante');
+        expect(groupLabel('consolante')).toBeNull();
         expect(groupLabel('qualifying')).toBeNull();
     });
 });
