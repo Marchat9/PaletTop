@@ -4,6 +4,8 @@ import { TournamentRepository } from 'src/modules/tournaments/repositories/tourn
 import { RealtimeGateway } from 'src/modules/realtime/realtime.gateway';
 import { MatchHistoryDto } from '../responses/match-history.dto';
 import { toPlayerMatchDto, PlayerMatchDto } from '../responses/player-match.dto';
+import { toTeamDto } from '../responses/admin-tournament.dto';
+import { PlayerTeamDto, toPlayerTeamDto } from '../responses/player-team.dto';
 import { GlobalRankingEntry } from '../responses/ranking.dto';
 import { SessionRepository } from '../repositories/session.repository';
 import { TournamentStrategyFactory } from '../strategies/tournament-strategy.factory';
@@ -69,6 +71,28 @@ export class RankingService {
 
         match.session = openSession;
         return toPlayerMatchDto(match);
+    }
+
+    /** The team with its place in the tournament: stopped after the qualifiers, repêchée. */
+    async getPlayerTeam(tournamentCode: string, teamCode: string): Promise<PlayerTeamDto> {
+        const tournament = await this.tournamentRepo.findWithRelations(
+            { code: tournamentCode },
+            { withTeams: true },
+        );
+        if (!tournament) throw new NotFoundException('Tournoi introuvable.');
+
+        const team = tournament.teams.find((t) => t.code === teamCode);
+        if (!team) throw new NotFoundException('Équipe introuvable.');
+
+        const sessions = await this.sessionRepo.findAllByTournament(tournament.id);
+        const strategy = this.strategyFactory.create(tournament.configuration.competitionMode);
+        const status = strategy.computeTeamStatus(
+            tournament,
+            sessions.flatMap((s) => s.matches),
+            team.id,
+        );
+        this.logger.log(`Team ${teamCode} retrieved for tournament ${tournamentCode}`);
+        return toPlayerTeamDto(toTeamDto(team), status);
     }
 
     async getTeamHistory(tournamentCode: string, teamCode: string): Promise<MatchHistoryDto[]> {

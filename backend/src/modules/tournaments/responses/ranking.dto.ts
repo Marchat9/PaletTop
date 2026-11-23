@@ -1,4 +1,7 @@
-/** Table a team ended in (structured tournaments), or `pools` when knocked out before any table. */
+/**
+ * Group key of the bracket a team ended in (structured tournaments), `eliminated_qualifying` for a
+ * team stopped after the qualifiers, or `pools` when knocked out before any bracket.
+ */
 export type RankingSection = string;
 
 export interface GlobalRankingEntry {
@@ -18,4 +21,6 @@ export interface GlobalRankingEntry {
      * (the 3rd-place match belongs to the principal table). Null or absent: a single ranking.
      */
     section?: RankingSection | null;
+    /** French label of `section`; null without section or for teams that never reached a bracket. */
+    sectionLabel?: string | null;
 }

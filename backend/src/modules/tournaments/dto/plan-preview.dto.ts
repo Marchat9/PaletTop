@@ -18,7 +18,7 @@ export class PlanPreviewDto {
 
     @Type(() => Number)
     @IsInt()
-    @Min(2)
+    @Min(1)
     @Max(MAX_TEAM_CAPACITY)
     teamCount!: number;
 

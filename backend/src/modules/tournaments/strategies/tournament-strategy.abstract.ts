@@ -6,6 +6,7 @@ import { MatchesSessionStatus, MatchStatus, TournamentStatus } from 'src/enum/st
 import { MatchHistoryDto, toMatchHistoryDto } from '../../tournaments/responses/match-history.dto';
 import { GlobalRankingEntry } from '../../tournaments/responses/ranking.dto';
 import { TournamentStatusInfo } from '../../tournaments/responses/tournament-status.dto';
+import { TeamTournamentStatus } from '../../tournaments/responses/player-team.dto';
 import { rankTeams } from '../../tournaments/utils/ranking-calculation.utils';
 import { TournamentPool } from 'src/entities/tournament-pool.entity';
 import { FillThresholds, TournamentPlan } from './structured/plan/plan.types';
@@ -92,6 +93,15 @@ export abstract class TournamentStrategy {
             tournament,
             matches.filter((m) => m.status === MatchStatus.VALIDATED),
         );
+    }
+
+    /** Place of a team in the tournament, beyond its results; modes without brackets have none. */
+    computeTeamStatus(
+        _tournament: Tournament,
+        _matches: TournamentMatch[],
+        _teamId: string,
+    ): TeamTournamentStatus {
+        return { eliminatedAfterQualifying: false };
     }
 
     computeTeamHistory(matches: TournamentMatch[], teamId: string): MatchHistoryDto[] {

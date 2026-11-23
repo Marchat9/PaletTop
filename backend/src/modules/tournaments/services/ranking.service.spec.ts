@@ -1,5 +1,5 @@
 import { NotFoundException } from '@nestjs/common';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
 import { RealtimeGateway } from 'src/modules/realtime/realtime.gateway';
 import { TournamentRepository } from '../repositories/tournament.repository';
 import { SessionRepository } from '../repositories/session.repository';
@@ -35,5 +35,47 @@ describe('RankingService.scheduleRankingUpdate', () => {
         expect(getRanking).toHaveBeenCalledWith('GONE');
         expect(gateway.emitRankingUpdated).not.toHaveBeenCalled();
         expect(onUnhandled).not.toHaveBeenCalled();
+    });
+});
+
+describe('RankingService.getPlayerTeam', () => {
+    const tournament = {
+        id: 'T1',
+        configuration: { competitionMode: 'standard' },
+        teams: [{ id: 'team-1', code: 'AAA', name: 'Les Rouges', players: [] }],
+    };
+
+    function build(status: object): { service: RankingService; computeTeamStatus: Mock } {
+        const computeTeamStatus = vi.fn().mockReturnValue(status);
+        const service = new RankingService(
+            { findWithRelations: vi.fn().mockResolvedValue(tournament) } as never,
+            { findAllByTournament: vi.fn().mockResolvedValue([{ matches: [] }]) } as never,
+            {} as RealtimeGateway,
+            { create: vi.fn().mockReturnValue({ computeTeamStatus }) } as never,
+        );
+        return { service, computeTeamStatus };
+    }
+
+    it('adds the team status computed by the strategy to the team', async () => {
+        const { service, computeTeamStatus } = build({
+            eliminatedAfterQualifying: false,
+            repechedFrom: 'Consolante A',
+        });
+
+        const team = await service.getPlayerTeam('TRN', 'AAA');
+
+        expect(team).toMatchObject({
+            id: 'team-1',
+            name: 'Les Rouges',
+            eliminatedAfterQualifying: false,
+            repechedFrom: 'Consolante A',
+        });
+        expect(computeTeamStatus).toHaveBeenCalledWith(tournament, [], 'team-1');
+    });
+
+    it('refuses an unknown team code', async () => {
+        const { service } = build({ eliminatedAfterQualifying: false });
+
+        await expect(service.getPlayerTeam('TRN', 'ZZZ')).rejects.toBeInstanceOf(NotFoundException);
     });
 });

@@ -11,6 +11,7 @@ import {
 } from '@nestjs/common';
 import { TeamDto, toTeamDto } from '../responses/admin-tournament.dto';
 import { MatchHistoryDto } from '../responses/match-history.dto';
+import { PlayerTeamDto } from '../responses/player-team.dto';
 import { PlayerMatchDto } from '../responses/player-match.dto';
 import { RankingService } from '../services/ranking.service';
 import { TournamentsService } from '../services/tournaments.service';
@@ -30,9 +31,9 @@ export class TeamController {
     async getTeam(
         @Param('code') tournamentCode: string,
         @Param('teamCode') teamCode: string,
-    ): Promise<TeamDto> {
+    ): Promise<PlayerTeamDto> {
         try {
-            return await this.tournamentsService.getTeamByCode(tournamentCode, teamCode);
+            return await this.rankingService.getPlayerTeam(tournamentCode, teamCode);
         } catch (error: unknown) {
             if (error instanceof HttpException) {
                 throw error;
