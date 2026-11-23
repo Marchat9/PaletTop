@@ -112,7 +112,7 @@ export class TournamentRepository {
                 .leftJoinAndSelect('match.teamA', 'matchTeamA')
                 .leftJoinAndSelect('match.teamB', 'matchTeamB')
                 // The elimination draw tracks each table's winners/losers by `pool.name`
-                // (MatchGroupKey), and the final standings group teams by their table: both need
+                // (the group key), and the final standings group teams by their table: both need
                 // the pool relation, which is `eager: false` and so must be joined explicitly.
                 .leftJoinAndSelect('match.pool', 'matchPool')
                 .where('match.tournament = :tournamentId', { tournamentId: tournament.id })

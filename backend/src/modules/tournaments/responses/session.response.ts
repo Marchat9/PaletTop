@@ -1,10 +1,12 @@
 import { MatchesSession } from 'src/entities/matches-session.entity';
 import { TournamentMatch } from 'src/entities/tounament-match.entity';
-import { MATCH_GROUP_ORDER, MatchGroupKey } from 'src/enum/tounament.enum';
+import { groupLabel, groupOrderOrNull } from '../strategies/structured/plan/group-keys';
 
 export interface MatchGroupDto {
     order: number;
-    name: MatchGroupKey;
+    name: string;
+    /** French label shown as the group title. */
+    label: string;
 }
 
 export interface SessionMatchResponseDto {
@@ -38,9 +40,10 @@ export interface SessionResponseDto {
 
 function toMatchGroup(poolName: string | null | undefined): MatchGroupDto | null {
     if (!poolName) return null;
-    const order = MATCH_GROUP_ORDER[poolName as MatchGroupKey];
-    if (order === undefined) return null;
-    return { order, name: poolName as MatchGroupKey };
+    const order = groupOrderOrNull(poolName);
+    const label = groupLabel(poolName);
+    if (order === null || label === null) return null;
+    return { order, name: poolName, label };
 }
 
 export function toSessionMatchResponseDto(match: TournamentMatch): SessionMatchResponseDto {

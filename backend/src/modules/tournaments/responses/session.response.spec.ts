@@ -40,4 +40,36 @@ describe('toSessionResponseDto', () => {
         expect(toSessionResponseDto(session, true).isDrawnRound).toBe(true);
         expect(toSessionResponseDto(session, false).isDrawnRound).toBe(false);
     });
+
+    it('carries the order, key and French label of the bracket group', () => {
+        const matchOf = (poolName: string): TournamentMatch =>
+            ({
+                id: poolName,
+                status: 'PENDING',
+                isBye: false,
+                scoreA: 0,
+                scoreB: 0,
+                teamA: { id: 'a', name: 'A' },
+                teamB: { id: 'b', name: 'B' },
+                pool: { name: poolName, poolNumber: 0 },
+            }) as unknown as TournamentMatch;
+        const session = {
+            id: 's',
+            sessionNumber: 3,
+            status: 'OPEN',
+            matches: [
+                'principale',
+                'challenge_principale',
+                'consolante_1',
+                'challenge_consolante_1',
+            ].map(matchOf),
+        } as unknown as MatchesSession;
+
+        expect(toSessionResponseDto(session, false).matches.map((m) => m.group)).toEqual([
+            { order: 1, name: 'principale', label: 'Principale' },
+            { order: 3, name: 'challenge_principale', label: 'Challenge principale' },
+            { order: 4, name: 'consolante_1', label: 'Consolante A' },
+            { order: 5, name: 'challenge_consolante_1', label: 'Challenge consolante A' },
+        ]);
+    });
 });

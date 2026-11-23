@@ -5,7 +5,7 @@ import { StructuredCompetitionConfiguration } from 'src/entities/tournament-comp
 import { TournamentPool } from 'src/entities/tournament-pool.entity';
 import { Tournament } from 'src/entities/tournament.entity';
 import { MatchStatus, TournamentStatus } from 'src/enum/status.enum';
-import { MatchGroupKey } from 'src/enum/tounament.enum';
+import { LEGACY_GROUP_KEY } from './plan/group-keys';
 import { TournamentRepository } from 'src/modules/tournaments/repositories/tournament.repository';
 import { extractCompetitionConfiguration } from 'src/modules/tournaments/utils/tournament.utils';
 import { DeepPartial } from 'typeorm';
@@ -25,7 +25,7 @@ import { StructuredPlanInput, TournamentPlan } from './plan/plan.types';
 import { computeStructuredPlan } from './plan/structured-plan';
 
 interface EliminationExit {
-    table: MatchGroupKey;
+    table: string;
     session: number;
     won: boolean;
     ownScore: number;
@@ -33,12 +33,12 @@ interface EliminationExit {
 
 // Block order of the tables in the final standings: principal final (1-2), third place (3-4),
 // challenge (5-…), consolante, challenge-consolante, then teams knocked out in the pools.
-const TABLE_STANDING_ORDER: Record<MatchGroupKey, number> = {
-    [MatchGroupKey.PRINCIPALE]: 0,
-    [MatchGroupKey.THIRD_PLACE_MATCH]: 1,
-    [MatchGroupKey.CHALLENGE]: 2,
-    [MatchGroupKey.CONSOLANTE]: 3,
-    [MatchGroupKey.CHALLENGE_CONSOLANTE]: 4,
+const TABLE_STANDING_ORDER: Record<string, number> = {
+    [LEGACY_GROUP_KEY.PRINCIPALE]: 0,
+    [LEGACY_GROUP_KEY.THIRD_PLACE_MATCH]: 1,
+    [LEGACY_GROUP_KEY.CHALLENGE]: 2,
+    [LEGACY_GROUP_KEY.CONSOLANTE]: 3,
+    [LEGACY_GROUP_KEY.CHALLENGE_CONSOLANTE]: 4,
 };
 const POOL_ONLY_ORDER = 5;
 
@@ -57,20 +57,22 @@ function withoutOptions(plan: Omit<TournamentPlan, 'options'>): Omit<TournamentP
  * consolation table to send them to.
  */
 function standingTable(exit: EliminationExit): number {
-    return exit.table === MatchGroupKey.THIRD_PLACE_MATCH
-        ? TABLE_STANDING_ORDER[MatchGroupKey.PRINCIPALE]
+    return exit.table === LEGACY_GROUP_KEY.THIRD_PLACE_MATCH
+        ? TABLE_STANDING_ORDER[LEGACY_GROUP_KEY.PRINCIPALE]
         : TABLE_STANDING_ORDER[exit.table];
 }
 
 /** Section of the standings: the 3rd-place match is shown with the principal table. */
 function standingSection(exit: EliminationExit | undefined): RankingSection {
     if (!exit) return 'pools';
-    return exit.table === MatchGroupKey.THIRD_PLACE_MATCH ? MatchGroupKey.PRINCIPALE : exit.table;
+    return exit.table === LEGACY_GROUP_KEY.THIRD_PLACE_MATCH
+        ? LEGACY_GROUP_KEY.PRINCIPALE
+        : exit.table;
 }
 
 /** Just under the final (played in the same round): finalists first, then the 3rd-place match. */
 function standingDepth(exit: EliminationExit): number {
-    return exit.table === MatchGroupKey.THIRD_PLACE_MATCH ? exit.session - 0.5 : exit.session;
+    return exit.table === LEGACY_GROUP_KEY.THIRD_PLACE_MATCH ? exit.session - 0.5 : exit.session;
 }
 
 export class StructuredTournamentStrategy extends TournamentStrategy {
@@ -250,7 +252,7 @@ export class StructuredTournamentStrategy extends TournamentStrategy {
             const ranking = this.computeGlobalRanking(tournament, pastMatches);
             const virtualPools: TournamentPool[] = await this.getOrCreateVirtualPools(
                 tournament.id,
-                Object.values(MatchGroupKey),
+                Object.values(LEGACY_GROUP_KEY),
             );
 
             partialMatches = generateEliminationMatches(
@@ -356,7 +358,7 @@ export class StructuredTournamentStrategy extends TournamentStrategy {
             const session = match.sessionNumber ?? 0;
             if (session <= qualifyingRounds) continue;
 
-            const table = (match.pool?.name ?? MatchGroupKey.PRINCIPALE) as MatchGroupKey;
+            const table = match.pool?.name ?? LEGACY_GROUP_KEY.PRINCIPALE;
             for (const teamId of [match.teamA.id, match.teamB.id]) {
                 const current = exits.get(teamId);
                 if (!current || session > current.session) {
@@ -383,7 +385,7 @@ export class StructuredTournamentStrategy extends TournamentStrategy {
             if ((match.sessionNumber ?? 0) <= qualifyingRounds) continue;
             if (match.status !== MatchStatus.VALIDATED) continue;
 
-            const table = (match.pool?.name ?? MatchGroupKey.PRINCIPALE) as MatchGroupKey;
+            const table = match.pool?.name ?? LEGACY_GROUP_KEY.PRINCIPALE;
             const session = match.sessionNumber!;
             const aWon = match.scoreA > match.scoreB;
             consider(match.teamA.id, { table, session, won: aWon, ownScore: match.scoreA });
@@ -433,7 +435,7 @@ export class StructuredTournamentStrategy extends TournamentStrategy {
 
     private async getOrCreateVirtualPools(
         tournamentId: string,
-        groupKeys: MatchGroupKey[],
+        groupKeys: string[],
     ): Promise<TournamentPool[]> {
         return Promise.all(
             groupKeys.map((groupKey) => this.getOrCreateVirtualPool(tournamentId, groupKey)),
@@ -442,7 +444,7 @@ export class StructuredTournamentStrategy extends TournamentStrategy {
 
     private async getOrCreateVirtualPool(
         tournamentId: string,
-        groupKey: MatchGroupKey,
+        groupKey: string,
     ): Promise<TournamentPool> {
         const existing = await this.poolRepo.findVirtualPoolByName(tournamentId, groupKey);
         if (existing) return existing;

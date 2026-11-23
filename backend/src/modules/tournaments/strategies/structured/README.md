@@ -53,7 +53,7 @@ Each table is filled from its own previous results, not from the global ranking:
   the principal / consolante, then their own winners.
 - **Third place**: the two principal semi-final losers, played with the final.
 
-Each table uses a virtual pool named after its `MatchGroupKey`.
+Each table uses a virtual pool named after its legacy group key.
 
 ## Ranking
 

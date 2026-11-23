@@ -5,7 +5,7 @@ import { StructuredCompetitionConfiguration } from 'src/entities/tournament-comp
 import { TournamentPool } from 'src/entities/tournament-pool.entity';
 import { Tournament } from 'src/entities/tournament.entity';
 import { TournamentStatus } from 'src/enum/status.enum';
-import { MatchGroupKey } from 'src/enum/tounament.enum';
+import { LEGACY_GROUP_KEY } from './plan/group-keys';
 import { ConstraintConfig } from 'src/model/constraint.model';
 import { generateMatchesInPool } from 'src/modules/tournaments/utils/match.utils';
 import { extractContraintConfig } from 'src/modules/tournaments/utils/tournament.utils';
@@ -95,7 +95,7 @@ export function generateEliminationMatches(
 
     // Winners (byes included) and losers of a table at a given elimination round, resolved to the
     // full team entities (matches only carry id/name/code refs, and the draw needs the players).
-    const roundResults = (groupKey: MatchGroupKey, atElimSession: number) => {
+    const roundResults = (groupKey: string, atElimSession: number) => {
         const sessionNumber = qualifyingRounds + atElimSession;
         const tableMatches = pastMatches.filter(
             (m) => m.pool?.name === groupKey && m.sessionNumber === sessionNumber,
@@ -125,8 +125,8 @@ export function generateEliminationMatches(
             .map((e) => teamById.get(e.teamId))
             .filter((t): t is Team => !!t);
 
-    const tableData: { teams: Team[]; groupKey: MatchGroupKey }[] = [];
-    const addTable = (enabled: boolean, groupKey: MatchGroupKey, teams: Team[]): void => {
+    const tableData: { teams: Team[]; groupKey: string }[] = [];
+    const addTable = (enabled: boolean, groupKey: string, teams: Team[]): void => {
         if (enabled && teams.length >= 2) tableData.push({ teams, groupKey });
     };
 
@@ -134,36 +134,36 @@ export function generateEliminationMatches(
     const principalTeams =
         elimSession === 1
             ? rankSlice(0, principalBracketSize)
-            : roundResults(MatchGroupKey.PRINCIPALE, elimSession - 1).winners;
-    addTable(true, MatchGroupKey.PRINCIPALE, principalTeams);
+            : roundResults(LEGACY_GROUP_KEY.PRINCIPALE, elimSession - 1).winners;
+    addTable(true, LEGACY_GROUP_KEY.PRINCIPALE, principalTeams);
 
     // Consolante: the field below the principal bracket at the first round, then its own winners.
     const consolanteTeams =
         elimSession === 1
             ? rankSlice(principalBracketSize, tournament.teams.length)
-            : roundResults(MatchGroupKey.CONSOLANTE, elimSession - 1).winners;
-    addTable(competitionConfig.hasConsolanteTable, MatchGroupKey.CONSOLANTE, consolanteTeams);
+            : roundResults(LEGACY_GROUP_KEY.CONSOLANTE, elimSession - 1).winners;
+    addTable(competitionConfig.hasConsolanteTable, LEGACY_GROUP_KEY.CONSOLANTE, consolanteTeams);
 
     // Challenge: repechage of the principal's first-round losers, then its own winners. Starts one
     // round after the principal (there are no losers to catch before the first principal round).
     if (elimSession >= 2) {
         const challengeTeams =
             elimSession === 2
-                ? roundResults(MatchGroupKey.PRINCIPALE, 1).losers
-                : roundResults(MatchGroupKey.CHALLENGE, elimSession - 1).winners;
+                ? roundResults(LEGACY_GROUP_KEY.PRINCIPALE, 1).losers
+                : roundResults(LEGACY_GROUP_KEY.CHALLENGE, elimSession - 1).winners;
         addTable(
             competitionConfig.hasChallengePrincipaleTable,
-            MatchGroupKey.CHALLENGE,
+            LEGACY_GROUP_KEY.CHALLENGE,
             challengeTeams,
         );
 
         const challengeConsolanteTeams =
             elimSession === 2
-                ? roundResults(MatchGroupKey.CONSOLANTE, 1).losers
-                : roundResults(MatchGroupKey.CHALLENGE_CONSOLANTE, elimSession - 1).winners;
+                ? roundResults(LEGACY_GROUP_KEY.CONSOLANTE, 1).losers
+                : roundResults(LEGACY_GROUP_KEY.CHALLENGE_CONSOLANTE, elimSession - 1).winners;
         addTable(
             competitionConfig.hasChallengeConsolanteTable,
-            MatchGroupKey.CHALLENGE_CONSOLANTE,
+            LEGACY_GROUP_KEY.CHALLENGE_CONSOLANTE,
             challengeConsolanteTeams,
         );
     }
@@ -171,8 +171,8 @@ export function generateEliminationMatches(
     // Third-place match (principal only): the two losers of the principal semi-finals, once the
     // principal is down to its final. They are the losers of the previous principal round.
     if (competitionConfig.hasThirdPlaceMatch && principalTeams.length === 2) {
-        const semiFinalLosers = roundResults(MatchGroupKey.PRINCIPALE, elimSession - 1).losers;
-        addTable(true, MatchGroupKey.THIRD_PLACE_MATCH, semiFinalLosers);
+        const semiFinalLosers = roundResults(LEGACY_GROUP_KEY.PRINCIPALE, elimSession - 1).losers;
+        addTable(true, LEGACY_GROUP_KEY.THIRD_PLACE_MATCH, semiFinalLosers);
     }
 
     return tableData.flatMap(({ teams, groupKey }) =>

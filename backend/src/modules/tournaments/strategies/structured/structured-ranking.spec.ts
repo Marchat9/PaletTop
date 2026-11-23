@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { TournamentMatch } from 'src/entities/tounament-match.entity';
 import { Tournament } from 'src/entities/tournament.entity';
 import { MatchStatus } from 'src/enum/status.enum';
-import { CompetitionMode, MatchGroupKey, ScoreCalculation } from 'src/enum/tounament.enum';
+import { CompetitionMode, ScoreCalculation } from 'src/enum/tounament.enum';
+import { LEGACY_GROUP_KEY } from './plan/group-keys';
 import { StructuredTournamentStrategy } from './structured-tournament.strategy';
 
 const strategy = new StructuredTournamentStrategy(
@@ -26,7 +27,7 @@ function tournament(teamIds: string[]): Tournament {
 }
 
 function match(
-    pool: MatchGroupKey,
+    pool: string,
     session: number,
     a: string,
     scoreA: number,
@@ -45,7 +46,7 @@ function match(
     } as unknown as TournamentMatch;
 }
 
-function scheduled(pool: MatchGroupKey, session: number, a: string, b: string): TournamentMatch {
+function scheduled(pool: string, session: number, a: string, b: string): TournamentMatch {
     return { ...match(pool, session, a, 0, b, 0), status: MatchStatus.PENDING } as TournamentMatch;
 }
 
@@ -59,10 +60,10 @@ describe('StructuredTournamentStrategy.computeStandings', () => {
     it('classe par tableau : principale, petite finale, challenge, consolante', () => {
         const teams = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
         const matches = [
-            match(MatchGroupKey.PRINCIPALE, 3, 'A', 13, 'B', 7), // final: A beats B
-            match(MatchGroupKey.THIRD_PLACE_MATCH, 3, 'C', 13, 'D', 7),
-            match(MatchGroupKey.CHALLENGE, 3, 'E', 13, 'F', 7),
-            match(MatchGroupKey.CONSOLANTE, 3, 'G', 13, 'H', 7),
+            match(LEGACY_GROUP_KEY.PRINCIPALE, 3, 'A', 13, 'B', 7), // final: A beats B
+            match(LEGACY_GROUP_KEY.THIRD_PLACE_MATCH, 3, 'C', 13, 'D', 7),
+            match(LEGACY_GROUP_KEY.CHALLENGE, 3, 'E', 13, 'F', 7),
+            match(LEGACY_GROUP_KEY.CONSOLANTE, 3, 'G', 13, 'H', 7),
         ];
 
         expect(order(strategy.computeStandings(tournament(teams), matches))).toEqual([
@@ -82,14 +83,14 @@ describe('StructuredTournamentStrategy.computeStandings', () => {
     it('classe la petite finale juste sous la finale, au-dessus des perdants des quarts', () => {
         const teams = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
         const matches = [
-            match(MatchGroupKey.PRINCIPALE, 1, 'A', 13, 'E', 5), // quarter-finals
-            match(MatchGroupKey.PRINCIPALE, 1, 'B', 13, 'F', 6),
-            match(MatchGroupKey.PRINCIPALE, 1, 'C', 13, 'G', 7),
-            match(MatchGroupKey.PRINCIPALE, 1, 'D', 13, 'H', 8),
-            match(MatchGroupKey.PRINCIPALE, 2, 'A', 13, 'C', 4), // semi-finals
-            match(MatchGroupKey.PRINCIPALE, 2, 'B', 13, 'D', 3),
-            match(MatchGroupKey.PRINCIPALE, 3, 'A', 13, 'B', 9), // final
-            match(MatchGroupKey.THIRD_PLACE_MATCH, 3, 'D', 13, 'C', 1),
+            match(LEGACY_GROUP_KEY.PRINCIPALE, 1, 'A', 13, 'E', 5), // quarter-finals
+            match(LEGACY_GROUP_KEY.PRINCIPALE, 1, 'B', 13, 'F', 6),
+            match(LEGACY_GROUP_KEY.PRINCIPALE, 1, 'C', 13, 'G', 7),
+            match(LEGACY_GROUP_KEY.PRINCIPALE, 1, 'D', 13, 'H', 8),
+            match(LEGACY_GROUP_KEY.PRINCIPALE, 2, 'A', 13, 'C', 4), // semi-finals
+            match(LEGACY_GROUP_KEY.PRINCIPALE, 2, 'B', 13, 'D', 3),
+            match(LEGACY_GROUP_KEY.PRINCIPALE, 3, 'A', 13, 'B', 9), // final
+            match(LEGACY_GROUP_KEY.THIRD_PLACE_MATCH, 3, 'D', 13, 'C', 1),
         ];
 
         expect(order(strategy.computeStandings(tournament(teams), matches))).toEqual([
@@ -108,8 +109,8 @@ describe('StructuredTournamentStrategy.computeStandings', () => {
     it('classe une élimination plus tardive au-dessus dans un même tableau', () => {
         const teams = ['W', 'F', 'S'];
         const matches = [
-            match(MatchGroupKey.CHALLENGE, 2, 'W', 13, 'S', 7), // S out in the semi
-            match(MatchGroupKey.CHALLENGE, 3, 'W', 13, 'F', 7), // F out in the final
+            match(LEGACY_GROUP_KEY.CHALLENGE, 2, 'W', 13, 'S', 7), // S out in the semi
+            match(LEGACY_GROUP_KEY.CHALLENGE, 3, 'W', 13, 'F', 7), // F out in the final
         ];
 
         // W wins the challenge, F loses the final (out later), S loses the semi (out earlier).
@@ -124,9 +125,9 @@ describe('StructuredTournamentStrategy.computeStandings', () => {
     it('départage deux perdants du même tour par leur score', () => {
         const teams = ['W', 'X', 'L9', 'L5'];
         const matches = [
-            match(MatchGroupKey.CHALLENGE, 2, 'W', 13, 'L5', 5), // L5 scored 5
-            match(MatchGroupKey.CHALLENGE, 2, 'X', 13, 'L9', 9), // L9 scored 9
-            match(MatchGroupKey.CHALLENGE, 3, 'W', 13, 'X', 7), // final
+            match(LEGACY_GROUP_KEY.CHALLENGE, 2, 'W', 13, 'L5', 5), // L5 scored 5
+            match(LEGACY_GROUP_KEY.CHALLENGE, 2, 'X', 13, 'L9', 9), // L9 scored 9
+            match(LEGACY_GROUP_KEY.CHALLENGE, 3, 'W', 13, 'X', 7), // final
         ];
 
         const standings = order(strategy.computeStandings(tournament(teams), matches));
@@ -138,10 +139,10 @@ describe('StructuredTournamentStrategy.computeStandings', () => {
     it('indique le tableau de chacun, la petite finale avec le tableau principal', () => {
         const teams = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'P'];
         const matches = [
-            match(MatchGroupKey.PRINCIPALE, 3, 'A', 13, 'B', 7),
-            match(MatchGroupKey.THIRD_PLACE_MATCH, 3, 'C', 13, 'D', 7),
-            match(MatchGroupKey.CHALLENGE, 3, 'E', 13, 'F', 7),
-            match(MatchGroupKey.CONSOLANTE, 3, 'G', 13, 'H', 7),
+            match(LEGACY_GROUP_KEY.PRINCIPALE, 3, 'A', 13, 'B', 7),
+            match(LEGACY_GROUP_KEY.THIRD_PLACE_MATCH, 3, 'C', 13, 'D', 7),
+            match(LEGACY_GROUP_KEY.CHALLENGE, 3, 'E', 13, 'F', 7),
+            match(LEGACY_GROUP_KEY.CONSOLANTE, 3, 'G', 13, 'H', 7),
         ];
 
         const sections = Object.fromEntries(
@@ -151,14 +152,14 @@ describe('StructuredTournamentStrategy.computeStandings', () => {
         );
 
         expect(sections).toEqual({
-            A: MatchGroupKey.PRINCIPALE,
-            B: MatchGroupKey.PRINCIPALE,
-            C: MatchGroupKey.PRINCIPALE,
-            D: MatchGroupKey.PRINCIPALE,
-            E: MatchGroupKey.CHALLENGE,
-            F: MatchGroupKey.CHALLENGE,
-            G: MatchGroupKey.CONSOLANTE,
-            H: MatchGroupKey.CONSOLANTE,
+            A: LEGACY_GROUP_KEY.PRINCIPALE,
+            B: LEGACY_GROUP_KEY.PRINCIPALE,
+            C: LEGACY_GROUP_KEY.PRINCIPALE,
+            D: LEGACY_GROUP_KEY.PRINCIPALE,
+            E: LEGACY_GROUP_KEY.CHALLENGE,
+            F: LEGACY_GROUP_KEY.CHALLENGE,
+            G: LEGACY_GROUP_KEY.CONSOLANTE,
+            H: LEGACY_GROUP_KEY.CONSOLANTE,
             // Never reached a table: knocked out in the pools.
             P: 'pools',
         });
@@ -176,18 +177,18 @@ describe('StructuredTournamentStrategy.computeStandings', () => {
     it('place chaque équipe dans son tableau dès le lancement du round, avant tout résultat', () => {
         const teams = ['A', 'B', 'C', 'D', 'P'];
         const standings = strategy.computeStandings(tournament(teams), [
-            scheduled(MatchGroupKey.CONSOLANTE, 1, 'C', 'D'),
-            scheduled(MatchGroupKey.PRINCIPALE, 1, 'A', 'B'),
+            scheduled(LEGACY_GROUP_KEY.CONSOLANTE, 1, 'C', 'D'),
+            scheduled(LEGACY_GROUP_KEY.PRINCIPALE, 1, 'A', 'B'),
         ]);
 
         expect(order(standings).slice(0, 2).sort()).toEqual(['A', 'B']);
         expect(order(standings).slice(2, 4).sort()).toEqual(['C', 'D']);
         expect(Object.fromEntries(standings.map((entry) => [entry.teamId, entry.section]))).toEqual(
             {
-                A: MatchGroupKey.PRINCIPALE,
-                B: MatchGroupKey.PRINCIPALE,
-                C: MatchGroupKey.CONSOLANTE,
-                D: MatchGroupKey.CONSOLANTE,
+                A: LEGACY_GROUP_KEY.PRINCIPALE,
+                B: LEGACY_GROUP_KEY.PRINCIPALE,
+                C: LEGACY_GROUP_KEY.CONSOLANTE,
+                D: LEGACY_GROUP_KEY.CONSOLANTE,
                 P: 'pools',
             },
         );
@@ -196,8 +197,8 @@ describe('StructuredTournamentStrategy.computeStandings', () => {
     // A team still playing a round ranks above the teams already knocked out of that table.
     it('classe une équipe encore en lice au-dessus des éliminées de son tableau', () => {
         const standings = strategy.computeStandings(tournament(['W', 'L', 'X', 'Y']), [
-            match(MatchGroupKey.PRINCIPALE, 1, 'W', 13, 'L', 4),
-            scheduled(MatchGroupKey.PRINCIPALE, 2, 'W', 'X'),
+            match(LEGACY_GROUP_KEY.PRINCIPALE, 1, 'W', 13, 'L', 4),
+            scheduled(LEGACY_GROUP_KEY.PRINCIPALE, 2, 'W', 'X'),
         ]);
 
         expect(order(standings).indexOf('W')).toBeLessThan(order(standings).indexOf('L'));

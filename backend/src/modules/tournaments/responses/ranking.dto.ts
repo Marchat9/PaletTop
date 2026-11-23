@@ -1,7 +1,5 @@
-import { MatchGroupKey } from 'src/enum/tounament.enum';
-
 /** Table a team ended in (structured tournaments), or `pools` when knocked out before any table. */
-export type RankingSection = MatchGroupKey | 'pools';
+export type RankingSection = string;
 
 export interface GlobalRankingEntry {
     rank: number;
