@@ -2,8 +2,9 @@
 
 ## Idea
 
-The default mode. Teams are split into pools and play a number of qualifying rounds. Then the
-best teams go into elimination brackets (principal, plus optional extra tables).
+The default mode. All teams play a number of qualifying rounds in a single pool. Then the teams
+go into elimination brackets (a main bracket plus optional consolations, challenges and a 3rd
+place match), following a plan computed from the number of teams.
 
 ## Flow
 
@@ -16,18 +17,51 @@ startTournament()
         └── session > numberOfQualifyingRounds → generateEliminationMatches (plan round)
 ```
 
-Plates are numbered 1, 2, 3… after each generation.
+Plates are numbered 1, 2, 3… after each generation; byes get none.
 
 ## Configuration
 
-| Field                       | Description                                                          |
-| --------------------------- | -------------------------------------------------------------------- |
-| `numberOfQualifyingRounds`  | Number of qualifying rounds (single pool, default 4)                 |
-| `consolationCount`          | Consolation brackets under the main one (0 = main only)              |
-| `hasChallenges`             | One challenge per bracket, for its first-round losers                |
-| `hasThirdPlaceMatch`        | Third-place match between the main semi-final losers                 |
-| `eliminatedAfterQualifying` | Written at launch: the last X teams of the qualifiers stop           |
-| `plan`                      | Written at launch: the frozen plan the elimination rounds follow     |
+| Field                       | Description                                                      |
+| --------------------------- | ---------------------------------------------------------------- |
+| `numberOfQualifyingRounds`  | Number of qualifying rounds (single pool, default 4)             |
+| `consolationCount`          | Consolation brackets under the main one (0 = main only)          |
+| `hasChallenges`             | One challenge per bracket, for its first-round losers            |
+| `hasThirdPlaceMatch`        | Third-place match between the main semi-final losers             |
+| `eliminatedAfterQualifying` | Written at launch: the last X teams of the qualifiers stop       |
+| `plan`                      | Written at launch: the frozen plan the elimination rounds follow |
+
+`maxTeamCapacity` is only a target: teams can register above it (`isTeamCapacityHard` is false).
+
+## Plan and frozen plan
+
+`computePlan` (`plan/structured-plan.ts`, `computeStructuredPlan`) turns the team count and the
+configuration into a `TournamentPlan`: brackets (key, label, capacity, fill ratio and level),
+rounds (qualifying and elimination, each with its groups, matches, byes and plates), warnings and
+the launch options. In draft it is computed for the registered teams with the target
+`maxTeamCapacity`; the super-admin thresholds (max consolations, fill levels) come from the app
+settings (`PlanSettings`).
+
+- `POST /tournaments/plan-preview` returns the plan (and its options) before the tournament exists.
+- `POST /tournaments/:code/start` takes the admin's launch choice (`consolationCount`,
+  `eliminatedAfterQualifying`). `prepareTournamentStart` freezes the matching plan (without its
+  options) in `competitionConfiguration.plan`, together with both values. An impossible plan or
+  more consolations than the setting allows refuses the start.
+- Once started, `computePlan` returns the frozen plan as is, never recomputed.
+
+## Group keys and labels
+
+Index-based, so renaming never breaks anything (`plan/group-keys.ts`):
+
+| Key                                    | Label                       | Display order |
+| -------------------------------------- | --------------------------- | ------------- |
+| `principale`                           | Principale                  | 1             |
+| `third_place_match`                    | Match pour la 3e place      | 2             |
+| `challenge_principale`                 | Challenge principale        | 3             |
+| `consolante_i` (i = 1, 2…)             | Consolante A, B…            | 2i + 2        |
+| `challenge_consolante_i`               | Challenge consolante A, B…  | 2i + 3        |
+
+`groupOrder` and `groupLabel` work for any index. The group key is also the name of the virtual
+pool holding the group's matches.
 
 ## Qualifying rounds
 
@@ -63,12 +97,39 @@ An odd group gives one bye to the team with the fewest byes, then the best ranke
 a win. Best losers are ranked by `rankBestLosers` (`best-losers.utils.ts`): goal average of the
 lost match, cumulative ranking, previous matches' goal average walking back, then a random draw.
 
-## Ranking
+## Best losers chain
+
+When a bracket is not a power of 2, its first round has fewer teams than the capacity and the plan
+brings back `bestLosersIn` of its first-round losers at round 2 (the repêchés). Losers are ranked by
+`rankBestLosers` (`best-losers.utils.ts`), each criterion splitting ties of the previous one:
+
+1. goal average of the lost match;
+2. rank in the cumulative ranking;
+3. goal average of the previous matches, walking back;
+4. random draw.
+
+A bracket and its challenge share one ranking per round, so they agree on who was brought back.
+The challenge gets the first-round losers that were not repêchés.
+
+## Teams stopped after the qualifiers
+
+With `eliminatedAfterQualifying = X`, the plan is computed for `N - X` teams and the X last teams of
+the qualifying ranking play no elimination match. Their final rank is their qualifying rank: they
+come after every bracket team, in section `eliminated_qualifying` (« Éliminés en qualifs »).
+
+## Ranking and player data
 
 - `computeGlobalRanking` (default) seeds the brackets.
-- `computeStandings` (override) gives the final ranking: grouped by table in the group order
-  (the 3rd place counted with the main), then teams out after the pools, then by how far the team
-  went, the score of its last match, and its seed.
+- `computeStandings` (override) gives the final ranking. Before any elimination match exists it
+  is the single qualifying ranking (`section` and `sectionLabel` are null). Then the teams are
+  grouped in blocks: Main (3rd place included), Challenge main, Consolante A, Challenge A,
+  Consolante B… (the group order), then `eliminated_qualifying`. Inside a block: how far the team
+  went, winner before loser, the score of its last match, then its seed. Each entry has `section`
+  (group key, `pools` for a team that reached no bracket without being stopped) and `sectionLabel`
+  (French label).
+- `computeTeamStatus` feeds `GET /tournaments/:code/teams/:teamCode` (`PlayerTeamDto`):
+  `eliminatedAfterQualifying`, and `repechedFrom`, the label of the bracket where the team lost its
+  first round and still plays the second one. Losers falling into a challenge are not repêchés.
 
 ## Phase name and end (`computeTournamentStatus`)
 
