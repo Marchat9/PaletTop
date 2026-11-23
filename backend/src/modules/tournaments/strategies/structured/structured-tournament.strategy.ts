@@ -1,4 +1,4 @@
-import { Logger } from '@nestjs/common';
+import { BadRequestException, Logger } from '@nestjs/common';
 import { MatchesSession } from 'src/entities/matches-session.entity';
 import { TournamentMatch } from 'src/entities/tounament-match.entity';
 import { StructuredCompetitionConfiguration } from 'src/entities/tournament-competition-configuration.entity';
@@ -20,8 +20,8 @@ import {
     generateQualifyingMatches,
     toLegacyEliminationTables,
 } from './structured-session.utils';
-import { PlanSettings, TournamentStrategy } from '../tournament-strategy.abstract';
-import { TournamentPlan } from './plan/plan.types';
+import { PlanSettings, StartOptions, TournamentStrategy } from '../tournament-strategy.abstract';
+import { StructuredPlanInput, TournamentPlan } from './plan/plan.types';
 import { computeStructuredPlan } from './plan/structured-plan';
 
 interface EliminationExit {
@@ -43,6 +43,12 @@ const TABLE_STANDING_ORDER: Record<MatchGroupKey, number> = {
 const POOL_ONLY_ORDER = 5;
 
 const SINGLE_POOL = 1;
+
+/** The plan as stored: the launch options only make sense before the start. */
+function withoutOptions(plan: Omit<TournamentPlan, 'options'>): Omit<TournamentPlan, 'options'> {
+    const { options: _options, ...frozen } = plan as TournamentPlan;
+    return frozen;
+}
 
 /**
  * The 3rd-place match belongs to the principal bracket, right under the final: its players are
@@ -103,7 +109,109 @@ export class StructuredTournamentStrategy extends TournamentStrategy {
         if (tournament.status !== TournamentStatus.DRAFT) {
             return null;
         }
-        return computeStructuredPlan({
+        return computeStructuredPlan(this.planInput(tournament, config, teamCount, settings));
+    }
+
+    /**
+     * Freezes the admin's launch choice in the stored configuration: `consolationCount`,
+     * `eliminatedAfterQualifying` and the plan the elimination phase will follow, computed for the
+     * registered teams. Without a choice, the stored consolation count is kept and no team stops
+     * after the qualifiers. An impossible plan refuses the start (the caller's transaction then
+     * leaves the tournament in draft).
+     */
+    override async prepareTournamentStart(
+        tournament: Tournament,
+        options?: StartOptions,
+    ): Promise<Tournament> {
+        this.logger.debug(
+            'Starting prepareTournamentStart with tournament code: ' + tournament.code,
+        );
+        if (!options) {
+            throw new Error('The plan settings are required to start a structured tournament.');
+        }
+        const { settings, choice } = options;
+        const config = this.getConfig(tournament);
+        const consolationCount = choice.consolationCount ?? config.consolationCount;
+        const eliminatedAfterQualifying = choice.eliminatedAfterQualifying ?? 0;
+
+        if (consolationCount > settings.maxConsolations) {
+            this.logger.warn(
+                `Start of ${tournament.code} refused: ${consolationCount} consolations (max ${settings.maxConsolations})`,
+            );
+            throw new BadRequestException(`Au maximum ${settings.maxConsolations} consolantes.`);
+        }
+
+        const plan = this.planToFreeze(
+            tournament,
+            config,
+            consolationCount,
+            eliminatedAfterQualifying,
+            settings,
+        );
+        if (plan.brackets.length === 0) {
+            const impossible = plan.warnings.find((w) => w.code === 'IMPOSSIBLE');
+            this.logger.warn(
+                `Start of ${tournament.code} refused: impossible plan for ${tournament.teams.length} teams and ${consolationCount} consolations`,
+            );
+            throw new BadRequestException(
+                impossible?.message ?? 'Configuration des tableaux impossible.',
+            );
+        }
+
+        this.logger.log(
+            `Tournament ${tournament.code}: plan frozen with ${plan.brackets.length} brackets, ${consolationCount} consolations, ${eliminatedAfterQualifying} teams stopped after the qualifiers`,
+        );
+        return await this.tournamentRepo.save({
+            ...tournament,
+            configuration: {
+                ...tournament.configuration,
+                competitionConfiguration: {
+                    ...config,
+                    consolationCount,
+                    eliminatedAfterQualifying,
+                    plan,
+                },
+            },
+        });
+    }
+
+    /**
+     * The plan to freeze for the confirmed choice. The launch options shown to the admin were not
+     * all computed with the stored target (`recalculate` uses the registered count as its target,
+     * `add_consolation` keeps the target layout plus an extra consolation), so recomputing them
+     * from the choice alone would not always give back the plan the admin saw. Matching rule: the
+     * plan is computed again for the registered teams with the stored configuration; the first of
+     * its options with the same `consolationCount` and `eliminatedAfterQualifying` as the choice
+     * gives the plan to freeze (the one the admin confirmed). A choice matching no option (e.g. an
+     * old client, or a count picked by hand) is computed with the stored target and the chosen
+     * values.
+     */
+    private planToFreeze(
+        tournament: Tournament,
+        config: StructuredCompetitionConfiguration,
+        consolationCount: number,
+        eliminatedAfterQualifying: number,
+        settings: PlanSettings,
+    ): Omit<TournamentPlan, 'options'> {
+        const input = this.planInput(tournament, config, tournament.teams.length, settings);
+        const offered = computeStructuredPlan(input).options.find(
+            (option) =>
+                option.consolationCount === consolationCount &&
+                option.eliminatedAfterQualifying === eliminatedAfterQualifying,
+        );
+        const plan =
+            offered?.plan ??
+            computeStructuredPlan({ ...input, consolationCount, eliminatedAfterQualifying });
+        return withoutOptions(plan);
+    }
+
+    private planInput(
+        tournament: Tournament,
+        config: StructuredCompetitionConfiguration,
+        teamCount: number,
+        settings: PlanSettings,
+    ): StructuredPlanInput {
+        return {
             teamCount,
             targetCount: tournament.configuration.maxTeamCapacity,
             consolationCount: config.consolationCount,
@@ -113,23 +221,7 @@ export class StructuredTournamentStrategy extends TournamentStrategy {
             eliminatedAfterQualifying: config.eliminatedAfterQualifying ?? 0,
             maxConsolations: settings.maxConsolations,
             thresholds: settings.thresholds,
-        });
-    }
-
-    override async prepareTournamentStart(tournament: Tournament): Promise<Tournament> {
-        this.logger.debug(
-            'Starting prepareTournamentStart with tournament code: ' + tournament.code,
-        );
-        // The principal bracket size is no longer stored: it follows from the team count.
-        const config = this.getConfig(tournament);
-
-        return await this.tournamentRepo.save({
-            ...tournament,
-            configuration: {
-                ...tournament.configuration,
-                competitionConfiguration: config,
-            },
-        });
+        };
     }
 
     override async assignTeamsToFirstPools(tournament: Tournament): Promise<TournamentPool[]> {

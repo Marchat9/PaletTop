@@ -1,4 +1,10 @@
-import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+    BadRequestException,
+    ConflictException,
+    Injectable,
+    Logger,
+    NotFoundException,
+} from '@nestjs/common';
 import { Transactional } from 'typeorm-transactional';
 import { MatchesSession } from 'src/entities/matches-session.entity';
 import { TournamentMatch } from 'src/entities/tounament-match.entity';
@@ -18,7 +24,11 @@ import { SessionRepository } from '../repositories/session.repository';
 import { toPlayerMatchDto } from '../responses/player-match.dto';
 import { SessionResponseDto, toSessionResponseDto } from '../responses/session.response';
 import { TournamentStatusInfo } from '../responses/tournament-status.dto';
-import { TournamentStrategy } from '../strategies/tournament-strategy.abstract';
+import {
+    StartChoice,
+    StartOptions,
+    TournamentStrategy,
+} from '../strategies/tournament-strategy.abstract';
 import { TournamentStrategyFactory } from '../strategies/tournament-strategy.factory';
 import { TournamentPlanService } from './tournament-plan.service';
 import { RankingService } from './ranking.service';
@@ -26,6 +36,12 @@ import {
     appendMatchesSessionToTournament,
     updateTournamentWithUpdatedSession,
 } from 'src/modules/tournaments/strategies/tournament-strategy.utils';
+
+/** The start request: the launch dialog's choice and the team count it was computed for. */
+export interface StartRequest extends StartChoice {
+    /** Team count of the launch check; a different count now means the check is outdated. */
+    expectedTeamCount?: number;
+}
 
 @Injectable()
 export class SessionService {
@@ -41,7 +57,11 @@ export class SessionService {
         private readonly planService: TournamentPlanService,
     ) {}
 
-    async startTournament(code: string, password: string): Promise<AdminTournamentDto> {
+    async startTournament(
+        code: string,
+        password: string,
+        request: StartRequest = {},
+    ): Promise<AdminTournamentDto> {
         const tournament = await this.tournamentAuthService.findWithAdminAuth({ code }, password, {
             withTeams: true,
         });
@@ -52,12 +72,30 @@ export class SessionService {
         if (!tournament.teams.length) {
             throw new BadRequestException('Aucune équipe inscrite au tournoi.');
         }
+        // Checked before any write: the admin confirmed a plan computed for another team count.
+        if (
+            request.expectedTeamCount !== undefined &&
+            request.expectedTeamCount !== tournament.teams.length
+        ) {
+            this.logger.warn(
+                `Start of ${tournament.code} refused: ${tournament.teams.length} teams, ${request.expectedTeamCount} expected`,
+            );
+            throw new ConflictException("Le nombre d'équipes a changé, relancez la vérification.");
+        }
 
         const tournamentCode = tournament.code;
         const strategy = this.strategyFactory.create(tournament.configuration.competitionMode);
+        const startOptions: StartOptions = {
+            settings: await this.planService.getPlanSettings(),
+            choice: {
+                consolationCount: request.consolationCount,
+                eliminatedAfterQualifying: request.eliminatedAfterQualifying,
+            },
+        };
         const { tournamentWithMatches, session } = await this.writeTournamentStart(
             tournament,
             strategy,
+            startOptions,
         );
 
         // ==== Final common steps (after commit) ====
@@ -99,6 +137,7 @@ export class SessionService {
     private async writeTournamentStart(
         tournament: Tournament,
         strategy: TournamentStrategy,
+        startOptions: StartOptions,
     ): Promise<{ tournamentWithMatches: Tournament; session: MatchesSession }> {
         // ====== Common ======
         // Common step: Create initial session
@@ -117,7 +156,10 @@ export class SessionService {
 
         // ========== Strategy ==========
         // Strategy step: Prepare Tournament to start
-        const tournamentPrepared = await strategy.prepareTournamentStart(tournamentActive);
+        const tournamentPrepared = await strategy.prepareTournamentStart(
+            tournamentActive,
+            startOptions,
+        );
 
         // Strategy step: Assign saved pools in current tournament object
         const tournamentWithPool = {

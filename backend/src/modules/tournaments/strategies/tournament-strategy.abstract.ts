@@ -16,6 +16,18 @@ export interface PlanSettings {
     thresholds: FillThresholds;
 }
 
+/** What the admin confirmed in the launch dialog; absent fields keep the stored configuration. */
+export interface StartChoice {
+    consolationCount?: number;
+    eliminatedAfterQualifying?: number;
+}
+
+/** What a strategy may need to prepare the start, read by the service layer. */
+export interface StartOptions {
+    settings: PlanSettings;
+    choice: StartChoice;
+}
+
 export abstract class TournamentStrategy {
     /**
      * Whether `maxTeamCapacity` caps the registrations. A soft capacity is only a target: teams can
@@ -127,7 +139,10 @@ export abstract class TournamentStrategy {
      * constructed with and returns the saved entity. Callers must merge this
      * return value into their in-memory state instead of re-reading from the DB.
      */
-    async prepareTournamentStart(_tournament: Tournament): Promise<Tournament> {
+    async prepareTournamentStart(
+        _tournament: Tournament,
+        _options?: StartOptions,
+    ): Promise<Tournament> {
         // No-op par défaut — surcharger pour initialiser des données au démarrage
         return _tournament;
     }

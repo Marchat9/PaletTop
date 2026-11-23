@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { BadRequestException } from '@nestjs/common';
 import { Tournament } from 'src/entities/tournament.entity';
 import { AppSettingKey } from 'src/enum/app-setting.enum';
 import { TournamentStatus } from 'src/enum/status.enum';
@@ -61,4 +62,71 @@ describe('TournamentPlanService.buildPlan', () => {
         const { service } = setup();
         expect(await service.buildPlan(draft(CompetitionMode.UP_DOWN, 8, 0))).toBeNull();
     });
+});
+
+describe('TournamentPlanService.previewPlan', () => {
+    const structured = {
+        numberOfQualifyingRounds: 4,
+        consolationCount: 2,
+        hasChallenges: true,
+        hasThirdPlaceMatch: true,
+    };
+
+    it('returns the plan for the given team count and target', async () => {
+        const { service } = setup();
+        const plan = await service.previewPlan({
+            competitionMode: CompetitionMode.STANDARD,
+            competitionConfiguration: structured,
+            teamCount: 128,
+            targetCount: 128,
+        });
+
+        expect(plan.teamCount).toBe(128);
+        expect(plan.brackets.map((b) => b.capacity)).toEqual([64, 32, 32]);
+        expect(plan.options.map((o) => o.id)).toEqual(['keep']);
+    });
+
+    it('ignores a plan or stopped teams sent by the client', async () => {
+        const { service } = setup();
+        const plan = await service.previewPlan({
+            competitionMode: CompetitionMode.STANDARD,
+            competitionConfiguration: {
+                ...structured,
+                eliminatedAfterQualifying: 10,
+                plan: { teamCount: 3 },
+            },
+            teamCount: 128,
+            targetCount: 128,
+        });
+
+        expect(plan.teamCount).toBe(128);
+        expect(plan.eliminatedAfterQualifying).toBe(0);
+    });
+
+    it('refuses more consolations than the setting allows', async () => {
+        const { service } = setup();
+        await expect(
+            service.previewPlan({
+                competitionMode: CompetitionMode.STANDARD,
+                competitionConfiguration: { ...structured, consolationCount: 5 },
+                teamCount: 128,
+                targetCount: 128,
+            }),
+        ).rejects.toThrow('Au maximum 4 consolantes.');
+    });
+
+    it.each([CompetitionMode.UP_DOWN, CompetitionMode.CHAMPIONSHIP])(
+        'refuses a mode without a plan (%s)',
+        async (competitionMode) => {
+            const { service } = setup();
+            await expect(
+                service.previewPlan({
+                    competitionMode,
+                    competitionConfiguration: { homeClub: 'A', awayClub: 'B' },
+                    teamCount: 8,
+                    targetCount: 8,
+                }),
+            ).rejects.toThrow(BadRequestException);
+        },
+    );
 });

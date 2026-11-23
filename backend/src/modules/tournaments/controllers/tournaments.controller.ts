@@ -21,6 +21,8 @@ import { AdminAccessDto } from '../dto/admin-access.dto';
 import { AdminQualifyingDto } from '../dto/admin-qualifying.dto';
 import { CreateTournamentDto } from '../dto/create-tournament.dto';
 import { JoinTournamentDto } from '../dto/join-tournament.dto';
+import { PlanPreviewDto } from '../dto/plan-preview.dto';
+import { StartTournamentDto } from '../dto/start-tournament.dto';
 import { UpdateTournamentConfigurationDto } from '../dto/update-tournament-configuration.dto';
 import { runGuarded } from 'src/utils/run-guarded.util';
 import { stripMatchTeamCodes } from '../utils/tournament.utils';
@@ -32,6 +34,7 @@ import { RankingService } from '../services/ranking.service';
 import { TournamentsService } from '../services/tournaments.service';
 import { TournamentPlanService } from '../services/tournament-plan.service';
 import { TournamentStrategyFactory } from '../strategies/tournament-strategy.factory';
+import { TournamentPlan } from '../strategies/structured/plan/plan.types';
 
 @Controller('tournaments')
 export class TournamentsController {
@@ -67,6 +70,17 @@ export class TournamentsController {
                 'Erreur interne lors de la création du tournoi.',
             );
         }
+    }
+
+    /**
+     * Stateless and public, like the creation form it serves. Declared before the `:code` routes
+     * so that it can never be taken for a tournament code.
+     */
+    @Post('plan-preview')
+    async planPreview(@Body() dto: PlanPreviewDto): Promise<TournamentPlan> {
+        return runGuarded(this.logger, 'Erreur lors du calcul des tableaux.', () =>
+            this.planService.previewPlan(dto),
+        );
     }
 
     @Post('admin-access')
@@ -178,12 +192,17 @@ export class TournamentsController {
     @Post(':code/start')
     async startTournament(
         @Param('code') code: string,
-        @Body() dto: AdminQualifyingDto,
+        @Body() dto: StartTournamentDto,
     ): Promise<AdminTournamentDto> {
         return runGuarded(
             this.logger,
             'Erreur lors du démarrage du tournoi.',
-            () => this.sessionService.startTournament(code, dto.password),
+            () =>
+                this.sessionService.startTournament(code, dto.password, {
+                    expectedTeamCount: dto.expectedTeamCount,
+                    consolationCount: dto.consolationCount,
+                    eliminatedAfterQualifying: dto.eliminatedAfterQualifying,
+                }),
             {
                 // Net against two concurrent starts (double click): the loser of the unique
                 // (tournament, session number) constraint gets a clean 409.
