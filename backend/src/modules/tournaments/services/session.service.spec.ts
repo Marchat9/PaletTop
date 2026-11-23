@@ -48,6 +48,7 @@ function setup(prepareTournamentStart: () => Promise<Tournament>) {
         gateway as never,
         rankingService as never,
         strategyFactory as never,
+        { buildPlan: vi.fn(async () => null) } as never,
     );
     return { service, gateway, rankingService };
 }
@@ -104,6 +105,7 @@ function setupActive(status: { canGenerateNewSession: boolean; canFinishTourname
         gateway as never,
         rankingService as never,
         { create: vi.fn(() => strategy) } as never,
+        { buildPlan: vi.fn(async () => null) } as never,
     );
     return { service, sessionRepo, tournament, validatedSession, rankingService };
 }

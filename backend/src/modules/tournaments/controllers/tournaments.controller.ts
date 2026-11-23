@@ -30,6 +30,7 @@ import { SpectatorTournamentDto } from '../responses/spectator-tournament.dto';
 import { TournamentStatusInfo } from '../responses/tournament-status.dto';
 import { RankingService } from '../services/ranking.service';
 import { TournamentsService } from '../services/tournaments.service';
+import { TournamentPlanService } from '../services/tournament-plan.service';
 import { TournamentStrategyFactory } from '../strategies/tournament-strategy.factory';
 
 @Controller('tournaments')
@@ -41,6 +42,7 @@ export class TournamentsController {
         private readonly rankingService: RankingService,
         @Inject(forwardRef(() => SessionService)) private readonly sessionService: SessionService,
         private readonly strategyFactory: TournamentStrategyFactory,
+        private readonly planService: TournamentPlanService,
     ) {}
 
     @Post()
@@ -79,7 +81,8 @@ export class TournamentsController {
                 strategy,
                 tournament,
             );
-            return toAdminTournamentDto(tournament, tournamentStatus);
+            const plan = await this.planService.buildPlan(tournament, strategy);
+            return toAdminTournamentDto(tournament, tournamentStatus, plan);
         } catch (error: unknown) {
             if (error instanceof HttpException) {
                 throw error;
@@ -104,7 +107,8 @@ export class TournamentsController {
                 dto,
             );
             await this.tournamentsService.broadcastTeamNames(tournamentCode);
-            return toAdminTournamentDto(updatedTournament);
+            const plan = await this.planService.buildPlan(updatedTournament);
+            return toAdminTournamentDto(updatedTournament, null, plan);
         } catch (error: unknown) {
             if (error instanceof HttpException) {
                 throw error;

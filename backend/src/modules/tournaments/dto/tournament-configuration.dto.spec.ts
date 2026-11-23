@@ -18,12 +18,10 @@ const structuredConfig = {
     pointsPerGame: 13,
     competitionMode: CompetitionMode.STANDARD,
     competitionConfiguration: {
-        hasConsolanteTable: true,
-        hasChallengePrincipaleTable: true,
-        hasChallengeConsolanteTable: true,
-        hasThirdPlaceMatch: true,
         numberOfQualifyingRounds: 2,
-        numberOfPools: 2,
+        consolationCount: 1,
+        hasChallenges: true,
+        hasThirdPlaceMatch: true,
     },
 };
 
@@ -47,7 +45,6 @@ describe('TournamentConfigurationDto', () => {
             competitionConfiguration: {
                 ...structuredConfig.competitionConfiguration,
                 numberOfQualifyingRounds: 0,
-                numberOfPools: 0,
             },
         };
         expect(validate(bad)).toContain('competitionConfiguration');
@@ -71,17 +68,54 @@ describe('TournamentConfigurationDto', () => {
         expect(validate(championship)).toEqual([]);
     });
 
-    // principalBracketSize is not rejected here (any integer passes); an invalid value is corrected
-    // to the automatic size at tournament start, not at validation time.
-    it('laisse passer un principalBracketSize non puissance de deux', () => {
-        const withOddBracket = {
-            ...structuredConfig,
-            competitionConfiguration: {
-                ...structuredConfig.competitionConfiguration,
-                principalBracketSize: 7,
+    describe('structured configuration', () => {
+        function structured(competitionConfiguration: Record<string, unknown>) {
+            return { ...structuredConfig, competitionConfiguration };
+        }
+        const base = structuredConfig.competitionConfiguration;
+
+        it('accepts no consolation at all', () => {
+            expect(validate(structured({ ...base, consolationCount: 0 }))).toEqual([]);
+        });
+
+        it('rejects a negative or non-integer consolation count', () => {
+            expect(validate(structured({ ...base, consolationCount: -1 }))).toContain(
+                'competitionConfiguration',
+            );
+            expect(validate(structured({ ...base, consolationCount: 1.5 }))).toContain(
+                'competitionConfiguration',
+            );
+        });
+
+        it.each(['consolationCount', 'hasChallenges', 'hasThirdPlaceMatch'])(
+            'rejects a configuration without %s',
+            (field) => {
+                const { [field as keyof typeof base]: _removed, ...rest } = base;
+                expect(validate(structured(rest))).toContain('competitionConfiguration');
             },
-        };
-        expect(validate(withOddBracket)).toEqual([]);
+        );
+
+        it('rejects the removed table fields', () => {
+            expect(validate(structured({ ...base, hasConsolanteTable: true }))).toContain(
+                'competitionConfiguration',
+            );
+            expect(validate(structured({ ...base, principalBracketSize: 8 }))).toContain(
+                'competitionConfiguration',
+            );
+            expect(validate(structured({ ...base, numberOfPools: 2 }))).toContain(
+                'competitionConfiguration',
+            );
+        });
+
+        // Written by the backend at launch: a client sending them back is not an error, they are
+        // simply never read from the request.
+        it('ignores the fields written at launch', () => {
+            expect(
+                validate(
+                    structured({ ...base, eliminatedAfterQualifying: 3, plan: { teamCount: 8 } }),
+                ),
+            ).toEqual([]);
+        });
     });
 
     describe('montée / descente — dernière partie au classement', () => {

@@ -26,11 +26,10 @@ const configuration = {
     pointsPerGame: 13,
     competitionMode: CompetitionMode.STANDARD,
     competitionConfiguration: {
-        hasConsolanteTable: false,
-        hasChallengePrincipaleTable: false,
-        hasChallengeConsolanteTable: false,
-        hasThirdPlaceMatch: false,
         numberOfQualifyingRounds: 2,
+        consolationCount: 0,
+        hasChallenges: false,
+        hasThirdPlaceMatch: false,
     },
 };
 
@@ -57,6 +56,23 @@ describe('CreateTournamentDto', () => {
             'configuration.competitionConfiguration',
         ],
         ['an extra nested field', { evil: 1 }, 'configuration.evil'],
+        [
+            'a negative consolation count',
+            {
+                competitionConfiguration: {
+                    numberOfQualifyingRounds: 2,
+                    consolationCount: -1,
+                    hasChallenges: false,
+                    hasThirdPlaceMatch: false,
+                },
+            },
+            'configuration.competitionConfiguration',
+        ],
+        [
+            'a structured configuration without its flags',
+            { competitionConfiguration: { numberOfQualifyingRounds: 2, consolationCount: 1 } },
+            'configuration.competitionConfiguration',
+        ],
         [
             'the same club at home and away',
             {

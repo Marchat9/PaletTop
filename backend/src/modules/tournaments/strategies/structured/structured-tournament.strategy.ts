@@ -4,7 +4,7 @@ import { TournamentMatch } from 'src/entities/tounament-match.entity';
 import { StructuredCompetitionConfiguration } from 'src/entities/tournament-competition-configuration.entity';
 import { TournamentPool } from 'src/entities/tournament-pool.entity';
 import { Tournament } from 'src/entities/tournament.entity';
-import { MatchStatus } from 'src/enum/status.enum';
+import { MatchStatus, TournamentStatus } from 'src/enum/status.enum';
 import { MatchGroupKey } from 'src/enum/tounament.enum';
 import { TournamentRepository } from 'src/modules/tournaments/repositories/tournament.repository';
 import { extractCompetitionConfiguration } from 'src/modules/tournaments/utils/tournament.utils';
@@ -14,13 +14,15 @@ import { PoolRepository } from '../../../tournaments/repositories/pool.repositor
 import { GlobalRankingEntry, RankingSection } from '../../../tournaments/responses/ranking.dto';
 import { TournamentStatusInfo } from '../../../tournaments/responses/tournament-status.dto';
 import { PoolService } from '../../../tournaments/services/pool.service';
-import { computePrincipalBracketSize } from '../../../tournaments/utils/bracket.utils';
-import { TournamentStrategy } from '../tournament-strategy.abstract';
 import {
     computePhaseName,
     generateEliminationMatches,
     generateQualifyingMatches,
+    toLegacyEliminationTables,
 } from './structured-session.utils';
+import { PlanSettings, TournamentStrategy } from '../tournament-strategy.abstract';
+import { TournamentPlan } from './plan/plan.types';
+import { computeStructuredPlan } from './plan/structured-plan';
 
 interface EliminationExit {
     table: MatchGroupKey;
@@ -39,6 +41,8 @@ const TABLE_STANDING_ORDER: Record<MatchGroupKey, number> = {
     [MatchGroupKey.CHALLENGE_CONSOLANTE]: 4,
 };
 const POOL_ONLY_ORDER = 5;
+
+const SINGLE_POOL = 1;
 
 /**
  * The 3rd-place match belongs to the principal bracket, right under the final: its players are
@@ -75,24 +79,49 @@ export class StructuredTournamentStrategy extends TournamentStrategy {
         super();
     }
 
+    /** `maxTeamCapacity` is only the target: teams can register above it. */
+    override isTeamCapacityHard(): boolean {
+        return false;
+    }
+
+    /**
+     * Once started, the plan frozen at launch is the reference: it is returned as is, never
+     * recomputed (it may have been computed for another target, e.g. with an extra consolation).
+     * In draft, the plan is computed for `teamCount` with the target `maxTeamCapacity`; a
+     * configuration that no longer fits is reported by the plan's warnings. A started tournament
+     * without a frozen plan has none.
+     */
+    override computePlan(
+        tournament: Tournament,
+        teamCount: number,
+        settings: PlanSettings,
+    ): TournamentPlan | null {
+        const config = this.getConfig(tournament);
+        if (config.plan) {
+            return { ...config.plan, options: [] };
+        }
+        if (tournament.status !== TournamentStatus.DRAFT) {
+            return null;
+        }
+        return computeStructuredPlan({
+            teamCount,
+            targetCount: tournament.configuration.maxTeamCapacity,
+            consolationCount: config.consolationCount,
+            numberOfQualifyingRounds: config.numberOfQualifyingRounds,
+            hasChallenges: config.hasChallenges,
+            hasThirdPlaceMatch: config.hasThirdPlaceMatch,
+            eliminatedAfterQualifying: config.eliminatedAfterQualifying ?? 0,
+            maxConsolations: settings.maxConsolations,
+            thresholds: settings.thresholds,
+        });
+    }
+
     override async prepareTournamentStart(tournament: Tournament): Promise<Tournament> {
         this.logger.debug(
             'Starting prepareTournamentStart with tournament code: ' + tournament.code,
         );
+        // The principal bracket size is no longer stored: it follows from the team count.
         const config = this.getConfig(tournament);
-
-        // A provided bracket size is only trusted when it is a power of two within [2, teams];
-        // anything else (odd number, larger than the field, missing) falls back to the automatic
-        // size. The whole elimination structure assumes a power-of-two principal bracket.
-        const teamCount = tournament.teams.length;
-        const provided = config.principalBracketSize;
-        const isValid =
-            !!provided &&
-            Number.isInteger(provided) &&
-            provided >= 2 &&
-            provided <= teamCount &&
-            (provided & (provided - 1)) === 0;
-        config.principalBracketSize = isValid ? provided : computePrincipalBracketSize(teamCount);
 
         return await this.tournamentRepo.save({
             ...tournament,
@@ -105,9 +134,9 @@ export class StructuredTournamentStrategy extends TournamentStrategy {
 
     override async assignTeamsToFirstPools(tournament: Tournament): Promise<TournamentPool[]> {
         this.logger.debug('Starting assignTeamsToPools with tournament code: ' + tournament.code);
-        const config = this.getConfig(tournament);
 
-        return await this.poolService.assignTeamsToPools(tournament, config.numberOfPools);
+        // Qualifying always uses a single pool.
+        return await this.poolService.assignTeamsToPools(tournament, SINGLE_POOL);
     }
 
     override async generateSessionMatches(
@@ -134,7 +163,8 @@ export class StructuredTournamentStrategy extends TournamentStrategy {
 
             partialMatches = generateEliminationMatches(
                 tournament,
-                config,
+                // TEMPORARY (Task 7): remove the adapter once the generation follows the plan.
+                toLegacyEliminationTables(config, tournament.teams.length),
                 session,
                 pastMatches,
                 ranking,
@@ -284,8 +314,13 @@ export class StructuredTournamentStrategy extends TournamentStrategy {
         const currentSessionNumber = this.currentSessionNumber(sessions);
         const isElimination = currentSessionNumber > numberOfQualifyingRounds;
         const allValidated = this.allMatchesValidated(sessions);
+        // TEMPORARY (Task 7): remove the adapter once the status follows the plan.
+        const { principalBracketSize } = toLegacyEliminationTables(
+            config,
+            tournament.teams?.length ?? 0,
+        );
         const nbTeamStillInGame =
-            (config.principalBracketSize ?? 0) /
+            principalBracketSize /
             Math.pow(2, Math.max(currentSessionNumber - (numberOfQualifyingRounds ?? 0) - 1, 0));
         const isFinal = isElimination && nbTeamStillInGame <= 2;
 
@@ -333,9 +368,22 @@ export class StructuredTournamentStrategy extends TournamentStrategy {
         return sessionNumber <= (this.getConfig(tournament).numberOfQualifyingRounds ?? 0);
     }
 
+    /**
+     * The stored configuration: the fields set by the admin, normalised like a request, plus the
+     * ones written at launch (which a request never carries).
+     */
     private getConfig(tournament: Tournament): StructuredCompetitionConfiguration {
-        return extractCompetitionConfiguration(
+        const stored = tournament.configuration
+            .competitionConfiguration as StructuredCompetitionConfiguration;
+        const config = extractCompetitionConfiguration(
             tournament.configuration,
         ) as StructuredCompetitionConfiguration;
+        if (stored.eliminatedAfterQualifying !== undefined) {
+            config.eliminatedAfterQualifying = stored.eliminatedAfterQualifying;
+        }
+        if (stored.plan) {
+            config.plan = stored.plan;
+        }
+        return config;
     }
 }

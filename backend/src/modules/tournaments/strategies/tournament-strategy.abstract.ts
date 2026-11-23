@@ -8,8 +8,36 @@ import { GlobalRankingEntry } from '../../tournaments/responses/ranking.dto';
 import { TournamentStatusInfo } from '../../tournaments/responses/tournament-status.dto';
 import { rankTeams } from '../../tournaments/utils/ranking-calculation.utils';
 import { TournamentPool } from 'src/entities/tournament-pool.entity';
+import { FillThresholds, TournamentPlan } from './structured/plan/plan.types';
+
+/** App settings a plan depends on, read by the service layer (strategies have no settings). */
+export interface PlanSettings {
+    maxConsolations: number;
+    thresholds: FillThresholds;
+}
 
 export abstract class TournamentStrategy {
+    /**
+     * Whether `maxTeamCapacity` caps the registrations. A soft capacity is only a target: teams can
+     * register up to the absolute maximum (`MAX_TEAM_CAPACITY`).
+     */
+    isTeamCapacityHard(): boolean {
+        return true;
+    }
+
+    /**
+     * The tournament plan (brackets, rounds, warnings, launch options) for `teamCount` teams, or
+     * `null` for modes without a plan. Must not throw on a configuration that no longer fits the
+     * team count: the plan reports it as a warning.
+     */
+    computePlan(
+        _tournament: Tournament,
+        _teamCount: number,
+        _settings: PlanSettings,
+    ): TournamentPlan | null {
+        return null;
+    }
+
     canStartNextSession(session: MatchesSession): boolean {
         return (
             session.status === MatchesSessionStatus.OPEN &&

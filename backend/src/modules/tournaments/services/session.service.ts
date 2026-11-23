@@ -20,6 +20,7 @@ import { SessionResponseDto, toSessionResponseDto } from '../responses/session.r
 import { TournamentStatusInfo } from '../responses/tournament-status.dto';
 import { TournamentStrategy } from '../strategies/tournament-strategy.abstract';
 import { TournamentStrategyFactory } from '../strategies/tournament-strategy.factory';
+import { TournamentPlanService } from './tournament-plan.service';
 import { RankingService } from './ranking.service';
 import {
     appendMatchesSessionToTournament,
@@ -37,6 +38,7 @@ export class SessionService {
         private readonly gateway: RealtimeGateway,
         private readonly rankingService: RankingService,
         private readonly strategyFactory: TournamentStrategyFactory,
+        private readonly planService: TournamentPlanService,
     ) {}
 
     async startTournament(code: string, password: string): Promise<AdminTournamentDto> {
@@ -82,7 +84,11 @@ export class SessionService {
         );
         // ====================
 
-        return toAdminTournamentDto(tournamentWithMatches, statusAfterStart);
+        return toAdminTournamentDto(
+            tournamentWithMatches,
+            statusAfterStart,
+            await this.planService.buildPlan(tournamentWithMatches, strategy),
+        );
     }
 
     /**
@@ -206,6 +212,7 @@ export class SessionService {
         return toAdminTournamentDto(
             sanitizeTournament(tournament),
             tournamentStatusInfoForNextSession,
+            await this.planService.buildPlan(tournament, strategy),
         );
     }
 
@@ -299,7 +306,11 @@ export class SessionService {
             toTournamentMetaDto(completedTournament, statusAfterComplete),
         );
 
-        return toAdminTournamentDto(completedTournament, statusAfterComplete);
+        return toAdminTournamentDto(
+            completedTournament,
+            statusAfterComplete,
+            await this.planService.buildPlan(completedTournament, strategy),
+        );
     }
 
     /** Closing the last session and completing the tournament succeed or fail together. */

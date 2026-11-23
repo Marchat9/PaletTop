@@ -1,29 +1,31 @@
 import { Column } from 'typeorm';
 import { PairingMode } from 'src/enum/tounament.enum';
+import { TournamentPlan } from 'src/modules/tournaments/strategies/structured/plan/plan.types';
 
 export abstract class TournamentCompetitionConfiguration {}
 
+/**
+ * Stored in the tournament's jsonb configuration (the `@Column`s of these sub-configurations are
+ * not real columns). `eliminatedAfterQualifying` and `plan` are written by the backend at launch
+ * only, never taken from a request.
+ */
 export class StructuredCompetitionConfiguration extends TournamentCompetitionConfiguration {
-    @Column({ default: false })
-    hasConsolanteTable!: boolean;
-
-    @Column({ default: false })
-    hasChallengePrincipaleTable!: boolean;
-
-    @Column({ default: false })
-    hasChallengeConsolanteTable!: boolean;
-
-    @Column({ default: false })
-    hasThirdPlaceMatch!: boolean;
-
-    @Column({ nullable: true })
-    principalBracketSize?: number;
-
-    @Column({ default: 4 })
     numberOfQualifyingRounds!: number;
 
-    @Column({ nullable: true })
-    numberOfPools?: number;
+    /** Consolation brackets under the main one (0 = main bracket only). */
+    consolationCount!: number;
+
+    /** One challenge per bracket (main and each consolation). */
+    hasChallenges!: boolean;
+
+    /** Main bracket only. */
+    hasThirdPlaceMatch!: boolean;
+
+    /** The last X teams of the qualifiers play no elimination match. */
+    eliminatedAfterQualifying?: number;
+
+    /** Frozen at launch: the plan the elimination phase follows. */
+    plan?: Omit<TournamentPlan, 'options'>;
 }
 
 export class UpDownCompetitionConfiguration extends TournamentCompetitionConfiguration {
