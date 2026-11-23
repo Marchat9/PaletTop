@@ -12,10 +12,11 @@ export async function deleteManyByIds<T extends ObjectLiteral>(
 export async function updateAdminPasswordById<T extends ObjectLiteral>(
     repo: Repository<T>,
     id: string,
-    newPassword: string,
+    // Already hashed by AdminPasswordService: never pass a clear password here.
+    newPasswordHash: string,
     notFoundMessage: string,
 ): Promise<void> {
-    const result = await repo.update(id, { adminPassword: newPassword } as never);
+    const result = await repo.update(id, { adminPassword: newPasswordHash } as never);
     if (!result.affected) {
         throw new NotFoundException(notFoundMessage);
     }

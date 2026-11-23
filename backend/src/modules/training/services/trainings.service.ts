@@ -23,6 +23,7 @@ import { TrainingAuthService } from './training-auth.service';
 import { sameName } from '../utils/same-name.utils';
 import { generateNumericCode } from 'src/utils/numeric-code.util';
 import { TrainingLeaderboardService } from './training-leaderboard.service';
+import { AdminPasswordService } from 'src/modules/admin-password/admin-password.service';
 
 @Injectable()
 export class TrainingsService {
@@ -36,6 +37,7 @@ export class TrainingsService {
         private readonly trainingLeaderboardService: TrainingLeaderboardService,
         private readonly trainingRealtimeGateway: TrainingRealtimeGateway,
         @InjectDataSource() private readonly dataSource: DataSource,
+        private readonly adminPassword: AdminPasswordService,
     ) {}
 
     async create(dto: CreateTrainingDto): Promise<AdminTrainingDto> {
@@ -43,7 +45,7 @@ export class TrainingsService {
             code: dto.code,
             name: dto.name,
             description: dto.description,
-            adminPassword: dto.adminPassword,
+            adminPassword: await this.adminPassword.hash(dto.adminPassword),
         });
         const saved = await this.trainingRepo.save(training);
         this.logger.log(`Training created: ${saved.code}`);

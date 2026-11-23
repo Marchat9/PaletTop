@@ -38,7 +38,9 @@ services:
             DB_NAME: ${DB_NAME:-palet}
             DB_USER: ${DB_USER:-postgres}
             DB_PASSWORD: ${DB_PASSWORD-postgres}
-            SUPER_ADMIN_PASSWORD: ${SUPER_ADMIN_PASSWORD-PaletTopPassword}
+            # Empty = backend dev defaults (hash of "PaletTopPassword", dev pepper).
+            SUPER_ADMIN_PASSWORD_HASH: ${SUPER_ADMIN_PASSWORD_HASH:-}
+            PASSWORD_PEPPER: ${PASSWORD_PEPPER:-}
         ports:
             - '3000:3000'
         volumes:

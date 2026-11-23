@@ -1,4 +1,3 @@
-import { createHash, timingSafeEqual } from 'crypto';
 import {
     HttpException,
     HttpStatus,
@@ -8,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { SuperAdminConfig } from 'src/config/super-admin.config';
+import { verifyPassword } from 'src/utils/password-hash.util';
 
 interface AttemptState {
     failedAttempts: number;
@@ -27,35 +27,33 @@ export class SuperAdminService {
         this.config = this.configService.getOrThrow<SuperAdminConfig>('superAdmin');
     }
 
-    login(password: string, ip: string): void {
-        const state = this.attempts.get(ip);
-        this.logger.debug(`Attemtp to connect to super admin with ip : '${ip}'`);
+    async login(password: string, ip: string): Promise<void> {
+        this.logger.debug(`Attempt to connect to super admin with ip : '${ip}'`);
+        // Checked before hashing, so a locked-out IP does not cost an Argon2 computation.
+        this.assertNotLockedOut(ip);
 
-        if (
-            state?.lockedUntil !== null &&
-            state?.lockedUntil !== undefined &&
-            state.lockedUntil > Date.now()
-        ) {
-            this.logger.warn(`Super admin login attempt refused (IP locked out): '${ip}'`);
-            throw new HttpException(LOCKOUT_MESSAGE, HttpStatus.TOO_MANY_REQUESTS);
-        }
+        // argon2.verify compares in constant time and runs off the event loop.
+        const valid = await verifyPassword(this.config.passwordHash, password);
 
-        if (this.isPasswordValid(password)) {
+        // Checked again after the await: a parallel attempt from the same IP may have triggered
+        // the lockout meanwhile. Answering 429 keeps those attempts from revealing anything.
+        this.assertNotLockedOut(ip);
+
+        if (valid) {
             this.attempts.delete(ip);
             return;
         }
 
-        this.registerFailedAttempt(ip, state);
+        // Re-read: the state seen before the await may be stale (parallel attempts).
+        this.registerFailedAttempt(ip, this.attempts.get(ip));
     }
 
-    // Timing-safe comparison: `===` short-circuits on the first mismatching
-    // character, leaking how many leading characters are correct via response
-    // time. Hashing first also gives timingSafeEqual two fixed-length (32-byte)
-    // buffers, since it throws on a length mismatch.
-    private isPasswordValid(password: string): boolean {
-        const providedHash = createHash('sha256').update(password).digest();
-        const expectedHash = createHash('sha256').update(this.config.password).digest();
-        return timingSafeEqual(providedHash, expectedHash);
+    private assertNotLockedOut(ip: string): void {
+        const lockedUntil = this.attempts.get(ip)?.lockedUntil;
+        if (lockedUntil !== null && lockedUntil !== undefined && lockedUntil > Date.now()) {
+            this.logger.warn(`Super admin login attempt refused (IP locked out): '${ip}'`);
+            throw new HttpException(LOCKOUT_MESSAGE, HttpStatus.TOO_MANY_REQUESTS);
+        }
     }
 
     private registerFailedAttempt(ip: string, existing: AttemptState | undefined): void {

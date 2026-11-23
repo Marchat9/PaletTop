@@ -16,6 +16,7 @@ import { CleanupModule } from './modules/cleanup/cleanup.module';
 import { SuperAdminModule } from './modules/super-admin/super-admin.module';
 import { HealthModule } from './modules/health/health.module';
 import { TrainingModule } from './modules/training/training.module';
+import { AdminPasswordModule } from './modules/admin-password/admin-password.module';
 
 @Module({
     imports: [
@@ -23,6 +24,7 @@ import { TrainingModule } from './modules/training/training.module';
             isGlobal: true,
             load: [superAdminConfig],
         }),
+        AdminPasswordModule,
         TypeOrmModule.forRootAsync({
             useFactory: getTypeOrmConfig,
             // Registers the data source so @Transactional() methods share one transaction.

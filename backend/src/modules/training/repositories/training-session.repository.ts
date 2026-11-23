@@ -54,7 +54,23 @@ export class TrainingSessionRepository {
         return session;
     }
 
-    findWithTrainingAuth(sessionCode: string, password: string): Promise<TrainingSession | null> {
+    /**
+     * Admin password hash of the session's training (column is `select: false`); null for an
+     * unknown session code. The session code itself stays a clear lookup key.
+     */
+    async findTrainingAdminPasswordHash(sessionCode: string): Promise<string | null> {
+        const session = await this.repo
+            .createQueryBuilder('session')
+            .innerJoin('session.training', 'training')
+            .select('session.id')
+            .addSelect(['training.id', 'training.adminPassword'])
+            .where('session.code = :sessionCode', { sessionCode })
+            .getOne();
+        return session?.training?.adminPassword ?? null;
+    }
+
+    /** Loads a session for an admin whose password has already been verified (TrainingSessionAuthService). */
+    findForAdmin(sessionCode: string): Promise<TrainingSession | null> {
         return this.repo
             .createQueryBuilder('session')
             .innerJoinAndSelect('session.training', 'training')
@@ -64,7 +80,6 @@ export class TrainingSessionRepository {
             .leftJoinAndSelect('team.members', 'teamMember')
             .leftJoinAndSelect('teamMember.participant', 'teamMemberParticipant')
             .where('session.code = :sessionCode', { sessionCode })
-            .andWhere('training.adminPassword = :password', { password })
             .getOne();
     }
 
@@ -73,7 +88,7 @@ export class TrainingSessionRepository {
     }
 
     // A targeted .update() on purpose, not repo.save(session): the session loaded by
-    // findWithTrainingAuth() carries a graph of relations (teams/members) whose inverse side
+    // findForAdmin() carries a graph of relations (teams/members) whose inverse side
     // (team.session) is not hydrated - a save() would cascade and write session_id = NULL on those
     // teams (NOT NULL violation, seen under load test).
     closeSession(sessionId: string, closedAt: Date): Promise<UpdateResult> {

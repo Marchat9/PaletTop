@@ -39,7 +39,9 @@ services:
             DB_NAME: ${DB_NAME}
             DB_USER: ${DB_USER}
             DB_PASSWORD: ${DB_PASSWORD}
-            SUPER_ADMIN_PASSWORD: ${SUPER_ADMIN_PASSWORD}
+            # Both mandatory in production (the backend refuses to start without them).
+            SUPER_ADMIN_PASSWORD_HASH: ${SUPER_ADMIN_PASSWORD_HASH}
+            PASSWORD_PEPPER: ${PASSWORD_PEPPER}
         ports:
             - '0.0.0.0:3000:3000'
         networks:
