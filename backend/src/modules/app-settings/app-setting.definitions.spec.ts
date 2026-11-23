@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { AppSettingKey } from 'src/enum/app-setting.enum';
+import { AppSettingKey, AppSettingScope } from 'src/enum/app-setting.enum';
 import {
     APP_SETTING_DEFINITIONS,
     isValidCronExpression,
+    validateBracketFillThresholds,
     validateCleanupConfig,
     validateLevelHistoryDepth,
+    validateMaxConsolationCount,
     validateScoreCalculationsByMode,
     validateTrainingAutoCloseConfig,
     validateTrainingCleanupConfig,
@@ -117,5 +119,38 @@ describe('readEnv', () => {
         expect(env?.value.standard).toEqual(['score']);
         // Invalid JSON is passed on as-is so that the validation rejects it.
         expect(readEnv({ APP_SETTING_SCORE_CALCULATIONS_BY_MODE: '{oops' })?.value).toBe('{oops');
+    });
+});
+
+describe('structured bracket settings', () => {
+    it('validates the max consolation count', () => {
+        expect(validateMaxConsolationCount(1)).toEqual([]);
+        expect(validateMaxConsolationCount(26)).toEqual([]);
+        for (const invalid of [0, 27, 2.5, '4']) {
+            expect(validateMaxConsolationCount(invalid), String(invalid)).toHaveLength(1);
+        }
+    });
+
+    it('validates the bracket fill thresholds', () => {
+        expect(validateBracketFillThresholds({ okRatio: 1, warningRatio: 0.51 })).toEqual([]);
+        expect(validateBracketFillThresholds({ okRatio: 0.9, warningRatio: 0.5 })).not.toEqual([]);
+        expect(validateBracketFillThresholds({ okRatio: 0.75, warningRatio: 0.75 })).not.toEqual(
+            [],
+        );
+        expect(validateBracketFillThresholds({ okRatio: 1.2, warningRatio: 0.8 })).not.toEqual([]);
+        expect(
+            validateBracketFillThresholds({ okRatio: 0.9, warningRatio: 0.75, extra: 1 }),
+        ).not.toEqual([]);
+        expect(validateBracketFillThresholds({ okRatio: 0.9 })).not.toEqual([]);
+        expect(validateBracketFillThresholds('x')).not.toEqual([]);
+    });
+
+    it('registers both settings as public with their defaults', () => {
+        const max = APP_SETTING_DEFINITIONS[AppSettingKey.MAX_CONSOLATION_COUNT];
+        const thresholds = APP_SETTING_DEFINITIONS[AppSettingKey.BRACKET_FILL_THRESHOLDS];
+        expect(max.defaultValue).toBe(4);
+        expect(max.scope).toBe(AppSettingScope.PUBLIC);
+        expect(thresholds.defaultValue).toEqual({ okRatio: 0.9, warningRatio: 0.75 });
+        expect(thresholds.scope).toBe(AppSettingScope.PUBLIC);
     });
 });

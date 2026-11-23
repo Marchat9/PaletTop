@@ -17,6 +17,7 @@ import {
 } from 'src/config/training-cleanup.config';
 import { AppSettingKey, AppSettingScope } from 'src/enum/app-setting.enum';
 import { CompetitionMode, ScoreCalculation } from 'src/enum/tounament.enum';
+import { FillThresholds } from 'src/modules/tournaments/strategies/structured/plan/plan.types';
 
 /** Score calculations offered at tournament creation, per competition mode (display order). */
 export type ScoreCalculationsByMode = Record<CompetitionMode, ScoreCalculation[]>;
@@ -27,6 +28,8 @@ export interface AppSettingValues {
     [AppSettingKey.TRAINING_CLEANUP]: TrainingCleanupConfig;
     [AppSettingKey.TRAINING_AUTO_CLOSE]: TrainingAutoCloseConfig;
     [AppSettingKey.TRAINING_LEVEL_HISTORY_DEPTH]: number;
+    [AppSettingKey.MAX_CONSOLATION_COUNT]: number;
+    [AppSettingKey.BRACKET_FILL_THRESHOLDS]: FillThresholds;
 }
 
 export interface AppSettingDefinition<K extends AppSettingKey> {
@@ -156,6 +159,44 @@ export function validateLevelHistoryDepth(value: unknown): string[] {
     return errors;
 }
 
+export const MAX_CONSOLATION_COUNT_LIMIT = 26;
+
+export function validateMaxConsolationCount(value: unknown): string[] {
+    if (
+        typeof value !== 'number' ||
+        !Number.isInteger(value) ||
+        value < 1 ||
+        value > MAX_CONSOLATION_COUNT_LIMIT
+    ) {
+        return [
+            `Le nombre maximum de consolantes doit être un entier entre 1 et ${MAX_CONSOLATION_COUNT_LIMIT}.`,
+        ];
+    }
+    return [];
+}
+
+export function validateBracketFillThresholds(value: unknown): string[] {
+    if (!isRecord(value)) return ['La valeur doit être un objet.'];
+    const errors: string[] = [];
+    checkKeys(errors, value, ['okRatio', 'warningRatio']);
+    const { okRatio, warningRatio } = value;
+    if (typeof okRatio !== 'number' || !Number.isFinite(okRatio)) {
+        errors.push('Le seuil « bon remplissage » doit être un nombre.');
+    }
+    if (typeof warningRatio !== 'number' || !Number.isFinite(warningRatio)) {
+        errors.push('Le seuil « avertissement » doit être un nombre.');
+    }
+    if (errors.length) return errors;
+    if (!(
+        0.5 < (warningRatio as number) &&
+        (warningRatio as number) < (okRatio as number) &&
+        (okRatio as number) <= 1
+    )) {
+        errors.push('Les seuils doivent respecter 0,5 < avertissement < bon remplissage ≤ 1.');
+    }
+    return errors;
+}
+
 /** TRAINING_LEVEL_HISTORY_DEPTH: an invalid value is ignored, as it always was. */
 function readLevelHistoryDepthFromEnv(env: NodeJS.ProcessEnv): EnvValue<number> | undefined {
     const raw = env.TRAINING_LEVEL_HISTORY_DEPTH?.trim();
@@ -195,6 +236,11 @@ export const DEFAULT_SCORE_CALCULATIONS_BY_MODE: ScoreCalculationsByMode = {
 };
 
 export const DEFAULT_LEVEL_HISTORY_DEPTH = 5;
+export const DEFAULT_MAX_CONSOLATION_COUNT = 4;
+export const DEFAULT_BRACKET_FILL_THRESHOLDS: FillThresholds = {
+    okRatio: 0.9,
+    warningRatio: 0.75,
+};
 
 /** Every app setting: the code is the source of truth for keys, scopes, defaults and rules. */
 export const APP_SETTING_DEFINITIONS: AppSettingDefinitions = {
@@ -227,6 +273,16 @@ export const APP_SETTING_DEFINITIONS: AppSettingDefinitions = {
         defaultValue: DEFAULT_LEVEL_HISTORY_DEPTH,
         readEnv: readLevelHistoryDepthFromEnv,
         validate: validateLevelHistoryDepth,
+    },
+    [AppSettingKey.MAX_CONSOLATION_COUNT]: {
+        scope: AppSettingScope.PUBLIC,
+        defaultValue: DEFAULT_MAX_CONSOLATION_COUNT,
+        validate: validateMaxConsolationCount,
+    },
+    [AppSettingKey.BRACKET_FILL_THRESHOLDS]: {
+        scope: AppSettingScope.PUBLIC,
+        defaultValue: DEFAULT_BRACKET_FILL_THRESHOLDS,
+        validate: validateBracketFillThresholds,
     },
 };
 

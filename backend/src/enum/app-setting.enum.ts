@@ -4,6 +4,8 @@ export enum AppSettingKey {
     TRAINING_CLEANUP = 'training_cleanup',
     TRAINING_AUTO_CLOSE = 'training_auto_close',
     TRAINING_LEVEL_HISTORY_DEPTH = 'training_level_history_depth',
+    MAX_CONSOLATION_COUNT = 'max_consolation_count',
+    BRACKET_FILL_THRESHOLDS = 'bracket_fill_thresholds',
 }
 
 /** Who may read a setting through the API. */
