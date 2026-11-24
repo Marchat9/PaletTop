@@ -12,6 +12,7 @@ import {
   Injector,
   OnInit,
   signal,
+  viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -155,6 +156,8 @@ export class AdminTournamentConfigurationPage implements OnInit {
     .tournamentConfiguration.admin.readonlyFields as TournamentConfigurationField[];
 
   private form: Nullable<TournamentConfigurationForm> = null;
+  /** The form, for the « Enregistrer » button of the header: it saves what the form holds. */
+  protected readonly configurationForm = viewChild(ConfigurationFormComponent);
 
   constructor() {
     // Try to connect when code / password change (a refresh loses the tournament, not the session).
@@ -184,7 +187,7 @@ export class AdminTournamentConfigurationPage implements OnInit {
         ofType(updateTournamentAdministratorConfigurationSuccess),
         takeUntilDestroyed(this.destroyRef),
       )
-      .subscribe(() => this.form?.markAsPristine());
+      .subscribe(() => this.configurationForm()?.markSaved());
 
     onResyncRequested(() => {
       const code = this.tournament()?.code;

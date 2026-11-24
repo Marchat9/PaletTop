@@ -252,6 +252,43 @@ describe('AdminTournamentConfigurationPage', { timeout: 15_000 }, () => {
     });
   });
 
+  describe('« Enregistrer » of the header', () => {
+    function headerSave(fixture: { nativeElement: unknown }): HTMLElement {
+      return Array.from(
+        (fixture.nativeElement as HTMLElement).querySelectorAll('app-admin-page-header .button'),
+      ).find((candidate) => candidate.textContent?.includes('Enregistrer')) as HTMLElement;
+    }
+
+    it('is disabled until the form is edited, then follows it', () => {
+      const { fixture } = setup();
+      fixture.detectChanges();
+      expect(headerSave(fixture).classList).toContain('disabled');
+
+      renderedForm(fixture).controls.rules.controls.maxTeamCapacity.setValue(64);
+      renderedForm(fixture).markAsDirty();
+      renderedForm(fixture).updateValueAndValidity();
+      fixture.detectChanges();
+
+      expect(headerSave(fixture).classList).not.toContain('disabled');
+    });
+
+    it('is disabled again once the configuration is saved', () => {
+      const { fixture, actions$ } = setup();
+      fixture.detectChanges();
+      renderedForm(fixture).controls.rules.controls.maxTeamCapacity.setValue(64);
+      renderedForm(fixture).markAsDirty();
+      renderedForm(fixture).updateValueAndValidity();
+      fixture.detectChanges();
+
+      actions$.next(
+        updateTournamentAdministratorConfigurationSuccess({ tournament: buildTournament() }),
+      );
+      fixture.detectChanges();
+
+      expect(headerSave(fixture).classList).toContain('disabled');
+    });
+  });
+
   describe('unsaved changes', () => {
     it('has none until the form is edited', () => {
       const { fixture } = setup();

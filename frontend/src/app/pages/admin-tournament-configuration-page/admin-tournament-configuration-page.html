@@ -13,6 +13,13 @@
           variant="secondary"
           (clicked)="backToTournament()"
         />
+        <app-button
+          title="Enregistrer"
+          icon="save"
+          [loading]="saveLoading()"
+          [disabled]="!configurationForm()?.canSave()"
+          (clicked)="configurationForm()?.onSave()"
+        />
       </ng-container>
     </app-admin-page-header>
 
