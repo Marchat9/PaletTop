@@ -5,7 +5,7 @@ import {
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, input, output, signal } from '@angular/core';
 import { Nullable } from 'src/app/models/nullable.model';
-import { BracketPanelState } from 'src/app/models/tournament-plan.model';
+import { BracketPanelState, PlanSimulationState } from 'src/app/models/tournament-plan.model';
 import { TournamentConfigurationDto } from 'src/app/models/tournament-configuration.model';
 import { Button } from 'src/app/shared/button/button';
 import { TournamentConfiguration } from 'src/app/shared/tournament-configuration/tournament-configuration';
@@ -35,10 +35,13 @@ export class ConfigurationFormComponent {
   );
 
   public readonly planState = input<Nullable<BracketPanelState>>(null);
+  public readonly simulation = input<Nullable<PlanSimulationState>>(null);
 
   public readonly configurationSaved = output<TournamentConfigurationDto>();
   public readonly formReady = output<TournamentConfigurationForm>();
   public readonly configurationCancelled = output<void>();
+  public readonly simulationTeamCountChange = output<number>();
+  public readonly simulationSheetRequested = output<number>();
   // ==============================
 
   public readonly tournamentForm = signal<Nullable<TournamentConfigurationForm>>(null);

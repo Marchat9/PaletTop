@@ -12,7 +12,7 @@ import {
   TournamentConfigurationField,
   TournamentConfigurationForm,
 } from 'src/app/shared/tournament-configuration/tournament-configuration-form.model';
-import { BracketPanelState } from 'src/app/models/tournament-plan.model';
+import { BracketPanelState, PlanSimulationState } from 'src/app/models/tournament-plan.model';
 import { TournamentConfigurationDto } from 'src/app/models/tournament-configuration.model';
 
 @Component({
@@ -35,8 +35,12 @@ export class TournamentConfigurationCardComponent {
 
   /** Preview of the brackets of a draft; no panel when null. */
   public readonly planState = input<Nullable<BracketPanelState>>(null);
+  /** Simulation of other team counts for a draft; none when null. */
+  public readonly simulation = input<Nullable<PlanSimulationState>>(null);
 
   public readonly saveConfiguration = output<TournamentConfigurationDto>();
+  public readonly simulationTeamCountChange = output<number>();
+  public readonly simulationSheetRequested = output<number>();
   /** The form is built: the page watches it to run the live preview. */
   public readonly formReady = output<TournamentConfigurationForm>();
   // ==============================

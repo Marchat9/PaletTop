@@ -7,7 +7,7 @@ import { Button } from '../button/button';
 import { InlineNotice } from '../inline-notice/inline-notice';
 
 /** Cards reserved in the panel, so that adding a consolation does not move what is below. */
-const RESERVED_CHIP_SLOTS = 4;
+const RESERVED_CHIP_SLOTS = 2;
 
 const FIRST_LETTER_CODE = 65;
 
@@ -35,7 +35,7 @@ export class BracketPanel {
   public readonly addConsolation = output<void>();
   public readonly removeConsolation = output<void>();
 
-  protected readonly reservedSlots = RESERVED_CHIP_SLOTS;
+  protected readonly reservedSlots = computed(() => this.maxConsolations() + 1);
 
   protected readonly brackets = computed<PlanBracket[]>(() => this.plan()?.brackets ?? []);
   protected readonly comfortText = computed(() => this.plan()?.comfort?.text ?? '');

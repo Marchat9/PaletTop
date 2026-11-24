@@ -3,11 +3,15 @@ import {
   selectMaxConsolationCount,
   selectScoreCalculationsByMode,
 } from 'src/app/store/app-settings/app-settings.selectors';
-import { BracketPanelState } from 'src/app/models/tournament-plan.model';
-import { previewPlan } from 'src/app/store/tournament-plan/tournament-plan.actions';
+import { BracketPanelState, PlanSimulationState } from 'src/app/models/tournament-plan.model';
+import { openPlanSimulationSheet } from 'src/app/modales/plan-simulation-popup/plan-simulation-popup';
+import { LEADERBOARD_MOBILE_QUERY } from 'src/app/utils/leaderboard-dialog.util';
+import { previewPlan, simulatePlan } from 'src/app/store/tournament-plan/tournament-plan.actions';
 import {
   selectPlanPreview,
   selectPlanPreviewLoading,
+  selectSimulatedPlan,
+  selectSimulationError,
 } from 'src/app/store/tournament-plan/tournament-plan.selectors';
 import { TournamentConfigurationForm } from 'src/app/shared/tournament-configuration/tournament-configuration-form.model';
 import {
@@ -28,6 +32,8 @@ import { TournamentStatus } from 'src/app/models/tournament-status.enum';
 import { TournamentNextStep } from './components/tournament-next-step/tournament-next-step';
 import { RoundsHistory } from 'src/app/shared/rounds-history/rounds-history';
 import { Dialog } from '@angular/cdk/dialog';
+import { BreakpointObserver } from '@angular/cdk/layout';
+import { Overlay } from '@angular/cdk/overlay';
 import { CommonModule } from '@angular/common';
 import {
   ChangeDetectionStrategy,
@@ -40,8 +46,8 @@ import {
   DestroyRef,
   viewChild,
 } from '@angular/core';
-import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
-import { debounceTime, filter } from 'rxjs';
+import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { debounceTime, filter, map } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { environment } from '@environment';
 import { Store } from '@ngrx/store';
@@ -124,6 +130,8 @@ export class AdminTournamentPageComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly store = inject(Store);
   private readonly dialog = inject(Dialog);
+  private readonly overlay = inject(Overlay);
+  private readonly breakpointObserver = inject(BreakpointObserver);
   private readonly pdfExport = inject(PdfExportService);
 
   readonly tournamentCode = signal<string | null>(null);
@@ -240,6 +248,28 @@ export class AdminTournamentPageComponent implements OnInit {
   );
   /** Increases with each request: the reducer keeps the result of the latest one only. */
   private previewSequence = 0;
+  private simulationSequence = 0;
+
+  // Simulation (« et si j'ai X équipes ? »): its plan is requested apart from the preview of the form.
+  private readonly simulatedPlan = this.store.selectSignal(selectSimulatedPlan);
+  private readonly simulationError = this.store.selectSignal(selectSimulationError);
+  /** Null until the slider moves: the simulation then starts from the target count. */
+  public readonly simulatedTeamCount = signal<number | null>(null);
+  private readonly simulatedTeamCount$ = toObservable(this.simulatedTeamCount);
+  private readonly isMobile = toSignal(
+    this.breakpointObserver.observe(LEADERBOARD_MOBILE_QUERY).pipe(map((state) => state.matches)),
+    { initialValue: this.breakpointObserver.isMatched(LEADERBOARD_MOBILE_QUERY) },
+  );
+  public readonly simulation = computed<Nullable<PlanSimulationState>>(() =>
+    this.isDraft()
+      ? {
+          plan: this.simulatedPlan(),
+          teamCount: this.simulatedTeamCount(),
+          error: this.simulationError(),
+          mobile: this.isMobile(),
+        }
+      : null,
+  );
 
   // Data
   public readonly hiddenFields: TournamentConfigurationField[] = environment.tournamentConfiguration
@@ -293,6 +323,25 @@ export class AdminTournamentPageComponent implements OnInit {
       .subscribe((body) =>
         this.store.dispatch(previewPlan({ requestId: String(++this.previewSequence), body })),
       );
+    planPreviewBodies(form, this.simulatedTeamCount$)
+      .pipe(
+        filter(() => this.isDraft()),
+        debounceTime(PLAN_PREVIEW_DEBOUNCE_MS),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe((body) =>
+        this.store.dispatch(simulatePlan({ requestId: String(++this.simulationSequence), body })),
+      );
+  }
+
+  public openSimulationSheet(targetCount: number): void {
+    openPlanSimulationSheet(this.dialog, this.overlay, {
+      targetCount,
+      plan: this.simulatedPlan,
+      teamCount: this.simulatedTeamCount,
+      error: this.simulationError,
+      changeTeamCount: (teamCount) => this.simulatedTeamCount.set(teamCount),
+    });
   }
 
   ngOnInit(): void {

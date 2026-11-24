@@ -14,6 +14,9 @@
       [readonlyFields]="readonlyFields()"
       [scoreCalculationsByMode]="scoreCalculationsByMode()"
       [planState]="planState()"
+      [simulation]="simulation()"
+      (simulationTeamCountChange)="simulationTeamCountChange.emit($event)"
+      (simulationSheetRequested)="simulationSheetRequested.emit($event)"
       (form)="onFormReady($event)"
       (invalidFields)="invalidFieldNames.set($event)"
     />

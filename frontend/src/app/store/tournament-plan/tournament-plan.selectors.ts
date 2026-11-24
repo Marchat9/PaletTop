@@ -17,3 +17,13 @@ export const selectPlanPreviewError = createSelector(
   selectTournamentPlanState,
   (state) => state.error,
 );
+
+export const selectSimulatedPlan = createSelector(
+  selectTournamentPlanState,
+  (state) => state.simulatedPlan,
+);
+
+export const selectSimulationError = createSelector(
+  selectTournamentPlanState,
+  (state) => state.simulationError,
+);

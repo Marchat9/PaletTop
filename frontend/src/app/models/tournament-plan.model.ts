@@ -157,3 +157,14 @@ export interface BracketPanelState {
   /** Teams registered on a tournament being edited; null while creating. */
   registeredCount: number | null;
 }
+
+/** What the simulation of the structured form shows: the page feeds it from the store. */
+export interface PlanSimulationState {
+  /** Plan of the simulated team count; null until the first answer. */
+  plan: TournamentPlan | null;
+  /** Simulated team count; null while the admin has not moved the slider (the target is shown). */
+  teamCount: number | null;
+  error: string | null;
+  /** Narrow screen: the simulation opens in a bottom sheet instead of sitting in the form. */
+  mobile: boolean;
+}

@@ -38,6 +38,7 @@ export const environment = {
     maxTeamCapacity: {
       min: 2,
       max: 256,
+      defaultStructured: 96,
       maxChampionship: 8,
     },
     teamImport: {

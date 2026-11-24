@@ -64,4 +64,31 @@
       [formControl]="group().controls.hasThirdPlaceMatch"
     ></app-switch>
   </div>
+
+  @if (simulation(); as state) {
+    <div class="form-group">
+      <span class="form-label">Simulation</span>
+      <p class="form-label-description">
+        Essayez un autre nombre d'équipes pour voir les tableaux et le parcours qui en résultent.
+      </p>
+      @if (state.mobile) {
+        <app-button
+          variant="secondary"
+          icon="query_stats"
+          title="Simuler et voir le parcours"
+          (clicked)="simulationSheetRequested.emit(targetCount())"
+        />
+      } @else {
+        <div class="simulation-card">
+          <app-plan-simulation
+            [plan]="state.plan"
+            [targetCount]="targetCount()"
+            [teamCount]="simulatedTeamCount()"
+            [error]="state.error"
+            (teamCountChange)="simulationTeamCountChange.emit($event)"
+          />
+        </div>
+      }
+    </div>
+  }
 </div>

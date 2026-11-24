@@ -10,10 +10,13 @@ import {
   selectMaxConsolationCount,
   selectScoreCalculationsByMode,
 } from 'src/app/store/app-settings/app-settings.selectors';
-import { previewPlan } from 'src/app/store/tournament-plan/tournament-plan.actions';
+import { Action } from '@ngrx/store';
+import { previewPlan, simulatePlan } from 'src/app/store/tournament-plan/tournament-plan.actions';
 import {
   selectPlanPreview,
   selectPlanPreviewLoading,
+  selectSimulatedPlan,
+  selectSimulationError,
 } from 'src/app/store/tournament-plan/tournament-plan.selectors';
 import {
   selectTournamentCreationError,
@@ -54,6 +57,8 @@ function setup() {
           { selector: selectMaxConsolationCount, value: 6 },
           { selector: selectPlanPreview, value: null },
           { selector: selectPlanPreviewLoading, value: false },
+          { selector: selectSimulatedPlan, value: null },
+          { selector: selectSimulationError, value: null },
         ],
       }),
     ],
@@ -70,6 +75,16 @@ function setup() {
   return { fixture, page: fixture.componentInstance, dispatchSpy };
 }
 
+/** The dispatched actions of one creator, in order. */
+function dispatched<T extends typeof previewPlan | typeof simulatePlan>(
+  dispatchSpy: { mock: { calls: unknown[][] } },
+  creator: T,
+): ReturnType<T>[] {
+  return dispatchSpy.mock.calls
+    .map(([action]) => action as Action)
+    .filter((action) => action.type === creator.type) as ReturnType<T>[];
+}
+
 describe('TournamentCreatePageComponent live preview', () => {
   afterEach(() => vi.useRealTimers());
 
@@ -82,9 +97,9 @@ describe('TournamentCreatePageComponent live preview', () => {
     expect(dispatchSpy).not.toHaveBeenCalled();
 
     vi.advanceTimersByTime(1);
-    expect(dispatchSpy).toHaveBeenCalledTimes(1);
-    const action = dispatchSpy.mock.calls[0][0] as unknown as ReturnType<typeof previewPlan>;
-    expect(action.type).toBe(previewPlan.type);
+    const previews = dispatched(dispatchSpy, previewPlan);
+    expect(previews).toHaveLength(1);
+    const action = previews[0];
     expect(action.requestId).toBe('1');
     expect(action.body).toMatchObject({ teamCount: 128, targetCount: 128 });
   });
@@ -105,8 +120,9 @@ describe('TournamentCreatePageComponent live preview', () => {
     expect(dispatchSpy).not.toHaveBeenCalled();
 
     vi.advanceTimersByTime(1);
-    expect(dispatchSpy).toHaveBeenCalledTimes(1);
-    const action = dispatchSpy.mock.calls[0][0] as unknown as ReturnType<typeof previewPlan>;
+    const previews = dispatched(dispatchSpy, previewPlan);
+    expect(previews).toHaveLength(1);
+    const action = previews[0];
     expect(action.requestId).toBe('2');
     expect(action.body).toMatchObject({ teamCount: 96, targetCount: 96 });
   });
@@ -123,6 +139,35 @@ describe('TournamentCreatePageComponent live preview', () => {
     vi.advanceTimersByTime(1000);
 
     expect(dispatchSpy).not.toHaveBeenCalled();
+  });
+
+  it('simulates the target count first, then the count the slider gives, apart from the preview', () => {
+    vi.useFakeTimers();
+    const { fixture, page, dispatchSpy } = setup();
+    page.onFormReady(structuredForm(128));
+    vi.advanceTimersByTime(300);
+
+    page.simulatedTeamCount.set(100);
+    fixture.detectChanges();
+    vi.advanceTimersByTime(300);
+
+    const simulations = dispatched(dispatchSpy, simulatePlan);
+    expect(simulations.map((action) => action.body.teamCount)).toEqual([128, 100]);
+    expect(simulations.map((action) => action.requestId)).toEqual(['1', '2']);
+    expect(dispatched(dispatchSpy, previewPlan)).toHaveLength(1);
+  });
+
+  it('feeds the simulation with its own plan and the simulated count', () => {
+    const { page } = setup();
+
+    expect(page.simulation()).toEqual({
+      plan: null,
+      teamCount: null,
+      error: null,
+      mobile: false,
+    });
+    page.simulatedTeamCount.set(90);
+    expect(page.simulation().teamCount).toBe(90);
   });
 
   it('feeds the panel with the store, without registered teams', () => {

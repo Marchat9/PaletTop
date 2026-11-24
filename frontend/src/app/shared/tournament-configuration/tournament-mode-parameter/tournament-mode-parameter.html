@@ -36,6 +36,9 @@
           [group]="group().controls.structuredMode"
           [targetControl]="targetControl()"
           [planState]="planState()"
+          [simulation]="simulation()"
+          (simulationTeamCountChange)="simulationTeamCountChange.emit($event)"
+          (simulationSheetRequested)="simulationSheetRequested.emit($event)"
           [readonlyFields]="readonlyFields()"
           [hiddenFields]="hiddenFields()"
         />

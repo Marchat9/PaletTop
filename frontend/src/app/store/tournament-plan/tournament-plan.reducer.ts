@@ -1,6 +1,13 @@
 import { createReducer, on } from '@ngrx/store';
 import { TournamentPlan } from 'src/app/models/tournament-plan.model';
-import { previewPlan, previewPlanFailure, previewPlanSuccess } from './tournament-plan.actions';
+import {
+  previewPlan,
+  previewPlanFailure,
+  previewPlanSuccess,
+  simulatePlan,
+  simulatePlanFailure,
+  simulatePlanSuccess,
+} from './tournament-plan.actions';
 
 export interface TournamentPlanState {
   plan: TournamentPlan | null;
@@ -8,6 +15,11 @@ export interface TournamentPlanState {
   error: string | null;
   /** Id of the latest preview request: older results are ignored. */
   latestRequestId: string | null;
+  /** Plan of the simulation, kept apart from the preview of the form. */
+  simulatedPlan: TournamentPlan | null;
+  simulationError: string | null;
+  /** Id of the latest simulation request: older results are ignored. */
+  latestSimulationRequestId: string | null;
 }
 
 export const initialTournamentPlanState: TournamentPlanState = {
@@ -15,6 +27,9 @@ export const initialTournamentPlanState: TournamentPlanState = {
   isLoading: false,
   error: null,
   latestRequestId: null,
+  simulatedPlan: null,
+  simulationError: null,
+  latestSimulationRequestId: null,
 };
 
 export const tournamentPlanReducer = createReducer(
@@ -30,5 +45,18 @@ export const tournamentPlanReducer = createReducer(
   ),
   on(previewPlanFailure, (state, { requestId, error }) =>
     requestId === state.latestRequestId ? { ...state, isLoading: false, error } : state,
+  ),
+  on(simulatePlan, (state, { requestId }) => ({
+    ...state,
+    simulationError: null,
+    latestSimulationRequestId: requestId,
+  })),
+  on(simulatePlanSuccess, (state, { requestId, plan }) =>
+    requestId === state.latestSimulationRequestId
+      ? { ...state, simulatedPlan: plan, simulationError: null }
+      : state,
+  ),
+  on(simulatePlanFailure, (state, { requestId, error }) =>
+    requestId === state.latestSimulationRequestId ? { ...state, simulationError: error } : state,
   ),
 );

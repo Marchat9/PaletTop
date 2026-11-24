@@ -15,7 +15,7 @@ import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { environment } from '@environment';
 import { Nullable } from 'src/app/models/nullable.model';
-import { BracketPanelState } from 'src/app/models/tournament-plan.model';
+import { BracketPanelState, PlanSimulationState } from 'src/app/models/tournament-plan.model';
 import {
   DEFAULT_SCORE_CALCULATIONS_BY_MODE,
   ScoreCalculationsByMode,
@@ -80,8 +80,13 @@ export class TournamentConfiguration implements OnInit {
   /** Preview of the structured brackets (the page runs the requests); no panel when null. */
   public readonly planState = input<Nullable<BracketPanelState>>(null);
 
+  /** Simulation of other team counts for the structured mode; no simulation when null. */
+  public readonly simulation = input<Nullable<PlanSimulationState>>(null);
+
   public readonly formReady = output<TournamentConfigurationForm>({ alias: 'form' });
   public readonly invalidFields = output<string[] | null>();
+  public readonly simulationTeamCountChange = output<number>();
+  public readonly simulationSheetRequested = output<number>();
   public form!: TournamentConfigurationForm;
 
   private readonly teamCapacity = environment.tournamentConfiguration.maxTeamCapacity;
@@ -143,7 +148,10 @@ export class TournamentConfiguration implements OnInit {
 
       rules: new FormGroup({
         maxTeamCapacity: new FormControl(
-          tournament?.configuration?.maxTeamCapacity ?? this.teamCapacity.max,
+          tournament?.configuration?.maxTeamCapacity ??
+            (initialCompetitionMode === 'standard'
+              ? this.teamCapacity.defaultStructured
+              : this.teamCapacity.max),
           {
             nonNullable: true,
             validators: [Validators.required, Validators.min(2)],
@@ -191,7 +199,7 @@ export class TournamentConfiguration implements OnInit {
               ],
             },
           ),
-          consolationCount: new FormControl(structuredConfig.consolationCount ?? 0, {
+          consolationCount: new FormControl(structuredConfig.consolationCount ?? 1, {
             nonNullable: true,
             validators: [Validators.required, Validators.min(0)],
           }),

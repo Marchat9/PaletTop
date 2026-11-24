@@ -1,0 +1,76 @@
+<div class="plan-simulation" [class.plan-simulation--mobile]="mobile()">
+  <div class="plan-simulation__pinned">
+    <div class="plan-simulation__head">
+      <span class="plan-simulation__question">
+        Et si j'ai <b class="plan-simulation__count">{{ teamCount() }}</b> équipes le jour J ?
+      </span>
+      <app-button
+        variant="tertiary"
+        icon="my_location"
+        title="Nombre visé"
+        [disabled]="isOnTarget()"
+        (clicked)="setTeamCount(targetCount())"
+      />
+    </div>
+
+    <div class="plan-simulation__slider">
+      <button
+        type="button"
+        class="plan-simulation__step"
+        aria-label="Une équipe de moins"
+        [disabled]="!canDecrement()"
+        (click)="setTeamCount(teamCount() - 1)"
+      >
+        <app-icon name="remove" [ariaHidden]="true" />
+      </button>
+      <app-input-range
+        class="plan-simulation__range"
+        [min]="minTeams"
+        [max]="maxTeams"
+        [step]="1"
+        [value]="teamCount()"
+        minPostLabel=""
+        maxPostLabel=""
+        (valueChange)="setTeamCount($event)"
+      />
+      <button
+        type="button"
+        class="plan-simulation__step"
+        aria-label="Une équipe de plus"
+        [disabled]="!canIncrement()"
+        (click)="setTeamCount(teamCount() + 1)"
+      >
+        <app-icon name="add" [ariaHidden]="true" />
+      </button>
+    </div>
+
+    <p class="plan-simulation__gap" [class.plan-simulation__gap--surplus]="isSurplus()">
+      {{ gapText() }}
+    </p>
+
+    <app-bracket-chips [brackets]="brackets()" [slots]="chipSlots" [dense]="mobile()" />
+
+    <ul class="plan-simulation__legend">
+      @for (item of legend; track item.level) {
+        <li>
+          <i class="plan-simulation__dot" [class]="item.level"></i>
+          {{ item.label }}
+        </li>
+      }
+    </ul>
+  </div>
+
+  <div class="plan-simulation__body">
+    <div class="plan-simulation__message" aria-live="polite">
+      @if (message(); as current) {
+        <app-inline-notice [tone]="current.tone" [icon]="current.icon">{{
+          current.text
+        }}</app-inline-notice>
+      }
+    </div>
+
+    @if (plan(); as current) {
+      <app-plan-table [plan]="current" />
+    }
+  </div>
+</div>

@@ -71,6 +71,9 @@
       [scoreCalculationsByMode]="scoreCalculationsByMode()"
       [saveLoading]="isUpdateConfigLoading()"
       [planState]="planState()"
+      [simulation]="simulation()"
+      (simulationTeamCountChange)="simulatedTeamCount.set($event)"
+      (simulationSheetRequested)="openSimulationSheet($event)"
       (formReady)="onConfigurationFormReady($event)"
       (saveConfiguration)="updateTournamentConfiguration($event)"
     />

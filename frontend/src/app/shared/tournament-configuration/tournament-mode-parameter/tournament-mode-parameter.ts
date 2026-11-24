@@ -1,9 +1,9 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { Card } from '../../card/card';
 import { Nullable } from 'src/app/models/nullable.model';
 import { ScoreCalculation } from 'src/app/models/tournament-configuration-detail.model';
-import { BracketPanelState } from 'src/app/models/tournament-plan.model';
+import { BracketPanelState, PlanSimulationState } from 'src/app/models/tournament-plan.model';
 import { InputCardRadio, InputCardRadioOption } from '../../input-card-radio/input-card-radio';
 import { TournamentConfigurationField } from '../tournament-configuration-form.model';
 import * as configuration from '../tournament-create.data';
@@ -34,10 +34,15 @@ export class TournamentModeParameter {
   public readonly targetControl = input.required<FormControl<number>>();
   /** Preview of the structured brackets; null when the page gives none. */
   public readonly planState = input<Nullable<BracketPanelState>>(null);
+  /** Simulation of other team counts for the structured mode; null when the page gives none. */
+  public readonly simulation = input<Nullable<PlanSimulationState>>(null);
   public readonly readonlyFields = input<TournamentConfigurationField[]>([]);
   public readonly hiddenFields = input<TournamentConfigurationField[]>([]);
   /** Score calculations of the selected mode (filtered by the parent). */
   public readonly scoreCalculationOptions = input<InputCardRadioOption<ScoreCalculation>[]>([]);
+
+  public readonly simulationTeamCountChange = output<number>();
+  public readonly simulationSheetRequested = output<number>();
 
   public readonly competitionModeOptions = configuration.competitionModeOptions;
 }

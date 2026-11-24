@@ -30,7 +30,7 @@ const MODE_PARAMETER_GROUP_BY_COMPETITION_MODE: Record<CompetitionMode, string> 
 export function applyCompetitionModeSideEffects(
   form: TournamentConfigurationForm,
   mode: CompetitionMode,
-  teamCapacity: { max: number; maxChampionship: number },
+  teamCapacity: { max: number; defaultStructured: number; maxChampionship: number },
 ): void {
   const championshipControls = form.controls.modeParameter.controls.championshipMode.controls;
   championshipControls.homeTeam.setValidators(homeClubValidators(mode));
@@ -38,9 +38,12 @@ export function applyCompetitionModeSideEffects(
   championshipControls.awayTeam.setValidators(awayClubValidators(mode));
   championshipControls.awayTeam.updateValueAndValidity();
 
-  form.controls.rules.controls.maxTeamCapacity.setValue(
-    mode === 'championship' ? teamCapacity.maxChampionship : teamCapacity.max,
-  );
+  const defaultByMode: Record<CompetitionMode, number> = {
+    standard: teamCapacity.defaultStructured,
+    up_down: teamCapacity.max,
+    championship: teamCapacity.maxChampionship,
+  };
+  form.controls.rules.controls.maxTeamCapacity.setValue(defaultByMode[mode]);
 }
 
 export function homeClubValidators(mode: CompetitionMode) {
