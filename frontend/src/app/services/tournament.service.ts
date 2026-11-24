@@ -5,6 +5,7 @@ import { TournamentConfigurationDto } from 'src/app/models/tournament-configurat
 import { TournamentDto } from 'src/app/store/tournament/tournament.models';
 import { environment } from 'src/environments/environment';
 import { TeamConfigCreateTeamPayload } from '../models/team-config.model';
+import { StartTournamentBody } from '../models/tournament-plan.model';
 
 @Injectable({
   providedIn: 'root',
@@ -61,12 +62,10 @@ export class TournamentService {
     );
   }
 
-  public startTournament(code: string, password: string): Observable<TournamentDto> {
+  public start(code: string, body: StartTournamentBody): Observable<TournamentDto> {
     return this.http.post<TournamentDto>(
       `${this.apiBaseUrl}/tournaments/${encodeURIComponent(code)}/start`,
-      {
-        password,
-      },
+      body,
     );
   }
 

@@ -1,4 +1,5 @@
 import { CompetitionMode, ScoreCalculation } from './tournament-configuration-detail.model';
+import { FillThresholds } from './tournament-plan.model';
 
 /** Mirror of the backend `AppSettingKey`. */
 export type AppSettingKey =
@@ -6,7 +7,9 @@ export type AppSettingKey =
   | 'tournament_cleanup'
   | 'training_cleanup'
   | 'training_auto_close'
-  | 'training_level_history_depth';
+  | 'training_level_history_depth'
+  | 'max_consolation_count'
+  | 'bracket_fill_thresholds';
 
 export type AppSettingScope = 'public' | 'super_admin' | 'internal';
 
@@ -50,6 +53,8 @@ export interface AppSettingValues {
   training_cleanup: TrainingCleanupConfig;
   training_auto_close: TrainingAutoCloseConfig;
   training_level_history_depth: number;
+  max_consolation_count: number;
+  bracket_fill_thresholds: FillThresholds;
 }
 
 export interface PublicAppSettingDto {
@@ -70,4 +75,11 @@ export const DEFAULT_SCORE_CALCULATIONS_BY_MODE: ScoreCalculationsByMode = {
   standard: ['victory_ga', 'score'],
   up_down: ['victory_buchholz_ga', 'score_buchholz_ga'],
   championship: ['tournament_score'],
+};
+
+/** Same defaults as the backend: used until the public settings are loaded, or if they fail. */
+export const DEFAULT_MAX_CONSOLATION_COUNT = 4;
+export const DEFAULT_BRACKET_FILL_THRESHOLDS: FillThresholds = {
+  okRatio: 0.9,
+  warningRatio: 0.75,
 };

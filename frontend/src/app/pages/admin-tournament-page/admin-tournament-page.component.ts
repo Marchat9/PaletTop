@@ -455,7 +455,7 @@ export class AdminTournamentPageComponent implements OnInit {
       })
       .closed.subscribe((confirmed) => {
         if (confirmed && !this.startLoading()) {
-          this.store.dispatch(startTournament());
+          this.store.dispatch(startTournament({}));
         }
       });
   }
