@@ -145,9 +145,12 @@ export class TournamentsController {
     async updateConfiguration(
         @UuidParam('idtournament') id: string,
         @Body() dto: UpdateTournamentConfigurationDto,
-    ): Promise<Tournament> {
+    ): Promise<AdminTournamentDto> {
         try {
-            return await this.tournamentsService.updateTournamentConfiguration(id, dto);
+            const updated = await this.tournamentsService.updateTournamentConfiguration(id, dto);
+            // The admin DTO, not the entity: its teams carry the club names, not the club entities.
+            const plan = await this.planService.buildPlan(updated);
+            return toAdminTournamentDto(updated, null, plan);
         } catch (error: unknown) {
             if (error instanceof HttpException) {
                 throw error;
