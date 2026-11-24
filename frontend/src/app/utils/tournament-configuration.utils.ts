@@ -1,6 +1,7 @@
 import {
   CompetitionMode,
   SpecificTournamentConfig,
+  StructuredTournamentConfig,
   TournamentConfigurationDetailsDto,
 } from '../models/tournament-configuration-detail.model';
 import { TournamentConfigurationDto } from '../models/tournament-configuration.model';
@@ -58,6 +59,7 @@ export function extractCompetitionConfiguration(
         consolationCount: structuredConfigControls.consolationCount.value,
         hasChallenges: structuredConfigControls.hasChallenges.value,
         hasThirdPlaceMatch: structuredConfigControls.hasThirdPlaceMatch.value,
+        eliminationPairingMode: structuredConfigControls.eliminationPairingMode.value,
       };
     case 'up_down':
       const upDownConfigControls = tournamentModeParameter.controls.upDownMode.controls;
@@ -95,10 +97,17 @@ export function buildPlanPreviewBody(
     return null;
   }
 
+  // The plan does not depend on how the elimination rounds are paired: changing it must not
+  // ask for a new preview.
+  const planConfiguration: StructuredTournamentConfig = {
+    ...(extractCompetitionConfiguration(modeParameter) as StructuredTournamentConfig),
+  };
+  delete planConfiguration.eliminationPairingMode;
+
   const targetCount = targetControl.value;
   return {
     competitionMode: 'standard',
-    competitionConfiguration: extractCompetitionConfiguration(modeParameter),
+    competitionConfiguration: planConfiguration,
     teamCount: registeredCount && registeredCount >= 2 ? registeredCount : targetCount,
     targetCount,
   };

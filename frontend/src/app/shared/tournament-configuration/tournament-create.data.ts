@@ -101,6 +101,28 @@ export const pairingModeOptions: {
   },
 ];
 
+export const eliminationPairingModeOptions: {
+  value: PairingMode;
+  label: string;
+  icon: string;
+  description: string;
+}[] = [
+  {
+    value: 'random',
+    icon: 'shuffle',
+    label: 'Tirage au sort',
+    description:
+      'Dans chaque tableau, les équipes sont tirées au sort à chaque tour, en respectant les règles de tirage (clubs, revanches).',
+  },
+  {
+    value: 'dutch',
+    icon: 'account_tree',
+    label: 'Système suisse (version hollandaise)',
+    description:
+      'À chaque tour, les équipes encore en lice sont classées selon tous les matchs déjà joués : la moitié haute joue la moitié basse (1re contre 5e, 2e contre 6e… pour 8 équipes).',
+  },
+];
+
 export const pointsPerGameOptions: { value: number; label: string; description: string }[] = [
   { value: 11, label: '11 points', description: 'Partie terminée à 11 points' },
   { value: 12, label: '12 points', description: 'Partie terminée à 12 points' },
