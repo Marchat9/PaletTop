@@ -54,14 +54,5 @@ export const environment = {
       max: 10,
       default: 4,
     },
-    numberOfPools: {
-      min: 0,
-      max: 32,
-      default: undefined,
-    },
-    principalBracketSize: {
-      default: 16,
-      options: [4, 8, 16, 32, 64, 128],
-    },
   },
 };

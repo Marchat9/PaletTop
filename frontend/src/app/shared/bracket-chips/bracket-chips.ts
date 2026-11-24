@@ -39,10 +39,11 @@ export class BracketChips {
         capacityText: full ? '' : ` / ${bracket.capacity}`,
         percent: Math.round(bracket.fillRatio * 100),
         level: bracket.fillLevel,
-        detail:
-          full || best === 0
-            ? 'Complet'
-            : `+${best} ${best > 1 ? 'meilleurs perdants' : 'meilleur perdant'}`,
+        detail: full
+          ? 'Complet'
+          : best > 0
+            ? `+${best} ${best > 1 ? 'meilleurs perdants' : 'meilleur perdant'}`
+            : '',
         main: index === 0,
       };
     }),

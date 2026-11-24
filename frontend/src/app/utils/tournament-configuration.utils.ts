@@ -5,6 +5,9 @@ import {
 } from '../models/tournament-configuration-detail.model';
 import { TournamentConfigurationDto } from '../models/tournament-configuration.model';
 import { TournamentConfigurationForm } from '../shared/tournament-configuration/tournament-configuration-form.model';
+import { combineLatest, distinctUntilChanged, filter, map, Observable, startWith } from 'rxjs';
+import { Nullable } from '../models/nullable.model';
+import { PlanPreviewBody } from '../models/tournament-plan.model';
 import { TournamentModeParameterForm } from '../shared/tournament-configuration/tournament-mode-parameter/tournament-mode-parameter-form.model';
 
 export function convertTournamentFormToTournamentConfigurationDto(
@@ -51,13 +54,10 @@ export function extractCompetitionConfiguration(
     case 'standard':
       const structuredConfigControls = tournamentModeParameter.controls.structuredMode.controls;
       return {
-        hasConsolanteTable: structuredConfigControls.hasConsolanteTable.value,
-        hasChallengePrincipaleTable: structuredConfigControls.hasChallengePrincipaleTable.value,
-        hasChallengeConsolanteTable: structuredConfigControls.hasChallengeConsolanteTable.value,
-        hasThirdPlaceMatch: structuredConfigControls.hasThirdPlaceMatch.value,
-        principalBracketSize: structuredConfigControls.principalBracketSize.value,
         numberOfQualifyingRounds: structuredConfigControls.numberOfQualifyingRounds.value,
-        numberOfPools: structuredConfigControls.numberOfPools.value,
+        consolationCount: structuredConfigControls.consolationCount.value,
+        hasChallenges: structuredConfigControls.hasChallenges.value,
+        hasThirdPlaceMatch: structuredConfigControls.hasThirdPlaceMatch.value,
       };
     case 'up_down':
       const upDownConfigControls = tournamentModeParameter.controls.upDownMode.controls;
@@ -75,4 +75,49 @@ export function extractCompetitionConfiguration(
     default:
       return {};
   }
+}
+
+/**
+ * Request of the live preview for the structured mode: the registered teams when there are enough
+ * of them (draft edit), the target count otherwise. Null for another mode or an incomplete form.
+ */
+export function buildPlanPreviewBody(
+  tournamentForm: TournamentConfigurationForm,
+  registeredCount: Nullable<number>,
+): PlanPreviewBody | null {
+  const modeParameter = tournamentForm.controls.modeParameter;
+  const targetControl = tournamentForm.controls.rules.controls.maxTeamCapacity;
+  if (
+    modeParameter.controls.competitionMode.value !== 'standard' ||
+    modeParameter.controls.structuredMode.invalid ||
+    targetControl.invalid
+  ) {
+    return null;
+  }
+
+  const targetCount = targetControl.value;
+  return {
+    competitionMode: 'standard',
+    competitionConfiguration: extractCompetitionConfiguration(modeParameter),
+    teamCount: registeredCount && registeredCount >= 2 ? registeredCount : targetCount,
+    targetCount,
+  };
+}
+
+/** Debounce of the live preview, applied by the pages. */
+export const PLAN_PREVIEW_DEBOUNCE_MS = 300;
+
+/**
+ * Requests of the live preview: one per change of what the plan depends on (the form or the
+ * registered teams), none while the form cannot be previewed.
+ */
+export function planPreviewBodies(
+  tournamentForm: TournamentConfigurationForm,
+  registeredCount: Observable<Nullable<number>>,
+): Observable<PlanPreviewBody> {
+  return combineLatest([tournamentForm.valueChanges.pipe(startWith(null)), registeredCount]).pipe(
+    map(([, registered]) => buildPlanPreviewBody(tournamentForm, registered)),
+    filter((body): body is PlanPreviewBody => body !== null),
+    distinctUntilChanged((previous, next) => JSON.stringify(previous) === JSON.stringify(next)),
+  );
 }

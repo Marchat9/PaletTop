@@ -69,6 +69,16 @@ describe('BracketChips', () => {
     expect(text(first)).toContain('Complet');
   });
 
+  it('does not claim a partial bracket without best losers is complete', () => {
+    const root = create({
+      brackets: [bracket({ capacity: 32, teamCount: 24, fillRatio: 0.75, fillLevel: 'mid' })],
+    });
+
+    const detail = root.querySelector('.bracket-chip__detail');
+    expect(text(detail)).toBe('');
+    expect(text(root)).not.toContain('Complet');
+  });
+
   it('colors the bar by fill level and sizes it by the fill ratio', () => {
     const root = create({ brackets });
 

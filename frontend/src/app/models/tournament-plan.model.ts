@@ -147,3 +147,13 @@ export interface StartTournamentBody {
   /** The last X teams of the qualifiers play no elimination match. */
   eliminatedAfterQualifying?: number;
 }
+
+/** What the bracket panel of the structured form shows: the page feeds it from the store. */
+export interface BracketPanelState {
+  plan: TournamentPlan | null;
+  loading: boolean;
+  /** Highest consolation count the admin can pick (app setting). */
+  maxConsolations: number;
+  /** Teams registered on a tournament being edited; null while creating. */
+  registeredCount: number | null;
+}

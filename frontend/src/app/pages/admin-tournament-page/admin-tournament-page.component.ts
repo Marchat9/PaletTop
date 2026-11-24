@@ -1,5 +1,19 @@
 import { UpDownTournamentConfig } from 'src/app/models/tournament-configuration-detail.model';
-import { selectScoreCalculationsByMode } from 'src/app/store/app-settings/app-settings.selectors';
+import {
+  selectMaxConsolationCount,
+  selectScoreCalculationsByMode,
+} from 'src/app/store/app-settings/app-settings.selectors';
+import { BracketPanelState } from 'src/app/models/tournament-plan.model';
+import { previewPlan } from 'src/app/store/tournament-plan/tournament-plan.actions';
+import {
+  selectPlanPreview,
+  selectPlanPreviewLoading,
+} from 'src/app/store/tournament-plan/tournament-plan.selectors';
+import { TournamentConfigurationForm } from 'src/app/shared/tournament-configuration/tournament-configuration-form.model';
+import {
+  PLAN_PREVIEW_DEBOUNCE_MS,
+  planPreviewBodies,
+} from 'src/app/utils/tournament-configuration.utils';
 import { normalizeCode } from 'src/app/utils/code-format.util';
 import { newId } from 'src/app/utils/unique-id.util';
 import { buildRankingPdf, rankingPdfFileName } from 'src/app/utils/pdf/ranking-pdf.util';
@@ -26,7 +40,8 @@ import {
   DestroyRef,
   viewChild,
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
+import { debounceTime, filter } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { environment } from '@environment';
 import { Store } from '@ngrx/store';
@@ -206,6 +221,26 @@ export class AdminTournamentPageComponent implements OnInit {
 
   public readonly scoreCalculationsByMode = this.store.selectSignal(selectScoreCalculationsByMode);
 
+  // Live preview of the brackets: only a draft still has its plan to build.
+  private readonly plan = this.store.selectSignal(selectPlanPreview);
+  private readonly planLoading = this.store.selectSignal(selectPlanPreviewLoading);
+  private readonly maxConsolations = this.store.selectSignal(selectMaxConsolationCount);
+  private readonly isDraft = computed(() => this.tournament()?.status === TournamentStatus.DRAFT);
+  private readonly registeredCount = computed(() => this.tournament()?.teams.length ?? 0);
+  private readonly registeredCount$ = toObservable(this.registeredCount);
+  public readonly planState = computed<Nullable<BracketPanelState>>(() =>
+    this.isDraft()
+      ? {
+          plan: this.plan(),
+          loading: this.planLoading(),
+          maxConsolations: this.maxConsolations(),
+          registeredCount: this.registeredCount(),
+        }
+      : null,
+  );
+  /** Increases with each request: the reducer keeps the result of the latest one only. */
+  private previewSequence = 0;
+
   // Data
   public readonly hiddenFields: TournamentConfigurationField[] = environment.tournamentConfiguration
     .admin.hiddenFields as TournamentConfigurationField[];
@@ -246,6 +281,18 @@ export class AdminTournamentPageComponent implements OnInit {
         this.store.dispatch(connectTournamentAdministrator({ code, password }));
       }
     });
+  }
+
+  public onConfigurationFormReady(form: TournamentConfigurationForm): void {
+    planPreviewBodies(form, this.registeredCount$)
+      .pipe(
+        filter(() => this.isDraft()),
+        debounceTime(PLAN_PREVIEW_DEBOUNCE_MS),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe((body) =>
+        this.store.dispatch(previewPlan({ requestId: String(++this.previewSequence), body })),
+      );
   }
 
   ngOnInit(): void {

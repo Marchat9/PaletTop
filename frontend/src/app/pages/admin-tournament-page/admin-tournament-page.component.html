@@ -70,6 +70,8 @@
       [readonlyFields]="readonlyFields"
       [scoreCalculationsByMode]="scoreCalculationsByMode()"
       [saveLoading]="isUpdateConfigLoading()"
+      [planState]="planState()"
+      (formReady)="onConfigurationFormReady($event)"
       (saveConfiguration)="updateTournamentConfiguration($event)"
     />
 

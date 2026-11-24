@@ -8,7 +8,11 @@ import { CardCollapsible } from 'src/app/shared/card-collapsible/card-collapsibl
 import { Icon } from 'src/app/shared/icon/icon';
 import { TournamentDto } from 'src/app/store/tournament/tournament.models';
 import { ConfigurationFormComponent } from './configuration-form/configuration-form.component';
-import { TournamentConfigurationField } from 'src/app/shared/tournament-configuration/tournament-configuration-form.model';
+import {
+  TournamentConfigurationField,
+  TournamentConfigurationForm,
+} from 'src/app/shared/tournament-configuration/tournament-configuration-form.model';
+import { BracketPanelState } from 'src/app/models/tournament-plan.model';
 import { TournamentConfigurationDto } from 'src/app/models/tournament-configuration.model';
 
 @Component({
@@ -29,6 +33,11 @@ export class TournamentConfigurationCardComponent {
     DEFAULT_SCORE_CALCULATIONS_BY_MODE,
   );
 
+  /** Preview of the brackets of a draft; no panel when null. */
+  public readonly planState = input<Nullable<BracketPanelState>>(null);
+
   public readonly saveConfiguration = output<TournamentConfigurationDto>();
+  /** The form is built: the page watches it to run the live preview. */
+  public readonly formReady = output<TournamentConfigurationForm>();
   // ==============================
 }

@@ -34,6 +34,8 @@
       @case ('standard') {
         <app-structured-tournament
           [group]="group().controls.structuredMode"
+          [targetControl]="targetControl()"
+          [planState]="planState()"
           [readonlyFields]="readonlyFields()"
           [hiddenFields]="hiddenFields()"
         />

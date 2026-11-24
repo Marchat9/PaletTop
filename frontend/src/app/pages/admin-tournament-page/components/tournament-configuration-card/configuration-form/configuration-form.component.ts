@@ -5,6 +5,7 @@ import {
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, input, output, signal } from '@angular/core';
 import { Nullable } from 'src/app/models/nullable.model';
+import { BracketPanelState } from 'src/app/models/tournament-plan.model';
 import { TournamentConfigurationDto } from 'src/app/models/tournament-configuration.model';
 import { Button } from 'src/app/shared/button/button';
 import { TournamentConfiguration } from 'src/app/shared/tournament-configuration/tournament-configuration';
@@ -33,7 +34,10 @@ export class ConfigurationFormComponent {
     DEFAULT_SCORE_CALCULATIONS_BY_MODE,
   );
 
+  public readonly planState = input<Nullable<BracketPanelState>>(null);
+
   public readonly configurationSaved = output<TournamentConfigurationDto>();
+  public readonly formReady = output<TournamentConfigurationForm>();
   public readonly configurationCancelled = output<void>();
   // ==============================
 
@@ -44,6 +48,7 @@ export class ConfigurationFormComponent {
   public onFormReady(form: TournamentConfigurationForm): void {
     this.tournamentForm.set(form);
     this.initialFormValues = form.getRawValue();
+    this.formReady.emit(form);
   }
 
   public onSave(): void {
