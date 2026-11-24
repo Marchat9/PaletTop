@@ -14,6 +14,7 @@ import { itemTables, leaderboardItems, podiumSteps } from 'src/app/utils/leaderb
 import { CardCollapsible } from '../card-collapsible/card-collapsible';
 import { FitCountDirective } from '../fit-count/fit-count.directive';
 import { Icon } from '../icon/icon';
+import { LeaderboardPodium, PodiumStepView } from '../leaderboard-podium/leaderboard-podium';
 import { Skeleton } from '../skeleton/skeleton';
 
 /** Height of a table row and of the table header in `fillHeight` mode, in rem (see the style). */
@@ -25,19 +26,6 @@ const PODIUM_MAX_NAMES = 3;
 
 const EMPTY_TABLE: LeaderboardTable = { nameLabel: '', columns: [], rows: [], legend: null };
 
-/** A podium step as displayed. */
-interface PodiumStepView {
-  key: string;
-  place: number;
-  rankLabel: string;
-  /** Names shown, one element each (one per line on mobile). */
-  names: string[];
-  /** Tied names beyond those shown (« +2 »); 0 when all are shown. */
-  hiddenCount: number;
-  summary: string;
-  isHighlighted: boolean;
-}
-
 /**
  * The one leaderboard of the application: tournament teams, session players or club members, built
  * with the `to…Leaderboard` utilities. Optional podium (the first three places, ties grouped),
@@ -47,7 +35,14 @@ interface PodiumStepView {
  */
 @Component({
   selector: 'app-leaderboard',
-  imports: [CardCollapsible, Icon, Skeleton, NgTemplateOutlet, FitCountDirective],
+  imports: [
+    CardCollapsible,
+    Icon,
+    LeaderboardPodium,
+    Skeleton,
+    NgTemplateOutlet,
+    FitCountDirective,
+  ],
   templateUrl: './leaderboard.html',
   styleUrl: './leaderboard.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

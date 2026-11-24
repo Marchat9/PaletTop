@@ -64,9 +64,16 @@
     }
   }
 
+  // Secondary text until the team wins (see `.winner`) or the row is corrected.
+  .team,
+  .score,
+  .score-sep,
+  .bye-badge {
+    color: var(--color-on-surface-variant);
+  }
+
   .team {
     min-width: 0;
-    color: var(--color-on-surface-variant);
     overflow-wrap: anywhere;
 
     &.team-a {
@@ -90,24 +97,23 @@
     font-weight: 700;
     font-variant-numeric: tabular-nums;
     text-align: center;
-    color: var(--color-on-surface-variant);
-
-    &.score-a {
-      grid-area: score-a;
-    }
-
-    &.score-b {
-      grid-area: score-b;
-    }
 
     &.winner {
       color: var(--color-on-surface);
     }
   }
 
+  // The scores of the row, shown (`.score`) or being corrected (inputs), sit in the same cells.
+  .score-a {
+    grid-area: score-a;
+  }
+
+  .score-b {
+    grid-area: score-b;
+  }
+
   .score-sep {
     grid-area: sep;
-    color: var(--color-on-surface-variant);
   }
 
   .match-meta {
@@ -160,7 +166,6 @@
     .bye-badge {
       font-size: 0.75rem;
       font-style: italic;
-      color: var(--color-on-surface-variant);
     }
   }
 
@@ -179,51 +184,44 @@
     .team {
       color: var(--color-on-surface);
     }
+  }
 
-    .score-a {
-      grid-area: score-a;
+  // Only in the correction markup: its cancel / save buttons, in the last cell.
+  .edit-actions {
+    grid-area: actions;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .action-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    border: 0;
+    border-radius: 0.6rem;
+    cursor: pointer;
+
+    &.cancel {
+      background: var(--color-surface-container-highest);
+      color: var(--color-on-surface);
     }
 
-    .score-b {
-      grid-area: score-b;
+    &.save {
+      background: var(--color-primary);
+      color: var(--color-on-primary);
+
+      &:disabled {
+        opacity: 0.4;
+        cursor: default;
+      }
     }
 
-    .edit-actions {
-      grid-area: actions;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    .action-btn {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 2.5rem;
-      height: 2.5rem;
-      border: 0;
-      border-radius: 0.6rem;
-      cursor: pointer;
-
-      &.cancel {
-        background: var(--color-surface-container-highest);
-        color: var(--color-on-surface);
-      }
-
-      &.save {
-        background: var(--color-primary);
-        color: var(--color-on-primary);
-
-        &:disabled {
-          opacity: 0.4;
-          cursor: default;
-        }
-      }
-
-      &:focus-visible {
-        outline: 2px solid var(--color-primary);
-        outline-offset: 2px;
-      }
+    &:focus-visible {
+      outline: 2px solid var(--color-primary);
+      outline-offset: 2px;
     }
   }
 
