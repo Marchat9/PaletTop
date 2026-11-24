@@ -38,6 +38,10 @@ export class StructuredTournamentConfig extends SpecificTournamentConfig {
 
     @IsBoolean()
     hasThirdPlaceMatch!: boolean;
+
+    @IsEnum(PairingMode)
+    @IsOptional()
+    eliminationPairingMode?: PairingMode;
 }
 
 @ValidatorConstraint({ name: 'lastRoundByRanking', async: false })

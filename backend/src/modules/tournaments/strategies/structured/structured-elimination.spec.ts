@@ -6,7 +6,7 @@ import { StructuredCompetitionConfiguration } from 'src/entities/tournament-comp
 import { TournamentPool } from 'src/entities/tournament-pool.entity';
 import { Tournament } from 'src/entities/tournament.entity';
 import { MatchesSessionStatus, MatchStatus, TournamentStatus } from 'src/enum/status.enum';
-import { CompetitionMode, ScoreCalculation } from 'src/enum/tounament.enum';
+import { CompetitionMode, PairingMode, ScoreCalculation } from 'src/enum/tounament.enum';
 import { TournamentStatusInfo } from '../../responses/tournament-status.dto';
 import { PlanSettings, StartChoice } from '../tournament-strategy.abstract';
 import { PlanRound } from './plan/plan.types';
@@ -25,6 +25,9 @@ interface SimulationInput {
     hasChallenges: boolean;
     hasThirdPlaceMatch: boolean;
     choice: StartChoice;
+    eliminationPairingMode?: PairingMode;
+    /** Rematches allowed: the pairing then follows its first preference. */
+    rematch?: boolean;
 }
 
 /** What the generation produced for one group of one round. */
@@ -160,11 +163,13 @@ async function simulate(input: SimulationInput): Promise<SimulationResult> {
             maxTeamCapacity: input.targetCount,
             competitionMode: CompetitionMode.STANDARD,
             scoreCalculation: ScoreCalculation.VICTORY_AND_GOAL_AVERAGE,
+            rematch: input.rematch ?? false,
             competitionConfiguration: {
                 numberOfQualifyingRounds: input.numberOfQualifyingRounds,
                 consolationCount: input.consolationCount,
                 hasChallenges: input.hasChallenges,
                 hasThirdPlaceMatch: input.hasThirdPlaceMatch,
+                eliminationPairingMode: input.eliminationPairingMode,
             },
         },
     } as unknown as Tournament;
@@ -323,6 +328,77 @@ describe('Structured elimination generated from the frozen plan', () => {
         expect(elimination[2].matches[0].plateNumber).toBe(1);
         expectRoundsToFollowThePlan(result);
         expectFinished(result);
+    });
+
+    describe('Dutch pairing of the elimination rounds', () => {
+        it('plays the top half of the ranking against the bottom half in the first round', async () => {
+            const result = await simulate({
+                teamCount: 8,
+                targetCount: 8,
+                consolationCount: 0,
+                numberOfQualifyingRounds: 2,
+                hasChallenges: false,
+                hasThirdPlaceMatch: false,
+                choice: { consolationCount: 0, eliminatedAfterQualifying: 0 },
+                eliminationPairingMode: PairingMode.DUTCH,
+                rematch: true,
+            });
+
+            const qualifyingRanking = result.strategy.computeGlobalRanking(
+                result.tournament,
+                result.allMatches.filter(
+                    (m) => (m.sessionNumber ?? 0) <= result.config.numberOfQualifyingRounds,
+                ),
+            );
+            const rankOf = new Map(qualifyingRanking.map((entry) => [entry.teamId, entry.rank]));
+            const quarterFinals = eliminationRounds(result)[0].matches;
+
+            // 1v5, 2v6, 3v7, 4v8, the best pairing on plate 1.
+            expect(
+                quarterFinals.map((m) => [rankOf.get(m.teamA.id), rankOf.get(m.teamB!.id)]),
+            ).toEqual([
+                [1, 5],
+                [2, 6],
+                [3, 7],
+                [4, 8],
+            ]);
+            expect(quarterFinals.map((m) => m.plateNumber)).toEqual([1, 2, 3, 4]);
+            expectRoundsToFollowThePlan(result);
+            expectNoTeamTwiceInARound(result);
+            expectFinished(result);
+        });
+
+        it('gives the bye of an odd group to the best ranked team and still follows the plan', async () => {
+            const result = await simulate({
+                teamCount: 11,
+                targetCount: 11,
+                consolationCount: 1,
+                numberOfQualifyingRounds: 2,
+                hasChallenges: true,
+                hasThirdPlaceMatch: true,
+                choice: { consolationCount: 1, eliminatedAfterQualifying: 0 },
+                eliminationPairingMode: PairingMode.DUTCH,
+            });
+
+            expectRoundsToFollowThePlan(result);
+            expectNoTeamTwiceInARound(result);
+            expectFinished(result);
+        });
+
+        it('keeps the random draw when the mode is missing', async () => {
+            const result = await simulate({
+                teamCount: 8,
+                targetCount: 8,
+                consolationCount: 0,
+                numberOfQualifyingRounds: 2,
+                hasChallenges: false,
+                hasThirdPlaceMatch: false,
+                choice: { consolationCount: 0, eliminatedAfterQualifying: 0 },
+            });
+
+            expectRoundsToFollowThePlan(result);
+            expectFinished(result);
+        });
     });
 
     it('never puts the 6 teams stopped after the qualifiers in an elimination match', async () => {

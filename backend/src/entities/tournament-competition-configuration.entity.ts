@@ -21,6 +21,12 @@ export class StructuredCompetitionConfiguration extends TournamentCompetitionCon
     /** Main bracket only. */
     hasThirdPlaceMatch!: boolean;
 
+    /**
+     * How the elimination rounds are paired. Missing on tournaments created before the option
+     * existed: read as RANDOM.
+     */
+    eliminationPairingMode?: PairingMode;
+
     /** The last X teams of the qualifiers play no elimination match. */
     eliminatedAfterQualifying?: number;
 

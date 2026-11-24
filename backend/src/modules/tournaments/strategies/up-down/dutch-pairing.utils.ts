@@ -195,12 +195,24 @@ export function generateDutchPairs(
 ): PairingResult {
     const byeTeam = selectDutchByeTeam(rankedTeams, pastMatches);
     const playing = rankedTeams.filter((team) => team.id !== byeTeam?.id);
-    const preferences = buildDutchPreferences(buildScoreGroups(playing, winsByTeam));
-    const pairs = pairAtFirstPossibleLevel(
-        playing,
+    return { pairs: pairDutch(playing, winsByTeam, pastMatches, config), byeTeam };
+}
+
+/**
+ * The Dutch pairing alone, for an even number of ranked teams whose bye (if any) is already
+ * decided by the caller (elimination rounds give it to the best ranked team, not the worst).
+ */
+export function pairDutch(
+    playingTeams: Team[],
+    winsByTeam: Map<string, number>,
+    pastMatches: TournamentMatch[],
+    config: ConstraintConfig,
+): TeamPair[] {
+    const preferences = buildDutchPreferences(buildScoreGroups(playingTeams, winsByTeam));
+    return pairAtFirstPossibleLevel(
+        playingTeams,
         preferences,
         buildDutchLevels(config),
         pastMatches,
     );
-    return { pairs, byeTeam };
 }
