@@ -49,6 +49,8 @@ export class TournamentHeaderComponent {
 
   public readonly completeTournament = output<void>();
   public readonly disconnect = output<void>();
+  /** The configuration has a page of its own. */
+  public readonly openConfiguration = output<void>();
   // ==============================
 
   private readonly tournamentStatus = computed(() => this.tournament()?.tournamentStatus ?? null);

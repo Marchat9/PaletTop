@@ -1,3 +1,21 @@
+// The summary of the configuration on the left, the way to change it on the right.
+.rules-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+
+  app-rule-pills {
+    flex: 1;
+    min-width: 0;
+  }
+
+  app-button {
+    flex-shrink: 0;
+    margin-left: auto;
+  }
+}
+
 .tournament-description {
   display: flex;
   flex-direction: column;

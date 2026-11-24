@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { trainingAdminGuard } from './guards/training-admin.guard';
+import { unsavedChangesGuard } from './guards/unsaved-configuration.guard';
 import {
   ADMIN_TOURNAMENT_CONNECTION,
   ADMIN_TRAINING_CONNECTION,
@@ -33,6 +34,14 @@ const tournamentRoutes: Routes = [
       import('./pages/admin-tournament-page/admin-tournament-page.component').then(
         (m) => m.AdminTournamentPageComponent,
       ),
+  },
+  {
+    path: 'admin/tournament/:tournamentCode/configuration',
+    loadComponent: () =>
+      import('./pages/admin-tournament-configuration-page/admin-tournament-configuration-page').then(
+        (m) => m.AdminTournamentConfigurationPage,
+      ),
+    canDeactivate: [unsavedChangesGuard],
   },
   {
     path: 'player/tournament',

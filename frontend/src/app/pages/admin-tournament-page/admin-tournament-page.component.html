@@ -11,6 +11,7 @@
       [completeLoading]="completeLoading()"
       (completeTournament)="completeTournament()"
       (disconnect)="disconnect()"
+      (openConfiguration)="openConfiguration()"
     />
 
     <app-tournament-next-step
@@ -75,20 +76,6 @@
       [downloadLoading]="isMatchesExporting()"
       (scoreUpdate)="adminScoreUpdate($event)"
       (downloadRequested)="downloadMatches()"
-    />
-
-    <app-tournament-configuration-card
-      [tournament]="tournament() ?? null"
-      [hiddenFields]="hiddenFields"
-      [readonlyFields]="readonlyFields"
-      [scoreCalculationsByMode]="scoreCalculationsByMode()"
-      [saveLoading]="isUpdateConfigLoading()"
-      [planState]="planState()"
-      [simulation]="simulation()"
-      (simulationTeamCountChange)="simulatedTeamCount.set($event)"
-      (simulationSheetRequested)="openSimulationSheet($event)"
-      (formReady)="onConfigurationFormReady($event)"
-      (saveConfiguration)="updateTournamentConfiguration($event)"
     />
 
     <app-tournament-team-configuration-card

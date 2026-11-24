@@ -1,29 +1,15 @@
 import { Dialog } from '@angular/cdk/dialog';
-import { FormControl, FormGroup } from '@angular/forms';
-import { TournamentConfigurationForm } from 'src/app/shared/tournament-configuration/tournament-configuration-form.model';
-import { selectMaxConsolationCount } from 'src/app/store/app-settings/app-settings.selectors';
-import {
-  previewLaunchPlan,
-  previewPlan,
-  simulatePlan,
-} from 'src/app/store/tournament-plan/tournament-plan.actions';
+import { previewLaunchPlan } from 'src/app/store/tournament-plan/tournament-plan.actions';
 import {
   selectLaunchPlan,
   selectLaunchPlanLoading,
-  selectPlanPreview,
-  selectPlanPreviewLoading,
-  selectSimulatedPlan,
-  selectSimulationError,
 } from 'src/app/store/tournament-plan/tournament-plan.selectors';
-import { DebugElement } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, convertToParamMap, ParamMap, Router } from '@angular/router';
 import { Actions } from '@ngrx/effects';
 import { Action } from '@ngrx/store';
 import { MockStore, provideMockStore } from '@ngrx/store/testing';
-import { DEFAULT_SCORE_CALCULATIONS_BY_MODE } from 'src/app/models/app-setting.model';
-import { selectScoreCalculationsByMode } from 'src/app/store/app-settings/app-settings.selectors';
 import { BehaviorSubject, Observable, of, Subject } from 'rxjs';
 import { describe, expect, it, vi } from 'vitest';
 import { TeamConfigEventType } from 'src/app/models/team-config.model';
@@ -45,16 +31,17 @@ import {
   selectNextSessionLoading,
   selectStartTournamentLoading,
   selectStartTournamentTeamCountChanged,
-  selectTournamentUpdateConfigLoading,
 } from 'src/app/store/tournament/tournament.selectors';
 import { TournamentDto, TounamentTeamDto } from 'src/app/store/tournament/tournament.models';
 import { startTournament } from 'src/app/store/tournament/tournament.match.actions';
-import { LaunchCheckPopup } from 'src/app/modales/launch-check-popup/launch-check-popup';
+import {
+  EDIT_CONFIGURATION,
+  LaunchCheckPopup,
+} from 'src/app/modales/launch-check-popup/launch-check-popup';
 import { StartSummaryPopup } from 'src/app/modales/start-summary-popup/start-summary-popup';
 import { ConfirmationPopupComponent } from 'src/app/modales/confirmation-popup/confirmation-popup';
 import { TournamentPlan } from 'src/app/models/tournament-plan.model';
 import { exactCountPlan, fewerTeamsPlan, impossiblePlan } from 'src/app/utils/launch-plan.fixtures';
-import { TournamentConfiguration } from 'src/app/shared/tournament-configuration/tournament-configuration';
 import {
   clearTournamentClubSuggestions,
   searchTournamentClubs,
@@ -115,22 +102,6 @@ const FINAL_RANKING: GlobalRankingEntry[] = [
   },
 ];
 
-function structuredForm(target = 128): TournamentConfigurationForm {
-  return new FormGroup({
-    rules: new FormGroup({ maxTeamCapacity: new FormControl(target, { nonNullable: true }) }),
-    modeParameter: new FormGroup({
-      competitionMode: new FormControl('standard', { nonNullable: true }),
-      structuredMode: new FormGroup({
-        numberOfQualifyingRounds: new FormControl(4, { nonNullable: true }),
-        consolationCount: new FormControl(1, { nonNullable: true }),
-        hasChallenges: new FormControl(false, { nonNullable: true }),
-        hasThirdPlaceMatch: new FormControl(false, { nonNullable: true }),
-        eliminationPairingMode: new FormControl('random', { nonNullable: true }),
-      }),
-    }),
-  }) as unknown as TournamentConfigurationForm;
-}
-
 interface SetupOptions {
   isAdminView?: boolean;
   status?: TournamentStatus;
@@ -168,12 +139,6 @@ function setup({
       { provide: PdfExportService, useValue: pdfExport },
       provideMockStore({
         selectors: [
-          { selector: selectScoreCalculationsByMode, value: DEFAULT_SCORE_CALCULATIONS_BY_MODE },
-          { selector: selectMaxConsolationCount, value: 4 },
-          { selector: selectPlanPreview, value: null },
-          { selector: selectPlanPreviewLoading, value: false },
-          { selector: selectSimulatedPlan, value: null },
-          { selector: selectSimulationError, value: null },
           { selector: selectLaunchPlan, value: null },
           { selector: selectLaunchPlanLoading, value: false },
           { selector: selectStartTournamentTeamCountChanged, value: false },
@@ -185,7 +150,6 @@ function setup({
           { selector: selectCurrentTournamentIsLoading, value: false },
           { selector: selectCurrentTournamentIsAdminView, value: isAdminView },
           { selector: selectCompleteTournamentLoading, value: false },
-          { selector: selectTournamentUpdateConfigLoading, value: false },
           { selector: selectStartTournamentLoading, value: false },
           { selector: selectNextSessionLoading, value: false },
           { selector: selectAdminUpdateScoreLoading, value: false },
@@ -200,22 +164,7 @@ function setup({
 
   const fixture = TestBed.createComponent(AdminTournamentPageComponent);
   const store = TestBed.inject(MockStore);
-  return { fixture, store, actions$, pdfExport, dialogMock };
-}
-
-// The first render of this large page takes about 1 s alone, but went past the default 5 s when
-// the whole suite runs in parallel.
-/** The dispatched preview requests, in order. */
-function previewCalls(dispatchSpy: { mock: { calls: unknown[][] } }): unknown[][] {
-  return dispatchSpy.mock.calls.filter(([action]) => (action as Action).type === previewPlan.type);
-}
-
-/** The configuration form the page renders: it is the one the page previews and simulates. */
-function renderedForm(fixture: { debugElement: DebugElement }): TournamentConfigurationForm {
-  return (
-    fixture.debugElement.query(By.directive(TournamentConfiguration))
-      .componentInstance as TournamentConfiguration
-  ).form;
+  return { fixture, store, actions$, pdfExport, dialogMock, routerMock };
 }
 
 describe('AdminTournamentPageComponent', { timeout: 15_000 }, () => {
@@ -254,73 +203,32 @@ describe('AdminTournamentPageComponent', { timeout: 15_000 }, () => {
     );
   });
 
-  describe('live preview of the brackets', () => {
-    afterEach(() => vi.useRealTimers());
-
-    it('previews a draft with its registered teams, once, 300 ms after the last change', () => {
-      vi.useFakeTimers();
-      const { fixture, store } = setup({ status: TournamentStatus.DRAFT });
-      const dispatchSpy = vi.spyOn(store, 'dispatch');
+  describe('configuration page', () => {
+    it('opens the configuration of the tournament on its own page', () => {
+      const { fixture, routerMock } = setup();
       fixture.detectChanges();
-      const form = renderedForm(fixture);
 
-      vi.advanceTimersByTime(300);
-      expect(previewCalls(dispatchSpy)).toHaveLength(1);
-      const [first] = previewCalls(dispatchSpy)[0];
-      expect(first).toMatchObject({ type: previewPlan.type, requestId: '1' });
-      expect((first as unknown as ReturnType<typeof previewPlan>).body.targetCount).toBe(16);
+      fixture.componentInstance.openConfiguration();
 
-      form.controls.rules.controls.maxTeamCapacity.setValue(96);
-      form.controls.rules.controls.maxTeamCapacity.setValue(64);
-      vi.advanceTimersByTime(299);
-      expect(previewCalls(dispatchSpy)).toHaveLength(1);
-      vi.advanceTimersByTime(1);
-      expect(previewCalls(dispatchSpy)).toHaveLength(2);
-      expect(previewCalls(dispatchSpy)[1][0]).toMatchObject({ requestId: '2' });
+      expect(routerMock.navigate).toHaveBeenCalledWith(
+        ['/admin/tournament', 'ABCD', 'configuration'],
+        { queryParams: {} },
+      );
     });
 
-    it('simulates a draft apart from the preview, with the count the slider gives', () => {
-      vi.useFakeTimers();
-      const { fixture, store } = setup({ status: TournamentStatus.DRAFT });
-      const dispatchSpy = vi.spyOn(store, 'dispatch');
+    it('opens it from the button of the header', () => {
+      const { fixture, routerMock } = setup();
       fixture.detectChanges();
 
-      renderedForm(fixture).controls.rules.controls.maxTeamCapacity.setValue(128);
-      vi.advanceTimersByTime(300);
-      fixture.componentInstance.simulatedTeamCount.set(100);
-      fixture.detectChanges();
-      vi.advanceTimersByTime(300);
+      const button = Array.from(
+        (fixture.nativeElement as HTMLElement).querySelectorAll('app-tournament-header .button'),
+      ).find((candidate) => candidate.textContent?.includes('Configuration')) as HTMLElement;
+      button.click();
 
-      const simulations = dispatchSpy.mock.calls
-        .map(([action]) => action as unknown as ReturnType<typeof simulatePlan>)
-        .filter((action) => action.type === simulatePlan.type);
-      expect(simulations.map((action) => action.body.teamCount)).toEqual([128, 100]);
-      expect(previewCalls(dispatchSpy)).toHaveLength(1);
-    });
-
-    it('only offers the panel, and the preview, while the tournament is a draft', () => {
-      vi.useFakeTimers();
-      const { fixture, store } = setup({ status: TournamentStatus.ACTIVE });
-      fixture.detectChanges();
-      const dispatchSpy = vi.spyOn(store, 'dispatch');
-
-      fixture.componentInstance.onConfigurationFormReady(structuredForm());
-      vi.advanceTimersByTime(1000);
-
-      expect(dispatchSpy).not.toHaveBeenCalled();
-      expect(fixture.componentInstance.planState()).toBeNull();
-      expect(fixture.componentInstance.simulation()).toBeNull();
-    });
-
-    it('shows the registered count of a draft in the panel state', () => {
-      const { fixture } = setup({ status: TournamentStatus.DRAFT });
-
-      expect(fixture.componentInstance.planState()).toEqual({
-        plan: null,
-        loading: false,
-        maxConsolations: 4,
-        registeredCount: 0,
-      });
+      expect(routerMock.navigate).toHaveBeenCalledWith(
+        ['/admin/tournament', 'ABCD', 'configuration'],
+        { queryParams: {} },
+      );
     });
   });
 
@@ -616,6 +524,17 @@ describe('AdminTournamentPageComponent', { timeout: 15_000 }, () => {
 
       expect(dialogMock.open).toHaveBeenCalledTimes(1);
       expect(dialogMock.open.mock.calls[0][0]).toBe(StartSummaryPopup);
+    });
+
+    it('sends the admin to the brackets of the configuration page to adjust them by hand', () => {
+      const { closed$, routerMock } = launch(3, impossiblePlan());
+
+      closed$.next(EDIT_CONFIGURATION);
+
+      expect(routerMock.navigate).toHaveBeenCalledWith(
+        ['/admin/tournament', 'ABCD', 'configuration'],
+        { queryParams: { section: 'mode' } },
+      );
     });
 
     it('opens the options, never the summary, for an impossible plan', () => {

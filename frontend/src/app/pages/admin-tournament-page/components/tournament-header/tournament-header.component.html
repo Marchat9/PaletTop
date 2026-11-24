@@ -46,5 +46,13 @@
     </div>
   }
 
-  <app-rule-pills [rules]="rules()" />
+  <div class="rules-row">
+    <app-rule-pills [rules]="rules()" />
+    <app-button
+      title="Configuration"
+      icon="tune"
+      variant="secondary"
+      (clicked)="openConfiguration.emit()"
+    />
+  </div>
 </app-admin-page-header>
