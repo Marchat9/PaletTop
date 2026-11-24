@@ -32,6 +32,11 @@ import {
   selectCurrentTournamentData,
 } from 'src/app/store/tournament/tournament.selectors';
 import { TournamentDto } from 'src/app/store/tournament/tournament.models';
+import { By } from '@angular/platform-browser';
+import { PlayerTeamDto } from 'src/app/models/team.model';
+import { MatchesSessionDto, SessionStatus } from 'src/app/models/matches-session.model';
+import { Button } from 'src/app/shared/button/button';
+import { PlayerParcours } from 'src/app/shared/player-parcours/player-parcours';
 import { PlayerTeamMatchPageComponent } from './player-team-match-page';
 
 function buildTournament(): TournamentDto {
@@ -57,7 +62,27 @@ function buildTournament(): TournamentDto {
   };
 }
 
-function setup(awaitingResync = false, pathCode = 'ABCD') {
+function buildTeam(overrides: Partial<PlayerTeamDto> = {}): PlayerTeamDto {
+  return {
+    id: 'team-1',
+    name: 'Fer et Fier',
+    code: 'AB12',
+    players: [],
+    eliminatedAfterQualifying: false,
+    ...overrides,
+  };
+}
+
+interface SetupOptions {
+  team?: PlayerTeamDto | null;
+  sessions?: MatchesSessionDto[];
+}
+
+function setup(
+  awaitingResync = false,
+  pathCode = 'ABCD',
+  { team = null, sessions = [] }: SetupOptions = {},
+) {
   const activatedRoute = {
     snapshot: {
       paramMap: {
@@ -85,9 +110,9 @@ function setup(awaitingResync = false, pathCode = 'ABCD') {
           { selector: selectCurrentTournamentData, value: buildTournament() },
           { selector: selectRanking, value: [] },
           { selector: selectMatchHistory, value: [] },
-          { selector: selectTeamData, value: null },
+          { selector: selectTeamData, value: team },
           { selector: selectCurrentMatch, value: null },
-          { selector: selectSessions, value: [] },
+          { selector: selectSessions, value: sessions },
           { selector: selectTeamIsLoading, value: false },
           { selector: selectStartMatchLoading, value: false },
           { selector: selectValidateMatchLoading, value: false },
@@ -103,7 +128,7 @@ function setup(awaitingResync = false, pathCode = 'ABCD') {
 
   const fixture = TestBed.createComponent(PlayerTeamMatchPageComponent);
   const store = TestBed.inject(MockStore);
-  return { fixture, store, actions$ };
+  return { fixture, store, actions$, routerMock };
 }
 
 describe('PlayerTeamMatchPageComponent', () => {
@@ -152,5 +177,82 @@ describe('PlayerTeamMatchPageComponent', () => {
       loadTournamentInformation({ tournamentCode: 'ABCD', teamCode: 'AB12' }),
     );
     dispatchSpy.mockRestore();
+  });
+
+  describe('structured tournament', () => {
+    const text = (fixture: { nativeElement: unknown }): string =>
+      ((fixture.nativeElement as HTMLElement).textContent ?? '').replace(/\s+/g, ' ');
+
+    it('tells a repêché team which bracket it was brought back to', () => {
+      const { fixture } = setup(false, 'ABCD', {
+        team: buildTeam({ repechedFrom: 'Consolante B' }),
+      });
+      fixture.detectChanges();
+
+      expect(fixture.componentInstance.repechedNotice()).toContain('repêchés dans la Consolante B');
+      expect(text(fixture)).toContain('vous êtes repêchés dans la Consolante B');
+    });
+
+    it('shows no notice for a team that was not brought back', () => {
+      const { fixture } = setup(false, 'ABCD', { team: buildTeam() });
+      fixture.detectChanges();
+
+      expect(fixture.componentInstance.repechedNotice()).toBeNull();
+      expect(text(fixture)).not.toContain('repêchés');
+    });
+
+    it('shows « Mon parcours » from the rounds the team played', () => {
+      const { fixture } = setup(false, 'ABCD', {
+        team: buildTeam(),
+        sessions: [
+          {
+            id: 's1',
+            sessionNumber: 1,
+            status: SessionStatus.CLOSED,
+            isDrawnRound: false,
+            matches: [
+              {
+                id: 'm1',
+                status: 'VALIDATED',
+                isBye: false,
+                scoreA: 11,
+                scoreB: 4,
+                plateNumber: 1,
+                teamA: { id: 'team-1', name: 'Fer et Fier' },
+                teamB: { id: 'team-2', name: 'Les Mouettes' },
+                poolNumber: null,
+                group: null,
+                startedAt: null,
+                finishedAt: null,
+                duration: null,
+              },
+            ],
+          },
+        ],
+      });
+      fixture.detectChanges();
+
+      const parcours = fixture.debugElement.query(By.directive(PlayerParcours))
+        .componentInstance as PlayerParcours;
+      expect(parcours.steps().map((step) => step.text)).toEqual(['Qualifs : 1 victoire']);
+    });
+
+    it('tells a team stopped after the qualifiers, who can follow the tournament as a spectator', () => {
+      const { fixture, routerMock } = setup(false, 'ABCD', {
+        team: buildTeam({ eliminatedAfterQualifying: true }),
+      });
+      fixture.detectChanges();
+
+      expect(fixture.componentInstance.teamMatchStatus()).toBe('ELIMINATED_QUALIFYING');
+      expect(text(fixture)).toContain('Éliminé après les qualifs');
+
+      const follow = fixture.debugElement
+        .queryAll(By.directive(Button))
+        .find((button) => (button.componentInstance as Button).title() === 'Suivre le tournoi');
+      expect(follow).toBeDefined();
+      (follow!.componentInstance as Button).clicked.emit(new Event('click'));
+
+      expect(routerMock.navigate).toHaveBeenCalledWith(['/spectateur', 'ABCD']);
+    });
   });
 });

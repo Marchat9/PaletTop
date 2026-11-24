@@ -4,7 +4,6 @@ import {
   AdminRoundHistory,
 } from 'src/app/models/admin-match.model';
 import {
-  MATCH_GROUP_LABELS,
   MatchesSessionDto,
   MatchPoolGroup,
   SessionStatus,
@@ -55,7 +54,7 @@ function roundLabel(
       session.matches
         .filter((match) => match.group)
         .sort((a, b) => a.group!.order - b.group!.order)
-        .map((match) => MATCH_GROUP_LABELS[match.group!.name]),
+        .map((match) => match.group!.label),
     ),
   ];
   if (brackets.length) {

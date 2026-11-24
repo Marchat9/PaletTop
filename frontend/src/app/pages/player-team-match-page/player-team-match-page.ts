@@ -65,6 +65,9 @@ import {
 } from 'src/app/store/tournament/tournament.selectors';
 import { onResyncRequested } from 'src/app/utils/resync-on-reconnect.util';
 import { PageState } from 'src/app/shared/page-state/page-state';
+import { InlineNotice } from 'src/app/shared/inline-notice/inline-notice';
+import { PlayerParcours } from 'src/app/shared/player-parcours/player-parcours';
+import { computePlayerParcours } from 'src/app/utils/player-parcours.util';
 import { PlayerFinalRank } from 'src/app/shared/player-final-rank/player-final-rank';
 import { PlayerHeader } from 'src/app/shared/player-header/player-header';
 import {
@@ -74,7 +77,7 @@ import {
 import { PlayerTeammates } from 'src/app/shared/player-teammates/player-teammates';
 import { newId } from 'src/app/utils/unique-id.util';
 
-export type TeamMatchStatus = 'NOT_STARTED' | 'CANCELLED' | 'FINISH';
+export type TeamMatchStatus = 'NOT_STARTED' | 'CANCELLED' | 'ELIMINATED_QUALIFYING' | 'FINISH';
 
 /**
  * What a validated bye gave: a win with a neutral goal average, the legacy points of an old bye,
@@ -91,8 +94,10 @@ function byeAwardLabel(match: Nullable<PlayerMatchDto> | undefined): Nullable<st
   standalone: true,
   imports: [
     PageState,
+    InlineNotice,
     PlayerFinalRank,
     PlayerHeader,
+    PlayerParcours,
     PlayerTeammates,
     PlayerMatchHistory,
     PlayerMatchCard,
@@ -152,6 +157,7 @@ export class PlayerTeamMatchPageComponent {
 
     const isDraft = this.tournamentData()?.status === TournamentStatus.DRAFT;
     const isCancelled = this.tournamentData()?.status === TournamentStatus.CANCELLED;
+    const isStopped = !!this.team()?.eliminatedAfterQualifying;
     const isFinishedForTeam = !this.currentSession()?.matches.some(
       (match) => match.teamA.id === teamId || match.teamB?.id === teamId,
     );
@@ -160,11 +166,30 @@ export class PlayerTeamMatchPageComponent {
         return 'NOT_STARTED';
       case isCancelled:
         return 'CANCELLED';
+      case isStopped:
+        return 'ELIMINATED_QUALIFYING';
       case isFinishedForTeam:
         return 'FINISH';
       default:
         return null;
     }
+  });
+  /** Bracket of the match shown on the card, named by the server. */
+  private readonly currentBracketLabel = computed(
+    () =>
+      this.currentSession()?.matches.find((match) => match.id === this.currentMatch()?.id)?.group
+        ?.label ?? null,
+  );
+  /** Told to a team brought back to a bracket after losing its first match there. */
+  public readonly repechedNotice = computed(() => {
+    const bracket = this.team()?.repechedFrom;
+    return bracket
+      ? `Bonne nouvelle : vous êtes repêchés dans la ${bracket} ! Vous avez perdu votre premier match de ce tableau, mais vous faites partie des meilleurs perdants : vous continuez.`
+      : null;
+  });
+  public readonly parcoursSteps = computed(() => {
+    const team = this.team();
+    return team ? computePlayerParcours(this.sessions() ?? [], team.id, team.repechedFrom) : [];
   });
   public readonly recentResults = computed(() => historyToResults(this.matchHistory()));
 
@@ -182,7 +207,9 @@ export class PlayerTeamMatchPageComponent {
       return null;
     }
     // Not started yet: "en cours" would contradict the "En attente" status shown on the card.
-    return this.matchView()!.status === 'PENDING' ? 'Prochain match' : 'Match en cours';
+    const title = this.matchView()!.status === 'PENDING' ? 'Prochain match' : 'Match en cours';
+    const bracket = this.currentBracketLabel();
+    return bracket ? `${title} · ${bracket}` : title;
   });
 
   public readonly awaitingResync = this.store.selectSignal(selectMatchAwaitingResync);
@@ -396,6 +423,14 @@ export class PlayerTeamMatchPageComponent {
             );
         }
       });
+  }
+
+  /** A team stopped after the qualifiers keeps up with the tournament as a spectator. */
+  public followTournament(): void {
+    const code = this.tournamentData()?.code;
+    if (code) {
+      void this.router.navigate(['/spectateur', code]);
+    }
   }
 
   public goHome(): void {

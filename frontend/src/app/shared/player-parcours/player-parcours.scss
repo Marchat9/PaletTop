@@ -1,0 +1,50 @@
+:host {
+  display: block;
+}
+
+.parcours-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  ::ng-deep .icon {
+    color: var(--color-primary);
+  }
+
+  .title {
+    margin: 0;
+    font-family: var(--font-headline);
+    font-size: 1.4rem;
+  }
+}
+
+.steps {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  .step {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+
+    ::ng-deep .step-icon {
+      flex: none;
+      font-size: 1.1rem;
+      color: var(--color-status-success-text);
+    }
+
+    &.current {
+      color: var(--color-primary);
+      font-weight: 600;
+
+      ::ng-deep .step-icon {
+        color: var(--color-primary);
+      }
+    }
+  }
+}

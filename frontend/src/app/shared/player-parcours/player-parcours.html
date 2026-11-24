@@ -1,0 +1,18 @@
+<app-card>
+  <div class="parcours-header">
+    <app-icon name="route" iconClass="icon" [ariaHidden]="true" />
+    <h3 class="title">Mon parcours</h3>
+  </div>
+  <ul class="steps">
+    @for (step of steps(); track step.key) {
+      <li class="step" [class.current]="step.state === 'current'">
+        <app-icon
+          [name]="step.state === 'current' ? 'play_circle' : 'check_circle'"
+          iconClass="step-icon"
+          [ariaHidden]="true"
+        />
+        <span class="step-text">{{ step.text }}</span>
+      </li>
+    }
+  </ul>
+</app-card>

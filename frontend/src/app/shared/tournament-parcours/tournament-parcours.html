@@ -1,0 +1,13 @@
+<app-card-collapsible [isExpanded]="expanded()">
+  <div header class="header">
+    <div class="header-title">
+      <app-icon name="route" iconClass="icon" [ariaHidden]="true" />
+      <h2 class="title">Parcours du tournoi</h2>
+    </div>
+  </div>
+
+  <div content class="parcours-content">
+    <app-plan-table [plan]="plan()" [doneRounds]="doneRounds()" [currentRound]="currentRound()" />
+    <p class="summary">{{ summary() }}</p>
+  </div>
+</app-card-collapsible>

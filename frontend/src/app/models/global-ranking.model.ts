@@ -1,8 +1,10 @@
-import { MatchGroupKey } from './matches-session.model';
 import { Nullable } from './nullable.model';
 
-/** Table a team ended in (structured tournaments), or `pools` when knocked out before any table. */
-export type RankingSection = MatchGroupKey | 'pools';
+/**
+ * Group key of the bracket a team ended in (structured tournaments), `eliminated_qualifying` for a
+ * team stopped after the qualifiers, or `pools` when knocked out before any bracket.
+ */
+export type RankingSection = string;
 
 export interface GlobalRankingEntry {
   rank: number;
@@ -18,4 +20,6 @@ export interface GlobalRankingEntry {
   buchholz: number;
   /** Section of the final standings of a structured tournament; absent or null: one ranking. */
   section?: Nullable<RankingSection>;
+  /** French label of `section`; null without section or for a team that never reached a bracket. */
+  sectionLabel?: Nullable<string>;
 }

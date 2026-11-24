@@ -49,6 +49,9 @@ import {
   toTournamentRoundHistories,
 } from 'src/app/utils/rounds-history.util';
 import { toTournamentAdminMatchGroups } from 'src/app/utils/match-groups.util';
+import { computeRepechedByBracket } from 'src/app/utils/repeched.util';
+import { RepechedList } from 'src/app/shared/repeched-list/repeched-list';
+import { TournamentParcours } from 'src/app/shared/tournament-parcours/tournament-parcours';
 import { PdfExportService } from 'src/app/services/pdf-export.service';
 import { TournamentStatus } from 'src/app/models/tournament-status.enum';
 import { TournamentNextStep } from './components/tournament-next-step/tournament-next-step';
@@ -116,7 +119,7 @@ import {
 } from 'src/app/store/tournament/tournament.selectors';
 import { TournamentDto } from 'src/app/store/tournament/tournament.models';
 import { CurrentRoundCard } from 'src/app/shared/current-round-card/current-round-card';
-import { MatchesSessionDto } from 'src/app/models/matches-session.model';
+import { MatchesSessionDto, SessionStatus } from 'src/app/models/matches-session.model';
 import { Nullable } from 'src/app/models/nullable.model';
 import { TournamentConfigurationCardComponent } from './components/tournament-configuration-card/tournament-configuration-card.component';
 import { TournamentHeaderComponent } from './components/tournament-header/tournament-header.component';
@@ -146,6 +149,8 @@ const TEAM_COUNT_CHANGED_NOTICE =
     Leaderboard,
     Button,
     RoundsHistory,
+    RepechedList,
+    TournamentParcours,
     AnimateOnChangeDirective,
   ],
   templateUrl: './admin-tournament-page.component.html',
@@ -236,6 +241,24 @@ export class AdminTournamentPageComponent implements OnInit {
   );
   public readonly currentRoundGroups = computed(() =>
     toTournamentAdminMatchGroups(this.currentSession()?.matches ?? []),
+  );
+  /** The plan of a structured tournament as the server froze it: never recomputed here. */
+  public readonly parcoursPlan = computed(() => this.tournament()?.plan ?? null);
+  /** Number of the last finished round (qualifying rounds counted, like the rounds of the plan). */
+  public readonly parcoursDoneRounds = computed(() =>
+    (this.sessions() ?? []).reduce(
+      (last, session) =>
+        session.status === SessionStatus.CLOSED ? Math.max(last, session.sessionNumber) : last,
+      0,
+    ),
+  );
+  public readonly parcoursCurrentRound = computed(
+    () =>
+      (this.sessions() ?? []).find((session) => session.status === SessionStatus.OPEN)
+        ?.sessionNumber ?? null,
+  );
+  public readonly repechedBrackets = computed(() =>
+    computeRepechedByBracket(this.sessions() ?? []),
   );
   public readonly showCurrentRound = computed(() => this.isActive() && !!this.currentSession());
   /** Where the tournament stands while no round is listed. */

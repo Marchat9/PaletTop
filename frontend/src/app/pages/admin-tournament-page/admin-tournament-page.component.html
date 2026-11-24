@@ -35,6 +35,19 @@
       (nextRound)="nextSession()"
     />
 
+    @if (parcoursPlan(); as plan) {
+      <app-tournament-parcours
+        [plan]="plan"
+        [doneRounds]="parcoursDoneRounds()"
+        [currentRound]="parcoursCurrentRound()"
+        [expanded]="isActive()"
+      />
+    }
+
+    @if (repechedBrackets().length > 0) {
+      <app-repeched-list [brackets]="repechedBrackets()" />
+    }
+
     <app-leaderboard
       [table]="rankingTable()"
       [isLoading]="rankingLoading()"

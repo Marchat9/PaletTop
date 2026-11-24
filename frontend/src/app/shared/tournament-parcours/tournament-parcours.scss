@@ -1,0 +1,38 @@
+:host {
+  display: block;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+
+  .header-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    ::ng-deep .icon {
+      color: var(--color-primary);
+    }
+
+    .title {
+      margin: 0;
+      font-family: var(--font-headline);
+      font-size: 1.8rem;
+      line-height: 1;
+    }
+  }
+}
+
+.parcours-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  min-width: 0;
+
+  .summary {
+    margin: 0;
+    color: var(--color-on-surface-variant);
+    font-size: 0.85rem;
+  }
+}

@@ -1,21 +1,5 @@
 import { Nullable } from 'src/app/models/nullable.model';
 
-export enum MatchGroupKey {
-  PRINCIPALE = 'principale',
-  THIRD_PLACE_MATCH = 'third_place_match',
-  CHALLENGE = 'challenge',
-  CONSOLANTE = 'consolante',
-  CHALLENGE_CONSOLANTE = 'challenge_consolante',
-}
-
-export const MATCH_GROUP_LABELS: Record<MatchGroupKey, string> = {
-  [MatchGroupKey.PRINCIPALE]: 'Tableau principal',
-  [MatchGroupKey.THIRD_PLACE_MATCH]: 'Petite finale (3eme place)',
-  [MatchGroupKey.CHALLENGE]: 'Challenge princial',
-  [MatchGroupKey.CONSOLANTE]: 'Consolante',
-  [MatchGroupKey.CHALLENGE_CONSOLANTE]: 'Challenge consolante',
-};
-
 export interface MatchPoolGroup {
   label: string | null;
   order: number;
@@ -24,7 +8,10 @@ export interface MatchPoolGroup {
 
 export interface MatchGroupDto {
   order: number;
-  name: MatchGroupKey;
+  /** Group key (`principale`, `consolante_2`, `challenge_consolante_1`…). */
+  name: string;
+  /** French label shown as the group title: it comes from the server. */
+  label: string;
 }
 
 export interface MatchesSessionDto {
