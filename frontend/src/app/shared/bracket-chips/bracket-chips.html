@@ -1,4 +1,4 @@
-<div class="bracket-chips" [class.dense]="dense()">
+<div class="bracket-chips" [class.dense]="dense()" [style.grid-template-columns]="gridColumns()">
   @for (chip of chips(); track chip.key) {
     <div class="bracket-chip" [class.main]="chip.main">
       <span class="bracket-chip__name">{{ chip.name }}</span>

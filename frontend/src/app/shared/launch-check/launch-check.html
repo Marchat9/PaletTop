@@ -1,0 +1,107 @@
+<div class="launch-check" [class.mobile]="mobile()">
+  <div class="launch-check__header">
+    <div>
+      <p class="launch-check__intro">
+        <strong>{{ registeredLabel() }}</strong>
+        {{ comparison() }}
+      </p>
+      <p class="launch-check__intro">Choisissez comment lancer le tournoi.</p>
+    </div>
+    <app-button
+      class="launch-check__manual"
+      variant="secondary"
+      icon="tune"
+      title="Ajuster les tableaux manuellement"
+      (clicked)="editConfiguration.emit()"
+    />
+  </div>
+
+  <div class="launch-check__layout">
+    <section
+      class="launch-check__options"
+      role="radiogroup"
+      aria-label="Configuration du lancement"
+    >
+      <span class="launch-check__label">Choisissez la configuration</span>
+
+      @for (card of cards(); track card.id) {
+        <div
+          class="option-card"
+          [class.selected]="card.selected"
+          role="radio"
+          tabindex="0"
+          [attr.aria-checked]="card.selected"
+          (click)="select.emit(card.id)"
+          (keydown.enter)="select.emit(card.id)"
+          (keydown.space)="$event.preventDefault(); select.emit(card.id)"
+        >
+          <div class="option-card__content">
+            <p class="option-card__name">
+              <span class="option-card__title">{{ card.label }}</span>
+              @if (card.recommended) {
+                <app-status-pill tone="success">Recommandé</app-status-pill>
+              }
+              <app-status-pill class="option-card__fill" [tone]="card.fill.tone">{{
+                card.fill.label
+              }}</app-status-pill>
+              @if (card.removedShort) {
+                <app-status-pill
+                  class="option-card__removed"
+                  tone="error"
+                  [title]="card.removedLabel!"
+                >
+                  <app-icon
+                    name="person_remove"
+                    iconClass="option-card__removed-icon"
+                    [ariaHidden]="true"
+                  />
+                  {{ card.removedShort }}
+                </app-status-pill>
+              }
+            </p>
+            <app-bracket-chips [brackets]="card.brackets" [dense]="true" />
+            <p class="option-card__description">{{ card.description }}</p>
+            @if (mobile()) {
+              <app-button
+                class="option-card__route"
+                variant="tertiary"
+                icon="route"
+                title="Voir le parcours"
+                [stopPropagation]="true"
+                (clicked)="view.emit(card.id)"
+              />
+            }
+          </div>
+          <app-icon
+            [name]="card.selected ? 'check_circle' : 'radio_button_unchecked'"
+            iconClass="option-card__check"
+            [ariaHidden]="true"
+          />
+        </div>
+      }
+    </section>
+
+    <section class="launch-check__route">
+      @if (selectedOption(); as option) {
+        @if (!mobile()) {
+          <span class="launch-check__label">Parcours avec « {{ option.label }} »</span>
+          <app-plan-table [plan]="option.plan" />
+        }
+        @for (notice of notices(); track notice.text) {
+          <app-inline-notice [tone]="notice.tone" [icon]="notice.icon">{{
+            notice.text
+          }}</app-inline-notice>
+        }
+        @if (needsConfirmation()) {
+          <app-switch
+            label="J'ai compris, je lance quand même avec beaucoup de repêchés"
+            [checked]="lowFillConfirmed()"
+            (checkedChange)="lowFillConfirmedChange.emit($event)"
+          />
+        }
+      } @else if (!mobile()) {
+        <p class="launch-check__hint">Choisissez une configuration pour voir son parcours.</p>
+      }
+    </section>
+  </div>
+</div>

@@ -1,0 +1,74 @@
+<div class="launch-check-popup" [class.mobile]="data.mobile">
+  <div class="launch-check-popup__header">
+    <h2 class="popup-title">
+      <app-icon name="warning" iconClass="icon" [ariaHidden]="true" />
+      Vérification avant le lancement
+    </h2>
+    @if (data.mobile) {
+      <button class="popup-close" type="button" aria-label="Fermer" (click)="cancel()">
+        <app-icon name="close" />
+      </button>
+    }
+  </div>
+
+  <div class="launch-check-popup__body">
+    @if (data.notice) {
+      <app-inline-notice tone="alert">{{ data.notice }}</app-inline-notice>
+    }
+    <app-launch-check
+      [plan]="data.plan"
+      [registeredCount]="data.registeredCount"
+      [targetCount]="data.targetCount"
+      [selectedOptionId]="selectedOptionId()"
+      [lowFillConfirmed]="lowFillConfirmed()"
+      [mobile]="data.mobile"
+      (select)="select($event)"
+      (view)="view($event)"
+      (lowFillConfirmedChange)="lowFillConfirmed.set($event)"
+      (editConfiguration)="editConfiguration()"
+    />
+  </div>
+
+  <div class="launch-check-popup__footer">
+    <app-button title="Annuler" variant="secondary" (clicked)="cancel()" />
+    <app-button
+      [title]="launchLabel"
+      variant="primary"
+      icon="play_arrow"
+      [disabled]="!canLaunch()"
+      (clicked)="launch()"
+    />
+  </div>
+
+  @if (data.mobile && viewedOption(); as option) {
+    <div class="route-sheet">
+      <div class="route-sheet__backdrop" (click)="closeView()"></div>
+      <div class="route-sheet__panel" role="dialog" aria-label="Parcours">
+        <span class="route-sheet__handle" aria-hidden="true"></span>
+        <div class="route-sheet__header">
+          <h2 class="popup-title">
+            <app-icon name="route" iconClass="icon" [ariaHidden]="true" />
+            Parcours
+          </h2>
+          <button class="popup-close" type="button" aria-label="Fermer" (click)="closeView()">
+            <app-icon name="close" />
+          </button>
+        </div>
+        <div class="route-sheet__body">
+          <p class="route-sheet__name">{{ option.label }}</p>
+          <app-bracket-chips [brackets]="option.plan.brackets" [dense]="true" />
+          <app-plan-table [plan]="option.plan" />
+        </div>
+        <div class="route-sheet__footer">
+          <app-button title="Retour" variant="secondary" (clicked)="closeView()" />
+          <app-button
+            title="Choisir cette option"
+            variant="primary"
+            icon="check"
+            (clicked)="chooseViewedOption()"
+          />
+        </div>
+      </div>
+    </div>
+  }
+</div>

@@ -73,7 +73,8 @@ function plural(count: number, singular: string): string {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PlanTable {
-  public readonly plan = input.required<TournamentPlan>();
+  /** A launch option's plan has no options of its own: only the rounds and the brackets are read. */
+  public readonly plan = input.required<Omit<TournamentPlan, 'options'>>();
   /** Number of the last finished round: the elimination rounds up to it are shown as done. */
   public readonly doneRounds = input<number>(0);
   /** Number of the round being played, highlighted. */

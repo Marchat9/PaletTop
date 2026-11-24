@@ -1,0 +1,141 @@
+:host {
+  display: block;
+}
+
+// Sticky header and footer around a body that scrolls. Desktop: a modal capped at the screen
+// height; mobile: the whole screen (the panel class is set by `openLaunchCheckPopup`).
+.launch-check-popup {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  max-height: 92dvh;
+  overflow: hidden;
+  border-radius: 0.8rem;
+  background: var(--color-surface-container-high);
+  box-shadow: 0 1rem 2.5rem var(--color-shadow-strong);
+
+  .launch-check-popup__header,
+  .launch-check-popup__footer {
+    flex: none;
+    padding: 1.4rem 2rem;
+  }
+
+  .launch-check-popup__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding-bottom: 1rem;
+  }
+
+  .launch-check-popup__body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    flex: 1 1 auto;
+    min-height: 0;
+    padding: 0 2rem 1rem;
+    overflow-y: auto;
+  }
+
+  .launch-check-popup__footer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    justify-content: flex-end;
+    border-top: 1px solid var(--color-outline-variant);
+
+    app-button {
+      min-width: 8rem;
+    }
+  }
+
+  &.mobile {
+    height: 100dvh;
+    max-height: 100dvh;
+    border-radius: 0;
+
+    .launch-check-popup__header {
+      padding: 1rem 1rem 0.75rem;
+    }
+
+    .launch-check-popup__body {
+      padding: 0 1rem 1rem;
+    }
+
+    .launch-check-popup__footer {
+      padding: 0.75rem 1rem calc(0.75rem + env(safe-area-inset-bottom, 0px));
+
+      app-button {
+        flex: 1;
+      }
+    }
+  }
+}
+
+// The route of an option, over the full-screen dialog.
+.route-sheet {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+
+  .route-sheet__backdrop {
+    position: absolute;
+    inset: 0;
+    background: var(--color-overlay-light);
+  }
+
+  .route-sheet__panel {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    max-height: 88%;
+    padding: 0.6rem 1rem calc(0.75rem + env(safe-area-inset-bottom, 0px));
+    border-radius: 1.2rem 1.2rem 0 0;
+    background: var(--color-surface-container-high);
+    box-shadow: 0 -0.5rem 1.5rem var(--color-shadow-strong);
+  }
+
+  .route-sheet__handle {
+    flex: none;
+    align-self: center;
+    width: 2.5rem;
+    height: 0.25rem;
+    border-radius: 999px;
+    background: var(--color-outline-variant);
+  }
+
+  .route-sheet__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+
+  .route-sheet__body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    min-height: 0;
+    overflow-y: auto;
+  }
+
+  .route-sheet__name {
+    margin: 0;
+    font-weight: 700;
+    color: var(--color-primary);
+  }
+
+  .route-sheet__footer {
+    display: flex;
+    gap: 0.75rem;
+
+    app-button {
+      flex: 1;
+    }
+  }
+}

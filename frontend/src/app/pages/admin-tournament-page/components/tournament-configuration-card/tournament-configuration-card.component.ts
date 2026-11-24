@@ -2,7 +2,17 @@ import {
   ScoreCalculationsByMode,
   DEFAULT_SCORE_CALCULATIONS_BY_MODE,
 } from 'src/app/models/app-setting.model';
-import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import {
+  afterNextRender,
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  inject,
+  Injector,
+  input,
+  output,
+  viewChild,
+} from '@angular/core';
 import { Nullable } from 'src/app/models/nullable.model';
 import { CardCollapsible } from 'src/app/shared/card-collapsible/card-collapsible';
 import { Icon } from 'src/app/shared/icon/icon';
@@ -14,6 +24,9 @@ import {
 } from 'src/app/shared/tournament-configuration/tournament-configuration-form.model';
 import { BracketPanelState, PlanSimulationState } from 'src/app/models/tournament-plan.model';
 import { TournamentConfigurationDto } from 'src/app/models/tournament-configuration.model';
+
+/** A little more than the opening animation of `app-card-collapsible` (220 ms). */
+const CARD_OPENING_MS = 260;
 
 @Component({
   selector: 'app-tournament-configuration-card',
@@ -44,4 +57,32 @@ export class TournamentConfigurationCardComponent {
   /** The form is built: the page watches it to run the live preview. */
   public readonly formReady = output<TournamentConfigurationForm>();
   // ==============================
+
+  private readonly card = viewChild.required(CardCollapsible);
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly injector = inject(Injector);
+
+  /**
+   * Opens the card and brings the parameters specific to the mode (where the consolations are set) into view: the
+   * launch check sends the admin here.
+   */
+  public reveal(): void {
+    const card = this.card();
+    // A folded card is 0 high until its opening animation ends: scrolling before would aim at
+    // the wrong place (and the browser cancels a smooth scroll when the layout moves).
+    const wasFolded = !card.isExpanded();
+    card.isExpanded.set(true);
+    afterNextRender(
+      () =>
+        setTimeout(
+          () =>
+            (
+              this.host.nativeElement.querySelector('#tournament-mode-specific') ??
+              this.host.nativeElement
+            ).scrollIntoView({ behavior: 'smooth', block: 'start' }),
+          wasFolded ? CARD_OPENING_MS : 0,
+        ),
+      { injector: this.injector },
+    );
+  }
 }

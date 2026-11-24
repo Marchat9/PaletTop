@@ -1,0 +1,27 @@
+<div class="start-summary-popup popup-surface" [class.sheet]="data.mobile">
+  @if (data.mobile) {
+    <span class="handle" aria-hidden="true"></span>
+  }
+  <div class="popup-header">
+    <h2 class="popup-title">
+      <app-icon name="warning" iconClass="icon" [ariaHidden]="true" />
+      Démarrer le tournoi
+    </h2>
+  </div>
+
+  <div class="start-summary-popup__body">
+    <p class="popup-subtitle">
+      Cette action est irréversible. Les équipes seront réparties aléatoirement dans les poules et
+      les matchs du premier round seront générés.
+    </p>
+    @if (data.notice) {
+      <app-inline-notice tone="alert">{{ data.notice }}</app-inline-notice>
+    }
+    <app-start-summary [plan]="data.plan" />
+  </div>
+
+  <div class="actions">
+    <app-button title="Annuler" variant="secondary" (clicked)="cancel()" />
+    <app-button title="Démarrer" variant="primary" icon="check" (clicked)="confirm()" />
+  </div>
+</div>

@@ -1,0 +1,46 @@
+:host {
+  display: block;
+}
+
+// The shell (background, header, close button) comes from `.popup-surface`, in styles/dialog.scss.
+.start-summary-popup {
+  max-height: 92dvh;
+  overflow: hidden;
+
+  .start-summary-popup__body {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    min-height: 0;
+    overflow-y: auto;
+  }
+
+  .actions {
+    display: flex;
+    flex: none;
+    flex-wrap: wrap;
+    gap: 1rem;
+
+    app-button {
+      flex: 1;
+      min-width: 8rem;
+    }
+  }
+
+  // Bottom sheet (see `.popup-sheet-panel` in styles/overload.scss).
+  &.sheet {
+    width: 100%;
+    gap: 0.75rem;
+    padding: 0.6rem 1.25rem calc(1rem + env(safe-area-inset-bottom, 0px));
+    border-radius: 1.2rem 1.2rem 0 0;
+
+    .handle {
+      flex: none;
+      align-self: center;
+      width: 2.5rem;
+      height: 0.25rem;
+      border-radius: 999px;
+      background: var(--color-outline-variant);
+    }
+  }
+}

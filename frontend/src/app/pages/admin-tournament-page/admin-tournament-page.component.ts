@@ -3,11 +3,33 @@ import {
   selectMaxConsolationCount,
   selectScoreCalculationsByMode,
 } from 'src/app/store/app-settings/app-settings.selectors';
-import { BracketPanelState, PlanSimulationState } from 'src/app/models/tournament-plan.model';
+import {
+  BracketPanelState,
+  LaunchChoice,
+  PlanSimulationState,
+  TournamentPlan,
+} from 'src/app/models/tournament-plan.model';
+import {
+  EDIT_CONFIGURATION,
+  openLaunchCheckPopup,
+} from 'src/app/modales/launch-check-popup/launch-check-popup';
+import { openStartSummaryPopup } from 'src/app/modales/start-summary-popup/start-summary-popup';
+import {
+  buildLaunchPlanBody,
+  isSummaryLaunch,
+  launchChoiceOfConfiguration,
+  launchChoiceOfOption,
+} from 'src/app/utils/launch-check.util';
 import { openPlanSimulationSheet } from 'src/app/modales/plan-simulation-popup/plan-simulation-popup';
 import { LEADERBOARD_MOBILE_QUERY } from 'src/app/utils/leaderboard-dialog.util';
-import { previewPlan, simulatePlan } from 'src/app/store/tournament-plan/tournament-plan.actions';
 import {
+  previewLaunchPlan,
+  previewPlan,
+  simulatePlan,
+} from 'src/app/store/tournament-plan/tournament-plan.actions';
+import {
+  selectLaunchPlan,
+  selectLaunchPlanLoading,
   selectPlanPreview,
   selectPlanPreviewLoading,
   selectSimulatedPlan,
@@ -43,6 +65,7 @@ import {
   inject,
   OnInit,
   signal,
+  untracked,
   DestroyRef,
   viewChild,
 } from '@angular/core';
@@ -88,8 +111,10 @@ import {
   selectCurrentTournamentIsLoading,
   selectNextSessionLoading,
   selectStartTournamentLoading,
+  selectStartTournamentTeamCountChanged,
   selectTournamentUpdateConfigLoading,
 } from 'src/app/store/tournament/tournament.selectors';
+import { TournamentDto } from 'src/app/store/tournament/tournament.models';
 import { CurrentRoundCard } from 'src/app/shared/current-round-card/current-round-card';
 import { MatchesSessionDto } from 'src/app/models/matches-session.model';
 import { Nullable } from 'src/app/models/nullable.model';
@@ -104,6 +129,9 @@ import { selectTournamentClubSuggestions } from 'src/app/store/tournament-club/t
 import { selectSessions } from 'src/app/store/session/session.selectors';
 import { selectAdminUpdateScoreLoading } from 'src/app/store/match/match.selectors';
 import { onResyncRequested } from 'src/app/utils/resync-on-reconnect.util';
+
+const TEAM_COUNT_CHANGED_NOTICE =
+  "Le nombre d'équipes a changé depuis la dernière vérification : voici le parcours à jour.";
 
 @Component({
   selector: 'app-admin-tournament-page',
@@ -145,14 +173,20 @@ export class AdminTournamentPageComponent implements OnInit {
   public readonly clubSuggestions = this.store.selectSignal(selectTournamentClubSuggestions);
 
   // Loadings
+  /** The tournament is being fetched, a first time or again. */
+  private readonly tournamentFetching = this.store.selectSignal(selectCurrentTournamentIsLoading);
   public readonly tournamentLoading = computed(
-    () => !this.tournament() && this.store.selectSignal(selectCurrentTournamentIsLoading)(),
+    () => !this.tournament() && this.tournamentFetching(),
   );
   public readonly completeLoading = this.store.selectSignal(selectCompleteTournamentLoading);
   public readonly isUpdateConfigLoading = this.store.selectSignal(
     selectTournamentUpdateConfigLoading,
   );
   public readonly startLoading = this.store.selectSignal(selectStartTournamentLoading);
+  private readonly launchPlan = this.store.selectSignal(selectLaunchPlan);
+  private readonly launchPlanLoading = this.store.selectSignal(selectLaunchPlanLoading);
+  /** The start is busy from the launch check to the answer of the server. */
+  public readonly startPending = computed(() => this.startLoading() || this.launchPlanLoading());
   public readonly nextLoading = this.store.selectSignal(selectNextSessionLoading);
   public readonly scoreUpdateLoading = this.store.selectSignal(selectAdminUpdateScoreLoading);
   public readonly rankingLoading = computed(
@@ -250,6 +284,22 @@ export class AdminTournamentPageComponent implements OnInit {
   private previewSequence = 0;
   private simulationSequence = 0;
 
+  // Launch check: the plan of the registered teams is asked for, then the right popup opens.
+  private readonly teamCountChanged = this.store.selectSignal(
+    selectStartTournamentTeamCountChanged,
+  );
+  private readonly launchRequested = signal(false);
+  /** Team count the launch check is computed for: the start refuses (409) any other count. */
+  private launchTeamCount = 0;
+  private launchNotice: Nullable<string> = null;
+  /** The start was sent from this page: its refusal (409) is ours to answer. */
+  private startSent = false;
+  /**
+   * After a refusal (409): the tournament the refused check was computed from. The check runs
+   * again once the tournament fetched anew replaces it, with the teams registered right now.
+   */
+  private readonly staleTournament = signal<Nullable<TournamentDto>>(null);
+
   // Simulation (« et si j'ai X équipes ? »): its plan is requested apart from the preview of the form.
   private readonly simulatedPlan = this.store.selectSignal(selectSimulatedPlan);
   private readonly simulationError = this.store.selectSignal(selectSimulationError);
@@ -297,6 +347,40 @@ export class AdminTournamentPageComponent implements OnInit {
     effect(() => {
       if (!this.tournament() && !this.tournamentLoading()) {
         this.reconnectAsAdmin();
+      }
+    });
+
+    // The launch check opens once its plan is there (it is cleared when asked for again).
+    effect(() => {
+      const plan = this.launchPlan();
+      if (plan && this.launchRequested()) {
+        untracked(() => {
+          this.launchRequested.set(false);
+          this.openLaunchPopup(plan);
+        });
+      }
+    });
+
+    // The teams moved since the check: nothing in the store says how many there are now, so the
+    // tournament is fetched again before the new check.
+    effect(() => {
+      if (this.teamCountChanged() && this.startSent) {
+        untracked(() => {
+          this.startSent = false;
+          this.reloadBeforeLaunchCheck();
+        });
+      }
+    });
+
+    // The tournament fetched anew is there: check again, and say why.
+    effect(() => {
+      const stale = this.staleTournament();
+      const tournament = this.tournament();
+      if (stale && tournament && tournament !== stale && !this.tournamentFetching()) {
+        untracked(() => {
+          this.staleTournament.set(null);
+          this.requestLaunchCheck(TEAM_COUNT_CHANGED_NOTICE);
+        });
       }
     });
 
@@ -535,6 +619,86 @@ export class AdminTournamentPageComponent implements OnInit {
   }
 
   public startTournament(): void {
+    this.requestLaunchCheck(null);
+  }
+
+  /** Asks for the plan of the registered teams; a mode without a plan has its plain confirmation. */
+  private requestLaunchCheck(notice: Nullable<string>): void {
+    const tournament = this.tournament();
+    if (!tournament || this.startPending()) {
+      return;
+    }
+    const body = buildLaunchPlanBody(tournament);
+    if (!body) {
+      this.confirmPlainStart();
+      return;
+    }
+    this.launchNotice = notice;
+    this.launchTeamCount = body.teamCount;
+    this.launchRequested.set(true);
+    this.store.dispatch(previewLaunchPlan({ body }));
+  }
+
+  private reloadBeforeLaunchCheck(): void {
+    const tournament = this.tournament();
+    const password = this.adminPassword();
+    if (!tournament || !password) {
+      return;
+    }
+    this.staleTournament.set(tournament);
+    this.store.dispatch(connectTournamentAdministrator({ code: tournament.code, password }));
+  }
+
+  /** Exactly the planned count: a summary to confirm. Otherwise: the options to choose from. */
+  private openLaunchPopup(plan: TournamentPlan): void {
+    const tournament = this.tournament();
+    if (!tournament) {
+      return;
+    }
+    const registeredCount = this.launchTeamCount;
+    const notice = this.launchNotice;
+    this.launchNotice = null;
+    const mobile = this.isMobile();
+
+    if (isSummaryLaunch(plan)) {
+      openStartSummaryPopup(this.dialog, this.overlay, { plan, mobile, notice }).closed.subscribe(
+        (confirmed) => {
+          if (confirmed) {
+            this.sendStart(launchChoiceOfConfiguration(tournament, registeredCount));
+          }
+        },
+      );
+      return;
+    }
+
+    openLaunchCheckPopup(this.dialog, {
+      plan,
+      registeredCount,
+      targetCount: tournament.configuration.maxTeamCapacity,
+      mobile,
+      notice,
+    }).closed.subscribe((result) => {
+      if (result === EDIT_CONFIGURATION) {
+        this.configurationCard()?.reveal();
+        return;
+      }
+      const optionId = result;
+      const option = plan.options.find((candidate) => candidate.id === optionId);
+      if (option) {
+        this.sendStart(launchChoiceOfOption(option, registeredCount));
+      }
+    });
+  }
+
+  private sendStart(launchChoice: LaunchChoice): void {
+    if (this.startLoading()) {
+      return;
+    }
+    this.startSent = true;
+    this.store.dispatch(startTournament({ launchChoice }));
+  }
+
+  private confirmPlainStart(): void {
     const data: ConfirmationData = {
       title: 'Démarrer le tournoi',
       message:
@@ -557,6 +721,7 @@ export class AdminTournamentPageComponent implements OnInit {
   }
 
   private readonly teamCard = viewChild(TournamentTeamConfigurationCard);
+  private readonly configurationCard = viewChild(TournamentConfigurationCardComponent);
 
   /** From the next-step card: open the team creation (sheet on mobile, form on desktop). */
   public addTeam(): void {

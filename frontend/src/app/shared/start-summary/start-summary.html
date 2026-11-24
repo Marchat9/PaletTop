@@ -1,0 +1,31 @@
+<div class="start-summary">
+  <p class="start-summary__headline">
+    <app-icon name="check_circle" iconClass="start-summary__headline-icon" [ariaHidden]="true" />
+    {{ headline() }}
+  </p>
+
+  <app-bracket-chips [brackets]="plan().brackets" [columns]="bracketsPerRow" />
+
+  <div class="start-summary__figures">
+    <div class="start-summary__figure">
+      <b>{{ plan().totalRounds }}</b>
+      <span>{{ roundsLabel() }}</span>
+    </div>
+    <div class="start-summary__figure">
+      <b>{{ plan().maxPlates }}</b>
+      <span>{{ platesLabel() }}</span>
+    </div>
+  </div>
+
+  <app-button
+    class="start-summary__toggle"
+    variant="tertiary"
+    icon="route"
+    [title]="routeToggleLabel()"
+    (clicked)="toggleRoute()"
+  />
+
+  @if (routeOpen()) {
+    <app-plan-table [plan]="plan()" />
+  }
+</div>

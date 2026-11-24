@@ -61,13 +61,18 @@ export interface TounamentTeamMatchTeamResumeDto {
   name: string;
 }
 
+export interface StartTournamentStatus extends ApiCallStatus {
+  /** The last start was refused because the team count changed since the launch check. */
+  teamCountChanged: boolean;
+}
+
 export interface TournamentAdminRequest {
   tournamentCreation: ApiCallStatus;
   updateConfiguration: ApiCallStatus;
   updateTeams: ApiCallStatus;
   updateTeam: ApiCallStatus;
   deleteTeam: ApiCallStatus;
-  startTournament: ApiCallStatus;
+  startTournament: StartTournamentStatus;
   nextSession: ApiCallStatus;
   completeTournament: ApiCallStatus;
 }

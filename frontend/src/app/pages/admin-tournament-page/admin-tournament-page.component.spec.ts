@@ -2,8 +2,14 @@ import { Dialog } from '@angular/cdk/dialog';
 import { FormControl, FormGroup } from '@angular/forms';
 import { TournamentConfigurationForm } from 'src/app/shared/tournament-configuration/tournament-configuration-form.model';
 import { selectMaxConsolationCount } from 'src/app/store/app-settings/app-settings.selectors';
-import { previewPlan, simulatePlan } from 'src/app/store/tournament-plan/tournament-plan.actions';
 import {
+  previewLaunchPlan,
+  previewPlan,
+  simulatePlan,
+} from 'src/app/store/tournament-plan/tournament-plan.actions';
+import {
+  selectLaunchPlan,
+  selectLaunchPlanLoading,
   selectPlanPreview,
   selectPlanPreviewLoading,
   selectSimulatedPlan,
@@ -38,9 +44,16 @@ import {
   selectCurrentTournamentIsLoading,
   selectNextSessionLoading,
   selectStartTournamentLoading,
+  selectStartTournamentTeamCountChanged,
   selectTournamentUpdateConfigLoading,
 } from 'src/app/store/tournament/tournament.selectors';
-import { TournamentDto } from 'src/app/store/tournament/tournament.models';
+import { TournamentDto, TounamentTeamDto } from 'src/app/store/tournament/tournament.models';
+import { startTournament } from 'src/app/store/tournament/tournament.match.actions';
+import { LaunchCheckPopup } from 'src/app/modales/launch-check-popup/launch-check-popup';
+import { StartSummaryPopup } from 'src/app/modales/start-summary-popup/start-summary-popup';
+import { ConfirmationPopupComponent } from 'src/app/modales/confirmation-popup/confirmation-popup';
+import { TournamentPlan } from 'src/app/models/tournament-plan.model';
+import { exactCountPlan, fewerTeamsPlan, impossiblePlan } from 'src/app/utils/launch-plan.fixtures';
 import { TournamentConfiguration } from 'src/app/shared/tournament-configuration/tournament-configuration';
 import {
   clearTournamentClubSuggestions,
@@ -54,7 +67,15 @@ import type { TDocumentDefinitions } from 'pdfmake/interfaces';
 import { PdfExportService } from 'src/app/services/pdf-export.service';
 import { TournamentTeamConfigurationCard } from './components/tournament-team-configuration-card/tournament-team-configuration-card';
 
-function buildTournament(status = TournamentStatus.ACTIVE): TournamentDto {
+function buildTeams(count: number): TounamentTeamDto[] {
+  return Array.from({ length: count }, (_, index) => ({
+    id: `team-${index}`,
+    name: `Equipe ${index}`,
+    players: [],
+  }));
+}
+
+function buildTournament(status = TournamentStatus.ACTIVE, teamCount = 0): TournamentDto {
   return {
     id: 't1',
     code: 'ABCD',
@@ -71,7 +92,7 @@ function buildTournament(status = TournamentStatus.ACTIVE): TournamentDto {
       competitionConfiguration: {},
     },
     status,
-    teams: [],
+    teams: buildTeams(teamCount),
     createdAt: new Date().toISOString(),
     tournamentStatus: null,
   };
@@ -114,6 +135,7 @@ interface SetupOptions {
   sessions?: MatchesSessionDto[];
   pdfDownload?: () => Promise<void>;
   paramMap?: Observable<ParamMap>;
+  tournament?: TournamentDto;
 }
 
 function setup({
@@ -123,6 +145,7 @@ function setup({
   sessions = [],
   pdfDownload = () => Promise.resolve(),
   paramMap = of(convertToParamMap({ tournamentCode: 'ABCD' })),
+  tournament = buildTournament(status),
 }: SetupOptions = {}) {
   const activatedRoute = { paramMap } as unknown as ActivatedRoute;
   const routerMock = { navigate: vi.fn() };
@@ -148,7 +171,10 @@ function setup({
           { selector: selectPlanPreviewLoading, value: false },
           { selector: selectSimulatedPlan, value: null },
           { selector: selectSimulationError, value: null },
-          { selector: selectCurrentTournamentData, value: buildTournament(status) },
+          { selector: selectLaunchPlan, value: null },
+          { selector: selectLaunchPlanLoading, value: false },
+          { selector: selectStartTournamentTeamCountChanged, value: false },
+          { selector: selectCurrentTournamentData, value: tournament },
           {
             selector: selectCurrentTournamentAdminInformations,
             value: { code: 'ABCD', password: 'secret' },
@@ -171,7 +197,7 @@ function setup({
 
   const fixture = TestBed.createComponent(AdminTournamentPageComponent);
   const store = TestBed.inject(MockStore);
-  return { fixture, store, actions$, pdfExport };
+  return { fixture, store, actions$, pdfExport, dialogMock };
 }
 
 // The first render of this large page takes about 1 s alone, but went past the default 5 s when
@@ -448,5 +474,175 @@ describe('AdminTournamentPageComponent', { timeout: 15_000 }, () => {
     expect(pdfExport.download).toHaveBeenCalledTimes(1);
     expect(pdfExport.download.mock.calls[0][1]).toBe('matchs-tournoi-test.pdf');
     expect(fixture.componentInstance.isMatchesExporting()).toBe(false);
+  });
+
+  describe('launch check', () => {
+    function draftWith(teamCount: number, competitionMode = 'standard'): TournamentDto {
+      const tournament = buildTournament(TournamentStatus.DRAFT, teamCount);
+      return {
+        ...tournament,
+        configuration: {
+          ...tournament.configuration,
+          maxTeamCapacity: 128,
+          competitionMode: competitionMode as TournamentDto['configuration']['competitionMode'],
+          competitionConfiguration: { consolationCount: 2 },
+        },
+      };
+    }
+
+    function launch(teamCount: number, plan: TournamentPlan, competitionMode = 'standard') {
+      const closed$ = new Subject<unknown>();
+      const context = setup({ tournament: draftWith(teamCount, competitionMode) });
+      context.dialogMock.open.mockReturnValue({ closed: closed$ });
+      const dispatchSpy = vi.spyOn(context.store, 'dispatch');
+      context.fixture.detectChanges();
+
+      context.fixture.componentInstance.startTournament();
+      context.store.overrideSelector(selectLaunchPlan, plan);
+      context.store.refreshState();
+      context.fixture.detectChanges();
+      return { ...context, closed$, dispatchSpy };
+    }
+
+    function dispatched(dispatchSpy: { mock: { calls: unknown[][] } }, type: string) {
+      return dispatchSpy.mock.calls
+        .map(([action]) => action as Action & Record<string, unknown>)
+        .filter((action) => action.type === type);
+    }
+
+    it('previews the saved configuration with the teams registered right now', () => {
+      const { dispatchSpy } = launch(117, fewerTeamsPlan());
+
+      const [request] = dispatched(dispatchSpy, previewLaunchPlan.type);
+      expect(request['body']).toEqual({
+        competitionMode: 'standard',
+        competitionConfiguration: { consolationCount: 2 },
+        teamCount: 117,
+        targetCount: 128,
+      });
+    });
+
+    it('opens the summary when the count is the planned one, with no option to pick', () => {
+      const { dialogMock } = launch(128, exactCountPlan());
+
+      expect(dialogMock.open).toHaveBeenCalledTimes(1);
+      expect(dialogMock.open.mock.calls[0][0]).toBe(StartSummaryPopup);
+    });
+
+    it('opens the options, never the summary, for an impossible plan', () => {
+      const { dialogMock } = launch(3, impossiblePlan());
+
+      expect(dialogMock.open).toHaveBeenCalledTimes(1);
+      expect(dialogMock.open.mock.calls[0][0]).toBe(LaunchCheckPopup);
+    });
+
+    it('starts after the summary with the saved configuration and the checked count', () => {
+      const { closed$, dispatchSpy } = launch(128, exactCountPlan());
+
+      closed$.next(true);
+
+      expect(dispatched(dispatchSpy, startTournament.type)).toEqual([
+        startTournament({
+          launchChoice: {
+            expectedTeamCount: 128,
+            consolationCount: 2,
+            eliminatedAfterQualifying: 0,
+          },
+        }),
+      ]);
+    });
+
+    it('does not start when the summary is cancelled', () => {
+      const { closed$, dispatchSpy } = launch(128, exactCountPlan());
+
+      closed$.next(false);
+
+      expect(dispatched(dispatchSpy, startTournament.type)).toEqual([]);
+    });
+
+    it('opens the options when the count differs from the planned one', () => {
+      const { dialogMock } = launch(117, fewerTeamsPlan());
+
+      expect(dialogMock.open).toHaveBeenCalledTimes(1);
+      expect(dialogMock.open.mock.calls[0][0]).toBe(LaunchCheckPopup);
+      expect(dialogMock.open.mock.calls[0][1].data).toMatchObject({
+        registeredCount: 117,
+        targetCount: 128,
+        notice: null,
+      });
+    });
+
+    it('starts with the values of the chosen option', () => {
+      const { closed$, dispatchSpy } = launch(117, fewerTeamsPlan());
+
+      closed$.next('stop_last');
+
+      expect(dispatched(dispatchSpy, startTournament.type)).toEqual([
+        startTournament({
+          launchChoice: {
+            expectedTeamCount: 117,
+            consolationCount: 2,
+            eliminatedAfterQualifying: 5,
+          },
+        }),
+      ]);
+    });
+
+    it('does not start when the options are closed without a choice', () => {
+      const { closed$, dispatchSpy } = launch(117, fewerTeamsPlan());
+
+      closed$.next(undefined);
+
+      expect(dispatched(dispatchSpy, startTournament.type)).toEqual([]);
+    });
+
+    it('fetches the teams again, then checks again with a notice, when the count changed', () => {
+      const { closed$, store, fixture, dialogMock, dispatchSpy } = launch(117, fewerTeamsPlan());
+      closed$.next('keep');
+      expect(dispatched(dispatchSpy, previewLaunchPlan.type)).toHaveLength(1);
+
+      store.overrideSelector(selectStartTournamentTeamCountChanged, true);
+      store.overrideSelector(selectCurrentTournamentIsLoading, true);
+      store.refreshState();
+      fixture.detectChanges();
+
+      // The store does not know the new count: the tournament is fetched before any new check.
+      expect(dispatchSpy).toHaveBeenCalledWith(
+        connectTournamentAdministrator({ code: 'ABCD', password: 'secret' }),
+      );
+      expect(dispatched(dispatchSpy, previewLaunchPlan.type)).toHaveLength(1);
+
+      store.overrideSelector(selectCurrentTournamentData, draftWith(118));
+      store.overrideSelector(selectCurrentTournamentIsLoading, false);
+      store.refreshState();
+      fixture.detectChanges();
+
+      const checks = dispatched(dispatchSpy, previewLaunchPlan.type);
+      expect(checks).toHaveLength(2);
+      expect(checks[1]['body']).toMatchObject({ teamCount: 118 });
+      store.overrideSelector(selectLaunchPlan, { ...fewerTeamsPlan() });
+      store.refreshState();
+      fixture.detectChanges();
+      expect(dialogMock.open).toHaveBeenCalledTimes(2);
+      expect(dialogMock.open.mock.calls[1][1].data.notice).toContain(
+        "Le nombre d'équipes a changé",
+      );
+      expect(dialogMock.open.mock.calls[1][1].data.registeredCount).toBe(118);
+    });
+
+    it('keeps the plain confirmation for a mode without a plan', () => {
+      const closed$ = new Subject<unknown>();
+      const { fixture, store, dialogMock } = setup({ tournament: draftWith(8, 'up_down') });
+      dialogMock.open.mockReturnValue({ closed: closed$ });
+      const dispatchSpy = vi.spyOn(store, 'dispatch');
+      fixture.detectChanges();
+
+      fixture.componentInstance.startTournament();
+      closed$.next(true);
+
+      expect(dialogMock.open.mock.calls[0][0]).toBe(ConfirmationPopupComponent);
+      expect(dispatched(dispatchSpy, previewLaunchPlan.type)).toEqual([]);
+      expect(dispatched(dispatchSpy, startTournament.type)).toEqual([startTournament({})]);
+    });
   });
 });

@@ -1,4 +1,4 @@
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { Action, Store } from '@ngrx/store';
@@ -307,7 +307,13 @@ export class TournamentEffects {
           .pipe(
             switchMap((tournament) => of(startTournamentSuccess({ tournament }))),
             catchError((error) =>
-              of(startTournamentFailure({ error: convertErrorToString(error) })),
+              of(
+                startTournamentFailure({
+                  error: convertErrorToString(error),
+                  teamCountChanged:
+                    error instanceof HttpErrorResponse && error.status === HttpStatusCode.Conflict,
+                }),
+              ),
             ),
           ),
       ),
@@ -367,6 +373,8 @@ export class TournamentEffects {
         updateTournamentAdministratorSingleTeamFailure,
         removeTournamentAdministratorTeamFailure,
       ),
+      // A start refused because the teams moved is answered by the page with a new check.
+      filter((action) => action.type !== startTournamentFailure.type || !action.teamCountChanged),
       map(({ error }) =>
         addNotification({
           notification: {

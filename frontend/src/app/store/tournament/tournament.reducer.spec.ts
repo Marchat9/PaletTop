@@ -9,6 +9,7 @@ import {
   loadTournamentInformationSuccess,
 } from './tournament.actions';
 import { connectTournamentAdministratorSuccess } from './tournament.admin.actions';
+import { startTournament, startTournamentFailure } from './tournament.match.actions';
 import { TournamentDto } from './tournament.models';
 import { initialTournamentState, tournamentReducer } from './tournament.reducer';
 
@@ -82,6 +83,33 @@ describe('tournamentReducer', () => {
       );
 
       expect(state.isAdminView).toBe(false);
+    });
+  });
+
+  describe('lancement', () => {
+    it('retient qu’un refus 409 vient du nombre d’équipes', () => {
+      const state = tournamentReducer(
+        initialTournamentState,
+        startTournamentFailure({ error: 'Changé', teamCountChanged: true }),
+      );
+
+      expect(state.adminRequest.startTournament).toEqual({
+        isLoading: false,
+        error: 'Changé',
+        teamCountChanged: true,
+      });
+    });
+
+    it('oublie ce refus au lancement suivant', () => {
+      const refused = tournamentReducer(
+        initialTournamentState,
+        startTournamentFailure({ error: 'Changé', teamCountChanged: true }),
+      );
+
+      const state = tournamentReducer(refused, startTournament({}));
+
+      expect(state.adminRequest.startTournament.teamCountChanged).toBe(false);
+      expect(state.adminRequest.startTournament.isLoading).toBe(true);
     });
   });
 });

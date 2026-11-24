@@ -59,7 +59,7 @@ export const initialTournamentState: TournamentState = {
     updateTeams: { isLoading: false, error: null },
     updateTeam: { isLoading: false, error: null },
     deleteTeam: { isLoading: false, error: null },
-    startTournament: { isLoading: false, error: null },
+    startTournament: { isLoading: false, error: null, teamCountChanged: false },
     nextSession: { isLoading: false, error: null },
     completeTournament: { isLoading: false, error: null },
   },
@@ -380,7 +380,7 @@ export const tournamentReducer = createReducer(
     ...state,
     adminRequest: {
       ...state.adminRequest,
-      startTournament: { isLoading: true, error: null },
+      startTournament: { isLoading: true, error: null, teamCountChanged: false },
     },
   })),
   on(startTournamentSuccess, (state, { tournament }) => ({
@@ -388,14 +388,14 @@ export const tournamentReducer = createReducer(
     tournament: { ...state.tournament, data: tournament },
     adminRequest: {
       ...state.adminRequest,
-      startTournament: { isLoading: false, error: null },
+      startTournament: { isLoading: false, error: null, teamCountChanged: false },
     },
   })),
-  on(startTournamentFailure, (state, { error }) => ({
+  on(startTournamentFailure, (state, { error, teamCountChanged }) => ({
     ...state,
     adminRequest: {
       ...state.adminRequest,
-      startTournament: { isLoading: false, error },
+      startTournament: { isLoading: false, error, teamCountChanged },
     },
   })),
 
