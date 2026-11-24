@@ -5,11 +5,7 @@
         <app-icon name="groups" iconClass="icon" />
         <span class="title">
           Configuration des équipes - (
-          <span class="number"
-            >{{ tournament()?.teams?.length ?? 0 }}/{{
-              tournament()?.configuration?.maxTeamCapacity ?? '?'
-            }}</span
-          >
+          <span class="number">{{ registeredLabel() }}</span>
           )
         </span>
       </div>

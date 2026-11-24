@@ -95,7 +95,8 @@ describe('TeamConfig', () => {
     expect(open).toHaveBeenCalledWith(
       TeamImportWizard,
       expect.objectContaining({
-        data: { existingTeamCount: 0, maxTeamCapacity: 16 },
+        // A structured tournament only targets its 16 teams: the import goes up to 256.
+        data: { existingTeamCount: 0, maxTeamCapacity: 256 },
         panelClass: 'team-import-wizard-panel',
         backdropClass: 'dialog-backdrop-light',
       }),
@@ -119,7 +120,7 @@ describe('TeamConfig', () => {
           { id: 'a', name: 'Alpha', players: [] },
           { id: 'b', name: 'Bravo', players: [] },
         ],
-        { maxTeamCapacity: 2 },
+        { maxTeamCapacity: 2, competitionMode: 'up_down' },
       ),
     );
     expect(component.canImport()).toBe(false);

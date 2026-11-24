@@ -30,7 +30,23 @@ describe('TournamentNextStep', () => {
   it('asks for teams first', () => {
     const host = render(tournament(1));
     expect(currentTitle(host)).toBe('Ajouter des équipes');
+    expect(host.textContent).toContain('1 équipe (cible 16) inscrites');
+  });
+
+  it('shows the limit of a mode whose capacity is not only a target', () => {
+    const host = render(
+      tournament(1, {
+        configuration: { maxTeamCapacity: 16, competitionMode: 'up_down' },
+      } as unknown as Partial<TournamentDto>),
+    );
     expect(host.textContent).toContain('1 / 16 équipes inscrites');
+  });
+
+  // The target of a structured tournament is not a limit: teams can still be added above it.
+  it('keeps offering to add teams above the target of a structured tournament', () => {
+    const host = render(tournament(20));
+    expect(host.querySelector('.step.is-done')?.textContent).toContain('20 équipes (cible 16)');
+    expect(host.querySelector('.step.is-done')?.textContent).toContain('ajouter une équipe');
   });
 
   it('moves on to the start once two teams are registered', () => {
@@ -84,7 +100,10 @@ describe('TournamentNextStep', () => {
       } as unknown as Partial<TournamentDto>;
       expect(importButton(render(tournament(0, championship)))).toBeUndefined();
       expect(importLink(render(tournament(3, championship)))).toBeUndefined();
-      expect(importLink(render(tournament(16)))).toBeUndefined();
+      const upDown = {
+        configuration: { maxTeamCapacity: 16, competitionMode: 'up_down' },
+      } as unknown as Partial<TournamentDto>;
+      expect(importLink(render(tournament(16, upDown)))).toBeUndefined();
     });
 
     it('emits importTeams', () => {

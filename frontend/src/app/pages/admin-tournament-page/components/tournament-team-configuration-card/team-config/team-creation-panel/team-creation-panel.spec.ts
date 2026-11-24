@@ -233,7 +233,7 @@ describe('TeamCreationPanel', () => {
 
   it('shows the max-capacity message once the live tournament is full', () => {
     const { fixture, root } = renderSheet({
-      tournament: buildTournament([ALPHA], { maxTeamCapacity: 2 }),
+      tournament: buildTournament([ALPHA], { maxTeamCapacity: 2, competitionMode: 'up_down' }),
     });
     expect(root.querySelector('app-team-form')).not.toBeNull();
 
@@ -241,12 +241,25 @@ describe('TeamCreationPanel', () => {
       'tournament',
       buildTournament([ALPHA, { id: 'team-2', code: '2222', name: 'Bravo', players: [] }], {
         maxTeamCapacity: 2,
+        competitionMode: 'up_down',
       }),
     );
     fixture.detectChanges();
     expect(root.querySelector('app-team-form')).toBeNull();
     expect(root.textContent).toContain("Nombre d'équipe maximum atteinte");
     expect(root.querySelector('.import-link')).toBeNull();
+  });
+
+  // The capacity of a structured tournament is only a target: teams can still register above it.
+  it('keeps the form above the target of a structured tournament', () => {
+    const { root } = renderSheet({
+      tournament: buildTournament(
+        [ALPHA, { id: 'team-2', code: '2222', name: 'Bravo', players: [] }],
+        { maxTeamCapacity: 2 },
+      ),
+    });
+
+    expect(root.querySelector('app-team-form')).not.toBeNull();
   });
 
   it('closes the sheet from the « Terminer » button', () => {

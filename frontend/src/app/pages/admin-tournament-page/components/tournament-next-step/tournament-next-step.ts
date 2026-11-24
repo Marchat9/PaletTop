@@ -1,5 +1,4 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
-import { environment } from '@environment';
 import { Nullable } from 'src/app/models/nullable.model';
 import { TournamentStatus } from 'src/app/models/tournament-status.enum';
 import { Button } from 'src/app/shared/button/button';
@@ -8,6 +7,7 @@ import { Icon } from 'src/app/shared/icon/icon';
 import { InlineNotice } from 'src/app/shared/inline-notice/inline-notice';
 import { TournamentDto } from 'src/app/store/tournament/tournament.models';
 import { championshipStartBlocker } from 'src/app/utils/championship-start.util';
+import { registeredTeamsLabel, registrationCapacity } from 'src/app/utils/team-capacity.util';
 import { canImportTeams } from '../tournament-team-configuration-card/team-config/team-import.utils';
 
 /** Below this, there is nobody to play against. */
@@ -36,12 +36,14 @@ export class TournamentNextStep {
 
   public readonly isDraft = computed(() => this.tournament()?.status === TournamentStatus.DRAFT);
   public readonly teamCount = computed(() => this.tournament()?.teams?.length ?? 0);
-  public readonly capacity = computed(
-    () =>
-      this.tournament()?.configuration.maxTeamCapacity ??
-      environment.tournamentConfiguration.maxTeamCapacity.max,
+  public readonly isFull = computed(
+    () => this.teamCount() >= registrationCapacity(this.tournament()),
   );
-  public readonly isFull = computed(() => this.teamCount() >= this.capacity());
+  /** « 12 / 16 équipes », or « 12 équipes (cible 16) » when the capacity is only a target. */
+  public readonly registeredLabel = computed(() => {
+    const tournament = this.tournament();
+    return tournament ? registeredTeamsLabel(tournament) : '';
+  });
 
   public readonly canImport = computed(() => canImportTeams(this.tournament()));
 

@@ -9,7 +9,7 @@ import {
   output,
   signal,
 } from '@angular/core';
-import { environment } from '@environment';
+import { registrationCapacity } from 'src/app/utils/team-capacity.util';
 import { Nullable } from 'src/app/models/nullable.model';
 import { TeamConfigEvent, TeamConfigEventType } from 'src/app/models/team-config.model';
 import { Button } from 'src/app/shared/button/button';
@@ -73,8 +73,7 @@ export class TeamCreationPanel {
     () =>
       this.isEditMode ||
       (this.resolvedTournament()?.teams?.length ?? 0) <
-        (this.resolvedTournament()?.configuration.maxTeamCapacity ??
-          environment.tournamentConfiguration.maxTeamCapacity.max),
+        registrationCapacity(this.resolvedTournament()),
   );
 
   public readonly showImportLink = computed(

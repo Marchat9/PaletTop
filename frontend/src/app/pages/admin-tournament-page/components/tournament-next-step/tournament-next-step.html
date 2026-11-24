@@ -8,7 +8,7 @@
           <span class="step-badge">1</span>
           <div class="step-text">
             <span class="step-title">Ajouter des équipes</span>
-            <span class="step-detail">{{ teamCount() }} / {{ capacity() }} équipes inscrites</span>
+            <span class="step-detail">{{ registeredLabel() }} inscrites</span>
           </div>
         </div>
         <app-button
@@ -41,7 +41,7 @@
           <div class="step-text">
             <span class="step-title">Équipes inscrites</span>
             <span class="step-detail">
-              {{ teamCount() }} / {{ capacity() }} équipes
+              {{ registeredLabel() }}
               @if (!isFull()) {
                 ·
                 <button type="button" class="link" (click)="addTeam.emit()">
