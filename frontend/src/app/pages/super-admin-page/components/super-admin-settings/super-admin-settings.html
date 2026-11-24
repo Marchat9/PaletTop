@@ -40,6 +40,59 @@
       </section>
     }
 
+    @if (maxConsolationCount() !== null) {
+      <section class="setting-block">
+        <h3 class="setting-title">Nombre maximum de consolantes</h3>
+        <p class="settings-hint">
+          Les consolantes sont nommées A, B, C… dans l'ordre. Ce nombre limite le bouton « Ajouter
+          une consolante » et les consolantes ajoutées automatiquement au lancement.
+        </p>
+        <div class="setting-field">
+          <label class="setting-label" for="max-consolation-count">
+            Maximum (de 1 à {{ maxConsolationCountLimit }})
+          </label>
+          <app-input-number
+            id="max-consolation-count"
+            [min]="1"
+            [max]="maxConsolationCountLimit"
+            [value]="maxConsolationCount()"
+            (valueChange)="onMaxConsolationCountChange($event)"
+          />
+        </div>
+        <p class="settings-hint">Aperçu : {{ consolationPreview() }}</p>
+        @if (settingMeta.max_consolation_count; as footerMeta) {
+          <app-setting-footer
+            [meta]="footerMeta"
+            (save)="onSave('max_consolation_count')"
+            (reset)="onReset('max_consolation_count')"
+          />
+        }
+      </section>
+    }
+
+    @if (fillThresholds(); as thresholds) {
+      <section class="setting-block">
+        <h3 class="setting-title">Seuils d'alerte de remplissage</h3>
+        <p class="settings-hint">
+          Deux seuils découpent le remplissage d'un tableau en trois couleurs. Le rouge oblige
+          l'admin à confirmer au lancement.
+        </p>
+        <app-threshold-gauge
+          [okRatio]="thresholds.okRatio"
+          [warningRatio]="thresholds.warningRatio"
+          (okRatioChange)="onFillThresholdsChange({ okRatio: $event })"
+          (warningRatioChange)="onFillThresholdsChange({ warningRatio: $event })"
+        />
+        @if (settingMeta.bracket_fill_thresholds; as footerMeta) {
+          <app-setting-footer
+            [meta]="footerMeta"
+            (save)="onSave('bracket_fill_thresholds')"
+            (reset)="onReset('bracket_fill_thresholds')"
+          />
+        }
+      </section>
+    }
+
     @if (tournamentCleanup() || trainingCleanup() || trainingAutoClose()) {
       <h3 class="settings-section-title">Paramètres techniques</h3>
       <p class="settings-hint">

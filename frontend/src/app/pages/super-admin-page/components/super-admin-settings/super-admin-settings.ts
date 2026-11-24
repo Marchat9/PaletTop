@@ -20,6 +20,7 @@ import {
   CompetitionMode,
   ScoreCalculation,
 } from 'src/app/models/tournament-configuration-detail.model';
+import { FillThresholds } from 'src/app/models/tournament-plan.model';
 import { CardCollapsible } from 'src/app/shared/card-collapsible/card-collapsible';
 import { Icon } from 'src/app/shared/icon/icon';
 import { InputCardCheckbox } from 'src/app/shared/input-card-checkbox/input-card-checkbox';
@@ -27,6 +28,7 @@ import { InputCardRadioOption } from 'src/app/shared/input-card-radio/input-card
 import { InputNumber } from 'src/app/shared/input-number/input-number';
 import { InputText } from 'src/app/shared/input-text/input-text';
 import { Switch } from 'src/app/shared/switch/switch';
+import { ThresholdGauge } from 'src/app/shared/threshold-gauge/threshold-gauge';
 import {
   competitionModeOptions,
   scoreCalculationOptions,
@@ -61,6 +63,10 @@ const CLEANUP_RULE_LABELS: Record<CleanupRuleName, string> = {
   active: 'Tournois actifs',
 };
 
+const MIN_CONSOLATION_COUNT = 1;
+const MAX_CONSOLATION_COUNT_LIMIT = 26;
+const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
 const SOURCE_LABELS: Record<AppSettingDetailDto['source'], string> = {
   app_default: 'Valeur par défaut',
   super_admin: 'Modifié par le super-admin',
@@ -84,6 +90,7 @@ function sourceLabel(detail: AppSettingDetailDto): string {
     InputNumber,
     InputText,
     Switch,
+    ThresholdGauge,
   ],
   templateUrl: './super-admin-settings.html',
   styleUrl: './super-admin-settings.scss',
@@ -102,6 +109,8 @@ export class SuperAdminSettingsComponent {
       this.settings().map((setting) => [setting.key, structuredClone(setting.value)]),
     ),
   );
+
+  public readonly maxConsolationCountLimit = MAX_CONSOLATION_COUNT_LIMIT;
 
   public readonly scoreCalculationOptions: InputCardRadioOption<ScoreCalculation>[] =
     scoreCalculationOptions;
@@ -148,6 +157,15 @@ export class SuperAdminSettingsComponent {
   public readonly levelHistoryDepth = computed(
     () => this.drafts().training_level_history_depth ?? null,
   );
+
+  public readonly maxConsolationCount = computed(() => this.drafts().max_consolation_count ?? null);
+  public readonly consolationPreview = computed(() =>
+    [
+      'Principale',
+      ...[...ALPHABET.slice(0, this.maxConsolationCount() ?? 0)].map((l) => `Consolante ${l}`),
+    ].join(' · '),
+  );
+  public readonly fillThresholds = computed(() => this.drafts().bracket_fill_thresholds ?? null);
 
   // ========= Draft edits =========
 
@@ -197,6 +215,17 @@ export class SuperAdminSettingsComponent {
 
   onLevelHistoryDepthChange(depth: number): void {
     this.patchDraft('training_level_history_depth', depth);
+  }
+
+  onMaxConsolationCountChange(count: number): void {
+    const clamped = Math.min(MAX_CONSOLATION_COUNT_LIMIT, Math.max(MIN_CONSOLATION_COUNT, count));
+    this.patchDraft('max_consolation_count', clamped);
+  }
+
+  onFillThresholdsChange(patch: Partial<FillThresholds>): void {
+    const current = this.fillThresholds();
+    if (!current) return;
+    this.patchDraft('bracket_fill_thresholds', { ...current, ...patch });
   }
 
   // ========= Actions =========
