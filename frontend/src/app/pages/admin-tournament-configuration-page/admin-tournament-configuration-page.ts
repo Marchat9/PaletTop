@@ -56,6 +56,7 @@ import {
   selectSimulationError,
 } from 'src/app/store/tournament-plan/tournament-plan.selectors';
 import { normalizeCode } from 'src/app/utils/code-format.util';
+import { keepSectionInView } from 'src/app/utils/keep-section-in-view.util';
 import { LEADERBOARD_MOBILE_QUERY } from 'src/app/utils/leaderboard-dialog.util';
 import { onResyncRequested } from 'src/app/utils/resync-on-reconnect.util';
 import {
@@ -271,13 +272,10 @@ export class AdminTournamentConfigurationPage implements OnInit {
     ) {
       return;
     }
-    afterNextRender(
-      () =>
-        document
-          .getElementById(MODE_SPECIFIC_SECTION_ID)
-          ?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
-      { injector: this.injector },
-    );
+    // The form is built before it has drawn its sections, and the page keeps growing around them.
+    afterNextRender(() => keepSectionInView(MODE_SPECIFIC_SECTION_ID), {
+      injector: this.injector,
+    });
   }
 
   private reconnectAsAdmin(): void {
