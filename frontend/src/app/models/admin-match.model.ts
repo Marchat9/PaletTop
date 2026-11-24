@@ -20,7 +20,7 @@ export interface AdminMatchView {
   finishedAt: Nullable<string>;
 }
 
-/** Matches of a pool or bracket (« Poule 2 », « Tableau principal »); no label when there is none. */
+/** Matches of a pool or bracket (« Poule 2 », « Principale »); no label when there is none. */
 export interface AdminMatchGroup {
   label: Nullable<string>;
   matches: AdminMatchView[];
@@ -30,7 +30,7 @@ export interface AdminMatchGroup {
 export interface AdminRoundHistory {
   id: string;
   roundNumber: number;
-  /** Phase of the round (« Qualifications », « Tableau principal »…); none for a training. */
+  /** Phase of the round (« Phase qualificative 1/4 », « Quarts de finale »…); none for a training. */
   label: Nullable<string>;
   matchCountLabel: string;
   /** Its scores can still be corrected. */

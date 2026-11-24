@@ -19,7 +19,7 @@ export interface PdfMatchGroup {
 
 export interface PdfMatchRound {
   sessionNumber: number;
-  /** Phase of the round: « Qualifications », « Tableau principal »… */
+  /** Phase of the round: « Phase qualificative 1/4 », « Quarts de finale »… */
   label: string;
   groups: PdfMatchGroup[];
 }
