@@ -1,12 +1,15 @@
 // The summary of the configuration on the left, the way to change it on the right.
 .rules-row {
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-start;
   justify-content: space-between;
   gap: 0.75rem;
 
+  // Wide enough to stay readable: on a narrow screen the button wraps below instead of squeezing
+  // the pills into a column.
   app-rule-pills {
-    flex: 1;
+    flex: 1 1 20rem;
     min-width: 0;
   }
 
