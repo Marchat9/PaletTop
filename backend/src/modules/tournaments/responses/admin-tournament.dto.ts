@@ -3,6 +3,7 @@ import { Team } from 'src/entities/team.entity';
 import { TournamentStatusInfo } from 'src/modules/tournaments/responses/tournament-status.dto';
 import { TournamentConfigurationDto } from '../dto/tournament-configuration.dto';
 import { TournamentStatus } from 'src/enum/status.enum';
+import { TournamentPlan } from '../strategies/structured/plan/plan.types';
 
 export interface TeamDto {
     id: string;
@@ -26,6 +27,8 @@ export interface TournamentMetaDto {
 
 export interface AdminTournamentDto extends TournamentMetaDto {
     teams: TeamDto[];
+    /** Frozen at launch once started, computed with the registered teams in draft; null without. */
+    plan: TournamentPlan | null;
 }
 
 export function toTeamDto(team: Team): TeamDto {
@@ -62,6 +65,7 @@ export function toTournamentMetaDto(
 export function toAdminTournamentDto(
     tournament: Tournament,
     tournamentStatus: TournamentStatusInfo | null = null,
+    plan: TournamentPlan | null = null,
 ): AdminTournamentDto {
     return {
         id: tournament.id,
@@ -74,5 +78,6 @@ export function toAdminTournamentDto(
         createdAt: tournament.createdAt.toISOString(),
         tournamentStatus,
         teams: (tournament.teams ?? []).map(toTeamDto),
+        plan,
     };
 }

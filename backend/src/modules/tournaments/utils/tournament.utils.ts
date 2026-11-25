@@ -69,17 +69,17 @@ export function extractCompetitionConfiguration(
 ): TournamentCompetitionConfiguration {
     switch (config.competitionMode) {
         case CompetitionMode.STANDARD: {
+            // `eliminatedAfterQualifying` and `plan` are written at launch only, never read from
+            // a request: the strategy reads them from the stored configuration itself.
             const structuredConfig =
                 config.competitionConfiguration as StructuredCompetitionConfiguration;
-            return {
-                hasConsolanteTable: structuredConfig.hasConsolanteTable,
-                hasChallengePrincipaleTable: structuredConfig.hasChallengePrincipaleTable,
-                hasChallengeConsolanteTable: structuredConfig.hasChallengeConsolanteTable,
-                hasThirdPlaceMatch: structuredConfig.hasThirdPlaceMatch,
-                principalBracketSize: structuredConfig.principalBracketSize,
+            const extracted: StructuredCompetitionConfiguration = {
                 numberOfQualifyingRounds: structuredConfig.numberOfQualifyingRounds,
-                numberOfPools: structuredConfig.numberOfPools,
+                consolationCount: structuredConfig.consolationCount,
+                hasChallenges: structuredConfig.hasChallenges,
+                hasThirdPlaceMatch: structuredConfig.hasThirdPlaceMatch,
             };
+            return extracted;
         }
         case CompetitionMode.UP_DOWN: {
             const upDownConfig = config.competitionConfiguration as UpDownCompetitionConfiguration;

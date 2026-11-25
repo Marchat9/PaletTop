@@ -27,6 +27,7 @@ import { TeamRepository } from './repositories/team.repository';
 import { TournamentRepository } from './repositories/tournament.repository';
 import { TournamentAuthService } from './services/tournament-auth.service';
 import { TournamentsService } from './services/tournaments.service';
+import { TournamentPlanService } from './services/tournament-plan.service';
 import { TournamentStrategyFactory } from './strategies/tournament-strategy.factory';
 import { SessionController } from 'src/modules/tournaments/controllers/session.controller';
 
@@ -62,6 +63,7 @@ import { SessionController } from 'src/modules/tournaments/controllers/session.c
         TournamentAuthService,
         TournamentClubsService,
         TournamentsService,
+        TournamentPlanService,
         PoolService,
         SessionService,
         RankingService,
@@ -76,6 +78,7 @@ import { SessionController } from 'src/modules/tournaments/controllers/session.c
         PoolRepository,
         TournamentAuthService,
         TournamentsService,
+        TournamentPlanService,
         PoolService,
         SessionService,
         RankingService,

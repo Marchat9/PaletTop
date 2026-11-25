@@ -8,8 +8,48 @@ import { GlobalRankingEntry } from '../../tournaments/responses/ranking.dto';
 import { TournamentStatusInfo } from '../../tournaments/responses/tournament-status.dto';
 import { rankTeams } from '../../tournaments/utils/ranking-calculation.utils';
 import { TournamentPool } from 'src/entities/tournament-pool.entity';
+import { FillThresholds, TournamentPlan } from './structured/plan/plan.types';
+
+/** App settings a plan depends on, read by the service layer (strategies have no settings). */
+export interface PlanSettings {
+    maxConsolations: number;
+    thresholds: FillThresholds;
+}
+
+/** What the admin confirmed in the launch dialog; absent fields keep the stored configuration. */
+export interface StartChoice {
+    consolationCount?: number;
+    eliminatedAfterQualifying?: number;
+}
+
+/** What a strategy may need to prepare the start, read by the service layer. */
+export interface StartOptions {
+    settings: PlanSettings;
+    choice: StartChoice;
+}
 
 export abstract class TournamentStrategy {
+    /**
+     * Whether `maxTeamCapacity` caps the registrations. A soft capacity is only a target: teams can
+     * register up to the absolute maximum (`MAX_TEAM_CAPACITY`).
+     */
+    isTeamCapacityHard(): boolean {
+        return true;
+    }
+
+    /**
+     * The tournament plan (brackets, rounds, warnings, launch options) for `teamCount` teams, or
+     * `null` for modes without a plan. Must not throw on a configuration that no longer fits the
+     * team count: the plan reports it as a warning.
+     */
+    computePlan(
+        _tournament: Tournament,
+        _teamCount: number,
+        _settings: PlanSettings,
+    ): TournamentPlan | null {
+        return null;
+    }
+
     canStartNextSession(session: MatchesSession): boolean {
         return (
             session.status === MatchesSessionStatus.OPEN &&
@@ -99,7 +139,10 @@ export abstract class TournamentStrategy {
      * constructed with and returns the saved entity. Callers must merge this
      * return value into their in-memory state instead of re-reading from the DB.
      */
-    async prepareTournamentStart(_tournament: Tournament): Promise<Tournament> {
+    async prepareTournamentStart(
+        _tournament: Tournament,
+        _options?: StartOptions,
+    ): Promise<Tournament> {
         // No-op par défaut — surcharger pour initialiser des données au démarrage
         return _tournament;
     }

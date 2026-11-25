@@ -23,6 +23,9 @@ import { generateNumericCode } from 'src/utils/numeric-code.util';
 import { AddMultipleTeamsToTournamentDto } from '../dto/add-team-to-tournament.dto';
 import { CreateTournamentDto } from '../dto/create-tournament.dto';
 import { UpdateTournamentConfigurationDto } from '../dto/update-tournament-configuration.dto';
+import { MAX_TEAM_CAPACITY, TournamentConfigurationDto } from '../dto/tournament-configuration.dto';
+import { StructuredTournamentConfig } from '../dto/tournament-comptetition-configuration.dto';
+import { TournamentConfiguration } from 'src/entities/tournament-configuration.entity';
 import { PlayerClubRepository } from '../repositories/player-club.repository';
 import { TeamRepository } from '../repositories/team.repository';
 import { TournamentRepository } from '../repositories/tournament.repository';
@@ -66,6 +69,34 @@ export class TournamentsService {
                 "Ce calcul des scores n'est pas disponible pour ce mode de compétition.",
             );
         }
+    }
+
+    /**
+     * A structured tournament has at most as many consolations as the app setting allows (the
+     * DTO only checks the lower bound: the upper one is a setting).
+     */
+    private async assertConsolationCountAllowed(config: TournamentConfigurationDto): Promise<void> {
+        if (config.competitionMode !== CompetitionMode.STANDARD) return;
+        const { consolationCount } = config.competitionConfiguration as StructuredTournamentConfig;
+        const max = await this.appSettingsService.get(AppSettingKey.MAX_CONSOLATION_COUNT);
+        if (consolationCount > max) {
+            this.logger.warn(`Consolation count ${consolationCount} refused (max ${max})`);
+            throw new BadRequestException(`Au maximum ${max} consolantes.`);
+        }
+    }
+
+    /** The stored configuration built from a request, the same way at creation and on update. */
+    private toTournamentConfiguration(config: TournamentConfigurationDto): TournamentConfiguration {
+        return {
+            maxTeamCapacity: config.maxTeamCapacity,
+            scoreCalculation: config.scoreCalculation,
+            pointsPerGame: config.pointsPerGame,
+            rematch: !!config.rematch,
+            matchAgainstFullSameClub: !!config.matchAgainstFullSameClub,
+            matchAgainstPartialSameClub: !!config.matchAgainstPartialSameClub,
+            competitionMode: config.competitionMode,
+            competitionConfiguration: extractCompetitionConfiguration(config),
+        };
     }
 
     async findAll(): Promise<Tournament[]> {
@@ -120,6 +151,7 @@ export class TournamentsService {
     async create(tournamentCreation: CreateTournamentDto): Promise<Tournament> {
         const config = tournamentCreation.configuration;
         await this.assertScoreCalculationOffered(config.competitionMode, config.scoreCalculation);
+        await this.assertConsolationCountAllowed(config);
 
         const tournament = this.tournamentRepo.create({
             name: tournamentCreation.name,
@@ -130,16 +162,7 @@ export class TournamentsService {
             status: TournamentStatus.DRAFT,
             teams: [],
             matches: [],
-            configuration: {
-                maxTeamCapacity: config.maxTeamCapacity,
-                scoreCalculation: config.scoreCalculation,
-                pointsPerGame: config.pointsPerGame,
-                rematch: !!config.rematch,
-                matchAgainstFullSameClub: !!config.matchAgainstFullSameClub,
-                matchAgainstPartialSameClub: !!config.matchAgainstPartialSameClub,
-                competitionMode: config.competitionMode,
-                competitionConfiguration: extractCompetitionConfiguration(config),
-            },
+            configuration: this.toTournamentConfiguration(config),
         });
 
         const saved = await this.tournamentRepo.save(tournament);
@@ -209,8 +232,12 @@ export class TournamentsService {
             );
         }
 
-        // The capacity is also checked by the form, but the API must not rely on it.
-        const capacity = tournament.configuration.maxTeamCapacity;
+        // The capacity is also checked by the form, but the API must not rely on it. A soft
+        // capacity (structured mode) is only a target: the absolute maximum applies instead.
+        const strategy = this.strategyFactory.create(tournament.configuration.competitionMode);
+        const capacity = strategy.isTeamCapacityHard()
+            ? tournament.configuration.maxTeamCapacity
+            : MAX_TEAM_CAPACITY;
         if (tournament.teams.length + dto.teams.length > capacity) {
             throw new BadRequestException(
                 `Capacité maximale atteinte : ${capacity} équipes pour ce tournoi (${tournament.teams.length} déjà inscrites).`,
@@ -314,6 +341,7 @@ export class TournamentsService {
         ) {
             await this.assertScoreCalculationOffered(competitionMode, scoreCalculation);
         }
+        await this.assertConsolationCountAllowed(dto.configuration);
 
         const mergedTournament: Tournament = {
             ...tournament,
@@ -321,8 +349,9 @@ export class TournamentsService {
             code: dto.code ?? tournament.code,
             date: dto.date ?? tournament.date,
             description: dto.description ?? tournament.description,
-            // Validated as a whole by the DTO: every stored field is overwritten.
-            configuration: { ...tournament.configuration, ...dto.configuration },
+            // Validated as a whole by the DTO and built like at creation: every stored field is
+            // overwritten, nothing else from the request is kept.
+            configuration: this.toTournamentConfiguration(dto.configuration),
         };
 
         const saved = await this.tournamentRepo.save(mergedTournament);

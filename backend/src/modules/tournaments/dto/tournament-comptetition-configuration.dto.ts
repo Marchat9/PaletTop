@@ -17,25 +17,12 @@ import { CompetitionMode, PairingMode } from 'src/enum/tounament.enum';
 
 export abstract class SpecificTournamentConfig {}
 
+/**
+ * `eliminatedAfterQualifying` and `plan` are written by the backend at launch: they are not part
+ * of this class and are dropped from the request (see `SERVER_WRITTEN_FIELDS`). The upper bound of
+ * `consolationCount` is an app setting, checked by the service.
+ */
 export class StructuredTournamentConfig extends SpecificTournamentConfig {
-    @IsBoolean()
-    hasConsolanteTable!: boolean;
-
-    @IsBoolean()
-    hasChallengePrincipaleTable!: boolean;
-
-    @IsBoolean()
-    hasChallengeConsolanteTable!: boolean;
-
-    @IsBoolean()
-    hasThirdPlaceMatch!: boolean;
-
-    // Only checked here; an out-of-range value falls back to the automatic size at tournament start.
-    @Type(() => Number)
-    @IsInt()
-    @IsOptional()
-    principalBracketSize?: number;
-
     @Type(() => Number)
     @IsInt()
     @Min(1)
@@ -43,9 +30,14 @@ export class StructuredTournamentConfig extends SpecificTournamentConfig {
 
     @Type(() => Number)
     @IsInt()
-    @Min(1)
-    @IsOptional()
-    numberOfPools?: number;
+    @Min(0)
+    consolationCount!: number;
+
+    @IsBoolean()
+    hasChallenges!: boolean;
+
+    @IsBoolean()
+    hasThirdPlaceMatch!: boolean;
 }
 
 @ValidatorConstraint({ name: 'lastRoundByRanking', async: false })
@@ -104,6 +96,19 @@ export class ChampionshipTournamentConfig extends SpecificTournamentConfig {
     awayClub!: string;
 }
 
+/** Fields of a stored configuration written by the backend only: ignored when sent by a client. */
+const SERVER_WRITTEN_FIELDS: Record<CompetitionMode, readonly string[]> = {
+    [CompetitionMode.STANDARD]: ['eliminatedAfterQualifying', 'plan'],
+    [CompetitionMode.UP_DOWN]: [],
+    [CompetitionMode.CHAMPIONSHIP]: [],
+};
+
+/** The request's configuration without the fields the backend writes itself. */
+function withoutServerWrittenFields(mode: CompetitionMode, value: object): object {
+    const ignored = SERVER_WRITTEN_FIELDS[mode];
+    return Object.fromEntries(Object.entries(value).filter(([key]) => !ignored.includes(key)));
+}
+
 const CONFIG_CLASS_BY_MODE: Record<CompetitionMode, new () => SpecificTournamentConfig> = {
     [CompetitionMode.STANDARD]: StructuredTournamentConfig,
     [CompetitionMode.UP_DOWN]: UpDownTournamentConfig,
@@ -123,7 +128,7 @@ export class CompetitionConfigConstraint implements ValidatorConstraintInterface
     validate(value: unknown, args: ValidationArguments): boolean {
         const mode = (args.object as { competitionMode?: CompetitionMode }).competitionMode;
         const configClass = mode ? CONFIG_CLASS_BY_MODE[mode] : undefined;
-        if (!configClass) {
+        if (!mode || !configClass) {
             this.message = 'Mode de compétition inconnu.';
             return false;
         }
@@ -132,7 +137,8 @@ export class CompetitionConfigConstraint implements ValidatorConstraintInterface
             return false;
         }
 
-        const errors = validateSync(plainToInstance(configClass, value), {
+        const input = withoutServerWrittenFields(mode, value);
+        const errors = validateSync(plainToInstance(configClass, input), {
             whitelist: true,
             forbidNonWhitelisted: true,
         });

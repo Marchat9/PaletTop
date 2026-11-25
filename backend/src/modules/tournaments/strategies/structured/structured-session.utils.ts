@@ -12,6 +12,35 @@ import { extractContraintConfig } from 'src/modules/tournaments/utils/tournament
 import { toPoolRef } from 'src/modules/tournaments/utils/type-orm-ref.utils';
 import { DeepPartial } from 'typeorm';
 import { GlobalRankingEntry } from '../../../tournaments/responses/ranking.dto';
+import { computePrincipalBracketSize } from '../../../tournaments/utils/bracket.utils';
+
+// TEMPORARY (Task 7): remove - the elimination generation below still reads the old tables.
+/** The old elimination tables, derived from the new structured configuration. */
+export interface LegacyEliminationTables {
+    numberOfQualifyingRounds: number;
+    hasConsolanteTable: boolean;
+    hasChallengePrincipaleTable: boolean;
+    hasChallengeConsolanteTable: boolean;
+    hasThirdPlaceMatch: boolean;
+    principalBracketSize: number;
+}
+
+// TEMPORARY (Task 7): remove - maps the new configuration to what the old generation reads: a
+// consolation table when there is at least one consolation, challenges on both tables, and the
+// automatic principal bracket size.
+export function toLegacyEliminationTables(
+    config: StructuredCompetitionConfiguration,
+    teamCount: number,
+): LegacyEliminationTables {
+    return {
+        numberOfQualifyingRounds: config.numberOfQualifyingRounds,
+        hasConsolanteTable: config.consolationCount >= 1,
+        hasChallengePrincipaleTable: config.hasChallenges,
+        hasChallengeConsolanteTable: config.hasChallenges,
+        hasThirdPlaceMatch: config.hasThirdPlaceMatch,
+        principalBracketSize: computePrincipalBracketSize(teamCount),
+    };
+}
 
 /**
  * Permet de générer les matches de qualification suivant le nombre de pool.
@@ -47,7 +76,7 @@ export function generateQualifyingMatches(
 
 export function generateEliminationMatches(
     tournament: Tournament,
-    competitionConfig: StructuredCompetitionConfiguration,
+    competitionConfig: LegacyEliminationTables,
     session: MatchesSession,
     pastMatches: TournamentMatch[],
     globalRanking: GlobalRankingEntry[],
@@ -60,7 +89,7 @@ export function generateEliminationMatches(
     // teams into the wrong tables. Winner-tracking keeps every team in exactly one table.
     const constraintConfig: ConstraintConfig = extractContraintConfig(tournament.configuration);
     const qualifyingRounds = competitionConfig.numberOfQualifyingRounds ?? 0;
-    const principalBracketSize = competitionConfig.principalBracketSize ?? tournament.teams.length;
+    const principalBracketSize = competitionConfig.principalBracketSize;
     const elimSession = session.sessionNumber - qualifyingRounds; // 1 = first elimination round
     const teamById = new Map(tournament.teams.map((t) => [t.id, t]));
 

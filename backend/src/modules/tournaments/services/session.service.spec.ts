@@ -1,8 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
 import { Tournament } from 'src/entities/tournament.entity';
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, ConflictException } from '@nestjs/common';
+import { StructuredCompetitionConfiguration } from 'src/entities/tournament-competition-configuration.entity';
 import { MatchStatus, MatchesSessionStatus, TournamentStatus } from 'src/enum/status.enum';
 import { CompetitionMode } from 'src/enum/tounament.enum';
+import { PlanSettings } from '../strategies/tournament-strategy.abstract';
+import { TournamentStrategyFactory } from '../strategies/tournament-strategy.factory';
 import { SessionService } from './session.service';
 
 // The rollback itself is done by the database; here @Transactional() just runs the method.
@@ -14,6 +17,11 @@ vi.mock('../responses/admin-tournament.dto', () => ({
     toAdminTournamentDto: vi.fn(() => ({})),
     toTournamentMetaDto: vi.fn(() => ({})),
 }));
+
+const planSettings: PlanSettings = {
+    maxConsolations: 4,
+    thresholds: { okRatio: 0.9, warningRatio: 0.75 },
+};
 
 function setup(prepareTournamentStart: () => Promise<Tournament>) {
     const tournament = {
@@ -48,8 +56,12 @@ function setup(prepareTournamentStart: () => Promise<Tournament>) {
         gateway as never,
         rankingService as never,
         strategyFactory as never,
+        {
+            buildPlan: vi.fn(async () => null),
+            getPlanSettings: vi.fn(async () => planSettings),
+        } as never,
     );
-    return { service, gateway, rankingService };
+    return { service, gateway, rankingService, tournamentRepo, sessionRepo, strategy };
 }
 
 describe('SessionService.startTournament', () => {
@@ -66,6 +78,171 @@ describe('SessionService.startTournament', () => {
         expect(gateway.emitMatchUpdated).not.toHaveBeenCalled();
         expect(rankingService.scheduleRankingUpdate).not.toHaveBeenCalled();
     });
+
+    // Review focus: a team added or removed between the launch check and « Lancer ».
+    it('refuses with a 409 when the team count changed since the launch check, before any write', async () => {
+        const { service, tournamentRepo, sessionRepo, strategy } = setup(async () => {
+            throw new Error('must not be called');
+        });
+
+        const start = service.startTournament('CODE', 'pw', { expectedTeamCount: 2 });
+        await expect(start).rejects.toThrow(ConflictException);
+        await expect(start).rejects.toThrow(
+            "Le nombre d'équipes a changé, relancez la vérification.",
+        );
+        expect(sessionRepo.save).not.toHaveBeenCalled();
+        expect(tournamentRepo.updateStatus).not.toHaveBeenCalled();
+        expect(strategy.prepareTournamentStart).not.toHaveBeenCalled();
+    });
+
+    it('passes the plan settings and the confirmed choice to the strategy', async () => {
+        const { service, strategy } = setup(async () => {
+            throw new Error('stop after prepare');
+        });
+
+        await expect(
+            service.startTournament('CODE', 'pw', {
+                expectedTeamCount: 1,
+                consolationCount: 3,
+                eliminatedAfterQualifying: 5,
+            }),
+        ).rejects.toThrow('stop after prepare');
+        expect(strategy.prepareTournamentStart).toHaveBeenCalledWith(
+            expect.objectContaining({ status: TournamentStatus.ACTIVE }),
+            {
+                settings: planSettings,
+                choice: { consolationCount: 3, eliminatedAfterQualifying: 5 },
+            },
+        );
+    });
+});
+
+/** A draft structured tournament started with the real strategy (its repositories mocked). */
+function setupStructured(teamCount: number, consolationCount: number, maxTeamCapacity = 128) {
+    const tournament = {
+        id: 'T1',
+        code: 'CODE',
+        status: TournamentStatus.DRAFT,
+        teams: Array.from({ length: teamCount }, (_, i) => ({ id: `team-${i}` })),
+        configuration: {
+            maxTeamCapacity,
+            competitionMode: CompetitionMode.STANDARD,
+            competitionConfiguration: {
+                numberOfQualifyingRounds: 4,
+                consolationCount,
+                hasChallenges: false,
+                hasThirdPlaceMatch: false,
+            },
+        },
+    } as unknown as Tournament;
+
+    const tournamentRepo = {
+        updateStatus: vi.fn(async (t: Tournament, status: TournamentStatus) => ({ ...t, status })),
+        save: vi.fn(async (t: Tournament) => t),
+    };
+    const sessionRepo = {
+        create: vi.fn((data: object) => data),
+        save: vi.fn(async (data: object) => ({ id: 'S1', ...data })),
+    };
+    const gateway = {
+        emitSessionUpdated: vi.fn(),
+        emitTournamentUpdated: vi.fn(),
+        emitMatchUpdated: vi.fn(),
+    };
+    const rankingService = { scheduleRankingUpdate: vi.fn() };
+    const factory = new TournamentStrategyFactory(
+        {} as never,
+        {} as never,
+        {} as never,
+        tournamentRepo as never,
+    );
+    const strategy = factory.create(CompetitionMode.STANDARD);
+    // Pools and matches are out of scope: only the configuration written at launch matters here.
+    vi.spyOn(strategy, 'assignTeamsToFirstPools').mockResolvedValue([]);
+    vi.spyOn(strategy, 'generateSessionMatches').mockResolvedValue([]);
+
+    const service = new SessionService(
+        tournamentRepo as never,
+        sessionRepo as never,
+        { findWithAdminAuth: vi.fn(async () => tournament) } as never,
+        gateway as never,
+        rankingService as never,
+        { create: vi.fn(() => strategy) } as never,
+        {
+            buildPlan: vi.fn(async () => null),
+            getPlanSettings: vi.fn(async () => planSettings),
+        } as never,
+    );
+    const storedConfig = (): StructuredCompetitionConfiguration =>
+        tournamentRepo.save.mock.calls[0][0].configuration
+            .competitionConfiguration as StructuredCompetitionConfiguration;
+    return { service, tournament, tournamentRepo, gateway, storedConfig };
+}
+
+describe('SessionService.startTournament (structured plan frozen at launch)', () => {
+    it('freezes the extra consolation chosen for 136 teams on a 128-team target', async () => {
+        const { service, storedConfig } = setupStructured(136, 2);
+
+        await service.startTournament('CODE', 'pw', {
+            expectedTeamCount: 136,
+            consolationCount: 3,
+            eliminatedAfterQualifying: 0,
+        });
+
+        const config = storedConfig();
+        expect(config.consolationCount).toBe(3);
+        expect(config.eliminatedAfterQualifying).toBe(0);
+        expect(config.plan!.brackets.length).toBe(4);
+        expect(config.plan!.brackets.map((b) => b.teamCount)).toEqual([64, 32, 32, 8]);
+        expect(config.plan!.brackets[3].extra).toBe(true);
+    });
+
+    it('keeps the stored configuration when an old client sends no choice', async () => {
+        const { service, storedConfig } = setupStructured(128, 2);
+
+        await service.startTournament('CODE', 'pw');
+
+        const config = storedConfig();
+        expect(config.consolationCount).toBe(2);
+        expect(config.eliminatedAfterQualifying).toBe(0);
+        expect(config.plan!.brackets.map((b) => b.capacity)).toEqual([64, 32, 32]);
+    });
+
+    it('stores the teams stopped after the qualifiers', async () => {
+        const { service, storedConfig } = setupStructured(136, 2);
+
+        await service.startTournament('CODE', 'pw', {
+            consolationCount: 2,
+            eliminatedAfterQualifying: 5,
+        });
+
+        const config = storedConfig();
+        expect(config.eliminatedAfterQualifying).toBe(5);
+        expect(config.plan!.eliminatedAfterQualifying).toBe(5);
+        expect(config.plan!.teamCount).toBe(131);
+    });
+
+    // Review focus: 2 or 3 teams cannot fill a main bracket and a consolation.
+    it.each([2, 3])(
+        'refuses an impossible plan for %i teams with a consolation, without starting',
+        async (teamCount) => {
+            const { service, tournament, tournamentRepo, gateway } = setupStructured(
+                teamCount,
+                0,
+                8,
+            );
+
+            await expect(
+                service.startTournament('CODE', 'pw', { consolationCount: 1 }),
+            ).rejects.toThrow(BadRequestException);
+            // Nothing is saved by the strategy; the status change is rolled back with the
+            // transaction, and nobody is told the tournament started.
+            expect(tournamentRepo.save).not.toHaveBeenCalled();
+            expect(tournament.status).toBe(TournamentStatus.DRAFT);
+            expect(gateway.emitSessionUpdated).not.toHaveBeenCalled();
+            expect(gateway.emitTournamentUpdated).not.toHaveBeenCalled();
+        },
+    );
 });
 
 function setupActive(status: { canGenerateNewSession: boolean; canFinishTournament: boolean }) {
@@ -104,6 +281,7 @@ function setupActive(status: { canGenerateNewSession: boolean; canFinishTourname
         gateway as never,
         rankingService as never,
         { create: vi.fn(() => strategy) } as never,
+        { buildPlan: vi.fn(async () => null) } as never,
     );
     return { service, sessionRepo, tournament, validatedSession, rankingService };
 }

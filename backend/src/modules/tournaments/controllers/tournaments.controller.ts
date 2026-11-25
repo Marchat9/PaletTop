@@ -21,6 +21,8 @@ import { AdminAccessDto } from '../dto/admin-access.dto';
 import { AdminQualifyingDto } from '../dto/admin-qualifying.dto';
 import { CreateTournamentDto } from '../dto/create-tournament.dto';
 import { JoinTournamentDto } from '../dto/join-tournament.dto';
+import { PlanPreviewDto } from '../dto/plan-preview.dto';
+import { StartTournamentDto } from '../dto/start-tournament.dto';
 import { UpdateTournamentConfigurationDto } from '../dto/update-tournament-configuration.dto';
 import { runGuarded } from 'src/utils/run-guarded.util';
 import { stripMatchTeamCodes } from '../utils/tournament.utils';
@@ -30,7 +32,9 @@ import { SpectatorTournamentDto } from '../responses/spectator-tournament.dto';
 import { TournamentStatusInfo } from '../responses/tournament-status.dto';
 import { RankingService } from '../services/ranking.service';
 import { TournamentsService } from '../services/tournaments.service';
+import { TournamentPlanService } from '../services/tournament-plan.service';
 import { TournamentStrategyFactory } from '../strategies/tournament-strategy.factory';
+import { TournamentPlan } from '../strategies/structured/plan/plan.types';
 
 @Controller('tournaments')
 export class TournamentsController {
@@ -41,6 +45,7 @@ export class TournamentsController {
         private readonly rankingService: RankingService,
         @Inject(forwardRef(() => SessionService)) private readonly sessionService: SessionService,
         private readonly strategyFactory: TournamentStrategyFactory,
+        private readonly planService: TournamentPlanService,
     ) {}
 
     @Post()
@@ -67,6 +72,17 @@ export class TournamentsController {
         }
     }
 
+    /**
+     * Stateless and public, like the creation form it serves. Declared before the `:code` routes
+     * so that it can never be taken for a tournament code.
+     */
+    @Post('plan-preview')
+    async planPreview(@Body() dto: PlanPreviewDto): Promise<TournamentPlan> {
+        return runGuarded(this.logger, 'Erreur lors du calcul des tableaux.', () =>
+            this.planService.previewPlan(dto),
+        );
+    }
+
     @Post('admin-access')
     async adminAccess(@Body() dto: AdminAccessDto): Promise<AdminTournamentDto> {
         try {
@@ -79,7 +95,8 @@ export class TournamentsController {
                 strategy,
                 tournament,
             );
-            return toAdminTournamentDto(tournament, tournamentStatus);
+            const plan = await this.planService.buildPlan(tournament, strategy);
+            return toAdminTournamentDto(tournament, tournamentStatus, plan);
         } catch (error: unknown) {
             if (error instanceof HttpException) {
                 throw error;
@@ -104,7 +121,8 @@ export class TournamentsController {
                 dto,
             );
             await this.tournamentsService.broadcastTeamNames(tournamentCode);
-            return toAdminTournamentDto(updatedTournament);
+            const plan = await this.planService.buildPlan(updatedTournament);
+            return toAdminTournamentDto(updatedTournament, null, plan);
         } catch (error: unknown) {
             if (error instanceof HttpException) {
                 throw error;
@@ -127,9 +145,12 @@ export class TournamentsController {
     async updateConfiguration(
         @UuidParam('idtournament') id: string,
         @Body() dto: UpdateTournamentConfigurationDto,
-    ): Promise<Tournament> {
+    ): Promise<AdminTournamentDto> {
         try {
-            return await this.tournamentsService.updateTournamentConfiguration(id, dto);
+            const updated = await this.tournamentsService.updateTournamentConfiguration(id, dto);
+            // The admin DTO, not the entity: its teams carry the club names, not the club entities.
+            const plan = await this.planService.buildPlan(updated);
+            return toAdminTournamentDto(updated, null, plan);
         } catch (error: unknown) {
             if (error instanceof HttpException) {
                 throw error;
@@ -174,12 +195,17 @@ export class TournamentsController {
     @Post(':code/start')
     async startTournament(
         @Param('code') code: string,
-        @Body() dto: AdminQualifyingDto,
+        @Body() dto: StartTournamentDto,
     ): Promise<AdminTournamentDto> {
         return runGuarded(
             this.logger,
             'Erreur lors du démarrage du tournoi.',
-            () => this.sessionService.startTournament(code, dto.password),
+            () =>
+                this.sessionService.startTournament(code, dto.password, {
+                    expectedTeamCount: dto.expectedTeamCount,
+                    consolationCount: dto.consolationCount,
+                    eliminatedAfterQualifying: dto.eliminatedAfterQualifying,
+                }),
             {
                 // Net against two concurrent starts (double click): the loser of the unique
                 // (tournament, session number) constraint gets a clean 409.
