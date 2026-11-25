@@ -14,7 +14,7 @@ function validate(config: Record<string, unknown>): string[] {
 
 const structuredConfig = {
     maxTeamCapacity: 16,
-    scoreCalculation: ScoreCalculation.VICTORY_AND_GOAL_AVERAGE,
+    scoreCalculation: ScoreCalculation.VICTORY_GOAL_AVERAGE,
     pointsPerGame: 13,
     competitionMode: CompetitionMode.STANDARD,
     competitionConfiguration: {

@@ -30,9 +30,9 @@ describe('APP_SETTING_DEFINITIONS', () => {
 
 describe('validateScoreCalculationsByMode', () => {
     const valid = {
-        standard: ['victory_ga', 'score'],
-        up_down: ['score'],
-        championship: ['tournament_score', 'victory_ga'],
+        standard: ['victory_goal_average', 'victory_points_scored'],
+        up_down: ['victory_points_scored'],
+        championship: ['tournament_score', 'victory_goal_average'],
     };
 
     it('accepts any calculation for any mode', () => {
@@ -46,12 +46,17 @@ describe('validateScoreCalculationsByMode', () => {
     });
 
     it('rejects unknown modes, unknown calculations and duplicates', () => {
-        expect(validateScoreCalculationsByMode({ ...valid, other: ['score'] })).toHaveLength(1);
+        expect(
+            validateScoreCalculationsByMode({ ...valid, other: ['victory_points_scored'] }),
+        ).toHaveLength(1);
         expect(validateScoreCalculationsByMode({ ...valid, standard: ['nope'] })).toHaveLength(1);
         expect(
-            validateScoreCalculationsByMode({ ...valid, standard: ['score', 'score'] }),
+            validateScoreCalculationsByMode({
+                ...valid,
+                standard: ['victory_points_scored', 'victory_points_scored'],
+            }),
         ).toHaveLength(1);
-        expect(validateScoreCalculationsByMode('score')).toHaveLength(1);
+        expect(validateScoreCalculationsByMode('victory_points_scored')).toHaveLength(1);
     });
 });
 
@@ -114,9 +119,9 @@ describe('readEnv', () => {
         const readEnv = APP_SETTING_DEFINITIONS[AppSettingKey.SCORE_CALCULATIONS_BY_MODE].readEnv!;
         const env = readEnv({
             APP_SETTING_SCORE_CALCULATIONS_BY_MODE:
-                '{"standard":["score"],"up_down":["score"],"championship":["tournament_score"]}',
+                '{"standard":["victory_points_scored"],"up_down":["victory_points_scored"],"championship":["tournament_score"]}',
         });
-        expect(env?.value.standard).toEqual(['score']);
+        expect(env?.value.standard).toEqual(['victory_points_scored']);
         // Invalid JSON is passed on as-is so that the validation rejects it.
         expect(readEnv({ APP_SETTING_SCORE_CALCULATIONS_BY_MODE: '{oops' })?.value).toBe('{oops');
     });

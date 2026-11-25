@@ -29,7 +29,7 @@ function tournament(
         teams: teamIds.map((id) => ({ id, name: id })),
         configuration: {
             competitionMode: CompetitionMode.STANDARD,
-            scoreCalculation: ScoreCalculation.SCORE,
+            scoreCalculation: ScoreCalculation.VICTORY_POINTS_SCORED,
             // By default no qualifying rounds: every match here is an elimination match.
             competitionConfiguration,
         },

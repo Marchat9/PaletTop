@@ -40,7 +40,7 @@ function tournament(
         teams: Array.from({ length: options.teamCount ?? 0 }, (_, i) => ({ id: `team-${i}` })),
         configuration: {
             maxTeamCapacity: options.maxTeamCapacity ?? 16,
-            scoreCalculation: ScoreCalculation.VICTORY_AND_GOAL_AVERAGE,
+            scoreCalculation: ScoreCalculation.VICTORY_GOAL_AVERAGE,
             pointsPerGame: 13,
             competitionMode: CompetitionMode.STANDARD,
             competitionConfiguration: config,

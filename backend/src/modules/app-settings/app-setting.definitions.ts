@@ -226,9 +226,16 @@ function readScoreCalculationsFromEnv(
 
 // ========= Registry =========
 
+/** Offered by the standard and up-down modes, the first one being the default. */
+const NEW_SCORE_CALCULATIONS: ScoreCalculation[] = [
+    ScoreCalculation.VICTORY_GOAL_AVERAGE,
+    ScoreCalculation.VICTORY_BEST_DEFEATS,
+    ScoreCalculation.VICTORY_POINTS_SCORED,
+];
+
 export const DEFAULT_SCORE_CALCULATIONS_BY_MODE: ScoreCalculationsByMode = {
-    [CompetitionMode.STANDARD]: [ScoreCalculation.VICTORY_AND_GOAL_AVERAGE, ScoreCalculation.SCORE],
-    [CompetitionMode.UP_DOWN]: [ScoreCalculation.VICTORY_AND_GOAL_AVERAGE, ScoreCalculation.SCORE],
+    [CompetitionMode.STANDARD]: NEW_SCORE_CALCULATIONS,
+    [CompetitionMode.UP_DOWN]: NEW_SCORE_CALCULATIONS,
     [CompetitionMode.CHAMPIONSHIP]: [ScoreCalculation.TOURNAMENT_SCORE],
 };
 

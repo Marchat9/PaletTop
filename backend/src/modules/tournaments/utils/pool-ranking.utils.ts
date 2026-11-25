@@ -10,11 +10,12 @@ export function computeRanking(
     teams: Team[],
     matches: TournamentMatch[],
     scoreCalculation: ScoreCalculation,
+    tournamentId: string,
 ): PoolRankingEntry[] {
     const countedStatuses: MatchStatus[] = [MatchStatus.ENDED, MatchStatus.VALIDATED];
     const finished = matches.filter((m) => countedStatuses.includes(m.status));
 
-    return rankTeams(teams, finished, scoreCalculation).map((entry) => ({
+    return rankTeams(teams, finished, scoreCalculation, tournamentId).map((entry) => ({
         teamId: entry.teamId,
         teamName: entry.teamName,
         wins: entry.wins,

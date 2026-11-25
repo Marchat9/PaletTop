@@ -162,7 +162,7 @@ async function simulate(input: SimulationInput): Promise<SimulationResult> {
         configuration: {
             maxTeamCapacity: input.targetCount,
             competitionMode: CompetitionMode.STANDARD,
-            scoreCalculation: ScoreCalculation.VICTORY_AND_GOAL_AVERAGE,
+            scoreCalculation: ScoreCalculation.VICTORY_GOAL_AVERAGE,
             rematch: input.rematch ?? false,
             competitionConfiguration: {
                 numberOfQualifyingRounds: input.numberOfQualifyingRounds,

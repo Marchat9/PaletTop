@@ -78,7 +78,12 @@ export abstract class TournamentStrategy {
 
     /** Aggregate ranking over the given matches, sorted by the tournament's score calculation. */
     computeGlobalRanking(tournament: Tournament, matches: TournamentMatch[]): GlobalRankingEntry[] {
-        return rankTeams(tournament.teams, matches, tournament.configuration.scoreCalculation);
+        return rankTeams(
+            tournament.teams,
+            matches,
+            tournament.configuration.scoreCalculation,
+            tournament.id,
+        );
     }
 
     /**
