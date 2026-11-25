@@ -1,0 +1,114 @@
+<div class="gauge">
+  <div #track class="gauge-track">
+    @for (zone of zones(); track zone.level) {
+      <span
+        class="gauge-zone"
+        [class]="zone.level"
+        [style.left]="zone.left"
+        [style.width]="zone.width"
+      >
+        {{ zone.name }}
+      </span>
+    }
+    <div
+      class="gauge-handle mid"
+      role="slider"
+      tabindex="0"
+      aria-label="Seuil entre rouge et orange"
+      [attr.aria-valuemin]="51"
+      [attr.aria-valuemax]="okPercent() - 1"
+      [attr.aria-valuenow]="warningPercent()"
+      [style.left]="warningPosition()"
+      (pointerdown)="onPointerDown('warning', $event)"
+      (pointermove)="onPointerMove('warning', $event)"
+      (pointerup)="onPointerUp()"
+      (pointercancel)="onPointerUp()"
+      (keydown)="onKeydown('warning', $event)"
+    >
+      <span class="gauge-bubble">{{ warningPercent() }} %</span>
+    </div>
+    <div
+      class="gauge-handle ok"
+      role="slider"
+      tabindex="0"
+      aria-label="Seuil entre orange et vert"
+      [attr.aria-valuemin]="warningPercent() + 1"
+      [attr.aria-valuemax]="100"
+      [attr.aria-valuenow]="okPercent()"
+      [style.left]="okPosition()"
+      (pointerdown)="onPointerDown('ok', $event)"
+      (pointermove)="onPointerMove('ok', $event)"
+      (pointerup)="onPointerUp()"
+      (pointercancel)="onPointerUp()"
+      (keydown)="onKeydown('ok', $event)"
+    >
+      <span class="gauge-bubble">{{ okPercent() }} %</span>
+    </div>
+  </div>
+  <div class="gauge-ends">
+    <span>50 % (moitié du tableau)</span>
+    <span>100 % (complet)</span>
+  </div>
+</div>
+
+<p class="gauge-hint">
+  Faites glisser les deux ronds sur la jauge, ou ajustez au pourcentage près :
+</p>
+<div class="gauge-steppers">
+  @for (stepper of steppers(); track stepper.threshold) {
+    <div class="gauge-stepper">
+      <span class="gauge-stepper-label">
+        <i class="dot" [class]="stepper.level"></i>
+        {{ stepper.label }}
+      </span>
+      <span class="gauge-stepper-controls">
+        <app-button
+          variant="secondary"
+          icon="remove"
+          [disabled]="!stepper.canDecrease"
+          (clicked)="onStep(stepper.threshold, -1)"
+        />
+        <b class="gauge-stepper-value">{{ stepper.percent }} %</b>
+        <app-button
+          variant="secondary"
+          icon="add"
+          [disabled]="!stepper.canIncrease"
+          (clicked)="onStep(stepper.threshold, 1)"
+        />
+      </span>
+    </div>
+  }
+</div>
+
+<div class="gauge-example">
+  <span class="gauge-example-title">
+    Ce que ça donne pour un tableau de {{ selectedSize() }} équipes
+  </span>
+  <span class="gauge-hint">
+    Par exemple un tournoi de 96 équipes : Principale 32 · Consolante A 32 · Consolante B 32.
+  </span>
+  <div class="gauge-example-sizes">
+    @for (size of exampleSizes; track size) {
+      <app-button
+        [title]="'' + size"
+        [variant]="size === selectedSize() ? 'primary' : 'secondary'"
+        (clicked)="onExampleSizeSelect(size)"
+      />
+    }
+  </div>
+  @for (zone of exampleZones(); track zone.level) {
+    <div class="gauge-example-row">
+      <i class="dot" [class]="zone.level"></i>
+      <span>
+        <b
+          >{{ zone.range }}
+          @if (zone.hasTeams) {
+            équipes
+          }
+        </b>
+        <span class="muted"> · {{ zone.name }}</span>
+      </span>
+      <span class="muted">{{ zone.bestLosers }}</span>
+    </div>
+  }
+</div>
