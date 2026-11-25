@@ -1,3 +1,4 @@
+import { LaunchChoice } from 'src/app/models/tournament-plan.model';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
@@ -20,7 +21,10 @@ import {
 import { startTournament, startTournamentFailure } from './tournament.match.actions';
 import { TournamentDto } from './tournament.models';
 import { TournamentEffects } from './tournament.effects';
-import { selectCurrentTournamentAdminInformations } from './tournament.selectors';
+import {
+  selectCurrentTournamentAdminInformations,
+  selectCurrentTournamentData,
+} from './tournament.selectors';
 
 async function configure(savedCode: string) {
   const actions$ = new ReplaySubject<Action>(1);
@@ -163,7 +167,10 @@ describe('TournamentEffects team import summary', () => {
 });
 
 describe('TournamentEffects start', () => {
-  function runStart(status: number) {
+  function runStart(status: number, withLaunchChoice = true) {
+    const launchChoice: LaunchChoice | undefined = withLaunchChoice
+      ? { expectedTeamCount: 117, consolationCount: 2, eliminatedAfterQualifying: 5 }
+      : undefined;
     const actions$ = new ReplaySubject<Action>(1);
     const start = vi.fn(() =>
       throwError(() => new HttpErrorResponse({ status, error: { message: 'Refusé' } })),
@@ -178,6 +185,10 @@ describe('TournamentEffects start', () => {
               selector: selectCurrentTournamentAdminInformations,
               value: { code: 'ABCD', password: 'secret' },
             },
+            {
+              selector: selectCurrentTournamentData,
+              value: { configuration: { competitionMode: 'standard' } },
+            },
           ],
         }),
         { provide: Router, useValue: {} },
@@ -187,11 +198,7 @@ describe('TournamentEffects start', () => {
     });
     const emitted: Action[] = [];
     TestBed.inject(TournamentEffects).startTournament$.subscribe((a) => emitted.push(a));
-    actions$.next(
-      startTournament({
-        launchChoice: { expectedTeamCount: 117, consolationCount: 2, eliminatedAfterQualifying: 5 },
-      }),
-    );
+    actions$.next(startTournament({ launchChoice }));
     return { emitted, start };
   }
 
@@ -199,10 +206,23 @@ describe('TournamentEffects start', () => {
     const { start } = runStart(409);
 
     expect(start).toHaveBeenCalledWith('ABCD', {
-      expectedTeamCount: 117,
-      consolationCount: 2,
-      eliminatedAfterQualifying: 5,
       password: 'secret',
+      competitionMode: 'standard',
+      competitionModeStartOptions: {
+        expectedTeamCount: 117,
+        consolationCount: 2,
+        eliminatedAfterQualifying: 5,
+      },
+    });
+  });
+
+  it('sends no start options without a launch choice', () => {
+    const { start } = runStart(409, false);
+
+    expect(start).toHaveBeenCalledWith('ABCD', {
+      password: 'secret',
+      competitionMode: 'standard',
+      competitionModeStartOptions: undefined,
     });
   });
 

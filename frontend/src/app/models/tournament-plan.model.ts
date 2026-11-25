@@ -106,9 +106,8 @@ export interface PlanPreviewBody {
   targetCount: number;
 }
 
-/** Body of `POST /tournaments/:code/start`: the launch choice is optional. */
-export interface StartTournamentBody {
-  password: string;
+/** Launch check of the structured mode: what the admin confirmed in the launch dialog. */
+export interface LaunchChoice {
   /** Team count of the launch check: a different count refuses the start (409). */
   expectedTeamCount?: number;
   consolationCount?: number;
@@ -116,8 +115,15 @@ export interface StartTournamentBody {
   eliminatedAfterQualifying?: number;
 }
 
-/** What the launch check confirms: the start request without its password. */
-export type LaunchChoice = Omit<StartTournamentBody, 'password'>;
+/**
+ * Body of `POST /tournaments/:code/start`: the options are those of the tournament's mode, and
+ * absent for a mode without any.
+ */
+export interface StartTournamentBody {
+  password: string;
+  competitionMode: CompetitionMode;
+  competitionModeStartOptions?: LaunchChoice | null;
+}
 
 /** What the bracket panel of the structured form shows: the page feeds it from the store. */
 export interface BracketPanelState {
