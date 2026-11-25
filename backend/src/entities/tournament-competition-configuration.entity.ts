@@ -1,13 +1,12 @@
-import { Column } from 'typeorm';
 import { PairingMode } from 'src/enum/tounament.enum';
 import { TournamentPlan } from 'src/modules/tournaments/strategies/structured/plan/plan.types';
 
 export abstract class TournamentCompetitionConfiguration {}
 
 /**
- * Stored in the tournament's jsonb configuration (the `@Column`s of these sub-configurations are
- * not real columns). `eliminatedAfterQualifying` and `plan` are written by the backend at launch
- * only, never taken from a request.
+ * Stored in the tournament's jsonb configuration: these classes only describe its shape, they are
+ * not entities. `eliminatedAfterQualifying` and `plan` are written by the backend at launch only,
+ * never taken from a request.
  */
 export class StructuredCompetitionConfiguration extends TournamentCompetitionConfiguration {
     numberOfQualifyingRounds!: number;
@@ -35,21 +34,16 @@ export class StructuredCompetitionConfiguration extends TournamentCompetitionCon
 }
 
 export class UpDownCompetitionConfiguration extends TournamentCompetitionConfiguration {
-    @Column({ nullable: true })
     numberOfRound?: number;
 
-    @Column({ default: false })
     lastRoundByRanking?: boolean;
 
     /** Missing on tournaments created before the pairing mode existed: read as RANDOM. */
-    @Column({ type: 'enum', enum: PairingMode, default: PairingMode.RANDOM })
     pairingMode?: PairingMode;
 }
 
 export class ChampionShipCompetitionConfiguration extends TournamentCompetitionConfiguration {
-    @Column({ nullable: false })
     homeClub!: string;
 
-    @Column({ nullable: false })
     awayClub!: string;
 }
