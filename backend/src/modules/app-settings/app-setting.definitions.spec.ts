@@ -20,6 +20,14 @@ describe('APP_SETTING_DEFINITIONS', () => {
         }
     });
 
+    it('offers the three victory-based calculations to the standard and up-down modes, goal-average first', () => {
+        const defaults =
+            APP_SETTING_DEFINITIONS[AppSettingKey.SCORE_CALCULATIONS_BY_MODE].defaultValue;
+        const expected = ['victory_goal_average', 'victory_best_defeats', 'victory_points_scored'];
+        expect(defaults.standard).toEqual(expected);
+        expect(defaults.up_down).toEqual(expected);
+    });
+
     it('offers only « Points tournoi » to the championship by default', () => {
         expect(
             APP_SETTING_DEFINITIONS[AppSettingKey.SCORE_CALCULATIONS_BY_MODE].defaultValue
@@ -37,6 +45,25 @@ describe('validateScoreCalculationsByMode', () => {
 
     it('accepts any calculation for any mode', () => {
         expect(validateScoreCalculationsByMode(valid)).toEqual([]);
+    });
+
+    it.each(['victory_ga', 'score', 'victory_buchholz_ga', 'score_buchholz_ga'])(
+        'rejects the removed calculation « %s »',
+        (removed) => {
+            expect(validateScoreCalculationsByMode({ ...valid, standard: [removed] })).toHaveLength(
+                1,
+            );
+        },
+    );
+
+    it('accepts the new calculations', () => {
+        expect(
+            validateScoreCalculationsByMode({
+                ...valid,
+                standard: ['victory_best_defeats'],
+                up_down: ['victory_goal_average', 'victory_points_scored'],
+            }),
+        ).toEqual([]);
     });
 
     it('requires at least one calculation per mode', () => {
