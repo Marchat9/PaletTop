@@ -142,7 +142,7 @@ describe('TournamentCreatePageComponent live preview', () => {
     expect(dispatchSpy).not.toHaveBeenCalled();
   });
 
-  it('simulates the target count first, then the count the slider gives, apart from the preview', () => {
+  it('does not repeat the preview for the target count: it simulates only the count the slider gives', () => {
     vi.useFakeTimers();
     const { fixture, page, dispatchSpy } = setup();
     page.onFormReady(structuredForm(128));
@@ -153,9 +153,23 @@ describe('TournamentCreatePageComponent live preview', () => {
     vi.advanceTimersByTime(300);
 
     const simulations = dispatched(dispatchSpy, simulatePlan);
-    expect(simulations.map((action) => action.body.teamCount)).toEqual([128, 100]);
-    expect(simulations.map((action) => action.requestId)).toEqual(['1', '2']);
+    expect(simulations.map((action) => action.body.teamCount)).toEqual([100]);
     expect(dispatched(dispatchSpy, previewPlan)).toHaveLength(1);
+  });
+
+  it('asks for one plan only when the form changes while the simulation follows the preview', () => {
+    vi.useFakeTimers();
+    const { page, dispatchSpy } = setup();
+    const form = structuredForm(128);
+    page.onFormReady(form);
+    vi.advanceTimersByTime(300);
+    dispatchSpy.mockClear();
+
+    form.controls.modeParameter.controls.structuredMode.controls.consolationCount.setValue(2);
+    vi.advanceTimersByTime(1000);
+
+    expect(dispatched(dispatchSpy, previewPlan)).toHaveLength(1);
+    expect(dispatched(dispatchSpy, simulatePlan)).toHaveLength(0);
   });
 
   it('feeds the simulation with its own plan and the simulated count', () => {

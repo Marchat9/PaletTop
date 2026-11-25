@@ -19,7 +19,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { environment } from '@environment';
 import { Actions, ofType } from '@ngrx/effects';
 import { Store } from '@ngrx/store';
-import { debounceTime, filter, map } from 'rxjs';
+import { debounceTime, filter, map, tap } from 'rxjs';
 import { openPlanSimulationSheet } from 'src/app/modales/plan-simulation-popup/plan-simulation-popup';
 import { Nullable } from 'src/app/models/nullable.model';
 import { TournamentConfigurationDto } from 'src/app/models/tournament-configuration.model';
@@ -62,6 +62,7 @@ import { onResyncRequested } from 'src/app/utils/resync-on-reconnect.util';
 import {
   PLAN_PREVIEW_DEBOUNCE_MS,
   planPreviewBodies,
+  repeatsPreview,
 } from 'src/app/utils/tournament-configuration.utils';
 import { ConfigurationFormComponent } from './components/configuration-form/configuration-form.component';
 import {
@@ -130,7 +131,12 @@ export class AdminTournamentConfigurationPage implements OnInit {
   private simulationSequence = 0;
 
   // Simulation (« et si j'ai X équipes ? »): its plan is requested apart from the preview of the form.
-  private readonly simulatedPlan = this.store.selectSignal(selectSimulatedPlan);
+  private readonly requestedSimulatedPlan = this.store.selectSignal(selectSimulatedPlan);
+  /** The simulation is at the preview's team count: it shows the preview's plan, not a request. */
+  private readonly simulationRepeatsPreview = signal(true);
+  private readonly simulatedPlan = computed(() =>
+    this.simulationRepeatsPreview() ? this.plan() : this.requestedSimulatedPlan(),
+  );
   private readonly simulationError = this.store.selectSignal(selectSimulationError);
   /** Null until the slider moves: the simulation then starts from the target count. */
   public readonly simulatedTeamCount = signal<number | null>(null);
@@ -231,6 +237,10 @@ export class AdminTournamentConfigurationPage implements OnInit {
     planPreviewBodies(form, this.simulatedTeamCount$)
       .pipe(
         filter(() => this.isDraft()),
+        tap((body) =>
+          this.simulationRepeatsPreview.set(repeatsPreview(form, this.registeredCount(), body)),
+        ),
+        filter(() => !this.simulationRepeatsPreview()),
         debounceTime(PLAN_PREVIEW_DEBOUNCE_MS),
         takeUntilDestroyed(this.destroyRef),
       )
