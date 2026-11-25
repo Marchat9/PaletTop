@@ -1,0 +1,41 @@
+<div class="configuration-page">
+  <div class="page-content">
+    <app-admin-page-header
+      eyebrow="Configuration du tournoi"
+      icon="tune"
+      [title]="tournament()?.name ?? null"
+      [code]="tournament()?.code ?? null"
+    >
+      <ng-container headerActions>
+        <app-button
+          title="Retour au tournoi"
+          icon="arrow_back"
+          variant="secondary"
+          (clicked)="backToTournament()"
+        />
+        <app-button
+          title="Enregistrer"
+          icon="save"
+          [loading]="saveLoading()"
+          [disabled]="!configurationForm()?.canSave()"
+          (clicked)="configurationForm()?.onSave()"
+        />
+      </ng-container>
+    </app-admin-page-header>
+
+    <app-configuration-form
+      [tournament]="tournament()"
+      [saving]="saveLoading()"
+      [hiddenFields]="hiddenFields"
+      [readonlyFields]="readonlyFields"
+      [scoreCalculationsByMode]="scoreCalculationsByMode()"
+      [planState]="planState()"
+      [simulation]="simulation()"
+      (simulationTeamCountChange)="simulatedTeamCount.set($event)"
+      (simulationSheetRequested)="openSimulationSheet($event)"
+      (formReady)="onConfigurationFormReady($event)"
+      (configurationSaved)="updateTournamentConfiguration($event)"
+      (configurationCancelled)="backToTournament()"
+    />
+  </div>
+</div>

@@ -1,14 +1,5 @@
 import { UpDownTournamentConfig } from 'src/app/models/tournament-configuration-detail.model';
-import {
-  selectMaxConsolationCount,
-  selectScoreCalculationsByMode,
-} from 'src/app/store/app-settings/app-settings.selectors';
-import {
-  BracketPanelState,
-  LaunchChoice,
-  PlanSimulationState,
-  TournamentPlan,
-} from 'src/app/models/tournament-plan.model';
+import { LaunchChoice, TournamentPlan } from 'src/app/models/tournament-plan.model';
 import {
   EDIT_CONFIGURATION,
   openLaunchCheckPopup,
@@ -20,26 +11,12 @@ import {
   launchChoiceOfConfiguration,
   launchChoiceOfOption,
 } from 'src/app/utils/launch-check.util';
-import { openPlanSimulationSheet } from 'src/app/modales/plan-simulation-popup/plan-simulation-popup';
 import { LEADERBOARD_MOBILE_QUERY } from 'src/app/utils/leaderboard-dialog.util';
-import {
-  previewLaunchPlan,
-  previewPlan,
-  simulatePlan,
-} from 'src/app/store/tournament-plan/tournament-plan.actions';
+import { previewLaunchPlan } from 'src/app/store/tournament-plan/tournament-plan.actions';
 import {
   selectLaunchPlan,
   selectLaunchPlanLoading,
-  selectPlanPreview,
-  selectPlanPreviewLoading,
-  selectSimulatedPlan,
-  selectSimulationError,
 } from 'src/app/store/tournament-plan/tournament-plan.selectors';
-import { TournamentConfigurationForm } from 'src/app/shared/tournament-configuration/tournament-configuration-form.model';
-import {
-  PLAN_PREVIEW_DEBOUNCE_MS,
-  planPreviewBodies,
-} from 'src/app/utils/tournament-configuration.utils';
 import { normalizeCode } from 'src/app/utils/code-format.util';
 import { newId } from 'src/app/utils/unique-id.util';
 import { buildRankingPdf, rankingPdfFileName } from 'src/app/utils/pdf/ranking-pdf.util';
@@ -72,10 +49,9 @@ import {
   DestroyRef,
   viewChild,
 } from '@angular/core';
-import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
-import { debounceTime, filter, map } from 'rxjs';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { map } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
-import { environment } from '@environment';
 import { Store } from '@ngrx/store';
 import {
   ConfirmationData,
@@ -85,19 +61,16 @@ import { addNotification } from 'src/app/store/app-config/app-config.actions';
 import { Notification } from 'src/app/store/app-config/app-config.model';
 import { ScoreUpdate } from 'src/app/models/score-update.model';
 import { TeamConfigEvent, TeamConfigEventType } from 'src/app/models/team-config.model';
-import { TournamentConfigurationDto } from 'src/app/models/tournament-configuration.model';
 import { AnimateOnChangeDirective } from 'src/app/shared/animate-on-change/animate-on-change.directive';
 import { Leaderboard } from 'src/app/shared/leaderboard/leaderboard';
 import { Button } from 'src/app/shared/button/button';
 import { toTournamentLeaderboard } from 'src/app/utils/leaderboard.util';
-import { TournamentConfigurationField } from 'src/app/shared/tournament-configuration/tournament-configuration-form.model';
 import { adminUpdateScore } from 'src/app/store/match/match.actions';
 import { selectRanking, selectRankingIsLoading } from 'src/app/store/ranking/ranking.selectors';
 import { disconnectTournamentAdministrator } from 'src/app/store/tournament/tournament.actions';
 import {
   connectTournamentAdministrator,
   removeTournamentAdministratorTeam,
-  updateTournamentAdministratorConfiguration,
   updateTournamentAdministratorSingleTeam,
   updateTournamentAdministratorTeam,
 } from 'src/app/store/tournament/tournament.admin.actions';
@@ -115,13 +88,11 @@ import {
   selectNextSessionLoading,
   selectStartTournamentLoading,
   selectStartTournamentTeamCountChanged,
-  selectTournamentUpdateConfigLoading,
 } from 'src/app/store/tournament/tournament.selectors';
 import { TournamentDto } from 'src/app/store/tournament/tournament.models';
 import { CurrentRoundCard } from 'src/app/shared/current-round-card/current-round-card';
 import { MatchesSessionDto, SessionStatus } from 'src/app/models/matches-session.model';
 import { Nullable } from 'src/app/models/nullable.model';
-import { TournamentConfigurationCardComponent } from './components/tournament-configuration-card/tournament-configuration-card.component';
 import { TournamentHeaderComponent } from './components/tournament-header/tournament-header.component';
 import { TournamentTeamConfigurationCard } from './components/tournament-team-configuration-card/tournament-team-configuration-card';
 import {
@@ -132,6 +103,10 @@ import { selectTournamentClubSuggestions } from 'src/app/store/tournament-club/t
 import { selectSessions } from 'src/app/store/session/session.selectors';
 import { selectAdminUpdateScoreLoading } from 'src/app/store/match/match.selectors';
 import { onResyncRequested } from 'src/app/utils/resync-on-reconnect.util';
+import {
+  CONFIGURATION_MODE_SECTION,
+  CONFIGURATION_SECTION_QUERY_PARAM,
+} from '../admin-tournament-configuration-page/configuration-page.constants';
 
 const TEAM_COUNT_CHANGED_NOTICE =
   "Le nombre d'équipes a changé depuis la dernière vérification : voici le parcours à jour.";
@@ -142,7 +117,6 @@ const TEAM_COUNT_CHANGED_NOTICE =
   imports: [
     CommonModule,
     TournamentHeaderComponent,
-    TournamentConfigurationCardComponent,
     TournamentTeamConfigurationCard,
     CurrentRoundCard,
     TournamentNextStep,
@@ -184,9 +158,6 @@ export class AdminTournamentPageComponent implements OnInit {
     () => !this.tournament() && this.tournamentFetching(),
   );
   public readonly completeLoading = this.store.selectSignal(selectCompleteTournamentLoading);
-  public readonly isUpdateConfigLoading = this.store.selectSignal(
-    selectTournamentUpdateConfigLoading,
-  );
   public readonly startLoading = this.store.selectSignal(selectStartTournamentLoading);
   private readonly launchPlan = this.store.selectSignal(selectLaunchPlan);
   private readonly launchPlanLoading = this.store.selectSignal(selectLaunchPlanLoading);
@@ -284,29 +255,6 @@ export class AdminTournamentPageComponent implements OnInit {
     );
   });
 
-  public readonly scoreCalculationsByMode = this.store.selectSignal(selectScoreCalculationsByMode);
-
-  // Live preview of the brackets: only a draft still has its plan to build.
-  private readonly plan = this.store.selectSignal(selectPlanPreview);
-  private readonly planLoading = this.store.selectSignal(selectPlanPreviewLoading);
-  private readonly maxConsolations = this.store.selectSignal(selectMaxConsolationCount);
-  private readonly isDraft = computed(() => this.tournament()?.status === TournamentStatus.DRAFT);
-  private readonly registeredCount = computed(() => this.tournament()?.teams.length ?? 0);
-  private readonly registeredCount$ = toObservable(this.registeredCount);
-  public readonly planState = computed<Nullable<BracketPanelState>>(() =>
-    this.isDraft()
-      ? {
-          plan: this.plan(),
-          loading: this.planLoading(),
-          maxConsolations: this.maxConsolations(),
-          registeredCount: this.registeredCount(),
-        }
-      : null,
-  );
-  /** Increases with each request: the reducer keeps the result of the latest one only. */
-  private previewSequence = 0;
-  private simulationSequence = 0;
-
   // Launch check: the plan of the registered teams is asked for, then the right popup opens.
   private readonly teamCountChanged = this.store.selectSignal(
     selectStartTournamentTeamCountChanged,
@@ -323,32 +271,10 @@ export class AdminTournamentPageComponent implements OnInit {
    */
   private readonly staleTournament = signal<Nullable<TournamentDto>>(null);
 
-  // Simulation (« et si j'ai X équipes ? »): its plan is requested apart from the preview of the form.
-  private readonly simulatedPlan = this.store.selectSignal(selectSimulatedPlan);
-  private readonly simulationError = this.store.selectSignal(selectSimulationError);
-  /** Null until the slider moves: the simulation then starts from the target count. */
-  public readonly simulatedTeamCount = signal<number | null>(null);
-  private readonly simulatedTeamCount$ = toObservable(this.simulatedTeamCount);
   private readonly isMobile = toSignal(
     this.breakpointObserver.observe(LEADERBOARD_MOBILE_QUERY).pipe(map((state) => state.matches)),
     { initialValue: this.breakpointObserver.isMatched(LEADERBOARD_MOBILE_QUERY) },
   );
-  public readonly simulation = computed<Nullable<PlanSimulationState>>(() =>
-    this.isDraft()
-      ? {
-          plan: this.simulatedPlan(),
-          teamCount: this.simulatedTeamCount(),
-          error: this.simulationError(),
-          mobile: this.isMobile(),
-        }
-      : null,
-  );
-
-  // Data
-  public readonly hiddenFields: TournamentConfigurationField[] = environment.tournamentConfiguration
-    .admin.hiddenFields as TournamentConfigurationField[];
-  public readonly readonlyFields: TournamentConfigurationField[] = environment
-    .tournamentConfiguration.admin.readonlyFields as TournamentConfigurationField[];
 
   constructor() {
     // Try to connect when code / password change.
@@ -420,37 +346,6 @@ export class AdminTournamentPageComponent implements OnInit {
     });
   }
 
-  public onConfigurationFormReady(form: TournamentConfigurationForm): void {
-    planPreviewBodies(form, this.registeredCount$)
-      .pipe(
-        filter(() => this.isDraft()),
-        debounceTime(PLAN_PREVIEW_DEBOUNCE_MS),
-        takeUntilDestroyed(this.destroyRef),
-      )
-      .subscribe((body) =>
-        this.store.dispatch(previewPlan({ requestId: String(++this.previewSequence), body })),
-      );
-    planPreviewBodies(form, this.simulatedTeamCount$)
-      .pipe(
-        filter(() => this.isDraft()),
-        debounceTime(PLAN_PREVIEW_DEBOUNCE_MS),
-        takeUntilDestroyed(this.destroyRef),
-      )
-      .subscribe((body) =>
-        this.store.dispatch(simulatePlan({ requestId: String(++this.simulationSequence), body })),
-      );
-  }
-
-  public openSimulationSheet(targetCount: number): void {
-    openPlanSimulationSheet(this.dialog, this.overlay, {
-      targetCount,
-      plan: this.simulatedPlan,
-      teamCount: this.simulatedTeamCount,
-      error: this.simulationError,
-      changeTeamCount: (teamCount) => this.simulatedTeamCount.set(teamCount),
-    });
-  }
-
   ngOnInit(): void {
     this.activatedRoute.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
       const code = params.get('tournamentCode');
@@ -484,14 +379,17 @@ export class AdminTournamentPageComponent implements OnInit {
     this.router.navigate(['/admin/tournament'], code ? { queryParams: { code } } : {});
   }
 
-  public updateTournamentConfiguration(tournament: TournamentConfigurationDto): void {
-    const id = this.tournament()?.id;
-    if (!id) {
+  /** The configuration has a page of its own. */
+  public openConfiguration(brackets = false): void {
+    const code = this.tournament()?.code;
+    if (!code) {
       return;
     }
-    this.store.dispatch(
-      updateTournamentAdministratorConfiguration({ idtournament: id, tournament }),
-    );
+    void this.router.navigate(['/admin/tournament', code, 'configuration'], {
+      queryParams: brackets
+        ? { [CONFIGURATION_SECTION_QUERY_PARAM]: CONFIGURATION_MODE_SECTION }
+        : {},
+    });
   }
 
   public searchClubs(search: string): void {
@@ -702,7 +600,7 @@ export class AdminTournamentPageComponent implements OnInit {
       notice,
     }).closed.subscribe((result) => {
       if (result === EDIT_CONFIGURATION) {
-        this.configurationCard()?.reveal();
+        this.openConfiguration(true);
         return;
       }
       const optionId = result;
@@ -744,7 +642,6 @@ export class AdminTournamentPageComponent implements OnInit {
   }
 
   private readonly teamCard = viewChild(TournamentTeamConfigurationCard);
-  private readonly configurationCard = viewChild(TournamentConfigurationCardComponent);
 
   /** From the next-step card: open the team creation (sheet on mobile, form on desktop). */
   public addTeam(): void {

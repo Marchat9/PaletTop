@@ -36,15 +36,13 @@
       <app-button
         title="Annuler"
         variant="tertiary"
-        [disabled]="saving() || !!tournamentForm()?.pristine"
+        [disabled]="!canCancel()"
         (clicked)="onCancel()"
       />
       <app-button
         title="Enregistrer"
         [loading]="saving()"
-        [disabled]="
-          saving() || !tournament() || !!tournamentForm()?.pristine || !!invalidFieldNames()
-        "
+        [disabled]="!canSave()"
         (clicked)="onSave()"
       />
     </div>

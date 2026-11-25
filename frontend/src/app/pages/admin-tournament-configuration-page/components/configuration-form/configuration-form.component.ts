@@ -3,7 +3,18 @@ import {
   DEFAULT_SCORE_CALCULATIONS_BY_MODE,
 } from 'src/app/models/app-setting.model';
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, input, output, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  DestroyRef,
+  inject,
+  input,
+  output,
+  signal,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { merge } from 'rxjs';
 import { Nullable } from 'src/app/models/nullable.model';
 import { BracketPanelState, PlanSimulationState } from 'src/app/models/tournament-plan.model';
 import { TournamentConfigurationDto } from 'src/app/models/tournament-configuration.model';
@@ -48,10 +59,36 @@ export class ConfigurationFormComponent {
   public readonly invalidFieldNames = signal<Nullable<string[]>>(null);
   private initialFormValues: Nullable<TournamentConfigurationForm['value']> = null;
 
+  private readonly destroyRef = inject(DestroyRef);
+  /** `pristine` is not a signal: this one changes whenever the form does, to recompute what depends on it. */
+  private readonly formRevision = signal(0);
+
+  /** Something to save, and nothing in the way: what both « Enregistrer » buttons follow. */
+  public readonly canSave = computed(() => {
+    this.formRevision();
+    const form = this.tournamentForm();
+    return (
+      !!form && !!this.tournament() && !this.saving() && !form.pristine && !this.invalidFieldNames()
+    );
+  });
+  public readonly canCancel = computed(() => {
+    this.formRevision();
+    return !this.saving() && !this.tournamentForm()?.pristine;
+  });
+
   public onFormReady(form: TournamentConfigurationForm): void {
     this.tournamentForm.set(form);
     this.initialFormValues = form.getRawValue();
+    merge(form.valueChanges, form.statusChanges)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.formRevision.update((revision) => revision + 1));
     this.formReady.emit(form);
+  }
+
+  /** What the form holds is now what the tournament has: nothing left to save or to lose. */
+  public markSaved(): void {
+    this.tournamentForm()?.markAsPristine();
+    this.formRevision.update((revision) => revision + 1);
   }
 
   public onSave(): void {
