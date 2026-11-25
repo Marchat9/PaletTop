@@ -1,6 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
 import { plainToInstance, Type } from 'class-transformer';
-import { IsInt, IsOptional, Max, Min } from 'class-validator';
+import { Allow, IsInt, IsOptional, Max, Min, validateSync } from 'class-validator';
 import { CompetitionMode } from 'src/enum/tounament.enum';
 import { MAX_CONSOLATION_COUNT_LIMIT } from 'src/modules/app-settings/app-setting.definitions';
 import type { StartRequest } from '../services/session.service';
@@ -24,19 +24,15 @@ export abstract class StartTournamentDto extends AdminQualifyingDto {
     @Max(MAX_TEAM_CAPACITY)
     expectedTeamCount?: number;
 
-    @IsOptional()
-    @Type(() => Number)
-    @IsInt()
-    @Min(0)
-    @Max(MAX_CONSOLATION_COUNT_LIMIT)
+    /**
+     * The launch choice fields of the modes. Only let through here: the global pipe validates the
+     * body against this class without knowing the mode, so the mode's subclass checks the values
+     * (`startChoiceOf`).
+     */
+    @Allow()
     consolationCount?: number;
 
-    /** The last X teams of the qualifiers play no elimination match. */
-    @IsOptional()
-    @Type(() => Number)
-    @IsInt()
-    @Min(0)
-    @Max(MAX_TEAM_CAPACITY)
+    @Allow()
     eliminatedAfterQualifying?: number;
 
     /** The launch choice of the mode, or a 400 when the request holds a field the mode ignores. */
@@ -45,6 +41,21 @@ export abstract class StartTournamentDto extends AdminQualifyingDto {
 
 /** Structured mode: the consolation count and the teams stopped after the qualifiers. */
 export class StructuredStartTournamentDto extends StartTournamentDto {
+    @IsOptional()
+    @Type(() => Number)
+    @IsInt()
+    @Min(0)
+    @Max(MAX_CONSOLATION_COUNT_LIMIT)
+    override consolationCount?: number = undefined;
+
+    /** The last X teams of the qualifiers play no elimination match. */
+    @IsOptional()
+    @Type(() => Number)
+    @IsInt()
+    @Min(0)
+    @Max(MAX_TEAM_CAPACITY)
+    override eliminatedAfterQualifying?: number = undefined;
+
     override toStartChoice(): StartChoice {
         return {
             consolationCount: this.consolationCount,
@@ -69,7 +80,15 @@ const START_DTO_BY_MODE: Record<CompetitionMode, new () => StartTournamentDto> =
     [CompetitionMode.CHAMPIONSHIP]: NoChoiceStartTournamentDto,
 };
 
-/** The launch choice of a validated start request, read the way the tournament's mode does. */
+/** The launch choice of a start request, validated and read the way the tournament's mode does. */
 export function startChoiceOf(mode: CompetitionMode, request: StartRequest): StartChoice {
-    return plainToInstance(START_DTO_BY_MODE[mode], request).toStartChoice();
+    const dto = plainToInstance(START_DTO_BY_MODE[mode], request);
+    // The pipe checked the password and the team count; what the request leaves out stays out.
+    const errors = validateSync(dto, { skipUndefinedProperties: true });
+    if (errors.length > 0) {
+        throw new BadRequestException(
+            errors.flatMap((error) => Object.values(error.constraints ?? {})),
+        );
+    }
+    return dto.toStartChoice();
 }
