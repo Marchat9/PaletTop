@@ -45,9 +45,12 @@ describe('computeTeamStats', () => {
             pointsFor: 0,
             goalAverage: 0,
             tournamentPoints: 6,
-            buchholz: 0,
             matchesPlayed: 1,
         });
+    });
+
+    it('no longer computes a Buchholz score', () => {
+        expect('buchholz' in statsOf(all, [bye('A', true)], 'A')).toBe(false);
     });
 
     it('keeps the effect of a legacy 13-0 bye', () => {
@@ -62,34 +65,10 @@ describe('computeTeamStats', () => {
         expect(statsOf(all, [bye('A', false)], 'A')).toMatchObject({ wins: 0, goalAverage: 0 });
     });
 
-    it('sums the final wins of the opponents met into the Buchholz', () => {
-        // A beat B and C; B beat D; C beat D. Wins: A 2, B 1, C 1, D 0.
-        const matches = [
-            match('A', 'B', 13, 5),
-            match('A', 'C', 13, 7),
-            match('B', 'D', 13, 2),
-            match('C', 'D', 13, 9),
-        ];
-        const stats = computeTeamStats(all, matches);
-        const buchholz = Object.fromEntries(stats.map((s) => [s.teamId, s.buchholz]));
-        expect(buchholz).toEqual({ A: 2, B: 2, C: 2, D: 2 });
-    });
-
-    it('counts an opponent met twice twice, and ignores byes', () => {
-        const matches = [
-            match('A', 'B', 13, 5),
-            match('A', 'B', 13, 5),
-            match('B', 'C', 13, 0),
-            bye('B', true),
-        ];
-        // Wins: A 2, B 2 (C + bye), C 0. A met B twice → 4; B met A twice + C → 4.
-        expect(statsOf(teams('A', 'B', 'C'), matches, 'A').buchholz).toBe(4);
-        expect(statsOf(teams('A', 'B', 'C'), matches, 'B').buchholz).toBe(4);
-    });
 });
 
 describe('rankTeams', () => {
-    // A and B both have 2 wins. A met stronger opponents (Bch.) but has a worse goal average.
+    // A and B both have 2 wins, A with a worse goal average.
     const all = teams('A', 'B', 'C', 'D', 'E', 'F');
     const matches = [
         match('C', 'E', 13, 0),
@@ -110,25 +89,11 @@ describe('rankTeams', () => {
         expect(order(ScoreCalculation.VICTORY_AND_GOAL_AVERAGE)).toEqual(['B', 'A']);
     });
 
-    it('breaks the same tie with the Buchholz in « Victoire, Bch. & GA »', () => {
-        expect(order(ScoreCalculation.VICTORY_BUCHHOLZ_GOAL_AVERAGE)).toEqual(['A', 'B']);
-    });
-
-    it('ranks by points scored, then Buchholz, then GA in « Score, Bch. & GA »', () => {
-        const ranked = rankTeams(
-            teams('A', 'B', 'C'),
-            [match('A', 'C', 13, 2), match('B', 'C', 13, 2), match('A', 'B', 10, 13)],
-            ScoreCalculation.SCORE_BUCHHOLZ_GOAL_AVERAGE,
-        );
-        // A 23 points, B 26 points.
-        expect(ranked.map((s) => s.teamId)).toEqual(['B', 'A', 'C']);
-    });
-
     it('shares the rank only when every criterion is equal', () => {
         const ranked = rankTeams(
             teams('A', 'B'),
             [bye('A', true), bye('B', true)],
-            ScoreCalculation.VICTORY_BUCHHOLZ_GOAL_AVERAGE,
+            ScoreCalculation.VICTORY_AND_GOAL_AVERAGE,
         );
         expect(ranked.map((s) => s.rank)).toEqual([1, 1]);
     });

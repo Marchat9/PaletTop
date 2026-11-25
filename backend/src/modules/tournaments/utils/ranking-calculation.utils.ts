@@ -13,8 +13,6 @@ export interface TeamRankingStats {
     goalAverage: number;
     matchesPlayed: number;
     tournamentPoints: number;
-    /** Sum of the wins of the opponents met (byes excluded). */
-    buchholz: number;
 }
 
 export interface RankedTeamStats extends TeamRankingStats {
@@ -22,7 +20,7 @@ export interface RankedTeamStats extends TeamRankingStats {
 }
 
 /** A ranking criterion, always sorted in descending order. */
-type RankingCriterion = 'wins' | 'pointsFor' | 'goalAverage' | 'tournamentPoints' | 'buchholz';
+type RankingCriterion = 'wins' | 'pointsFor' | 'goalAverage' | 'tournamentPoints';
 
 /**
  * Criteria of each score calculation, in priority order. The trailing criteria are tie-breakers
@@ -32,8 +30,6 @@ const CRITERIA_BY_SCORE_CALCULATION: Record<ScoreCalculation, RankingCriterion[]
     [ScoreCalculation.VICTORY_AND_GOAL_AVERAGE]: ['wins', 'goalAverage', 'pointsFor'],
     [ScoreCalculation.SCORE]: ['pointsFor', 'goalAverage', 'wins'],
     [ScoreCalculation.TOURNAMENT_SCORE]: ['tournamentPoints'],
-    [ScoreCalculation.VICTORY_BUCHHOLZ_GOAL_AVERAGE]: ['wins', 'buchholz', 'goalAverage'],
-    [ScoreCalculation.SCORE_BUCHHOLZ_GOAL_AVERAGE]: ['pointsFor', 'buchholz', 'goalAverage'],
 };
 
 /**
@@ -62,7 +58,6 @@ export function computeTeamStats(teams: Team[], matches: TournamentMatch[]): Tea
                 goalAverage: 0,
                 matchesPlayed: 0,
                 tournamentPoints: 0,
-                buchholz: 0,
             },
         ]),
     );
@@ -84,15 +79,6 @@ export function computeTeamStats(teams: Team[], matches: TournamentMatch[]): Tea
         }
         credit(match.teamA.id, match.scoreA, match.scoreB, match.scoreA > match.scoreB);
         credit(match.teamB.id, match.scoreB, match.scoreA, match.scoreB > match.scoreA);
-    }
-
-    // Buchholz needs every team's final wins over the same matches: second pass.
-    for (const match of matches) {
-        if (match.isBye || !match.teamB) continue;
-        const entryA = stats.get(match.teamA.id);
-        const entryB = stats.get(match.teamB.id);
-        if (entryA) entryA.buchholz += entryB?.wins ?? 0;
-        if (entryB) entryB.buchholz += entryA?.wins ?? 0;
     }
 
     const result = [...stats.values()];

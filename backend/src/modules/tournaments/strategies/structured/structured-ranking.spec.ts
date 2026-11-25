@@ -336,26 +336,6 @@ describe('StructuredTournamentStrategy.computeStandings', () => {
             });
         });
 
-        // Their order is the qualifying one: the elimination results of their past opponents
-        // (Buchholz) must not reorder them.
-        it('garde leur ordre de qualification malgré le Buchholz des tableaux', () => {
-            const t = tournament(teams, config);
-            t.configuration.scoreCalculation = ScoreCalculation.VICTORY_BUCHHOLZ_GOAL_AVERAGE;
-            const qualifiers = [
-                match('pool', 1, 'A', 13, 'E', 3),
-                match('pool', 1, 'B', 13, 'F', 4),
-                match('pool', 1, 'C', 13, 'D', 12),
-            ];
-            const standings = strategy.computeStandings(t, [
-                ...qualifiers,
-                // A (E's opponent) wins again, B (F's opponent) loses: E's Buchholz overtakes F's.
-                match(GROUP.PRINCIPALE, 2, 'A', 13, 'C', 5),
-                match(bracketKey(1), 2, 'D', 13, 'B', 5),
-            ]);
-
-            expect(order(standings).slice(-2)).toEqual(['F', 'E']);
-        });
-
         it('ne les sépare pas tant que le tournoi est en qualifs', () => {
             const standings = strategy.computeStandings(tournament(teams, config), qualifying);
 
