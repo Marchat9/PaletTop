@@ -350,7 +350,10 @@ describe('Structured elimination generated from the frozen plan', () => {
                     (m) => (m.sessionNumber ?? 0) <= result.config.numberOfQualifyingRounds,
                 ),
             );
-            const rankOf = new Map(qualifyingRanking.map((entry) => [entry.teamId, entry.rank]));
+            // The position in the ranking, not its rank: tied teams share a rank but not a position.
+            const rankOf = new Map(
+                qualifyingRanking.map((entry, index) => [entry.teamId, index + 1]),
+            );
             const quarterFinals = eliminationRounds(result)[0].matches;
 
             // 1v5, 2v6, 3v7, 4v8, the best pairing on plate 1.
