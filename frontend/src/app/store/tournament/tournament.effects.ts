@@ -61,6 +61,7 @@ import {
 } from './tournament.match.actions';
 import {
   selectCurrentTournamentAdminInformations,
+  selectCurrentTournamentData,
   selectCurrentTournamentPlayerInformations,
 } from './tournament.selectors';
 import { buildImportSummaryMessage } from 'src/app/utils/import-summary.util';
@@ -300,10 +301,17 @@ export class TournamentEffects {
   startTournament$ = createEffect(() =>
     this.actions$.pipe(
       ofType(startTournament),
-      withLatestFrom(this.store.select(selectCurrentTournamentAdminInformations)),
-      switchMap(([{ launchChoice }, adminInfo]) =>
+      withLatestFrom(
+        this.store.select(selectCurrentTournamentAdminInformations),
+        this.store.select(selectCurrentTournamentData),
+      ),
+      switchMap(([{ launchChoice }, adminInfo, tournament]) =>
         this.tournamentService
-          .start(adminInfo!.code, { ...launchChoice, password: adminInfo!.password })
+          .start(adminInfo!.code, {
+            password: adminInfo!.password,
+            competitionMode: tournament!.configuration.competitionMode,
+            competitionModeStartOptions: launchChoice,
+          })
           .pipe(
             switchMap((tournament) => of(startTournamentSuccess({ tournament }))),
             catchError((error) =>

@@ -5,6 +5,7 @@ import {
     Logger,
     NotFoundException,
 } from '@nestjs/common';
+import { CompetitionMode } from 'src/enum/tounament.enum';
 import { Transactional } from 'typeorm-transactional';
 import { MatchesSession } from 'src/entities/matches-session.entity';
 import { TournamentMatch } from 'src/entities/tounament-match.entity';
@@ -39,6 +40,8 @@ import {
 
 /** The start request: the launch dialog's choice and the team count it was computed for. */
 export interface StartRequest extends StartChoice {
+    /** Mode the options were written for; a different one than the tournament's refuses the start. */
+    competitionMode?: CompetitionMode;
     /** Team count of the launch check; a different count now means the check is outdated. */
     expectedTeamCount?: number;
 }
@@ -65,6 +68,12 @@ export class SessionService {
         const tournament = await this.tournamentAuthService.findWithAdminAuth({ code }, password, {
             withTeams: true,
         });
+        const { competitionMode, expectedTeamCount, ...choice } = request;
+        if (competitionMode && competitionMode !== tournament.configuration.competitionMode) {
+            throw new BadRequestException(
+                `Le tournoi n'est pas en mode ${competitionMode}, relancez la vérification.`,
+            );
+        }
 
         if (tournament.status !== TournamentStatus.DRAFT) {
             throw new BadRequestException('Le tournoi doit être en mode brouillon pour démarrer.');
@@ -73,12 +82,9 @@ export class SessionService {
             throw new BadRequestException('Aucune équipe inscrite au tournoi.');
         }
         // Checked before any write: the admin confirmed a plan computed for another team count.
-        if (
-            request.expectedTeamCount !== undefined &&
-            request.expectedTeamCount !== tournament.teams.length
-        ) {
+        if (expectedTeamCount !== undefined && expectedTeamCount !== tournament.teams.length) {
             this.logger.warn(
-                `Start of ${tournament.code} refused: ${tournament.teams.length} teams, ${request.expectedTeamCount} expected`,
+                `Start of ${tournament.code} refused: ${tournament.teams.length} teams, ${expectedTeamCount} expected`,
             );
             throw new ConflictException("Le nombre d'équipes a changé, relancez la vérification.");
         }
@@ -87,10 +93,7 @@ export class SessionService {
         const strategy = this.strategyFactory.create(tournament.configuration.competitionMode);
         const startOptions: StartOptions = {
             settings: await this.planService.getPlanSettings(),
-            choice: {
-                consolationCount: request.consolationCount,
-                eliminatedAfterQualifying: request.eliminatedAfterQualifying,
-            },
+            choice,
         };
         const { tournamentWithMatches, session } = await this.writeTournamentStart(
             tournament,

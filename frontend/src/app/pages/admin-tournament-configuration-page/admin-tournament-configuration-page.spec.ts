@@ -222,7 +222,7 @@ describe('AdminTournamentConfigurationPage', { timeout: 15_000 }, () => {
       const simulations = dispatchSpy.mock.calls
         .map(([action]) => action as unknown as ReturnType<typeof simulatePlan>)
         .filter((action) => action.type === simulatePlan.type);
-      expect(simulations.map((action) => action.body.teamCount)).toEqual([128, 100]);
+      expect(simulations.map((action) => action.body.teamCount)).toEqual([100]);
       expect(previewCalls(dispatchSpy)).toHaveLength(1);
     });
 

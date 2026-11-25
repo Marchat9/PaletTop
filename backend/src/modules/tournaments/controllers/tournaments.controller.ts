@@ -202,9 +202,8 @@ export class TournamentsController {
             'Erreur lors du démarrage du tournoi.',
             () =>
                 this.sessionService.startTournament(code, dto.password, {
-                    expectedTeamCount: dto.expectedTeamCount,
-                    consolationCount: dto.consolationCount,
-                    eliminatedAfterQualifying: dto.eliminatedAfterQualifying,
+                    ...dto.competitionModeStartOptions,
+                    competitionMode: dto.competitionMode,
                 }),
             {
                 // Net against two concurrent starts (double click): the loser of the unique

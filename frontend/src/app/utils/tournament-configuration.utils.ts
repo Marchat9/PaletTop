@@ -113,6 +113,20 @@ export function buildPlanPreviewBody(
   };
 }
 
+/**
+ * Whether a simulation body asks what the live preview already asks (same team count): its plan is
+ * then the preview's, a second request would only repeat the first.
+ */
+export function repeatsPreview(
+  tournamentForm: TournamentConfigurationForm,
+  registeredCount: Nullable<number>,
+  simulationBody: PlanPreviewBody,
+): boolean {
+  return (
+    buildPlanPreviewBody(tournamentForm, registeredCount)?.teamCount === simulationBody.teamCount
+  );
+}
+
 /** Debounce of the live preview, applied by the pages. */
 export const PLAN_PREVIEW_DEBOUNCE_MS = 300;
 

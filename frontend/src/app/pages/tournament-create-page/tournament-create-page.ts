@@ -1,4 +1,4 @@
-import { of, debounceTime, map } from 'rxjs';
+import { of, debounceTime, filter, map, tap } from 'rxjs';
 import { Dialog } from '@angular/cdk/dialog';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { Overlay } from '@angular/cdk/overlay';
@@ -33,6 +33,7 @@ import {
   convertTournamentFormToTournamentConfigurationDto,
   PLAN_PREVIEW_DEBOUNCE_MS,
   planPreviewBodies,
+  repeatsPreview,
 } from 'src/app/utils/tournament-configuration.utils';
 import { BracketPanelState, PlanSimulationState } from 'src/app/models/tournament-plan.model';
 import { openPlanSimulationSheet } from 'src/app/modales/plan-simulation-popup/plan-simulation-popup';
@@ -78,7 +79,12 @@ export class TournamentCreatePageComponent {
   }));
 
   // Simulation (« et si j'ai X équipes ? »): its plan is requested apart from the preview of the form.
-  private readonly simulatedPlan = this.store.selectSignal(selectSimulatedPlan);
+  private readonly requestedSimulatedPlan = this.store.selectSignal(selectSimulatedPlan);
+  /** The simulation is at the preview's team count: it shows the preview's plan, not a request. */
+  private readonly simulationRepeatsPreview = signal(true);
+  private readonly simulatedPlan = computed(() =>
+    this.simulationRepeatsPreview() ? this.plan() : this.requestedSimulatedPlan(),
+  );
   private readonly simulationError = this.store.selectSignal(selectSimulationError);
   /** Null until the slider moves: the simulation then starts from the target count. */
   public readonly simulatedTeamCount = signal<number | null>(null);
@@ -128,7 +134,12 @@ export class TournamentCreatePageComponent {
         this.store.dispatch(previewPlan({ requestId: String(++this.previewSequence), body })),
       );
     planPreviewBodies(form, this.simulatedTeamCount$)
-      .pipe(debounceTime(PLAN_PREVIEW_DEBOUNCE_MS), takeUntilDestroyed(this.destroyRef))
+      .pipe(
+        tap((body) => this.simulationRepeatsPreview.set(repeatsPreview(form, null, body))),
+        filter(() => !this.simulationRepeatsPreview()),
+        debounceTime(PLAN_PREVIEW_DEBOUNCE_MS),
+        takeUntilDestroyed(this.destroyRef),
+      )
       .subscribe((body) =>
         this.store.dispatch(simulatePlan({ requestId: String(++this.simulationSequence), body })),
       );

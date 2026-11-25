@@ -95,6 +95,18 @@ describe('SessionService.startTournament', () => {
         expect(strategy.prepareTournamentStart).not.toHaveBeenCalled();
     });
 
+    it('refuses options written for another mode than the tournament, before any write', async () => {
+        const { service, sessionRepo, strategy } = setup(async () => {
+            throw new Error('must not be called');
+        });
+
+        await expect(
+            service.startTournament('CODE', 'pw', { competitionMode: CompetitionMode.STANDARD }),
+        ).rejects.toThrow(BadRequestException);
+        expect(sessionRepo.save).not.toHaveBeenCalled();
+        expect(strategy.prepareTournamentStart).not.toHaveBeenCalled();
+    });
+
     it('passes the plan settings and the confirmed choice to the strategy', async () => {
         const { service, strategy } = setup(async () => {
             throw new Error('stop after prepare');
