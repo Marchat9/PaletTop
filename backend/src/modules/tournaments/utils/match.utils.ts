@@ -7,6 +7,7 @@
  * @param session
  * @param constraintConfig
  * @param pastMatches
+ * @param byeRanking when given, a tie on the fewest byes goes to the best ranked team (else random)
  * @returns DeepPartial<TournamentMatch>[]
  */
 
@@ -41,6 +42,7 @@ export function generateMatchesInPool(
     session: MatchesSession,
     constraintConfig: ConstraintConfig,
     pastMatches: TournamentMatch[],
+    byeRanking?: GlobalRankingEntry[],
 ): DeepPartial<TournamentMatch>[] {
     const allMatches: DeepPartial<TournamentMatch>[] = [];
 
@@ -50,7 +52,7 @@ export function generateMatchesInPool(
 
     // Byes
     if (currentTeams.length % 2 !== 0) {
-        const byeTeam = selectByeTeam(currentTeams, pastMatches);
+        const byeTeam = selectByeTeam(currentTeams, pastMatches, byeRanking);
         allMatches.push(
             buildByeMatchData(
                 toTeamRef(byeTeam),

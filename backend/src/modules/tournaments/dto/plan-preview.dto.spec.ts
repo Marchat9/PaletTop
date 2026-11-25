@@ -29,8 +29,12 @@ describe('PlanPreviewDto', () => {
         expect(errors(body)).toEqual([]);
     });
 
-    it('refuses fewer than 2 teams', () => {
-        expect(errors({ ...body, teamCount: 1 })).toContain('min');
+    it('accepts a single team (the plan itself reports it as impossible)', () => {
+        expect(errors({ ...body, teamCount: 1 })).toEqual([]);
+    });
+
+    it('refuses fewer than 1 team', () => {
+        expect(errors({ ...body, teamCount: 0 })).toContain('min');
     });
 
     it('refuses more teams than the absolute maximum', () => {

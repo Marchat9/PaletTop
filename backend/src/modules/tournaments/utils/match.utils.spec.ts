@@ -130,6 +130,24 @@ describe('generateMatchesInPool', () => {
         }
     });
 
+    it('gives the bye to the best ranked team on a tie on the fewest byes when a ranking is given', () => {
+        // A has had a bye already; B and C none: C is better ranked than B.
+        const ranking = [entry('A', 1), entry('C', 2), entry('B', 3), entry('D', 4)];
+
+        for (let i = 0; i < 20; i++) {
+            const matches = generateMatchesInPool(
+                pool,
+                teams(['A', 'B', 'C']).map((team) => Object.assign(team, { players: [] })),
+                tournamentWithConfig,
+                session,
+                constraintConfig,
+                [pastBye('A')],
+                ranking,
+            );
+            expect(matches.find((m) => m.isBye)?.teamA?.id).toBe('C');
+        }
+    });
+
     it('stores the drawn-round bye 0-0 as a win, so it leaves the goal average untouched', () => {
         const matches = generateMatchesInPool(
             pool,

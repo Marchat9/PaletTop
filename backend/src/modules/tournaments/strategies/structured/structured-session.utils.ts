@@ -1,46 +1,20 @@
+import { Logger } from '@nestjs/common';
 import { MatchesSession } from 'src/entities/matches-session.entity';
-import { Team } from 'src/entities/team.entity';
 import { TournamentMatch } from 'src/entities/tounament-match.entity';
 import { StructuredCompetitionConfiguration } from 'src/entities/tournament-competition-configuration.entity';
 import { TournamentPool } from 'src/entities/tournament-pool.entity';
 import { Tournament } from 'src/entities/tournament.entity';
 import { TournamentStatus } from 'src/enum/status.enum';
-import { MatchGroupKey } from 'src/enum/tounament.enum';
 import { ConstraintConfig } from 'src/model/constraint.model';
 import { generateMatchesInPool } from 'src/modules/tournaments/utils/match.utils';
 import { extractContraintConfig } from 'src/modules/tournaments/utils/tournament.utils';
 import { toPoolRef } from 'src/modules/tournaments/utils/type-orm-ref.utils';
 import { DeepPartial } from 'typeorm';
 import { GlobalRankingEntry } from '../../../tournaments/responses/ranking.dto';
-import { computePrincipalBracketSize } from '../../../tournaments/utils/bracket.utils';
+import { EliminationTeamsResolver } from './elimination-teams.utils';
+import { PlanRound } from './plan/plan.types';
 
-// TEMPORARY (Task 7): remove - the elimination generation below still reads the old tables.
-/** The old elimination tables, derived from the new structured configuration. */
-export interface LegacyEliminationTables {
-    numberOfQualifyingRounds: number;
-    hasConsolanteTable: boolean;
-    hasChallengePrincipaleTable: boolean;
-    hasChallengeConsolanteTable: boolean;
-    hasThirdPlaceMatch: boolean;
-    principalBracketSize: number;
-}
-
-// TEMPORARY (Task 7): remove - maps the new configuration to what the old generation reads: a
-// consolation table when there is at least one consolation, challenges on both tables, and the
-// automatic principal bracket size.
-export function toLegacyEliminationTables(
-    config: StructuredCompetitionConfiguration,
-    teamCount: number,
-): LegacyEliminationTables {
-    return {
-        numberOfQualifyingRounds: config.numberOfQualifyingRounds,
-        hasConsolanteTable: config.consolationCount >= 1,
-        hasChallengePrincipaleTable: config.hasChallenges,
-        hasChallengeConsolanteTable: config.hasChallenges,
-        hasThirdPlaceMatch: config.hasThirdPlaceMatch,
-        principalBracketSize: computePrincipalBracketSize(teamCount),
-    };
-}
+const logger = new Logger('StructuredSessionUtils');
 
 /**
  * Permet de générer les matches de qualification suivant le nombre de pool.
@@ -74,150 +48,102 @@ export function generateQualifyingMatches(
         );
 }
 
+/** The elimination round of the frozen plan played at `sessionNumber`, if any. */
+export function eliminationPlanRound(
+    config: StructuredCompetitionConfiguration,
+    sessionNumber: number,
+): PlanRound | undefined {
+    return config.plan?.rounds.find(
+        (round) => round.number === sessionNumber && round.kind === 'elimination',
+    );
+}
+
+/** Group keys of the elimination round played at `sessionNumber` (one virtual pool each). */
+export function eliminationGroupKeys(
+    config: StructuredCompetitionConfiguration,
+    sessionNumber: number,
+): string[] {
+    return eliminationPlanRound(config, sessionNumber)?.groups.map((group) => group.key) ?? [];
+}
+
+/**
+ * Matches of an elimination round, following the frozen plan: each group of the plan round gets
+ * its teams from the earlier results (see `EliminationTeamsResolver`) and is drawn in its own
+ * virtual pool with the constrained draw; an odd group gives its bye to the team with the fewest
+ * byes, then the best ranked. Groups come in the plan's order, which is the plate order.
+ */
 export function generateEliminationMatches(
     tournament: Tournament,
-    competitionConfig: LegacyEliminationTables,
+    config: StructuredCompetitionConfiguration,
     session: MatchesSession,
     pastMatches: TournamentMatch[],
     globalRanking: GlobalRankingEntry[],
     virtualPools: TournamentPool[],
 ): DeepPartial<TournamentMatch>[] {
-    // Each table is seeded from the teams that actually belong to it - the winners of its own
-    // previous round, and for a repechage table the first-round losers of its parent - NOT by
-    // re-slicing the global ranking. Once challenge/consolante tables exist, a repechage winner
-    // climbs the aggregate ranking above a principal semi-finalist, so slicing pulled the wrong
-    // teams into the wrong tables. Winner-tracking keeps every team in exactly one table.
-    const constraintConfig: ConstraintConfig = extractContraintConfig(tournament.configuration);
-    const qualifyingRounds = competitionConfig.numberOfQualifyingRounds ?? 0;
-    const principalBracketSize = competitionConfig.principalBracketSize;
-    const elimSession = session.sessionNumber - qualifyingRounds; // 1 = first elimination round
-    const teamById = new Map(tournament.teams.map((t) => [t.id, t]));
-
-    // Winners (byes included) and losers of a table at a given elimination round, resolved to the
-    // full team entities (matches only carry id/name/code refs, and the draw needs the players).
-    const roundResults = (groupKey: MatchGroupKey, atElimSession: number) => {
-        const sessionNumber = qualifyingRounds + atElimSession;
-        const tableMatches = pastMatches.filter(
-            (m) => m.pool?.name === groupKey && m.sessionNumber === sessionNumber,
+    const round = eliminationPlanRound(config, session.sessionNumber);
+    if (!config.plan || !round) {
+        throw new Error(
+            `No elimination round planned for session ${session.sessionNumber} of ${tournament.code}.`,
         );
-        const resolve = (team: Team): Team | undefined => teamById.get(team.id);
-        const winners: Team[] = [];
-        const losers: Team[] = [];
-        for (const m of tableMatches) {
-            if (m.isBye || !m.teamB) {
-                const bye = resolve(m.teamA);
-                if (bye) winners.push(bye);
-                continue;
-            }
-            const [winner, loser] = m.scoreA > m.scoreB ? [m.teamA, m.teamB] : [m.teamB, m.teamA];
-            const winnerTeam = resolve(winner);
-            const loserTeam = resolve(loser);
-            if (winnerTeam) winners.push(winnerTeam);
-            if (loserTeam) losers.push(loserTeam);
+    }
+    const constraintConfig = extractContraintConfig(tournament.configuration);
+    const resolver = new EliminationTeamsResolver({
+        plan: config.plan,
+        teams: tournament.teams,
+        pastMatches,
+        globalRanking,
+        stoppedCount: config.eliminatedAfterQualifying ?? 0,
+        random: Math.random,
+    });
+
+    return round.groups.flatMap((group) => {
+        const teams = resolver.teamsOf(group, round.number);
+        if (teams.length !== group.teamCount) {
+            logger.warn(
+                `${tournament.code} session ${round.number}: ${group.key} has ${teams.length} teams, ${group.teamCount} planned`,
+            );
         }
-        return { winners, losers };
-    };
-
-    const seededRanking = [...globalRanking].sort((a, b) => a.rank - b.rank);
-    const rankSlice = (from: number, to: number): Team[] =>
-        seededRanking
-            .slice(from, to)
-            .map((e) => teamById.get(e.teamId))
-            .filter((t): t is Team => !!t);
-
-    const tableData: { teams: Team[]; groupKey: MatchGroupKey }[] = [];
-    const addTable = (enabled: boolean, groupKey: MatchGroupKey, teams: Team[]): void => {
-        if (enabled && teams.length >= 2) tableData.push({ teams, groupKey });
-    };
-
-    // Principal: top P at the first round, then its own winners.
-    const principalTeams =
-        elimSession === 1
-            ? rankSlice(0, principalBracketSize)
-            : roundResults(MatchGroupKey.PRINCIPALE, elimSession - 1).winners;
-    addTable(true, MatchGroupKey.PRINCIPALE, principalTeams);
-
-    // Consolante: the field below the principal bracket at the first round, then its own winners.
-    const consolanteTeams =
-        elimSession === 1
-            ? rankSlice(principalBracketSize, tournament.teams.length)
-            : roundResults(MatchGroupKey.CONSOLANTE, elimSession - 1).winners;
-    addTable(competitionConfig.hasConsolanteTable, MatchGroupKey.CONSOLANTE, consolanteTeams);
-
-    // Challenge: repechage of the principal's first-round losers, then its own winners. Starts one
-    // round after the principal (there are no losers to catch before the first principal round).
-    if (elimSession >= 2) {
-        const challengeTeams =
-            elimSession === 2
-                ? roundResults(MatchGroupKey.PRINCIPALE, 1).losers
-                : roundResults(MatchGroupKey.CHALLENGE, elimSession - 1).winners;
-        addTable(
-            competitionConfig.hasChallengePrincipaleTable,
-            MatchGroupKey.CHALLENGE,
-            challengeTeams,
+        if (teams.length < 2) return [];
+        logger.debug(
+            `${tournament.code} session ${round.number}: ${group.key}, ${teams.length} teams`,
         );
-
-        const challengeConsolanteTeams =
-            elimSession === 2
-                ? roundResults(MatchGroupKey.CONSOLANTE, 1).losers
-                : roundResults(MatchGroupKey.CHALLENGE_CONSOLANTE, elimSession - 1).winners;
-        addTable(
-            competitionConfig.hasChallengeConsolanteTable,
-            MatchGroupKey.CHALLENGE_CONSOLANTE,
-            challengeConsolanteTeams,
-        );
-    }
-
-    // Third-place match (principal only): the two losers of the principal semi-finals, once the
-    // principal is down to its final. They are the losers of the previous principal round.
-    if (competitionConfig.hasThirdPlaceMatch && principalTeams.length === 2) {
-        const semiFinalLosers = roundResults(MatchGroupKey.PRINCIPALE, elimSession - 1).losers;
-        addTable(true, MatchGroupKey.THIRD_PLACE_MATCH, semiFinalLosers);
-    }
-
-    return tableData.flatMap(({ teams, groupKey }) =>
-        generateMatchesInPool(
-            virtualPools.find((vp) => vp.name === groupKey)!,
+        const pool = virtualPools.find((vp) => vp.name === group.key)!;
+        return generateMatchesInPool(
+            pool,
             teams,
             tournament,
             session,
             constraintConfig,
             pastMatches,
-        ),
-    );
+            globalRanking,
+        );
+    });
 }
 
+/**
+ * Phase name of the current session, from the frozen plan's round labels (« Phase qualificative
+ * x/N », « Élimination n », « Quarts de finale », « Demi-finales », « Finale »); the final round
+ * says « + Petite Finale » when the 3rd place match is played with it.
+ */
 export function computePhaseName(
     tournamentStatus: TournamentStatus,
-    isElimination: boolean,
-    nbTeamStillInGame: number,
+    config: StructuredCompetitionConfiguration,
     currentSessionNumber: number,
-    hasThirdPlaceMatch: boolean,
-    numberOfQualifyingRounds: number,
 ): string {
-    switch (true) {
-        case tournamentStatus === TournamentStatus.DRAFT:
-        case tournamentStatus === TournamentStatus.CANCELLED:
-        default:
-            return '';
+    if (tournamentStatus === TournamentStatus.COMPLETED) return 'Tournoi terminé';
+    if (tournamentStatus !== TournamentStatus.ACTIVE || currentSessionNumber === 0) return '';
 
-        case tournamentStatus === TournamentStatus.COMPLETED:
-            return 'Tournoi terminé';
-
-        case tournamentStatus === TournamentStatus.ACTIVE && !isElimination:
-            return `Phase qualificative ${currentSessionNumber}/${numberOfQualifyingRounds}`;
-
-        case tournamentStatus === TournamentStatus.ACTIVE &&
-            isElimination &&
-            nbTeamStillInGame === 2:
-            return `Finale${hasThirdPlaceMatch ? ' + Petite Finale' : ''}`;
-
-        case tournamentStatus === TournamentStatus.ACTIVE &&
-            isElimination &&
-            nbTeamStillInGame === 4:
-            return 'Demi-Finale';
-
-        case tournamentStatus === TournamentStatus.ACTIVE && isElimination && nbTeamStillInGame > 4:
-            return 'Phase éliminatoire';
+    const round = config.plan?.rounds.find((r) => r.number === currentSessionNumber);
+    if (!round) {
+        return currentSessionNumber <= config.numberOfQualifyingRounds
+            ? `Phase qualificative ${currentSessionNumber}/${config.numberOfQualifyingRounds}`
+            : '';
     }
+    const withThirdPlace = round.groups.some((group) => group.kind === 'third_place');
+    return withThirdPlace ? `${round.label} + Petite Finale` : round.label;
+}
+
+/** Last round of the tournament: the plan's last one (the last qualifying one without a plan). */
+export function lastRoundNumber(config: StructuredCompetitionConfiguration): number {
+    return config.plan?.totalRounds ?? config.numberOfQualifyingRounds ?? 0;
 }

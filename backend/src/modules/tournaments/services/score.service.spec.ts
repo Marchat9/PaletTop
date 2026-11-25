@@ -8,17 +8,18 @@ function setup(match: Partial<TournamentMatch>, drawnRound = true) {
     const matchRepo = {
         findByIdInTournament: vi.fn(async () => match),
         update: vi.fn(async () => undefined),
+        updateIfStatus: vi.fn(async () => true),
     };
-    const tournamentAuthService = {
-        findWithAdminAuth: vi.fn(async () => ({
-            id: 'T1',
-            configuration: { pointsPerGame: 13, competitionMode: 'standard' },
-        })),
+    const tournament = {
+        id: 'T1',
+        status: 'ACTIVE',
+        configuration: { pointsPerGame: 13, competitionMode: 'standard' },
     };
+    const tournamentAuthService = { findWithAdminAuth: vi.fn(async () => tournament) };
     const isDrawnSession = vi.fn(() => drawnRound);
     const strategyFactory = { create: vi.fn(() => ({ isDrawnSession })) };
     const service = new ScoreService(
-        {} as never,
+        { findByCode: vi.fn(async () => tournament) } as never,
         matchRepo as never,
         {} as never,
         {} as never,
@@ -160,5 +161,75 @@ describe('ScoreService.validateMatch racing a score change', () => {
                 scoreB: 9,
             }),
         ).rejects.toBeInstanceOf(BadRequestException);
+    });
+});
+
+describe('ScoreService scores in an elimination session', () => {
+    const eliminationMatch: Partial<TournamentMatch> = {
+        id: 'm1',
+        scoreA: 0,
+        scoreB: 0,
+        isBye: false,
+        status: MatchStatus.ONGOING,
+        startedAt: new Date(),
+        teamA: { code: 'AAAA' } as TournamentMatch['teamA'],
+        teamB: { code: 'BBBB' } as TournamentMatch['teamB'],
+        session: {
+            status: MatchesSessionStatus.OPEN,
+            sessionNumber: 3,
+        } as TournamentMatch['session'],
+    };
+
+    it('accepts an in-progress equal score from a team', async () => {
+        const { service, matchRepo } = setup(eliminationMatch, false);
+
+        await service.updateScore('CODE', 'm1', 'AAAA', 3, 3).catch(() => undefined);
+
+        expect(matchRepo.updateIfStatus).toHaveBeenCalledWith(
+            'm1',
+            expect.anything(),
+            expect.objectContaining({ scoreA: 3, scoreB: 3, status: MatchStatus.ONGOING }),
+            null,
+        );
+    });
+
+    it('accepts an in-progress equal score forced by the admin', async () => {
+        const { service, matchRepo } = setup(eliminationMatch, false);
+
+        await service.adminUpdateScore('CODE', 'm1', 'pwd', 3, 3).catch(() => undefined);
+
+        expect(matchRepo.update).toHaveBeenCalledWith(
+            'm1',
+            expect.objectContaining({ scoreA: 3, scoreB: 3 }),
+        );
+    });
+
+    it('refuses both teams at the maximum, from a team and from the admin', async () => {
+        const { service, matchRepo } = setup(eliminationMatch, false);
+
+        await expect(service.updateScore('CODE', 'm1', 'AAAA', 13, 13)).rejects.toBeInstanceOf(
+            BadRequestException,
+        );
+        await expect(service.adminUpdateScore('CODE', 'm1', 'pwd', 13, 13)).rejects.toBeInstanceOf(
+            BadRequestException,
+        );
+        expect(matchRepo.update).not.toHaveBeenCalled();
+    });
+
+    it('keeps the qualifying behaviour: equal in-progress score accepted, both at max refused', async () => {
+        const qualifying = {
+            ...eliminationMatch,
+            session: { status: MatchesSessionStatus.OPEN, sessionNumber: 1 },
+        } as Partial<TournamentMatch>;
+        const { service, matchRepo } = setup(qualifying, true);
+
+        await service.adminUpdateScore('CODE', 'm1', 'pwd', 4, 4).catch(() => undefined);
+        expect(matchRepo.update).toHaveBeenCalledWith(
+            'm1',
+            expect.objectContaining({ scoreA: 4, scoreB: 4 }),
+        );
+        await expect(service.adminUpdateScore('CODE', 'm1', 'pwd', 13, 13)).rejects.toBeInstanceOf(
+            BadRequestException,
+        );
     });
 });

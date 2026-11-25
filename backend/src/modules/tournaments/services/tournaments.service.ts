@@ -29,7 +29,6 @@ import { TournamentConfiguration } from 'src/entities/tournament-configuration.e
 import { PlayerClubRepository } from '../repositories/player-club.repository';
 import { TeamRepository } from '../repositories/team.repository';
 import { TournamentRepository } from '../repositories/tournament.repository';
-import { TeamDto, toTeamDto } from '../responses/admin-tournament.dto';
 import { TournamentAuthService } from './tournament-auth.service';
 import { AdminPasswordService } from 'src/modules/admin-password/admin-password.service';
 
@@ -287,20 +286,6 @@ export class TournamentsService {
         const saved = await this.tournamentRepo.save(tournament);
         this.logger.log(`${savedTeams.length} team(s) added to tournament ${tournamentCode}`);
         return sanitizeTournament(saved);
-    }
-
-    async getTeamByCode(tournamentCode: string, teamCode: string): Promise<TeamDto> {
-        const tournament = await this.tournamentRepo.findWithRelations(
-            { code: tournamentCode },
-            { withTeams: true },
-        );
-        if (!tournament) throw new NotFoundException('Tournoi introuvable.');
-
-        const team = tournament.teams.find((t) => t.code === teamCode);
-        if (!team) throw new NotFoundException('Équipe introuvable.');
-
-        this.logger.log(`Team ${teamCode} retrieved for tournament ${tournamentCode}`);
-        return toTeamDto(team);
     }
 
     async updateTournamentConfiguration(

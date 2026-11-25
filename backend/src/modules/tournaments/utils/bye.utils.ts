@@ -5,8 +5,17 @@ import { TournamentMatch } from 'src/entities/tounament-match.entity';
 import { Tournament } from 'src/entities/tournament.entity';
 import { TournamentPool } from 'src/entities/tournament-pool.entity';
 import { MatchStatus } from 'src/enum/status.enum';
+import { GlobalRankingEntry } from 'src/modules/tournaments/responses/ranking.dto';
 
-export function selectByeTeam(teams: Team[], pastMatches: TournamentMatch[]): Team {
+/**
+ * The team getting the bye: the one with the fewest byes so far. On a tie, the best ranked of
+ * `ranking` when given (elimination rounds), otherwise one drawn at random.
+ */
+export function selectByeTeam(
+    teams: Team[],
+    pastMatches: TournamentMatch[],
+    ranking?: GlobalRankingEntry[],
+): Team {
     const byeCountByTeam = new Map<string, number>(teams.map((t) => [t.id, 0]));
 
     for (const match of pastMatches) {
@@ -17,6 +26,15 @@ export function selectByeTeam(teams: Team[], pastMatches: TournamentMatch[]): Te
 
     const minByes = Math.min(...byeCountByTeam.values());
     const candidates = teams.filter((t) => byeCountByTeam.get(t.id) === minByes);
+    if (ranking) {
+        const position = new Map(
+            [...ranking].sort((a, b) => a.rank - b.rank).map((e, index) => [e.teamId, index]),
+        );
+        const positionOf = (team: Team): number => position.get(team.id) ?? Number.MAX_SAFE_INTEGER;
+        return candidates.reduce((best, team) =>
+            positionOf(team) < positionOf(best) ? team : best,
+        );
+    }
     return candidates[Math.floor(Math.random() * candidates.length)];
 }
 

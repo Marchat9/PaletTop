@@ -5,42 +5,53 @@ import { StructuredCompetitionConfiguration } from 'src/entities/tournament-comp
 import { TournamentPool } from 'src/entities/tournament-pool.entity';
 import { Tournament } from 'src/entities/tournament.entity';
 import { MatchStatus, TournamentStatus } from 'src/enum/status.enum';
-import { MatchGroupKey } from 'src/enum/tounament.enum';
+import { groupLabel, groupOrder } from './plan/group-keys';
 import { TournamentRepository } from 'src/modules/tournaments/repositories/tournament.repository';
 import { extractCompetitionConfiguration } from 'src/modules/tournaments/utils/tournament.utils';
 import { DeepPartial } from 'typeorm';
 import { MatchRepository } from '../../../tournaments/repositories/match.repository';
 import { PoolRepository } from '../../../tournaments/repositories/pool.repository';
 import { GlobalRankingEntry, RankingSection } from '../../../tournaments/responses/ranking.dto';
+import { TeamTournamentStatus } from '../../../tournaments/responses/player-team.dto';
 import { TournamentStatusInfo } from '../../../tournaments/responses/tournament-status.dto';
 import { PoolService } from '../../../tournaments/services/pool.service';
 import {
     computePhaseName,
+    eliminationGroupKeys,
     generateEliminationMatches,
     generateQualifyingMatches,
-    toLegacyEliminationTables,
+    lastRoundNumber,
 } from './structured-session.utils';
 import { PlanSettings, StartOptions, TournamentStrategy } from '../tournament-strategy.abstract';
 import { StructuredPlanInput, TournamentPlan } from './plan/plan.types';
-import { computeStructuredPlan } from './plan/structured-plan';
+import { bracketKey, computeStructuredPlan, THIRD_PLACE_GROUP_KEY } from './plan/structured-plan';
 
 interface EliminationExit {
-    table: MatchGroupKey;
+    table: string;
     session: number;
     won: boolean;
     ownScore: number;
 }
 
-// Block order of the tables in the final standings: principal final (1-2), third place (3-4),
-// challenge (5-…), consolante, challenge-consolante, then teams knocked out in the pools.
-const TABLE_STANDING_ORDER: Record<MatchGroupKey, number> = {
-    [MatchGroupKey.PRINCIPALE]: 0,
-    [MatchGroupKey.THIRD_PLACE_MATCH]: 1,
-    [MatchGroupKey.CHALLENGE]: 2,
-    [MatchGroupKey.CONSOLANTE]: 3,
-    [MatchGroupKey.CHALLENGE_CONSOLANTE]: 4,
-};
-const POOL_ONLY_ORDER = 5;
+/** A team in the standings being sorted. */
+interface StandingItem {
+    exit?: EliminationExit;
+    /** Index in the full aggregate ranking. */
+    seed: number;
+    /** Index in the qualifying ranking, for a team stopped after the qualifiers. */
+    stoppedOrder?: number;
+}
+
+const MAIN_GROUP_KEY = bracketKey(0);
+// Teams knocked out before any table (or stopped after the qualifiers) come after every block.
+const POOL_ONLY_ORDER = Number.MAX_SAFE_INTEGER;
+
+/** Section of the teams stopped after the qualifiers. */
+const ELIMINATED_QUALIFYING_SECTION = 'eliminated_qualifying';
+const ELIMINATED_QUALIFYING_LABEL = 'Éliminés en qualifs';
+/** Section of a team that never reached a bracket without being stopped on purpose. */
+const POOLS_SECTION = 'pools';
+const POOLS_LABEL = 'Hors tableaux';
 
 const SINGLE_POOL = 1;
 
@@ -51,26 +62,33 @@ function withoutOptions(plan: Omit<TournamentPlan, 'options'>): Omit<TournamentP
 }
 
 /**
+ * Block of a table in the standings, in the group order (main, challenge main, A, challenge A…).
  * The 3rd-place match belongs to the principal bracket, right under the final: its players are
  * the semi-final losers, ahead of every earlier exit of the bracket. Ranked as a table of its own
  * (after the whole principal bracket), it put the quarter-final losers 3rd to 6th when there is no
  * consolation table to send them to.
  */
 function standingTable(exit: EliminationExit): number {
-    return exit.table === MatchGroupKey.THIRD_PLACE_MATCH
-        ? TABLE_STANDING_ORDER[MatchGroupKey.PRINCIPALE]
-        : TABLE_STANDING_ORDER[exit.table];
+    return groupOrder(exit.table === THIRD_PLACE_GROUP_KEY ? MAIN_GROUP_KEY : exit.table);
 }
 
-/** Section of the standings: the 3rd-place match is shown with the principal table. */
+/** Section of the standings: the group key, the 3rd-place match shown with the principal table. */
 function standingSection(exit: EliminationExit | undefined): RankingSection {
-    if (!exit) return 'pools';
-    return exit.table === MatchGroupKey.THIRD_PLACE_MATCH ? MatchGroupKey.PRINCIPALE : exit.table;
+    if (!exit) return POOLS_SECTION;
+    return exit.table === THIRD_PLACE_GROUP_KEY ? MAIN_GROUP_KEY : exit.table;
+}
+
+/** French label of a standings section; null when there is none. */
+function sectionLabel(section: RankingSection | null): string | null {
+    if (section === null) return null;
+    if (section === ELIMINATED_QUALIFYING_SECTION) return ELIMINATED_QUALIFYING_LABEL;
+    if (section === POOLS_SECTION) return POOLS_LABEL;
+    return groupLabel(section);
 }
 
 /** Just under the final (played in the same round): finalists first, then the 3rd-place match. */
 function standingDepth(exit: EliminationExit): number {
-    return exit.table === MatchGroupKey.THIRD_PLACE_MATCH ? exit.session - 0.5 : exit.session;
+    return exit.table === THIRD_PLACE_GROUP_KEY ? exit.session - 0.5 : exit.session;
 }
 
 export class StructuredTournamentStrategy extends TournamentStrategy {
@@ -248,15 +266,18 @@ export class StructuredTournamentStrategy extends TournamentStrategy {
         const generationStartedAt = Date.now();
         if (isElimination) {
             const ranking = this.computeGlobalRanking(tournament, pastMatches);
+            const groupKeys = eliminationGroupKeys(config, session.sessionNumber);
+            this.logger.debug(
+                `Elimination session ${session.sessionNumber} of ${tournament.code}: groups ${groupKeys.join(', ')}`,
+            );
             const virtualPools: TournamentPool[] = await this.getOrCreateVirtualPools(
                 tournament.id,
-                Object.values(MatchGroupKey),
+                groupKeys,
             );
 
             partialMatches = generateEliminationMatches(
                 tournament,
-                // TEMPORARY (Task 7): remove the adapter once the generation follows the plan.
-                toLegacyEliminationTables(config, tournament.teams.length),
+                config,
                 session,
                 pastMatches,
                 ranking,
@@ -296,11 +317,17 @@ export class StructuredTournamentStrategy extends TournamentStrategy {
         const exits = this.eliminationExits(tournament, validatedMatches);
         this.addScheduledTables(tournament, scheduledMatches, exits);
 
+        const stopped =
+            exits.size > 0
+                ? this.stoppedTeamOrder(tournament, validatedMatches)
+                : new Map<string, number>();
+
         const placed = base
             .map((entry) => ({
                 entry,
                 exit: exits.get(entry.teamId),
                 seed: seed.get(entry.teamId)!,
+                stoppedOrder: stopped.get(entry.teamId),
             }))
             .sort((a, b) => this.compareStandings(a, b));
 
@@ -310,16 +337,79 @@ export class StructuredTournamentStrategy extends TournamentStrategy {
                     ? ranked[index - 1].rank
                     : index + 1;
             // Sections only once a table has started: before, it is a single ranking.
-            const section = exits.size > 0 ? standingSection(item.exit) : null;
-            ranked.push({ ...item.entry, rank, section });
+            let section: RankingSection | null = null;
+            if (exits.size > 0) {
+                section = stopped.has(item.entry.teamId)
+                    ? ELIMINATED_QUALIFYING_SECTION
+                    : standingSection(item.exit);
+            }
+            ranked.push({ ...item.entry, rank, section, sectionLabel: sectionLabel(section) });
             return ranked;
         }, []);
     }
 
-    private compareStandings(
-        a: { exit?: EliminationExit; seed: number },
-        b: { exit?: EliminationExit; seed: number },
-    ): number {
+    /**
+     * The last `eliminatedAfterQualifying` teams of the qualifying ranking, each with its index in
+     * that ranking: they play no elimination match, so they come after every bracket team, in
+     * qualifying order (their final rank is their qualifying rank, whatever the later results of
+     * their past opponents).
+     */
+    private stoppedTeamOrder(
+        tournament: Tournament,
+        matches: TournamentMatch[],
+    ): Map<string, number> {
+        const config = this.getConfig(tournament);
+        const stoppedCount = config.eliminatedAfterQualifying ?? 0;
+        if (stoppedCount <= 0) return new Map();
+        const qualifyingRounds = config.numberOfQualifyingRounds ?? 0;
+        const qualifying = this.computeGlobalRanking(
+            tournament,
+            matches.filter((m) => (m.sessionNumber ?? 0) <= qualifyingRounds),
+        );
+        return new Map(
+            qualifying.slice(-stoppedCount).map((entry, index) => [entry.teamId, index]),
+        );
+    }
+
+    /**
+     * Stopped after the qualifiers (once the elimination phase exists), and the bracket a team was
+     * repêchée into: it lost its first round there yet plays that bracket's second round, as one of
+     * the best losers the plan brings back. Losers dropped into the challenge are not repêchés.
+     */
+    override computeTeamStatus(
+        tournament: Tournament,
+        matches: TournamentMatch[],
+        teamId: string,
+    ): TeamTournamentStatus {
+        const firstRound = (this.getConfig(tournament).numberOfQualifyingRounds ?? 0) + 1;
+        const validated = matches.filter((m) => m.status === MatchStatus.VALIDATED);
+        const eliminationStarted = matches.some((m) => (m.sessionNumber ?? 0) >= firstRound);
+        const eliminatedAfterQualifying =
+            eliminationStarted && this.stoppedTeamOrder(tournament, validated).has(teamId);
+
+        const plays = (m: TournamentMatch): boolean =>
+            m.teamA.id === teamId || m.teamB?.id === teamId;
+        const lostFirstRound = validated.find(
+            (m) =>
+                m.sessionNumber === firstRound &&
+                !m.isBye &&
+                !!m.teamB &&
+                plays(m) &&
+                (m.teamA.id === teamId ? m.scoreA < m.scoreB : m.scoreB < m.scoreA),
+        );
+        const bracket = lostFirstRound?.pool?.name;
+        const isBack =
+            !!bracket &&
+            matches.some(
+                (m) => m.sessionNumber === firstRound + 1 && m.pool?.name === bracket && plays(m),
+            );
+        const repechedFrom = isBack ? groupLabel(bracket) : null;
+        return repechedFrom
+            ? { eliminatedAfterQualifying, repechedFrom }
+            : { eliminatedAfterQualifying };
+    }
+
+    private compareStandings(a: StandingItem, b: StandingItem): number {
         const tableA = a.exit ? standingTable(a.exit) : POOL_ONLY_ORDER;
         const tableB = b.exit ? standingTable(b.exit) : POOL_ONLY_ORDER;
         if (tableA !== tableB) return tableA - tableB;
@@ -333,17 +423,17 @@ export class StructuredTournamentStrategy extends TournamentStrategy {
         const scoreA = a.exit?.ownScore ?? -1;
         const scoreB = b.exit?.ownScore ?? -1;
         if (scoreA !== scoreB) return scoreB - scoreA;
+        if (a.stoppedOrder !== undefined && b.stoppedOrder !== undefined) {
+            return a.stoppedOrder - b.stoppedOrder;
+        }
         return a.seed - b.seed;
     }
 
     /**
-     * Each team's terminal elimination match (the deepest round it played): which table it was in,
-     * whether it won, and the points it scored there. Byes and pool matches are ignored.
-     */
-    /**
      * A table match not validated yet already tells where its teams stand: in that table, still in
      * the game at that round. The sections show as soon as an elimination round is launched, and a
-     * team still playing ranks above those already knocked out of its table.
+     * team still playing ranks above those already knocked out of its table. A bye is stored
+     * validated, so it is placed by `eliminationExits`.
      */
     private addScheduledTables(
         tournament: Tournament,
@@ -356,7 +446,7 @@ export class StructuredTournamentStrategy extends TournamentStrategy {
             const session = match.sessionNumber ?? 0;
             if (session <= qualifyingRounds) continue;
 
-            const table = (match.pool?.name ?? MatchGroupKey.PRINCIPALE) as MatchGroupKey;
+            const table = match.pool?.name ?? MAIN_GROUP_KEY;
             for (const teamId of [match.teamA.id, match.teamB.id]) {
                 const current = exits.get(teamId);
                 if (!current || session > current.session) {
@@ -366,6 +456,11 @@ export class StructuredTournamentStrategy extends TournamentStrategy {
         }
     }
 
+    /**
+     * Each team's terminal elimination match (the deepest round it played): which table it was in,
+     * whether it won, and the points it scored there. A bye in a table counts as a round won
+     * without points (an odd bracket's first round); pool matches are ignored.
+     */
     private eliminationExits(
         tournament: Tournament,
         matches: TournamentMatch[],
@@ -379,12 +474,15 @@ export class StructuredTournamentStrategy extends TournamentStrategy {
         };
 
         for (const match of matches) {
-            if (match.isBye || !match.teamB) continue;
             if ((match.sessionNumber ?? 0) <= qualifyingRounds) continue;
             if (match.status !== MatchStatus.VALIDATED) continue;
 
-            const table = (match.pool?.name ?? MatchGroupKey.PRINCIPALE) as MatchGroupKey;
+            const table = match.pool?.name ?? MAIN_GROUP_KEY;
             const session = match.sessionNumber!;
+            if (match.isBye || !match.teamB) {
+                consider(match.teamA.id, { table, session, won: true, ownScore: -1 });
+                continue;
+            }
             const aWon = match.scoreA > match.scoreB;
             consider(match.teamA.id, { table, session, won: aWon, ownScore: match.scoreA });
             consider(match.teamB.id, { table, session, won: !aWon, ownScore: match.scoreB });
@@ -402,38 +500,24 @@ export class StructuredTournamentStrategy extends TournamentStrategy {
         );
         const config = this.getConfig(tournament);
 
-        const numberOfQualifyingRounds = config.numberOfQualifyingRounds ?? 0;
         const currentSessionNumber = this.currentSessionNumber(sessions);
-        const isElimination = currentSessionNumber > numberOfQualifyingRounds;
         const allValidated = this.allMatchesValidated(sessions);
-        // TEMPORARY (Task 7): remove the adapter once the status follows the plan.
-        const { principalBracketSize } = toLegacyEliminationTables(
-            config,
-            tournament.teams?.length ?? 0,
-        );
-        const nbTeamStillInGame =
-            principalBracketSize /
-            Math.pow(2, Math.max(currentSessionNumber - (numberOfQualifyingRounds ?? 0) - 1, 0));
-        const isFinal = isElimination && nbTeamStillInGame <= 2;
+        // Every group of the plan's last round is played in that session: once all its matches
+        // are validated, every bracket has finished.
+        const isLastRound =
+            currentSessionNumber > 0 && currentSessionNumber >= lastRoundNumber(config);
 
         return {
             currentSession: currentSessionNumber,
-            phaseName: computePhaseName(
-                tournament.status,
-                isElimination,
-                nbTeamStillInGame,
-                currentSessionNumber,
-                config.hasThirdPlaceMatch,
-                numberOfQualifyingRounds,
-            ),
-            canFinishTournament: isElimination && allValidated && isFinal,
-            canGenerateNewSession: allValidated && !isFinal,
+            phaseName: computePhaseName(tournament.status, config, currentSessionNumber),
+            canFinishTournament: allValidated && isLastRound,
+            canGenerateNewSession: allValidated && !isLastRound,
         };
     }
 
     private async getOrCreateVirtualPools(
         tournamentId: string,
-        groupKeys: MatchGroupKey[],
+        groupKeys: string[],
     ): Promise<TournamentPool[]> {
         return Promise.all(
             groupKeys.map((groupKey) => this.getOrCreateVirtualPool(tournamentId, groupKey)),
@@ -442,7 +526,7 @@ export class StructuredTournamentStrategy extends TournamentStrategy {
 
     private async getOrCreateVirtualPool(
         tournamentId: string,
-        groupKey: MatchGroupKey,
+        groupKey: string,
     ): Promise<TournamentPool> {
         const existing = await this.poolRepo.findVirtualPoolByName(tournamentId, groupKey);
         if (existing) return existing;

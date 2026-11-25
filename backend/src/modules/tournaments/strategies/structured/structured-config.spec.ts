@@ -8,7 +8,6 @@ import { extractCompetitionConfiguration } from '../../utils/tournament.utils';
 import { PlanSettings } from '../tournament-strategy.abstract';
 import { TournamentStrategyFactory } from '../tournament-strategy.factory';
 import { TournamentPlan } from './plan/plan.types';
-import { toLegacyEliminationTables } from './structured-session.utils';
 import { StructuredTournamentStrategy } from './structured-tournament.strategy';
 
 const settings: PlanSettings = {
@@ -136,33 +135,6 @@ describe('StructuredTournamentStrategy configuration', () => {
                 consolationCount: 2,
                 hasChallenges: true,
                 hasThirdPlaceMatch: false,
-            });
-        });
-    });
-
-    // TEMPORARY (Task 7): remove with the adapter.
-    describe('toLegacyEliminationTables', () => {
-        it('maps the consolation count and the challenges to the old tables', () => {
-            expect(
-                toLegacyEliminationTables(
-                    structuredConfig({ consolationCount: 1, hasChallenges: true }),
-                    14,
-                ),
-            ).toEqual({
-                numberOfQualifyingRounds: 4,
-                hasConsolanteTable: true,
-                hasChallengePrincipaleTable: true,
-                hasChallengeConsolanteTable: true,
-                hasThirdPlaceMatch: false,
-                principalBracketSize: 8,
-            });
-            expect(
-                toLegacyEliminationTables(structuredConfig({ consolationCount: 0 }), 16),
-            ).toMatchObject({
-                hasConsolanteTable: false,
-                hasChallengePrincipaleTable: false,
-                hasChallengeConsolanteTable: false,
-                principalBracketSize: 8,
             });
         });
     });
