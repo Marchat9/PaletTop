@@ -1,10 +1,10 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
-import { ReactiveFormsModule } from '@angular/forms';
-import { environment } from '@environment';
+import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { Card } from '../../card/card';
+import { Nullable } from 'src/app/models/nullable.model';
 import { ScoreCalculation } from 'src/app/models/tournament-configuration-detail.model';
+import { BracketPanelState, PlanSimulationState } from 'src/app/models/tournament-plan.model';
 import { InputCardRadio, InputCardRadioOption } from '../../input-card-radio/input-card-radio';
-import { InputSelectOption } from '../../input-select/input-select';
 import { TournamentConfigurationField } from '../tournament-configuration-form.model';
 import * as configuration from '../tournament-create.data';
 import { ChampionshipTournament } from './championship-tournament/championship-tournament';
@@ -30,20 +30,19 @@ import { Icon } from '../../icon/icon';
 })
 export class TournamentModeParameter {
   public readonly group = input.required<TournamentModeParameterForm>();
+  /** « Nombre d'équipes cible » (rules group), edited with the structured settings. */
+  public readonly targetControl = input.required<FormControl<number>>();
+  /** Preview of the structured brackets; null when the page gives none. */
+  public readonly planState = input<Nullable<BracketPanelState>>(null);
+  /** Simulation of other team counts for the structured mode; null when the page gives none. */
+  public readonly simulation = input<Nullable<PlanSimulationState>>(null);
   public readonly readonlyFields = input<TournamentConfigurationField[]>([]);
   public readonly hiddenFields = input<TournamentConfigurationField[]>([]);
   /** Score calculations of the selected mode (filtered by the parent). */
   public readonly scoreCalculationOptions = input<InputCardRadioOption<ScoreCalculation>[]>([]);
 
+  public readonly simulationTeamCountChange = output<number>();
+  public readonly simulationSheetRequested = output<number>();
+
   public readonly competitionModeOptions = configuration.competitionModeOptions;
-  public readonly principalBracketSizeOptions: InputSelectOption[] = [
-    { value: '', label: 'Automatique' },
-    ...environment.tournamentConfiguration.principalBracketSize.options.map((v) => ({
-      value: v.toString(),
-      label: `${v} équipes`,
-    })),
-  ];
-  public readonly numberOfQualifyingRoundsConfig =
-    environment.tournamentConfiguration.numberOfQualifyingRounds;
-  public readonly numberOfPoolsConfig = environment.tournamentConfiguration.numberOfPools;
 }

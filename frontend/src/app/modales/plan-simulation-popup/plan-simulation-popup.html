@@ -1,0 +1,22 @@
+<div class="popup-container popup-surface sheet">
+  <span class="handle" aria-hidden="true"></span>
+  <div class="popup-header">
+    <h2 class="popup-title">
+      <app-icon name="query_stats" iconClass="icon" [ariaHidden]="true" />
+      Simulation et parcours
+    </h2>
+    <button class="popup-close" type="button" aria-label="Fermer" (click)="close()">
+      <app-icon name="close" />
+    </button>
+  </div>
+
+  <app-plan-simulation
+    class="simulation"
+    [mobile]="true"
+    [plan]="data.plan()"
+    [targetCount]="data.targetCount"
+    [teamCount]="teamCount()"
+    [error]="data.error()"
+    (teamCountChange)="data.changeTeamCount($event)"
+  />
+</div>

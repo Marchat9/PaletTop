@@ -38,10 +38,14 @@ describe('InputNumber', () => {
     expect(fixture.componentInstance.value()).toBe(6);
   });
 
-  it('ramène une saisie en dessous du minimum', () => {
-    const { fixture, type } = setup();
+  it('ramène une saisie en dessous du minimum à la perte du focus', () => {
+    const { fixture, input, type } = setup();
 
     type('-4');
+    expect(fixture.componentInstance.value()).toBe(-4);
+
+    input.dispatchEvent(new Event('blur'));
+    fixture.detectChanges();
 
     expect(fixture.componentInstance.value()).toBe(1);
   });

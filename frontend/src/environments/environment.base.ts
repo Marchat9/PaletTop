@@ -38,6 +38,7 @@ export const environment = {
     maxTeamCapacity: {
       min: 2,
       max: 256,
+      defaultStructured: 96,
       maxChampionship: 8,
     },
     teamImport: {
@@ -53,15 +54,6 @@ export const environment = {
       min: 1,
       max: 10,
       default: 4,
-    },
-    numberOfPools: {
-      min: 0,
-      max: 32,
-      default: undefined,
-    },
-    principalBracketSize: {
-      default: 16,
-      options: [4, 8, 16, 32, 64, 128],
     },
   },
 };

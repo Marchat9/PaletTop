@@ -15,6 +15,7 @@ import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { environment } from '@environment';
 import { Nullable } from 'src/app/models/nullable.model';
+import { BracketPanelState, PlanSimulationState } from 'src/app/models/tournament-plan.model';
 import {
   DEFAULT_SCORE_CALCULATIONS_BY_MODE,
   ScoreCalculationsByMode,
@@ -51,10 +52,11 @@ export const FIELD_LABELS: Record<string, string> = {
   'parameters.code': 'Code Unique',
   'parameters.adminPassword': 'Mot de passe administrateur',
   'parameters.date': "Date de l'événement",
-  'rules.maxTeamCapacity': 'Capacité Maximale',
+  'rules.maxTeamCapacity': "Nombre d'équipes cible",
   'rules.pointsPerGame': 'Points par partie',
   'modeParameter.competitionMode': 'Mode de compétition',
   'modeParameter.scoreCalculation': 'Calcul des scores',
+  'modeParameter.structuredMode.numberOfQualifyingRounds': 'Nombre de parties qualificatives',
   'modeParameter.championshipMode.homeTeam': 'Équipe à domicile',
   'modeParameter.championshipMode.awayTeam': "Équipe à l'extérieur",
 };
@@ -75,12 +77,20 @@ export class TournamentConfiguration implements OnInit {
   public readonly scoreCalculationsByMode = input<ScoreCalculationsByMode>(
     DEFAULT_SCORE_CALCULATIONS_BY_MODE,
   );
+  /** Preview of the structured brackets (the page runs the requests); no panel when null. */
+  public readonly planState = input<Nullable<BracketPanelState>>(null);
+
+  /** Simulation of other team counts for the structured mode; no simulation when null. */
+  public readonly simulation = input<Nullable<PlanSimulationState>>(null);
 
   public readonly formReady = output<TournamentConfigurationForm>({ alias: 'form' });
   public readonly invalidFields = output<string[] | null>();
+  public readonly simulationTeamCountChange = output<number>();
+  public readonly simulationSheetRequested = output<number>();
   public form!: TournamentConfigurationForm;
 
   private readonly teamCapacity = environment.tournamentConfiguration.maxTeamCapacity;
+  private readonly qualifyingRounds = environment.tournamentConfiguration.numberOfQualifyingRounds;
 
   private readonly selectedCompetitionMode = signal<CompetitionMode>('standard');
   /** Calculation stored on the edited tournament: kept selectable even if no longer offered. */
@@ -138,7 +148,10 @@ export class TournamentConfiguration implements OnInit {
 
       rules: new FormGroup({
         maxTeamCapacity: new FormControl(
-          tournament?.configuration?.maxTeamCapacity ?? this.teamCapacity.max,
+          tournament?.configuration?.maxTeamCapacity ??
+            (initialCompetitionMode === 'standard'
+              ? this.teamCapacity.defaultStructured
+              : this.teamCapacity.max),
           {
             nonNullable: true,
             validators: [Validators.required, Validators.min(2)],
@@ -175,29 +188,25 @@ export class TournamentConfiguration implements OnInit {
           validators: [Validators.required],
         }),
         structuredMode: new FormGroup({
-          hasConsolanteTable: new FormControl(structuredConfig.hasConsolanteTable ?? false, {
-            nonNullable: true,
-          }),
-          hasChallengePrincipaleTable: new FormControl(
-            structuredConfig.hasChallengePrincipaleTable ?? false,
-            { nonNullable: true },
-          ),
-          hasChallengeConsolanteTable: new FormControl(
-            structuredConfig.hasChallengeConsolanteTable ?? false,
-            { nonNullable: true },
-          ),
-          hasThirdPlaceMatch: new FormControl(structuredConfig.hasThirdPlaceMatch ?? false, {
-            nonNullable: true,
-          }),
-          principalBracketSize: new FormControl(
-            structuredConfig.principalBracketSize ?? undefined,
-            { nonNullable: true },
-          ),
           numberOfQualifyingRounds: new FormControl(
-            structuredConfig.numberOfQualifyingRounds ?? 4,
-            { nonNullable: true },
+            structuredConfig.numberOfQualifyingRounds ?? this.qualifyingRounds.default,
+            {
+              nonNullable: true,
+              validators: [
+                Validators.required,
+                Validators.min(this.qualifyingRounds.min),
+                Validators.max(this.qualifyingRounds.max),
+              ],
+            },
           ),
-          numberOfPools: new FormControl(structuredConfig.numberOfPools ?? undefined, {
+          consolationCount: new FormControl(structuredConfig.consolationCount ?? 1, {
+            nonNullable: true,
+            validators: [Validators.required, Validators.min(0)],
+          }),
+          hasChallenges: new FormControl(structuredConfig.hasChallenges ?? false, {
+            nonNullable: true,
+          }),
+          hasThirdPlaceMatch: new FormControl(structuredConfig.hasThirdPlaceMatch ?? false, {
             nonNullable: true,
           }),
         }),

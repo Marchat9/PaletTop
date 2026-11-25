@@ -17,13 +17,12 @@ export interface TournamentConfigurationDetailsDto {
 export abstract class SpecificTournamentConfig {}
 
 export interface StructuredTournamentConfig extends SpecificTournamentConfig {
-  hasConsolanteTable?: boolean;
-  hasChallengePrincipaleTable?: boolean;
-  hasChallengeConsolanteTable?: boolean;
-  hasThirdPlaceMatch?: boolean;
-  principalBracketSize?: number;
   numberOfQualifyingRounds?: number;
-  numberOfPools?: number;
+  /** Consolations after the main bracket (« Consolante A », « B »…). */
+  consolationCount?: number;
+  /** One switch for the challenges of every bracket. */
+  hasChallenges?: boolean;
+  hasThirdPlaceMatch?: boolean;
 }
 
 /** How the up-down rounds after the first one are paired. */

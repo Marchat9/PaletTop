@@ -69,23 +69,15 @@ function buildStructuredRules(config: StructuredTournamentConfig): TournamentRul
       label: `${config.numberOfQualifyingRounds} parties qualificatives`,
     });
   }
-  if ((config.numberOfPools ?? 0) > 1) {
-    rules.push({ icon: 'workspaces', label: `${config.numberOfPools} poules` });
-  }
-  if (config.principalBracketSize) {
+  if (config.consolationCount) {
     rules.push({
       icon: 'account_tree',
-      label: `Tableau principal : ${config.principalBracketSize} équipes`,
+      label:
+        config.consolationCount > 1 ? `${config.consolationCount} consolantes` : '1 consolante',
     });
   }
-  if (config.hasConsolanteTable) {
-    rules.push({ icon: 'account_tree', label: 'Consolante' });
-  }
-  if (config.hasChallengePrincipaleTable) {
-    rules.push({ icon: 'account_tree', label: 'Challenge principale' });
-  }
-  if (config.hasChallengeConsolanteTable) {
-    rules.push({ icon: 'account_tree', label: 'Challenge consolante' });
+  if (config.hasChallenges) {
+    rules.push({ icon: 'account_tree', label: 'Challenges' });
   }
   if (config.hasThirdPlaceMatch) {
     rules.push({ icon: 'military_tech', label: 'Match pour la 3e place' });

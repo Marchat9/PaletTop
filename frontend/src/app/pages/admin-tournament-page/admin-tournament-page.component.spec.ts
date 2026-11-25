@@ -1,4 +1,15 @@
 import { Dialog } from '@angular/cdk/dialog';
+import { FormControl, FormGroup } from '@angular/forms';
+import { TournamentConfigurationForm } from 'src/app/shared/tournament-configuration/tournament-configuration-form.model';
+import { selectMaxConsolationCount } from 'src/app/store/app-settings/app-settings.selectors';
+import { previewPlan, simulatePlan } from 'src/app/store/tournament-plan/tournament-plan.actions';
+import {
+  selectPlanPreview,
+  selectPlanPreviewLoading,
+  selectSimulatedPlan,
+  selectSimulationError,
+} from 'src/app/store/tournament-plan/tournament-plan.selectors';
+import { DebugElement } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, convertToParamMap, ParamMap, Router } from '@angular/router';
@@ -30,6 +41,7 @@ import {
   selectTournamentUpdateConfigLoading,
 } from 'src/app/store/tournament/tournament.selectors';
 import { TournamentDto } from 'src/app/store/tournament/tournament.models';
+import { TournamentConfiguration } from 'src/app/shared/tournament-configuration/tournament-configuration';
 import {
   clearTournamentClubSuggestions,
   searchTournamentClubs,
@@ -80,6 +92,21 @@ const FINAL_RANKING: GlobalRankingEntry[] = [
   },
 ];
 
+function structuredForm(target = 128): TournamentConfigurationForm {
+  return new FormGroup({
+    rules: new FormGroup({ maxTeamCapacity: new FormControl(target, { nonNullable: true }) }),
+    modeParameter: new FormGroup({
+      competitionMode: new FormControl('standard', { nonNullable: true }),
+      structuredMode: new FormGroup({
+        numberOfQualifyingRounds: new FormControl(4, { nonNullable: true }),
+        consolationCount: new FormControl(1, { nonNullable: true }),
+        hasChallenges: new FormControl(false, { nonNullable: true }),
+        hasThirdPlaceMatch: new FormControl(false, { nonNullable: true }),
+      }),
+    }),
+  }) as unknown as TournamentConfigurationForm;
+}
+
 interface SetupOptions {
   isAdminView?: boolean;
   status?: TournamentStatus;
@@ -116,6 +143,11 @@ function setup({
       provideMockStore({
         selectors: [
           { selector: selectScoreCalculationsByMode, value: DEFAULT_SCORE_CALCULATIONS_BY_MODE },
+          { selector: selectMaxConsolationCount, value: 4 },
+          { selector: selectPlanPreview, value: null },
+          { selector: selectPlanPreviewLoading, value: false },
+          { selector: selectSimulatedPlan, value: null },
+          { selector: selectSimulationError, value: null },
           { selector: selectCurrentTournamentData, value: buildTournament(status) },
           {
             selector: selectCurrentTournamentAdminInformations,
@@ -144,6 +176,19 @@ function setup({
 
 // The first render of this large page takes about 1 s alone, but went past the default 5 s when
 // the whole suite runs in parallel.
+/** The dispatched preview requests, in order. */
+function previewCalls(dispatchSpy: { mock: { calls: unknown[][] } }): unknown[][] {
+  return dispatchSpy.mock.calls.filter(([action]) => (action as Action).type === previewPlan.type);
+}
+
+/** The configuration form the page renders: it is the one the page previews and simulates. */
+function renderedForm(fixture: { debugElement: DebugElement }): TournamentConfigurationForm {
+  return (
+    fixture.debugElement.query(By.directive(TournamentConfiguration))
+      .componentInstance as TournamentConfiguration
+  ).form;
+}
+
 describe('AdminTournamentPageComponent', { timeout: 15_000 }, () => {
   it('re-fetches the tournament as admin when a resync is requested', () => {
     const { fixture, store, actions$ } = setup();
@@ -178,6 +223,76 @@ describe('AdminTournamentPageComponent', { timeout: 15_000 }, () => {
     expect(dispatchSpy).toHaveBeenCalledWith(
       connectTournamentAdministrator({ code: 'ABCD', password: 'secret' }),
     );
+  });
+
+  describe('live preview of the brackets', () => {
+    afterEach(() => vi.useRealTimers());
+
+    it('previews a draft with its registered teams, once, 300 ms after the last change', () => {
+      vi.useFakeTimers();
+      const { fixture, store } = setup({ status: TournamentStatus.DRAFT });
+      const dispatchSpy = vi.spyOn(store, 'dispatch');
+      fixture.detectChanges();
+      const form = renderedForm(fixture);
+
+      vi.advanceTimersByTime(300);
+      expect(previewCalls(dispatchSpy)).toHaveLength(1);
+      const [first] = previewCalls(dispatchSpy)[0];
+      expect(first).toMatchObject({ type: previewPlan.type, requestId: '1' });
+      expect((first as unknown as ReturnType<typeof previewPlan>).body.targetCount).toBe(16);
+
+      form.controls.rules.controls.maxTeamCapacity.setValue(96);
+      form.controls.rules.controls.maxTeamCapacity.setValue(64);
+      vi.advanceTimersByTime(299);
+      expect(previewCalls(dispatchSpy)).toHaveLength(1);
+      vi.advanceTimersByTime(1);
+      expect(previewCalls(dispatchSpy)).toHaveLength(2);
+      expect(previewCalls(dispatchSpy)[1][0]).toMatchObject({ requestId: '2' });
+    });
+
+    it('simulates a draft apart from the preview, with the count the slider gives', () => {
+      vi.useFakeTimers();
+      const { fixture, store } = setup({ status: TournamentStatus.DRAFT });
+      const dispatchSpy = vi.spyOn(store, 'dispatch');
+      fixture.detectChanges();
+
+      renderedForm(fixture).controls.rules.controls.maxTeamCapacity.setValue(128);
+      vi.advanceTimersByTime(300);
+      fixture.componentInstance.simulatedTeamCount.set(100);
+      fixture.detectChanges();
+      vi.advanceTimersByTime(300);
+
+      const simulations = dispatchSpy.mock.calls
+        .map(([action]) => action as unknown as ReturnType<typeof simulatePlan>)
+        .filter((action) => action.type === simulatePlan.type);
+      expect(simulations.map((action) => action.body.teamCount)).toEqual([128, 100]);
+      expect(previewCalls(dispatchSpy)).toHaveLength(1);
+    });
+
+    it('only offers the panel, and the preview, while the tournament is a draft', () => {
+      vi.useFakeTimers();
+      const { fixture, store } = setup({ status: TournamentStatus.ACTIVE });
+      fixture.detectChanges();
+      const dispatchSpy = vi.spyOn(store, 'dispatch');
+
+      fixture.componentInstance.onConfigurationFormReady(structuredForm());
+      vi.advanceTimersByTime(1000);
+
+      expect(dispatchSpy).not.toHaveBeenCalled();
+      expect(fixture.componentInstance.planState()).toBeNull();
+      expect(fixture.componentInstance.simulation()).toBeNull();
+    });
+
+    it('shows the registered count of a draft in the panel state', () => {
+      const { fixture } = setup({ status: TournamentStatus.DRAFT });
+
+      expect(fixture.componentInstance.planState()).toEqual({
+        plan: null,
+        loading: false,
+        maxConsolations: 4,
+        registeredCount: 0,
+      });
+    });
   });
 
   it('offers the ranking PDF only once the tournament is finished and ranked', () => {

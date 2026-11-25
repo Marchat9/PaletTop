@@ -15,6 +15,7 @@
     [step]="step()"
     [disabled]="disabled()"
     (input)="onInput($any($event.target).value)"
+    (blur)="onBlur($any($event.target).value)"
   />
 
   <div class="stepper" aria-hidden="true">

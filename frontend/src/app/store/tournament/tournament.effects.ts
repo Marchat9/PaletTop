@@ -301,11 +301,15 @@ export class TournamentEffects {
     this.actions$.pipe(
       ofType(startTournament),
       withLatestFrom(this.store.select(selectCurrentTournamentAdminInformations)),
-      switchMap(([, adminInfo]) =>
-        this.tournamentService.startTournament(adminInfo!.code, adminInfo!.password).pipe(
-          switchMap((tournament) => of(startTournamentSuccess({ tournament }))),
-          catchError((error) => of(startTournamentFailure({ error: convertErrorToString(error) }))),
-        ),
+      switchMap(([{ launchChoice }, adminInfo]) =>
+        this.tournamentService
+          .start(adminInfo!.code, { ...launchChoice, password: adminInfo!.password })
+          .pipe(
+            switchMap((tournament) => of(startTournamentSuccess({ tournament }))),
+            catchError((error) =>
+              of(startTournamentFailure({ error: convertErrorToString(error) })),
+            ),
+          ),
       ),
     ),
   );

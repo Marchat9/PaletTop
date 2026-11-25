@@ -1,0 +1,93 @@
+:host {
+  display: block;
+}
+
+.bracket-chips {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 0.6rem;
+
+  &.dense {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+
+    .bracket-chip {
+      padding: 0.6rem;
+    }
+
+    .bracket-chip__name {
+      font-size: 0.68rem;
+    }
+
+    .bracket-chip__count {
+      font-size: 1.2rem;
+    }
+  }
+}
+
+.bracket-chip {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid var(--color-outline-variant);
+  border-radius: 0.7rem;
+  background: var(--color-surface-container);
+
+  &.main .bracket-chip__name {
+    color: var(--color-primary);
+  }
+}
+
+.bracket-chip__name {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--color-on-surface);
+}
+
+.bracket-chip__count {
+  font-family: var(--font-label);
+  font-size: 1.4rem;
+  font-weight: 700;
+  line-height: 1;
+
+  small {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--color-on-surface-variant);
+  }
+}
+
+.bracket-chip__bar {
+  height: 5px;
+  border-radius: 3px;
+  background: var(--color-surface-container-highest);
+  overflow: hidden;
+
+  i {
+    display: block;
+    height: 5px;
+
+    &.ok {
+      background: var(--color-success);
+    }
+
+    &.mid {
+      background: var(--color-warning);
+    }
+
+    &.low {
+      background: var(--color-error);
+    }
+  }
+}
+
+.bracket-chip__detail {
+  font-size: 0.72rem;
+  color: var(--color-on-surface-variant);
+}
+
+.bracket-chip--slot {
+  min-height: 92px;
+  border: 1px dashed var(--color-outline-variant);
+  border-radius: 0.7rem;
+}

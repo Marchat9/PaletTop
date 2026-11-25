@@ -81,6 +81,8 @@ export class InputNumber implements ControlValueAccessor {
   // A typed value is bounded like a stepped one. `min`/`max` on a native number input are only
   // advisory - the browser lets anything through - so without this a "99" typed in a field capped at
   // 6 would travel all the way to the API and come back as a 400.
+  // The minimum is only enforced on blur: while typing, "1" on the way to "123" must not jump to a
+  // min of 2 (which would give "223"). The form's own min validator flags the value meanwhile.
   onInput(value: string): void {
     const nextValue = Number(value);
     if (Number.isNaN(nextValue)) {
@@ -88,7 +90,17 @@ export class InputNumber implements ControlValueAccessor {
     }
     // An empty field is not a value yet: left as it is, so it can be retyped without the bounds
     // jumping in.
-    this.emitValue(value === '' ? nextValue : this.clamp(nextValue));
+    const max = this.max();
+    this.emitValue(value !== '' && max != null && nextValue > max ? max : nextValue);
+  }
+
+  onBlur(value: string): void {
+    const min = this.min();
+    const current = Number(value);
+    if (value !== '' && !Number.isNaN(current) && min != null && current < min) {
+      this.emitValue(min);
+    }
+    this.onTouchedFn();
   }
 
   onIncrement(): void {

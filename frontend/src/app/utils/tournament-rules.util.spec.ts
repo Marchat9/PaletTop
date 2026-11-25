@@ -40,9 +40,8 @@ describe('buildTournamentRules', () => {
       configuration({
         competitionConfiguration: {
           numberOfQualifyingRounds: 4,
-          numberOfPools: 2,
-          hasConsolanteTable: true,
-          hasChallengePrincipaleTable: false,
+          consolationCount: 2,
+          hasChallenges: false,
           hasThirdPlaceMatch: true,
         },
       }),
@@ -50,12 +49,24 @@ describe('buildTournamentRules', () => {
     expect(result).toEqual(
       expect.arrayContaining([
         '4 parties qualificatives',
-        '2 poules',
-        'Consolante',
+        '2 consolantes',
         'Match pour la 3e place',
       ]),
     );
-    expect(result).not.toContain('Challenge principale');
+    expect(result).not.toContain('Challenges');
+  });
+
+  it('accorde la consolante au singulier et indique les challenges', () => {
+    const result = labels(
+      configuration({
+        competitionConfiguration: {
+          numberOfQualifyingRounds: 3,
+          consolationCount: 1,
+          hasChallenges: true,
+        },
+      }),
+    );
+    expect(result).toEqual(expect.arrayContaining(['1 consolante', 'Challenges']));
   });
 
   it('indique le nombre de parties et la dernière partie au classement en montée / descente', () => {

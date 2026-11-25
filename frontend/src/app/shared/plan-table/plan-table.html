@@ -1,0 +1,84 @@
+@if (qualifying(); as qualifying) {
+  <div class="plan-table__qualifying">
+    <app-icon name="sports_score" iconClass="plan-table__qualifying-icon" [ariaHidden]="true" />
+    <span>
+      <b>Qualifs : {{ qualifying.rounds }} {{ qualifying.rounds > 1 ? 'parties' : 'partie' }}</b>
+      pour les {{ qualifying.teams }} équipes · {{ qualifying.matchesPerRound }}
+      {{ qualifying.matchesPerRound > 1 ? 'matchs' : 'match' }} par partie
+      @if (qualifying.hasBye) {
+        + 1 exempt
+      }
+      @if (qualifying.stopped > 0) {
+        ·
+        <b class="plan-table__stopped"
+          >les {{ qualifying.stopped }} derniers s'arrêtent après les qualifs</b
+        >
+      }
+    </span>
+  </div>
+}
+
+<div class="plan-table__hint">
+  <app-icon name="swipe" iconClass="plan-table__hint-icon" [ariaHidden]="true" />
+  Faites glisser le tableau vers la gauche pour voir les tours suivants
+</div>
+
+<div
+  class="plan-table__scroll"
+  [class.dragging]="dragging()"
+  (mousedown)="onMouseDown($event)"
+  (mousemove)="onMouseMove($event)"
+  (mouseup)="onMouseUp()"
+  (mouseleave)="onMouseUp()"
+>
+  <table class="plan-table__table">
+    <thead>
+      <tr>
+        <th class="lab" scope="col">Tableau</th>
+        @for (column of columns(); track $index) {
+          <th scope="col" [class.done]="column.done" [class.now]="column.now">
+            @if (column.done) {
+              ✓
+            }
+            {{ column.label }}
+          </th>
+        }
+      </tr>
+    </thead>
+    <tbody>
+      @for (row of rows(); track row.key) {
+        <tr [class.sub]="row.sub">
+          <th class="lab" scope="row">
+            @if (row.level) {
+              <i class="dot" [class]="row.level"></i>
+            } @else {
+              <i class="dot"></i>
+            }
+            {{ row.label }}
+            @if (row.size) {
+              <small>{{ row.size }}</small>
+            }
+          </th>
+          @for (cell of row.cells; track $index) {
+            <td [class]="cell.kind" [class.done]="cell.done" [class.now]="cell.now">
+              @if (cell.stage) {
+                <b>{{ cell.stage }}</b>
+              }
+              @if (cell.note) {
+                <small>{{ cell.note }}</small>
+              }
+            </td>
+          }
+        </tr>
+      }
+    </tbody>
+    <tfoot>
+      <tr>
+        <th class="lab" scope="row">Plaques utilisées</th>
+        @for (total of totals(); track $index) {
+          <td [class.done]="total.done" [class.now]="total.now">{{ total.plates }}</td>
+        }
+      </tr>
+    </tfoot>
+  </table>
+</div>

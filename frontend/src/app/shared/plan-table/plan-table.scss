@@ -1,0 +1,199 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  min-width: 0;
+}
+
+.plan-table__qualifying {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  font-size: 0.82rem;
+  color: var(--color-on-surface-variant);
+
+  b {
+    color: var(--color-on-surface);
+  }
+
+  .plan-table__stopped {
+    color: var(--color-warning);
+  }
+
+  ::ng-deep .plan-table__qualifying-icon {
+    color: var(--color-primary);
+    font-size: 18px;
+  }
+}
+
+.plan-table__hint {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.72rem;
+  color: var(--color-on-surface-variant);
+
+  ::ng-deep .plan-table__hint-icon {
+    color: var(--color-primary);
+    font-size: 16px;
+  }
+
+  // A mouse drags the table; the hint only makes sense for touch.
+  @media (hover: hover) and (pointer: fine) {
+    display: none;
+  }
+}
+
+.plan-table__scroll {
+  overflow-x: auto;
+  position: relative;
+  border: 1px solid var(--color-border-default);
+  border-radius: 0.7rem;
+  background: var(--color-surface-container-lowest);
+  cursor: grab;
+  user-select: none;
+  // Touch uses the native pan.
+  touch-action: pan-x pan-y;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-primary) var(--color-surface-container-low);
+
+  &.dragging {
+    cursor: grabbing;
+  }
+}
+
+.plan-table__table {
+  min-width: max-content;
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 0.8rem;
+
+  th,
+  td {
+    box-sizing: border-box;
+    min-height: 44px;
+    padding: 0.5rem 0.55rem;
+    border-bottom: 1px solid var(--color-border-subtle);
+    border-right: 1px solid var(--color-border-subtle);
+    text-align: center;
+    vertical-align: middle;
+  }
+
+  td {
+    min-width: 84px;
+
+    b {
+      display: block;
+      font-weight: 700;
+    }
+
+    small {
+      display: block;
+      font-size: 0.66rem;
+      color: var(--color-warning);
+    }
+
+    &.main {
+      background: rgb(233 195 73 / 13%);
+    }
+
+    &.third_place {
+      background: rgb(233 195 73 / 8%);
+    }
+
+    &.consolation {
+      background: var(--color-surface-container);
+    }
+
+    &.challenge {
+      background: var(--color-surface-container-low);
+    }
+
+    &.empty {
+      background: transparent;
+    }
+  }
+
+  thead th {
+    min-height: 36px;
+    font-family: var(--font-label);
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-on-surface-variant);
+    background: var(--color-surface-container-low);
+
+    &.now {
+      color: var(--color-primary);
+    }
+  }
+
+  .lab {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    min-width: 150px;
+    max-width: 170px;
+    text-align: left;
+    font-weight: 700;
+    background: var(--color-surface-container-low);
+
+    small {
+      margin-left: 0.4rem;
+      font-family: var(--font-label);
+      font-weight: 500;
+      color: var(--color-on-surface-variant);
+    }
+
+    .dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      margin-right: 0.45rem;
+      border-radius: 50%;
+      background: transparent;
+
+      &.ok {
+        background: var(--color-success);
+      }
+
+      &.mid {
+        background: var(--color-warning);
+      }
+
+      &.low {
+        background: var(--color-error);
+      }
+    }
+  }
+
+  tr.sub .lab {
+    padding-left: 1.3rem;
+    font-weight: 500;
+    color: var(--color-on-surface-variant);
+
+    &::before {
+      content: '└ ';
+    }
+  }
+
+  tfoot {
+    th,
+    td {
+      font-family: var(--font-label);
+      font-weight: 700;
+      color: var(--color-primary);
+      background: var(--color-surface-container-low);
+    }
+  }
+
+  .done {
+    opacity: 0.45;
+  }
+
+  .now {
+    box-shadow: inset 0 0 0 2px var(--color-primary);
+  }
+}

@@ -10,7 +10,11 @@ import {
   updateSetting,
 } from './app-settings.actions';
 import { appSettingsReducer, initialAppSettingsState } from './app-settings.reducer';
-import { selectScoreCalculationsByMode } from './app-settings.selectors';
+import {
+  selectFillThresholds,
+  selectMaxConsolationCount,
+  selectScoreCalculationsByMode,
+} from './app-settings.selectors';
 
 const SCORE_CALCULATIONS = {
   standard: ['score'],
@@ -88,5 +92,27 @@ describe('selectScoreCalculationsByMode', () => {
     expect(selectScoreCalculationsByMode.projector(initialAppSettingsState)).toEqual(
       DEFAULT_SCORE_CALCULATIONS_BY_MODE,
     );
+  });
+});
+
+describe('plan settings selectors', () => {
+  it('fall back to the defaults until the settings are loaded', () => {
+    expect(selectMaxConsolationCount.projector(initialAppSettingsState)).toBe(4);
+    expect(selectFillThresholds.projector(initialAppSettingsState)).toEqual({
+      okRatio: 0.9,
+      warningRatio: 0.75,
+    });
+  });
+
+  it('return the loaded values', () => {
+    const state = {
+      ...initialAppSettingsState,
+      values: {
+        max_consolation_count: 7,
+        bracket_fill_thresholds: { okRatio: 0.8, warningRatio: 0.5 },
+      },
+    };
+    expect(selectMaxConsolationCount.projector(state)).toBe(7);
+    expect(selectFillThresholds.projector(state)).toEqual({ okRatio: 0.8, warningRatio: 0.5 });
   });
 });

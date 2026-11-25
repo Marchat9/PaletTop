@@ -1,8 +1,13 @@
 import { createAction, props } from '@ngrx/store';
+import { StartTournamentBody } from 'src/app/models/tournament-plan.model';
 import { TournamentDto } from './tournament.models';
 
 // --------- Start Tournament ---------
-export const startTournament = createAction('[Tournament] Start Tournament');
+/** The launch choice is optional: without it the tournament starts as configured. */
+export const startTournament = createAction(
+  '[Tournament] Start Tournament',
+  props<{ launchChoice?: Omit<StartTournamentBody, 'password'> }>(),
+);
 export const startTournamentSuccess = createAction(
   '[Tournament] Start Tournament Success',
   props<{ tournament: TournamentDto }>(),

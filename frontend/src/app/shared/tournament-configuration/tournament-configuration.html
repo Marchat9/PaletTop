@@ -18,6 +18,11 @@
   <div class="item">
     <app-tournament-mode-parameter
       [group]="form.controls.modeParameter"
+      [targetControl]="form.controls.rules.controls.maxTeamCapacity"
+      [planState]="planState()"
+      [simulation]="simulation()"
+      (simulationTeamCountChange)="simulationTeamCountChange.emit($event)"
+      (simulationSheetRequested)="simulationSheetRequested.emit($event)"
       [scoreCalculationOptions]="scoreCalculationOptions()"
       [readonlyFields]="readonlyFields()"
       [hiddenFields]="hiddenFields()"

@@ -1,0 +1,142 @@
+:host {
+  display: block;
+}
+
+.plan-simulation {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+
+  &__pinned {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  &__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  &__question {
+    color: var(--color-on-surface);
+  }
+
+  &__count {
+    display: inline-block;
+    min-width: 2.4rem;
+    text-align: center;
+    font-family: var(--font-label);
+    font-size: 1.4rem;
+    color: var(--color-primary);
+  }
+
+  &__slider {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  &__range {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  &__step {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 2.5rem;
+    height: 2.5rem;
+    border: 1px solid var(--color-outline-variant);
+    border-radius: 50%;
+    background: var(--color-surface-container);
+    color: var(--color-on-surface);
+    cursor: pointer;
+
+    &:disabled {
+      opacity: 0.4;
+      cursor: default;
+    }
+  }
+
+  // Two lines reserved: the text changes but the height does not.
+  &__gap {
+    display: flex;
+    align-items: center;
+    min-height: 2.4em;
+    margin: 0;
+    font-size: 0.8rem;
+    line-height: 1.2;
+    color: var(--color-on-surface-variant);
+
+    &--surplus {
+      color: var(--color-warning);
+    }
+  }
+
+  &__legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 1rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: 0.75rem;
+    color: var(--color-on-surface-variant);
+
+    li {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+  }
+
+  &__dot {
+    width: 0.6rem;
+    height: 0.6rem;
+    border-radius: 50%;
+
+    &.ok {
+      background: var(--color-success);
+    }
+
+    &.mid {
+      background: var(--color-warning);
+    }
+
+    &.low {
+      background: var(--color-error);
+    }
+  }
+
+  &__body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  // Reserved: the table does not move when the message appears or changes.
+  &__message {
+    min-height: 3.5rem;
+  }
+
+  // In the bottom sheet: the pinned part stays, only the body scrolls.
+  &--mobile {
+    height: 100%;
+    min-height: 0;
+
+    .plan-simulation__pinned {
+      flex: none;
+    }
+
+    .plan-simulation__body {
+      flex: 1 1 0;
+      min-height: 0;
+      overflow-y: auto;
+    }
+  }
+}

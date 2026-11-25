@@ -1,0 +1,40 @@
+<div class="bracket-panel">
+  @if (registeredText()) {
+    <p class="bracket-panel__registered">{{ registeredText() }}</p>
+  }
+
+  <app-bracket-chips [brackets]="brackets()" [slots]="reservedSlots()" />
+
+  <div class="bracket-panel__actions">
+    <div class="bracket-panel__add">
+      <app-button
+        variant="secondary"
+        icon="add"
+        [title]="addLabel()"
+        [disabled]="!canAdd()"
+        (clicked)="addConsolation.emit()"
+      />
+    </div>
+    <div class="bracket-panel__remove">
+      <app-button
+        variant="tertiary"
+        icon="remove"
+        [title]="removeLabel()"
+        [disabled]="!canRemove()"
+        (clicked)="removeConsolation.emit()"
+      />
+    </div>
+  </div>
+
+  @if (comfortText()) {
+    <p class="bracket-panel__comfort">{{ comfortText() }}</p>
+  }
+
+  <div class="bracket-panel__message" aria-live="polite">
+    @if (message(); as current) {
+      <app-inline-notice [tone]="current.tone" [icon]="current.icon">{{
+        current.text
+      }}</app-inline-notice>
+    }
+  </div>
+</div>

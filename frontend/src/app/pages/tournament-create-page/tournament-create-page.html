@@ -27,7 +27,11 @@
   <app-tournament-configuration
     [columns]="2"
     [scoreCalculationsByMode]="scoreCalculationsByMode()"
-    (form)="tournamentForm.set($event)"
+    [planState]="planState()"
+    [simulation]="simulation()"
+    (simulationTeamCountChange)="simulatedTeamCount.set($event)"
+    (simulationSheetRequested)="openSimulationSheet($event)"
+    (form)="onFormReady($event)"
     (invalidFields)="onInvalidFields($event)"
   />
 

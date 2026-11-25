@@ -1,0 +1,20 @@
+<div class="bracket-chips" [class.dense]="dense()">
+  @for (chip of chips(); track chip.key) {
+    <div class="bracket-chip" [class.main]="chip.main">
+      <span class="bracket-chip__name">{{ chip.name }}</span>
+      <span class="bracket-chip__count"
+        >{{ chip.count }}
+        @if (chip.capacityText) {
+          <small>{{ chip.capacityText }}</small>
+        }
+      </span>
+      <span class="bracket-chip__bar"
+        ><i [class]="chip.level" [style.width.%]="chip.percent"></i
+      ></span>
+      <span class="bracket-chip__detail">{{ chip.detail }}</span>
+    </div>
+  }
+  @for (placeholder of placeholders(); track placeholder) {
+    <div class="bracket-chip--slot"></div>
+  }
+</div>
