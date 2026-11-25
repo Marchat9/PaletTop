@@ -1,6 +1,7 @@
 import { ApiCall, ApiCallStatus } from 'src/app/models/api-call.model';
 import { Nullable } from '../../models/nullable.model';
 import { TournamentStatus } from 'src/app/models/tournament-status.enum';
+import { TournamentPlan } from 'src/app/models/tournament-plan.model';
 import { TournamentConfigurationDetailsDto } from 'src/app/models/tournament-configuration-detail.model';
 
 export interface TournamentStatusInfo {
@@ -21,6 +22,8 @@ export interface TournamentDto {
   teams: TounamentTeamDto[];
   createdAt: string;
   tournamentStatus: Nullable<TournamentStatusInfo>;
+  /** Admin view of a structured tournament: frozen at launch, computed from the registered teams in draft. */
+  plan?: Nullable<TournamentPlan>;
 }
 
 export interface TounamentTeamDto {

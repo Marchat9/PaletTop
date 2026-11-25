@@ -8,38 +8,6 @@ export interface FillThresholds {
 
 export type FillLevel = 'ok' | 'mid' | 'low';
 
-/** One bracket of the split: `count` teams in a bracket of `capacity` slots (a power of 2). */
-export interface BracketSize {
-  capacity: number;
-  count: number;
-  /** True for the bracket added on top of the target layout to host the surplus teams. */
-  extra?: boolean;
-}
-
-/** One elimination round of a bracket. */
-export interface BracketRound {
-  teams: number;
-  matches: number;
-  byes: number;
-  losers: number;
-  /** Best losers brought back to fill the second round of a partial bracket. */
-  bestLosersIn: number;
-}
-
-/** Everything `computeStructuredPlan` needs: the registered teams, the configuration, the settings. */
-export interface StructuredPlanInput {
-  teamCount: number;
-  targetCount: number;
-  consolationCount: number;
-  numberOfQualifyingRounds: number;
-  hasChallenges: boolean;
-  hasThirdPlaceMatch: boolean;
-  /** Last-ranked teams of the qualifiers that play no elimination match. */
-  eliminatedAfterQualifying: number;
-  maxConsolations: number;
-  thresholds: FillThresholds;
-}
-
 /** A main or consolation bracket of the plan. */
 export interface PlanBracket {
   key: string;

@@ -1,6 +1,5 @@
 import {
   MatchesSessionDto,
-  MatchGroupKey,
   SessionMatchDto,
   SessionStatus,
 } from 'src/app/models/matches-session.model';
@@ -48,7 +47,7 @@ const SESSIONS: MatchesSessionDto[] = [
   ]),
   session(2, SessionStatus.CLOSED, false, [
     match('m3', 'Les Galets', 'Équipe 7', {
-      group: { order: 1, name: MatchGroupKey.PRINCIPALE },
+      group: { order: 1, name: 'principale', label: 'Principale' },
       poolNumber: null,
     }),
   ]),
@@ -65,7 +64,7 @@ describe('buildRoundHistoryViews', () => {
   it('names the phase and counts the played matches, byes left out', () => {
     const [bracket, qualifying] = buildRoundHistoryViews(SESSIONS, 'standard', true);
 
-    expect(bracket.label).toBe('Tableau principal');
+    expect(bracket.label).toBe('Principale');
     expect(bracket.matchCountLabel).toBe('1 match');
     expect(qualifying.label).toBe('Qualifications');
     expect(qualifying.matchCountLabel).toBe('2 matchs');

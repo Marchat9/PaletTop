@@ -19,6 +19,7 @@ import { TournamentDto } from 'src/app/store/tournament/tournament.models';
 import { Button } from 'src/app/shared/button/button';
 import { TeamConfig } from './team-config/team-config';
 import { newId } from 'src/app/utils/unique-id.util';
+import { registeredTeamsLabel, registrationCapacity } from 'src/app/utils/team-capacity.util';
 import { buildTeamListPdf, teamListPdfFileName } from 'src/app/utils/pdf/team-list-pdf.util';
 
 @Component({
@@ -57,10 +58,16 @@ export class TournamentTeamConfigurationCard {
 
   public readonly hasTeams = computed(() => (this.tournament()?.teams?.length ?? 0) > 0);
 
-  // Si le tournoi n'a pas de limite d'équipe, on affiche toujours la section de configuration des équipes
-  // Sinon on affiche la section de configuration des équipes tant que le nombre d'équipe est inférieur à 90% de la limite
+  /** « 12 / 16 équipes », or « 12 équipes (cible 16) » when the capacity is only a target. */
+  public readonly registeredLabel = computed(() => {
+    const tournament = this.tournament();
+    return tournament ? registeredTeamsLabel(tournament) : '?';
+  });
+
+  // Expanded in draft while the teams stay under 90% of what the tournament accepts (a structured
+  // tournament accepts teams above its target).
   public readonly isExpanded = computed(() => {
-    const tournamentLimitTeams = this.tournament()?.configuration?.maxTeamCapacity ?? 0;
+    const tournamentLimitTeams = registrationCapacity(this.tournament());
     const teamsLength = this.tournament()?.teams?.length ?? 0;
     const tournamentStatus = this.tournament()?.status;
 

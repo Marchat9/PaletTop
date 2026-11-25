@@ -112,6 +112,22 @@ describe('TournamentTeamConfigurationCard', () => {
     expect(card.isExporting()).toBe(false);
   });
 
+  it('shows the target of a structured tournament in the header, not a limit', () => {
+    const { fixture } = render();
+    const teams = Array.from({ length: 20 }, (_, index) => ({
+      id: `team-${index}`,
+      name: `Equipe ${index}`,
+      players: [],
+    }));
+    fixture.componentRef.setInput('tournament', buildTournament(teams));
+    fixture.detectChanges();
+    const header = fixture.nativeElement.querySelector('.header .number') as HTMLElement;
+
+    expect(header.textContent?.trim()).toBe('20 équipes (cible 16)');
+    // Above its target, the card stays open: teams can still register.
+    expect(fixture.componentInstance.isExpanded()).toBe(true);
+  });
+
   it('disables the download action when the tournament has no teams', () => {
     const { fixture } = render();
     fixture.componentRef.setInput('tournament', buildTournament([]));

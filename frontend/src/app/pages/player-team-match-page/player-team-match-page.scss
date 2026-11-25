@@ -29,6 +29,11 @@
     // it stays ours.
     p {
       margin: 0;
+
+      &.eliminated-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+      }
     }
 
     ::ng-deep .empty-icon {

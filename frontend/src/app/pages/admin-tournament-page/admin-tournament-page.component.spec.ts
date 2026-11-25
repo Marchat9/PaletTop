@@ -65,6 +65,8 @@ import { GlobalRankingEntry } from 'src/app/models/global-ranking.model';
 import { MatchesSessionDto, SessionStatus } from 'src/app/models/matches-session.model';
 import type { TDocumentDefinitions } from 'pdfmake/interfaces';
 import { PdfExportService } from 'src/app/services/pdf-export.service';
+import { RepechedList } from 'src/app/shared/repeched-list/repeched-list';
+import { TournamentParcours } from 'src/app/shared/tournament-parcours/tournament-parcours';
 import { TournamentTeamConfigurationCard } from './components/tournament-team-configuration-card/tournament-team-configuration-card';
 
 function buildTeams(count: number): TounamentTeamDto[] {
@@ -474,6 +476,92 @@ describe('AdminTournamentPageComponent', { timeout: 15_000 }, () => {
     expect(pdfExport.download).toHaveBeenCalledTimes(1);
     expect(pdfExport.download.mock.calls[0][1]).toBe('matchs-tournoi-test.pdf');
     expect(fixture.componentInstance.isMatchesExporting()).toBe(false);
+  });
+
+  describe('parcours', () => {
+    const closed = (sessionNumber: number): MatchesSessionDto => ({
+      id: `s${sessionNumber}`,
+      sessionNumber,
+      status: SessionStatus.CLOSED,
+      isDrawnRound: false,
+      matches: [],
+    });
+    const parcours = (fixture: ReturnType<typeof setup>['fixture']) =>
+      fixture.debugElement.query(By.directive(TournamentParcours))?.componentInstance as
+        TournamentParcours | undefined;
+
+    it('ticks the finished rounds and highlights the current one, from the sessions', () => {
+      const { fixture } = setup({
+        tournament: { ...buildTournament(TournamentStatus.ACTIVE), plan: exactCountPlan() },
+        sessions: [closed(1), closed(2), { ...closed(3), status: SessionStatus.OPEN }],
+      });
+      fixture.detectChanges();
+
+      expect(parcours(fixture)?.doneRounds()).toBe(2);
+      expect(parcours(fixture)?.currentRound()).toBe(3);
+      expect(parcours(fixture)?.plan()).toBe(fixture.componentInstance.tournament()?.plan);
+    });
+
+    it('shows the planned parcours of a draft, with no round played', () => {
+      const { fixture } = setup({
+        status: TournamentStatus.DRAFT,
+        tournament: { ...buildTournament(TournamentStatus.DRAFT), plan: exactCountPlan() },
+      });
+      fixture.detectChanges();
+
+      expect(parcours(fixture)?.doneRounds()).toBe(0);
+      expect(parcours(fixture)?.currentRound()).toBeNull();
+    });
+
+    it('keeps every round ticked once the tournament is finished', () => {
+      const { fixture } = setup({
+        tournament: { ...buildTournament(TournamentStatus.FINISHED), plan: exactCountPlan() },
+        sessions: [closed(1), closed(2)],
+      });
+      fixture.detectChanges();
+
+      expect(parcours(fixture)?.doneRounds()).toBe(2);
+      expect(parcours(fixture)?.currentRound()).toBeNull();
+    });
+
+    it('shows no parcours for a tournament without plan', () => {
+      const { fixture } = setup();
+      fixture.detectChanges();
+
+      expect(parcours(fixture)).toBeUndefined();
+    });
+
+    it('lists the repêchés of each bracket', () => {
+      const match = (id: string, a: string, b: string, scoreA: number, scoreB: number) => ({
+        id,
+        status: 'VALIDATED',
+        isBye: false,
+        scoreA,
+        scoreB,
+        plateNumber: 1,
+        teamA: { id: a, name: a },
+        teamB: { id: b, name: b },
+        poolNumber: null,
+        group: { order: 6, name: 'consolante_2', label: 'Consolante B' },
+        startedAt: null,
+        finishedAt: null,
+        duration: null,
+      });
+      const { fixture } = setup({
+        tournament: { ...buildTournament(TournamentStatus.ACTIVE), plan: exactCountPlan() },
+        sessions: [
+          { ...closed(5), matches: [match('m1', 'Fer et Fier', 'Les Mouettes', 10, 11)] },
+          { ...closed(6), matches: [match('m2', 'Fer et Fier', 'Les Bigorneaux', 0, 0)] },
+        ],
+      });
+      fixture.detectChanges();
+
+      const list = fixture.debugElement.query(By.directive(RepechedList))
+        .componentInstance as RepechedList;
+      expect(list.brackets().map((bracket) => [bracket.label, bracket.teams[0].teamName])).toEqual([
+        ['Consolante B', 'Fer et Fier'],
+      ]);
+    });
   });
 
   describe('launch check', () => {

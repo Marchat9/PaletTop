@@ -1,12 +1,12 @@
 import { createReducer, on } from '@ngrx/store';
 import { ApiCall } from 'src/app/models/api-call.model';
 import { Nullable } from 'src/app/models/nullable.model';
-import { TeamDto } from 'src/app/models/team.model';
+import { PlayerTeamDto } from 'src/app/models/team.model';
 import { resetTournament } from 'src/app/store/tournament/tournament.actions';
 import { loadTeam, loadTeamFailure, loadTeamSuccess } from './team.actions';
 
 export interface TeamState {
-  data: ApiCall<Nullable<TeamDto>>;
+  data: ApiCall<Nullable<PlayerTeamDto>>;
 }
 
 export const initialTeamState: TeamState = {

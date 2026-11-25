@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { GlobalRankingEntry } from 'src/app/models/global-ranking.model';
 import { LeaderboardRow } from 'src/app/models/leaderboard.model';
-import { MatchGroupKey } from 'src/app/models/matches-session.model';
 import {
   itemTables,
   leaderboardItems,
@@ -190,15 +189,22 @@ describe('rowsBelowPodium', () => {
 });
 
 describe('sections du classement', () => {
-  it('nomme le tableau de chaque équipe d’un tournoi structuré', () => {
+  it('nomme le tableau de chaque équipe d’un tournoi structuré avec le libellé du serveur', () => {
     const table = toTournamentLeaderboard(
-      [team(1, 'A', { section: MatchGroupKey.PRINCIPALE }), team(2, 'B', { section: 'pools' })],
+      [
+        team(1, 'A', { section: 'principale', sectionLabel: 'Principale' }),
+        team(2, 'B', { section: 'consolante_2', sectionLabel: 'Consolante B' }),
+        team(3, 'C', { section: 'eliminated_qualifying', sectionLabel: 'Éliminés en qualifs' }),
+        team(4, 'D', { section: 'pools', sectionLabel: null }),
+      ],
       'victory_ga',
     );
 
     expect(table.rows.map((entry) => entry.section)).toEqual([
-      'Tableau principal',
-      'Éliminés en poules',
+      'Principale',
+      'Consolante B',
+      'Éliminés en qualifs',
+      null,
     ]);
   });
 

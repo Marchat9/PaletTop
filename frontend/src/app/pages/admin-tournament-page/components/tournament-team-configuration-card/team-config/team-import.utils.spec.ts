@@ -162,12 +162,20 @@ describe('team import helpers', () => {
     });
 
     it('refuses when the tournament is full', () => {
-      expect(canImportTeams(tournament(4))).toBe(false);
+      expect(canImportTeams(tournament(4, { competitionMode: 'up_down' }))).toBe(false);
+    });
+
+    // The capacity of a structured tournament is only a target: the absolute maximum is the limit.
+    it('allows a structured tournament above its target, up to the absolute maximum', () => {
+      expect(canImportTeams(tournament(4))).toBe(true);
+      expect(canImportTeams(tournament(255))).toBe(true);
+      expect(canImportTeams(tournament(256))).toBe(false);
     });
 
     it('falls back to the environment capacity when none is configured', () => {
-      expect(canImportTeams(tournament(255, { maxTeamCapacity: undefined }))).toBe(true);
-      expect(canImportTeams(tournament(256, { maxTeamCapacity: undefined }))).toBe(false);
+      const upDown = { competitionMode: 'up_down', maxTeamCapacity: undefined };
+      expect(canImportTeams(tournament(255, upDown))).toBe(true);
+      expect(canImportTeams(tournament(256, upDown))).toBe(false);
     });
 
     it('refuses while no tournament is loaded', () => {

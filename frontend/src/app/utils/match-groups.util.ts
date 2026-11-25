@@ -1,9 +1,5 @@
 import { AdminMatchGroup, AdminMatchView } from 'src/app/models/admin-match.model';
-import {
-  MATCH_GROUP_LABELS,
-  MatchPoolGroup,
-  SessionMatchDto,
-} from 'src/app/models/matches-session.model';
+import { MatchPoolGroup, SessionMatchDto } from 'src/app/models/matches-session.model';
 import { TrainingMatchDto } from 'src/app/store/training/training.models';
 import { teamLabel } from 'src/app/utils/training-team.util';
 
@@ -25,11 +21,7 @@ export function computeMatchGroups(matches: SessionMatchDto[]): MatchPoolGroup[]
       match.group?.order ??
       (Number.isInteger(match.poolNumber) ? match.poolNumber! : groupMap.size);
 
-    const label: string | null = match.group
-      ? MATCH_GROUP_LABELS[match.group.name]
-      : key !== noGroupKey
-        ? key
-        : null;
+    const label: string | null = match.group ? match.group.label : key !== noGroupKey ? key : null;
 
     if (!groupMap.has(key)) {
       groupMap.set(key, { label, order, matches: [] });

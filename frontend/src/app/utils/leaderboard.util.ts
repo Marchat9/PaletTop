@@ -7,8 +7,6 @@ import {
   LeaderboardTable,
   PodiumStep,
 } from 'src/app/models/leaderboard.model';
-import { MATCH_GROUP_LABELS, MatchGroupKey } from 'src/app/models/matches-session.model';
-import { RankingSection } from 'src/app/models/global-ranking.model';
 import { Nullable } from 'src/app/models/nullable.model';
 import { ScoreCalculation } from 'src/app/models/tournament-configuration-detail.model';
 import {
@@ -18,7 +16,6 @@ import {
 
 const PODIUM_PLACES = 3;
 
-const POOLS_SECTION_LABEL = 'Éliminés en poules';
 /** Visual order of the podium: second on the left, first in the middle, third on the right. */
 const PODIUM_ORDER = [2, 1, 3];
 
@@ -36,13 +33,6 @@ interface TournamentLayout {
   cells: (entry: GlobalRankingEntry) => LeaderboardCell[];
   summary: (entry: GlobalRankingEntry) => string;
   legend: Nullable<string>;
-}
-
-function sectionLabel(section: Nullable<RankingSection>): Nullable<string> {
-  if (!section) {
-    return null;
-  }
-  return section === 'pools' ? POOLS_SECTION_LABEL : MATCH_GROUP_LABELS[section as MatchGroupKey];
 }
 
 function plain(value: number): LeaderboardCell {
@@ -176,7 +166,7 @@ export function toTournamentLeaderboard(
         name: entry.teamName,
         cells: layout.cells(entry),
         summary: layout.summary(entry),
-        section: sectionLabel(entry.section),
+        section: entry.sectionLabel ?? null,
       })),
     ),
   };

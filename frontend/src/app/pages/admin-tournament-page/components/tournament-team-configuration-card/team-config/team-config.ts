@@ -42,6 +42,7 @@ import {
 } from './team-import-wizard/team-import-wizard';
 import { canImportTeams } from './team-import.utils';
 import { environment } from '@environment';
+import { registrationCapacity } from 'src/app/utils/team-capacity.util';
 
 const MOBILE_BREAKPOINT = '(max-width: ' + environment.limitMobileSizePx + 'px)';
 const CREATION_HIGHLIGHT_MS = 1500;
@@ -97,11 +98,8 @@ export class TeamConfig {
   public readonly editingTeam = signal<Nullable<TeamEditFormValue>>(null);
 
   public readonly teamCount = computed(() => this.tournament()?.teams?.length ?? 0);
-  public readonly maxTeamCapacity = computed(
-    () =>
-      this.tournament()?.configuration.maxTeamCapacity ??
-      environment.tournamentConfiguration.maxTeamCapacity.max,
-  );
+  /** Teams the tournament still accepts in all, its capacity being only a target or a limit. */
+  public readonly maxTeamCapacity = computed(() => registrationCapacity(this.tournament()));
   public readonly canImport = computed(() => canImportTeams(this.tournament()));
 
   // Brief outline on the desktop creation panel when the user is sent to it from elsewhere.

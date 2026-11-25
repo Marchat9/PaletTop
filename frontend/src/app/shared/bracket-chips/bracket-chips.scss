@@ -12,14 +12,14 @@
 
     .bracket-chip {
       padding: 0.6rem;
-    }
 
-    .bracket-chip__name {
-      font-size: 0.68rem;
-    }
+      &__name {
+        font-size: 0.68rem;
+      }
 
-    .bracket-chip__count {
-      font-size: 1.2rem;
+      &__count {
+        font-size: 1.2rem;
+      }
     }
   }
 }
@@ -36,58 +36,58 @@
   &.main .bracket-chip__name {
     color: var(--color-primary);
   }
-}
 
-.bracket-chip__name {
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: var(--color-on-surface);
-}
-
-.bracket-chip__count {
-  font-family: var(--font-label);
-  font-size: 1.4rem;
-  font-weight: 700;
-  line-height: 1;
-
-  small {
+  &__name {
     font-size: 0.8rem;
-    font-weight: 500;
+    font-weight: 700;
+    color: var(--color-on-surface);
+  }
+
+  &__count {
+    font-family: var(--font-label);
+    font-size: 1.4rem;
+    font-weight: 700;
+    line-height: 1;
+
+    small {
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--color-on-surface-variant);
+    }
+  }
+
+  &__bar {
+    height: 5px;
+    border-radius: 3px;
+    background: var(--color-surface-container-highest);
+    overflow: hidden;
+
+    i {
+      display: block;
+      height: 5px;
+
+      &.ok {
+        background: var(--color-success);
+      }
+
+      &.mid {
+        background: var(--color-warning);
+      }
+
+      &.low {
+        background: var(--color-error);
+      }
+    }
+  }
+
+  &__detail {
+    font-size: 0.72rem;
     color: var(--color-on-surface-variant);
   }
-}
 
-.bracket-chip__bar {
-  height: 5px;
-  border-radius: 3px;
-  background: var(--color-surface-container-highest);
-  overflow: hidden;
-
-  i {
-    display: block;
-    height: 5px;
-
-    &.ok {
-      background: var(--color-success);
-    }
-
-    &.mid {
-      background: var(--color-warning);
-    }
-
-    &.low {
-      background: var(--color-error);
-    }
+  &--slot {
+    min-height: 92px;
+    border: 1px dashed var(--color-outline-variant);
+    border-radius: 0.7rem;
   }
-}
-
-.bracket-chip__detail {
-  font-size: 0.72rem;
-  color: var(--color-on-surface-variant);
-}
-
-.bracket-chip--slot {
-  min-height: 92px;
-  border: 1px dashed var(--color-outline-variant);
-  border-radius: 0.7rem;
 }

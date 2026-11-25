@@ -1,4 +1,5 @@
 import { environment } from '@environment';
+import { registrationCapacity } from '../../../../../utils/team-capacity.util';
 import { Nullable } from '../../../../../models/nullable.model';
 import { TeamConfigCreateTeamPayload } from '../../../../../models/team-config.model';
 import { TournamentStatus } from '../../../../../models/tournament-status.enum';
@@ -139,12 +140,9 @@ export function canImportTeams(tournament: Nullable<TournamentDto>): boolean {
   if (!tournament) {
     return false;
   }
-  const capacity =
-    tournament.configuration.maxTeamCapacity ??
-    environment.tournamentConfiguration.maxTeamCapacity.max;
   return (
     tournament.status === TournamentStatus.DRAFT &&
     tournament.configuration.competitionMode !== 'championship' &&
-    (tournament.teams?.length ?? 0) < capacity
+    (tournament.teams?.length ?? 0) < registrationCapacity(tournament)
   );
 }

@@ -4,7 +4,6 @@ import {
   AdminRoundHistory,
 } from 'src/app/models/admin-match.model';
 import {
-  MATCH_GROUP_LABELS,
   MatchesSessionDto,
   MatchPoolGroup,
   SessionStatus,
@@ -23,7 +22,7 @@ import {
 export interface RoundHistoryView {
   id: string;
   sessionNumber: number;
-  /** Phase of the round: « Qualifications », « Tableau principal »… */
+  /** Phase of the round: « Phase qualificative 1/4 », « Quarts de finale »… */
   label: string;
   matchCountLabel: string;
   /** Drawn round of a tournament still open to corrections: its scores can be edited. */
@@ -55,7 +54,7 @@ function roundLabel(
       session.matches
         .filter((match) => match.group)
         .sort((a, b) => a.group!.order - b.group!.order)
-        .map((match) => MATCH_GROUP_LABELS[match.group!.name]),
+        .map((match) => match.group!.label),
     ),
   ];
   if (brackets.length) {

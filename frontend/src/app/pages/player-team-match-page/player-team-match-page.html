@@ -24,6 +24,10 @@
         (tileClicked)="openRankModale()"
       />
 
+      @if (repechedNotice(); as notice) {
+        <app-inline-notice icon="celebration">{{ notice }}</app-inline-notice>
+      }
+
       <section class="current-match">
         @if (matchTitle(); as title) {
           <h3>{{ title }}</h3>
@@ -49,6 +53,26 @@
               <app-icon name="timer" iconClass="empty-icon" />
               <p>Le tournoi n'a pas encore commencé, préparez-vous</p>
             }
+            @case ('ELIMINATED_QUALIFYING') {
+              <app-icon name="flag" iconClass="empty-icon" />
+              <p class="eliminated-title">Éliminé après les qualifs</p>
+              <p>
+                Votre tournoi s'arrête après les qualifications.
+                @if (rankLabel(); as rank) {
+                  Vous terminez {{ rank }}.
+                }
+                Merci d'avoir joué avec nous !
+              </p>
+              <app-inline-notice icon="visibility">
+                Vous pouvez suivre la suite du tournoi en direct depuis la page spectateur.
+              </app-inline-notice>
+              <app-button
+                title="Suivre le tournoi"
+                icon="visibility"
+                variant="secondary"
+                (clicked)="followTournament()"
+              />
+            }
             @case ('FINISH') {
               <app-player-final-rank
                 headline="C'est fini, merci d'avoir joué avec nous !"
@@ -69,6 +93,10 @@
           }
         </app-player-match-card>
       </section>
+
+      @if (parcoursSteps().length > 0) {
+        <app-player-parcours [steps]="parcoursSteps()" />
+      }
 
       <app-player-teammates
         title="Membres de l'équipe"

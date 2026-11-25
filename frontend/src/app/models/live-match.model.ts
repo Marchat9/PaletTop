@@ -11,7 +11,7 @@ export interface LiveMatchView {
   /** A training player resting this round: worth nothing, shown as a rest. */
   isRest?: boolean;
   plateNumber: Nullable<number>;
-  /** Pool or bracket of a structured tournament (« Tableau principal »...). */
+  /** Pool or bracket of a structured tournament (« Principale », « Consolante A »...). */
   groupLabel: Nullable<string>;
   teamA: string;
   teamB: Nullable<string>;
