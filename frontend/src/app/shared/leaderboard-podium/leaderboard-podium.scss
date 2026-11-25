@@ -1,0 +1,126 @@
+:host {
+  display: block;
+
+  // Spectator screens, read from afar: larger text.
+  &.large .podium {
+    .medal {
+      width: 2.4rem;
+      height: 2.4rem;
+      font-size: 0.95rem;
+    }
+
+    .podium-names {
+      font-size: 1.15rem;
+    }
+
+    .podium-summary {
+      font-size: 0.9rem;
+    }
+  }
+}
+
+// ======= Podium: second, first, third; the first step is the highest =======
+.podium {
+  display: grid;
+  grid-template-columns: repeat(var(--steps, 3), minmax(0, 1fr));
+  align-items: end;
+  gap: 0.6rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  .podium-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.3rem;
+    min-height: 5.5rem;
+    padding: 0.7rem 0.5rem;
+    border-radius: 0.8rem;
+    background: var(--color-surface-container);
+    text-align: center;
+
+    &.place-1 {
+      min-height: 7.3rem;
+      outline: 1px solid var(--color-primary);
+      // Drawn inside the step: the containers that clip their overflow cut an outer border.
+      outline-offset: -1px;
+
+      .medal {
+        background: var(--color-medal-gold);
+      }
+    }
+
+    &.place-2 {
+      min-height: 6.5rem;
+      outline: 1px solid var(--color-status-draft-border);
+      outline-offset: -1px;
+
+      .medal {
+        background: var(--color-medal-silver);
+      }
+    }
+
+    &.place-3 .medal {
+      background: var(--color-medal-bronze);
+    }
+
+    &.is-highlighted {
+      outline: 2px solid var(--color-primary);
+      outline-offset: -2px;
+
+      .podium-names {
+        color: var(--color-primary);
+      }
+    }
+  }
+
+  .medal {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 999px;
+    color: var(--color-on-medal);
+    font-family: var(--font-label);
+    font-size: 0.8rem;
+    font-weight: 700;
+  }
+
+  .podium-names {
+    font-size: 0.92rem;
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+
+    // Tied names: on one line separated by a dot, one per line on mobile.
+    .podium-name + .podium-name::before {
+      content: ' · ';
+    }
+
+    .podium-more {
+      margin-left: 0.3rem;
+      color: var(--color-on-surface-variant);
+    }
+
+    @media (width < 768px) {
+      .podium-name,
+      .podium-more {
+        display: block;
+        margin-left: 0;
+      }
+
+      .podium-name + .podium-name::before {
+        content: none;
+      }
+    }
+  }
+
+  .podium-summary {
+    font-family: var(--font-label);
+    font-size: 0.75rem;
+    color: var(--color-on-surface-variant);
+    font-variant-numeric: tabular-nums;
+  }
+}

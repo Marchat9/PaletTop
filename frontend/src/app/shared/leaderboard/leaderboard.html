@@ -30,28 +30,7 @@
     <p class="empty">{{ emptyLabel() }}</p>
   } @else {
     @if (podium().length > 0) {
-      <ol class="podium" [style.--steps]="podium().length" aria-label="Podium">
-        @for (step of podium(); track step.key) {
-          <li
-            class="podium-step"
-            [class]="'place-' + step.place"
-            [class.is-highlighted]="step.isHighlighted"
-          >
-            <span class="medal" [attr.aria-label]="'Rang ' + step.rankLabel">{{
-              step.rankLabel
-            }}</span>
-            <strong class="podium-names">
-              @for (name of step.names; track $index) {
-                <span class="podium-name">{{ name }}</span>
-              }
-              @if (step.hiddenCount > 0) {
-                <span class="podium-more">+{{ step.hiddenCount }}</span>
-              }
-            </strong>
-            <span class="podium-summary">{{ step.summary }}</span>
-          </li>
-        }
-      </ol>
+      <app-leaderboard-podium [steps]="podium()" [large]="fillHeight()" />
     }
 
     <div

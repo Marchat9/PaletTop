@@ -13,10 +13,10 @@
   border-radius: 1.25rem;
   background: var(--color-surface-container-low);
   border-left: 5px solid var(--color-primary);
-  min-height: var(--card-min-height, 320px);
+  min-height: var(--card-h, 320px);
 
   @media (min-height: 600px) {
-    --card-min-height: 420px;
+    --card-h: 420px;
     padding: 2rem;
   }
 
@@ -27,7 +27,6 @@
 
   @media (width < 375px) {
     padding: 1rem 0.5rem;
-    border-left-width: 0;
   }
 }
 
@@ -44,16 +43,24 @@
 
   // Two lines of text do not need the height of a score table.
   &--bye {
-    --card-min-height: 180px;
+    --card-h: 180px;
 
     border-left-color: var(--color-secondary);
     align-items: center;
     gap: 1.25rem;
   }
 
-  &__headers {
+  // Stacks of the card, all in a column: only their spacing and alignment differ.
+  &__headers,
+  &__vs,
+  &__meta,
+  &__action,
+  &__validate {
     display: flex;
     flex-direction: column;
+  }
+
+  &__headers {
     gap: 0.5rem;
   }
 
@@ -71,8 +78,6 @@
 
   &__vs,
   &__meta {
-    display: flex;
-    flex-direction: column;
     align-items: center;
     gap: 0.35rem;
   }
@@ -90,16 +95,12 @@
   }
 
   &__action {
-    display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
     gap: 0.75rem;
   }
 
   &__validate {
-    display: flex;
-    flex-direction: column;
     gap: 0.75rem;
     border-top: 1px solid var(--color-outline-variant);
     padding-top: 1rem;
@@ -172,22 +173,25 @@
   }
 }
 
+.vs-label,
+.score-sep {
+  color: var(--color-outline-variant);
+}
+
 .vs-label {
   font-size: 1.1rem;
   font-weight: 800;
-  color: var(--color-outline-variant);
   letter-spacing: 0.1em;
 }
 
 .score-block {
   min-width: 6rem;
-  flex: 1 1 auto;
+  flex: auto;
 }
 
 .score-sep {
   font-size: clamp(2rem, 8vw, 3.5rem);
   font-weight: 300;
-  color: var(--color-outline-variant);
   user-select: none;
 }
 
@@ -269,7 +273,7 @@ p {
 // only projects content into it, whose layout is the page's business - colour and text size are
 // inherited from here.
 .match-card-empty {
-  --card-min-height: 180px;
+  --card-h: 180px;
 
   align-items: center;
   gap: 0.75rem;
@@ -281,9 +285,9 @@ p {
   // End of event: the moment is marked rather than showing one more empty box.
   &--celebration {
     border-left-color: var(--color-primary);
+    // Top to bottom, from the first stop (0%) to 65%: both are the defaults.
     background: linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--color-primary) 12%, var(--color-surface-container-low)) 0%,
+      color-mix(in srgb, var(--color-primary) 12%, var(--color-surface-container-low)),
       var(--color-surface-container-low) 65%
     );
   }

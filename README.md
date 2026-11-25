@@ -96,3 +96,9 @@ but not required.
 ## License
 
 Licensed under the [GNU GPL v3.0](LICENSE).
+
+## AI disclaimer
+
+This project is developed with the help of AI tools, notably [Claude](https://claude.ai) (Anthropic)
+and Claude Code, used to write, refactor and test part of the code and documentation. All changes
+are reviewed by a human before being merged.
