@@ -27,6 +27,7 @@ Plates are numbered 1, 2, 3… after each generation; byes get none.
 | `consolationCount`          | Consolation brackets under the main one (0 = main only)          |
 | `hasChallenges`             | One challenge per bracket, for its first-round losers            |
 | `hasThirdPlaceMatch`        | Third-place match between the main semi-final losers             |
+| `eliminationPairingMode`    | `random` (default, also when missing) or `dutch`: see Elimination |
 | `eliminatedAfterQualifying` | Written at launch: the last X teams of the qualifiers stop       |
 | `plan`                      | Written at launch: the frozen plan the elimination rounds follow |
 
@@ -94,7 +95,23 @@ virtual pool named after its group key (`principale`, `third_place_match`, `chal
 - **Third place**: the two main semi-final losers, played with the final.
 
 An odd group gives one bye to the team with the fewest byes, then the best ranked; it counts as
-a win. Best losers are ranked by `rankBestLosers` (`best-losers.utils.ts`): goal average of the
+a win.
+
+### Pairing mode (`eliminationPairingMode`)
+
+Who plays whom inside a group, once its teams are known:
+
+- `random` (default): the constrained draw above.
+- `dutch`: the Dutch Swiss pairing of the up-down mode (`pairDutch`,
+  `../up-down/dutch-pairing.utils.ts`), from the ranking of **every match played so far**
+  (qualifying and elimination, `computeGlobalRanking`), so the seeds move from round to round. All
+  the teams of a group are still in the running, so they form one score group: the top half of the
+  ranking plays the bottom half (1v5, 2v6, 3v7, 4v8 for 8 teams), not 1v8. The club and rematch
+  constraints of the tournament apply first, then are relaxed (`buildDutchLevels`). The bye is
+  still the elimination one (fewest byes, then best ranked), unlike the up-down one. Plates follow
+  the pairing order: plate 1 is the best ranked team's match.
+
+Best losers are ranked by `rankBestLosers` (`best-losers.utils.ts`): goal average of the
 lost match, cumulative ranking, previous matches' goal average walking back, then a random draw.
 
 ## Best losers chain

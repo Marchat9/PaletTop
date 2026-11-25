@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { StructuredCompetitionConfiguration } from 'src/entities/tournament-competition-configuration.entity';
 import { Tournament } from 'src/entities/tournament.entity';
 import { TournamentStatus } from 'src/enum/status.enum';
-import { CompetitionMode, ScoreCalculation } from 'src/enum/tounament.enum';
+import { CompetitionMode, PairingMode, ScoreCalculation } from 'src/enum/tounament.enum';
 import { TournamentConfigurationDto } from '../../dto/tournament-configuration.dto';
 import { extractCompetitionConfiguration } from '../../utils/tournament.utils';
 import { PlanSettings } from '../tournament-strategy.abstract';
@@ -135,6 +135,24 @@ describe('StructuredTournamentStrategy configuration', () => {
                 consolationCount: 2,
                 hasChallenges: true,
                 hasThirdPlaceMatch: false,
+                eliminationPairingMode: 'random',
+            });
+        });
+
+        it('keeps the elimination pairing mode, random when missing', () => {
+            const extract = (competitionConfiguration: object): unknown =>
+                extractCompetitionConfiguration({
+                    competitionMode: CompetitionMode.STANDARD,
+                    competitionConfiguration,
+                } as unknown as TournamentConfigurationDto);
+
+            expect(
+                extract(structuredConfig({ eliminationPairingMode: PairingMode.DUTCH })),
+            ).toMatchObject({
+                eliminationPairingMode: 'dutch',
+            });
+            expect(extract(structuredConfig())).toMatchObject({
+                eliminationPairingMode: 'random',
             });
         });
     });

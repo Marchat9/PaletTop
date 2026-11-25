@@ -78,6 +78,8 @@ export function extractCompetitionConfiguration(
                 consolationCount: structuredConfig.consolationCount,
                 hasChallenges: structuredConfig.hasChallenges,
                 hasThirdPlaceMatch: structuredConfig.hasThirdPlaceMatch,
+                eliminationPairingMode:
+                    structuredConfig.eliminationPairingMode ?? PairingMode.RANDOM,
             };
             return extracted;
         }

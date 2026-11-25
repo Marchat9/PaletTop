@@ -39,6 +39,7 @@ function structuredForm(target = 128): TournamentConfigurationForm {
         consolationCount: new FormControl(1, { nonNullable: true }),
         hasChallenges: new FormControl(false, { nonNullable: true }),
         hasThirdPlaceMatch: new FormControl(false, { nonNullable: true }),
+        eliminationPairingMode: new FormControl('random', { nonNullable: true }),
       }),
     }),
   }) as unknown as TournamentConfigurationForm;

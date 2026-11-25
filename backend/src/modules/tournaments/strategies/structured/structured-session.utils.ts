@@ -1,12 +1,20 @@
 import { Logger } from '@nestjs/common';
 import { MatchesSession } from 'src/entities/matches-session.entity';
+import { Team } from 'src/entities/team.entity';
 import { TournamentMatch } from 'src/entities/tounament-match.entity';
 import { StructuredCompetitionConfiguration } from 'src/entities/tournament-competition-configuration.entity';
 import { TournamentPool } from 'src/entities/tournament-pool.entity';
 import { Tournament } from 'src/entities/tournament.entity';
 import { TournamentStatus } from 'src/enum/status.enum';
 import { ConstraintConfig } from 'src/model/constraint.model';
-import { generateMatchesInPool } from 'src/modules/tournaments/utils/match.utils';
+import { PairingMode } from 'src/enum/tounament.enum';
+import { selectByeTeam } from 'src/modules/tournaments/utils/bye.utils';
+import {
+    generateMatchesFromPairs,
+    generateMatchesInPool,
+    orderTeamsByRanking,
+} from 'src/modules/tournaments/utils/match.utils';
+import { pairDutch } from '../up-down/dutch-pairing.utils';
 import { extractContraintConfig } from 'src/modules/tournaments/utils/tournament.utils';
 import { toPoolRef } from 'src/modules/tournaments/utils/type-orm-ref.utils';
 import { DeepPartial } from 'typeorm';
@@ -108,6 +116,17 @@ export function generateEliminationMatches(
             `${tournament.code} session ${round.number}: ${group.key}, ${teams.length} teams`,
         );
         const pool = virtualPools.find((vp) => vp.name === group.key)!;
+        if (config.eliminationPairingMode === PairingMode.DUTCH) {
+            return generateDutchGroupMatches(
+                pool,
+                teams,
+                tournament,
+                session,
+                constraintConfig,
+                pastMatches,
+                globalRanking,
+            );
+        }
         return generateMatchesInPool(
             pool,
             teams,
@@ -118,6 +137,32 @@ export function generateEliminationMatches(
             globalRanking,
         );
     });
+}
+
+/**
+ * One elimination group paired by the Dutch Swiss system, from the ranking of every match played
+ * so far. All the teams of a group are still in the running, so they share one score group: the
+ * top half of the ranking plays the bottom half, within the club and rematch constraints when
+ * possible. An odd group gives its bye the elimination way (fewest byes, then best ranked), not
+ * the up-down way (worst ranked). Plates follow the pairing order, the best ranked team first.
+ */
+function generateDutchGroupMatches(
+    pool: TournamentPool,
+    teams: Team[],
+    tournament: Tournament,
+    session: MatchesSession,
+    constraintConfig: ConstraintConfig,
+    pastMatches: TournamentMatch[],
+    globalRanking: GlobalRankingEntry[],
+): DeepPartial<TournamentMatch>[] {
+    const byeTeam =
+        teams.length % 2 !== 0 ? selectByeTeam(teams, pastMatches, globalRanking) : null;
+    const playing = orderTeamsByRanking(
+        teams.filter((team) => team.id !== byeTeam?.id),
+        globalRanking,
+    );
+    const pairs = pairDutch(playing, new Map(), pastMatches, constraintConfig);
+    return generateMatchesFromPairs(pool, pairs, byeTeam, true, tournament, session);
 }
 
 /**

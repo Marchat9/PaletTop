@@ -8,10 +8,12 @@ import { BracketPanelState, PlanSimulationState } from 'src/app/models/tournamen
 import { Button } from 'src/app/shared/button/button';
 import { BracketPanel } from 'src/app/shared/bracket-panel/bracket-panel';
 import { InlineNotice } from 'src/app/shared/inline-notice/inline-notice';
+import { InputCardRadio } from 'src/app/shared/input-card-radio/input-card-radio';
 import { InputNumber } from 'src/app/shared/input-number/input-number';
 import { Switch } from 'src/app/shared/switch/switch';
 import { PlanSimulation } from './plan-simulation/plan-simulation';
 import { TournamentConfigurationField } from '../../tournament-configuration-form.model';
+import * as configuration from '../../tournament-create.data';
 import { StructuredTournamentForm } from './structured-tournament-form.model';
 
 @Component({
@@ -19,6 +21,7 @@ import { StructuredTournamentForm } from './structured-tournament-form.model';
   imports: [
     ReactiveFormsModule,
     Switch,
+    InputCardRadio,
     InputNumber,
     InlineNotice,
     BracketPanel,
@@ -47,6 +50,7 @@ export class StructuredTournament {
   public readonly numberOfQualifyingRoundsConfig =
     environment.tournamentConfiguration.numberOfQualifyingRounds;
   public readonly targetCountConfig = environment.tournamentConfiguration.maxTeamCapacity;
+  public readonly eliminationPairingModeOptions = configuration.eliminationPairingModeOptions;
   protected readonly consolationCount: Signal<number> = controlValue(
     computed(() => this.group().controls.consolationCount),
     0,
