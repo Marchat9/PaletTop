@@ -1,21 +1,22 @@
-import { BadRequestException } from '@nestjs/common';
-import { plainToInstance, Type } from 'class-transformer';
-import { Allow, IsInt, IsOptional, Max, Min, validateSync } from 'class-validator';
+import { plainToInstance, Transform, Type } from 'class-transformer';
+import { IsDefined, IsEnum, IsInt, IsOptional, Max, Min, ValidateNested } from 'class-validator';
 import { CompetitionMode } from 'src/enum/tounament.enum';
 import { MAX_CONSOLATION_COUNT_LIMIT } from 'src/modules/app-settings/app-setting.definitions';
-import type { StartRequest } from '../services/session.service';
-import type { StartChoice } from '../strategies/tournament-strategy.abstract';
 import { AdminQualifyingDto } from './admin-qualifying.dto';
 import { MAX_TEAM_CAPACITY } from './tournament-configuration.dto';
 
 /**
- * Start request. The body is the same for every mode (the mode is the tournament's, not the
- * request's), so this class checks what a field can hold; the subclasses below tell which of the
- * launch choice fields a mode accepts and how it reads them (`toStartChoice`). The choice is
- * optional: modes without a plan and older clients send the password only. The upper bound of
- * `consolationCount` is an app setting, checked by the strategy.
+ * What the launch dialog sends for a competition mode. One subclass per mode, picked by the
+ * request's `competitionMode` (see `StartTournamentDto`); a field the mode does not know, or any option for a mode without
+ * options, is refused by the validation pipe.
  */
-export abstract class StartTournamentDto extends AdminQualifyingDto {
+export abstract class CompetitionModeStartOptions {}
+
+/**
+ * Structured mode: the launch check. The upper bound of `consolationCount` is an app setting,
+ * checked by the strategy.
+ */
+export class StructuredStartOptions extends CompetitionModeStartOptions {
     /** Team count of the launch check: a different count refuses the start (409). */
     @IsOptional()
     @Type(() => Number)
@@ -24,29 +25,12 @@ export abstract class StartTournamentDto extends AdminQualifyingDto {
     @Max(MAX_TEAM_CAPACITY)
     expectedTeamCount?: number;
 
-    /**
-     * The launch choice fields of the modes. Only let through here: the global pipe validates the
-     * body against this class without knowing the mode, so the mode's subclass checks the values
-     * (`startChoiceOf`).
-     */
-    @Allow()
-    consolationCount?: number;
-
-    @Allow()
-    eliminatedAfterQualifying?: number;
-
-    /** The launch choice of the mode, or a 400 when the request holds a field the mode ignores. */
-    abstract toStartChoice(): StartChoice;
-}
-
-/** Structured mode: the consolation count and the teams stopped after the qualifiers. */
-export class StructuredStartTournamentDto extends StartTournamentDto {
     @IsOptional()
     @Type(() => Number)
     @IsInt()
     @Min(0)
     @Max(MAX_CONSOLATION_COUNT_LIMIT)
-    override consolationCount?: number = undefined;
+    consolationCount?: number;
 
     /** The last X teams of the qualifiers play no elimination match. */
     @IsOptional()
@@ -54,41 +38,33 @@ export class StructuredStartTournamentDto extends StartTournamentDto {
     @IsInt()
     @Min(0)
     @Max(MAX_TEAM_CAPACITY)
-    override eliminatedAfterQualifying?: number = undefined;
-
-    override toStartChoice(): StartChoice {
-        return {
-            consolationCount: this.consolationCount,
-            eliminatedAfterQualifying: this.eliminatedAfterQualifying,
-        };
-    }
+    eliminatedAfterQualifying?: number;
 }
 
-/** Modes without a launch choice (up-down, championship): any choice field is refused. */
-export class NoChoiceStartTournamentDto extends StartTournamentDto {
-    override toStartChoice(): StartChoice {
-        if (this.consolationCount !== undefined || this.eliminatedAfterQualifying !== undefined) {
-            throw new BadRequestException('Ce mode de compétition n’a pas de choix de lancement.');
-        }
-        return {};
-    }
-}
-
-const START_DTO_BY_MODE: Record<CompetitionMode, new () => StartTournamentDto> = {
-    [CompetitionMode.STANDARD]: StructuredStartTournamentDto,
-    [CompetitionMode.UP_DOWN]: NoChoiceStartTournamentDto,
-    [CompetitionMode.CHAMPIONSHIP]: NoChoiceStartTournamentDto,
+/** Modes without a launch choice (up-down, championship) have no class: no options are accepted. */
+const START_OPTIONS_BY_MODE: Partial<
+    Record<CompetitionMode, new () => CompetitionModeStartOptions>
+> = {
+    [CompetitionMode.STANDARD]: StructuredStartOptions,
 };
 
-/** The launch choice of a start request, validated and read the way the tournament's mode does. */
-export function startChoiceOf(mode: CompetitionMode, request: StartRequest): StartChoice {
-    const dto = plainToInstance(START_DTO_BY_MODE[mode], request);
-    // The pipe checked the password and the team count; what the request leaves out stays out.
-    const errors = validateSync(dto, { skipUndefinedProperties: true });
-    if (errors.length > 0) {
-        throw new BadRequestException(
-            errors.flatMap((error) => Object.values(error.constraints ?? {})),
-        );
-    }
-    return dto.toStartChoice();
+/**
+ * Start request. The options are optional, and null or absent for a mode without any and
+ * become the class of the sibling `competitionMode`: class-transformer's `@Type` cannot read a
+ * sibling field, so the `@Transform` does it. The service checks that the mode is the tournament's.
+ */
+export class StartTournamentDto extends AdminQualifyingDto {
+    @IsEnum(CompetitionMode)
+    @IsDefined()
+    competitionMode!: CompetitionMode;
+
+    @IsOptional()
+    @Transform(({ value, obj }: { value: unknown; obj: { competitionMode?: CompetitionMode } }) => {
+        const optionsClass = obj.competitionMode && START_OPTIONS_BY_MODE[obj.competitionMode];
+        return optionsClass && typeof value === 'object' && value !== null
+            ? plainToInstance(optionsClass, value)
+            : value;
+    })
+    @ValidateNested()
+    competitionModeStartOptions?: StructuredStartOptions | null;
 }

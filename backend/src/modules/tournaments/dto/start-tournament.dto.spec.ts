@@ -1,58 +1,76 @@
-import { BadRequestException } from '@nestjs/common';
-import { plainToInstance } from 'class-transformer';
-import { validateSync } from 'class-validator';
+import { BadRequestException, ValidationPipe } from '@nestjs/common';
 import { describe, expect, it } from 'vitest';
-import { CompetitionMode } from 'src/enum/tounament.enum';
-import { StartTournamentDto, startChoiceOf } from './start-tournament.dto';
+import { StartTournamentDto, StructuredStartOptions } from './start-tournament.dto';
 
-describe('Start request by tournament mode', () => {
-    it('reads the launch choice of a structured tournament', () => {
-        expect(
-            startChoiceOf(CompetitionMode.STANDARD, {
+/** The global validation pipe of the application (main.ts). */
+const pipe = new ValidationPipe({ whitelist: true, transform: true, forbidNonWhitelisted: true });
+const parse = (body: object): Promise<StartTournamentDto> =>
+    pipe.transform(body, {
+        type: 'body',
+        metatype: StartTournamentDto,
+    }) as Promise<StartTournamentDto>;
+
+describe('Start request validation by competition mode', () => {
+    it('reads the options of a structured tournament as numbers', async () => {
+        const dto = await parse({
+            password: 'pw',
+            competitionMode: 'standard',
+            competitionModeStartOptions: {
+                expectedTeamCount: '12',
                 consolationCount: 2,
                 eliminatedAfterQualifying: 3,
-            }),
-        ).toEqual({ consolationCount: 2, eliminatedAfterQualifying: 3 });
-    });
+            },
+        });
 
-    it('has no choice when the request holds none, in every mode', () => {
-        for (const mode of [CompetitionMode.UP_DOWN, CompetitionMode.CHAMPIONSHIP]) {
-            expect(startChoiceOf(mode, { expectedTeamCount: 8 })).toEqual({});
-        }
-        expect(startChoiceOf(CompetitionMode.STANDARD, {})).toEqual({
-            consolationCount: undefined,
-            eliminatedAfterQualifying: undefined,
+        expect(dto.competitionModeStartOptions).toBeInstanceOf(StructuredStartOptions);
+        expect({ ...dto.competitionModeStartOptions }).toEqual({
+            expectedTeamCount: 12,
+            consolationCount: 2,
+            eliminatedAfterQualifying: 3,
         });
     });
 
-    it('refuses a launch choice for a mode that has none', () => {
-        for (const mode of [CompetitionMode.UP_DOWN, CompetitionMode.CHAMPIONSHIP]) {
-            expect(() => startChoiceOf(mode, { consolationCount: 1 })).toThrow(BadRequestException);
-            expect(() => startChoiceOf(mode, { eliminatedAfterQualifying: 1 })).toThrow(
-                BadRequestException,
-            );
+    it('accepts the password and the mode only, in every mode', async () => {
+        for (const competitionMode of ['standard', 'up_down', 'championship']) {
+            const dto = await parse({ password: 'pw', competitionMode });
+            expect(dto.competitionModeStartOptions).toBeUndefined();
         }
     });
 
-    it('refuses a value out of range for the mode, without asking the password again', () => {
-        expect(() => startChoiceOf(CompetitionMode.STANDARD, { consolationCount: -1 })).toThrow(
-            BadRequestException,
-        );
-        expect(startChoiceOf(CompetitionMode.STANDARD, { consolationCount: '2' as never })).toEqual(
-            { consolationCount: 2, eliminatedAfterQualifying: undefined },
-        );
+    it('refuses any option for a mode without options', async () => {
+        for (const competitionMode of ['up_down', 'championship']) {
+            await expect(
+                parse({
+                    password: 'pw',
+                    competitionMode,
+                    competitionModeStartOptions: { consolationCount: 1 },
+                }),
+            ).rejects.toThrow(BadRequestException);
+            const none = await parse({
+                password: 'pw',
+                competitionMode,
+                competitionModeStartOptions: null,
+            });
+            expect(none.competitionModeStartOptions).toBeNull();
+        }
     });
 
-    it('lets the global pipe through the choice fields, the mode checking their values', () => {
-        const errors = (body: object) =>
-            validateSync(plainToInstance(StartTournamentDto as never, body), {
-                whitelist: true,
-                forbidNonWhitelisted: true,
-            });
+    it('refuses a value out of range, an unknown field, a missing password or mode', async () => {
+        const options = (competitionModeStartOptions: object) => ({
+            password: 'pw',
+            competitionMode: 'standard',
+            competitionModeStartOptions,
+        });
 
-        expect(errors({ password: 'pw', consolationCount: '2' })).toHaveLength(0);
-        expect(errors({ password: 'pw', consolationCount: -1 })).toHaveLength(0);
-        expect(errors({ consolationCount: 1 })).not.toHaveLength(0);
-        expect(errors({ password: 'pw', unknown: 1 })).not.toHaveLength(0);
+        await expect(parse(options({ consolationCount: -1 }))).rejects.toThrow(BadRequestException);
+        await expect(parse(options({ expectedTeamCount: -1 }))).rejects.toThrow(
+            BadRequestException,
+        );
+        await expect(parse(options({ unknown: 1 }))).rejects.toThrow(BadRequestException);
+        await expect(parse({ competitionMode: 'standard' })).rejects.toThrow(BadRequestException);
+        await expect(parse({ password: 'pw' })).rejects.toThrow(BadRequestException);
+        await expect(parse({ password: 'pw', competitionMode: 'bowling' })).rejects.toThrow(
+            BadRequestException,
+        );
     });
 });
