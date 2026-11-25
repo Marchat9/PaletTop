@@ -17,8 +17,8 @@ function detail(key: AppSettingDetailDto['key'], value: unknown): AppSettingDeta
 const SETTINGS: AppSettingDetailDto[] = [
   {
     ...detail('score_calculations_by_mode', {
-      standard: ['victory_ga', 'score'],
-      up_down: ['victory_ga', 'score'],
+      standard: ['victory_goal_average', 'victory_points_scored'],
+      up_down: ['victory_goal_average', 'victory_points_scored'],
       championship: ['tournament_score'],
     }),
     scope: 'public',
@@ -67,7 +67,7 @@ describe('SuperAdminSettingsComponent', () => {
   it('marks an edited setting dirty and saves the edited value', () => {
     expect(component.meta().score_calculations_by_mode?.isDirty).toBe(false);
 
-    component.onScoreCalculationsChange('up_down', ['score']);
+    component.onScoreCalculationsChange('up_down', ['victory_points_scored']);
     expect(component.meta().score_calculations_by_mode?.isDirty).toBe(true);
 
     component.onSave('score_calculations_by_mode');
@@ -75,8 +75,8 @@ describe('SuperAdminSettingsComponent', () => {
       {
         key: 'score_calculations_by_mode',
         value: {
-          standard: ['victory_ga', 'score'],
-          up_down: ['score'],
+          standard: ['victory_goal_average', 'victory_points_scored'],
+          up_down: ['victory_points_scored'],
           championship: ['tournament_score'],
         },
       },

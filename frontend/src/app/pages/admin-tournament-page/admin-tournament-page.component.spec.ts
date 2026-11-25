@@ -72,7 +72,7 @@ function buildTournament(status = TournamentStatus.ACTIVE, teamCount = 0): Tourn
     date: new Date(),
     configuration: {
       maxTeamCapacity: 16,
-      scoreCalculation: 'victory_ga',
+      scoreCalculation: 'victory_goal_average',
       pointsPerGame: 1,
       rematch: false,
       matchAgainstFullSameClub: false,
@@ -98,7 +98,6 @@ const FINAL_RANKING: GlobalRankingEntry[] = [
     goalAverage: 27,
     matchesPlayed: 3,
     tournamentPoints: 9,
-    buchholz: 0,
   },
 ];
 

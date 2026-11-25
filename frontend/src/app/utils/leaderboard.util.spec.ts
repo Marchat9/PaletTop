@@ -23,7 +23,6 @@ function team(rank: number, teamId: string, overrides: Partial<GlobalRankingEntr
     goalAverage: 4,
     matchesPlayed: 1,
     tournamentPoints: 3,
-    buchholz: 0,
     ...overrides,
   };
 }
@@ -42,32 +41,10 @@ function labels(items: ReturnType<typeof leaderboardItems>): string[] {
 }
 
 describe('toTournamentLeaderboard', () => {
-  it('affiche V / Bch. / GA en victoires + Buchholz, avec la légende du Buchholz', () => {
-    const table = toTournamentLeaderboard(
-      [team(1, 'A', { wins: 2, buchholz: 5, goalAverage: 3 })],
-      'victory_buchholz_ga',
-    );
-
-    expect(table.columns.map((column) => column.label)).toEqual(['V', 'Bch.', 'GA']);
-    expect(table.columns[1].title).toBe('Score Buchholz (Somme des victoires des adversaires)');
-    expect(table.rows[0].cells.map((cell) => cell.value)).toEqual(['2', '5', '+3']);
-    expect(table.legend).toContain('Bch. = Score Buchholz (Somme des victoires des adversaires)');
-  });
-
-  it('affiche Score / Bch. / GA en somme des scores + Buchholz', () => {
-    const table = toTournamentLeaderboard(
-      [team(1, 'A', { pointsFor: 26, buchholz: 4, goalAverage: -2 })],
-      'score_buchholz_ga',
-    );
-
-    expect(table.columns.map((column) => column.label)).toEqual(['Score', 'Bch.', 'GA']);
-    expect(table.rows[0].cells.map((cell) => cell.value)).toEqual(['26', '4', '-2']);
-  });
-
   it('affiche V / Pts+ / GA en victoires + goal average, avec le signe et la couleur du GA', () => {
     const table = toTournamentLeaderboard(
       [team(1, 'A', { goalAverage: 8 }), team(2, 'B', { wins: 0, goalAverage: -8 })],
-      'victory_ga',
+      'victory_goal_average',
     );
 
     expect(table.nameLabel).toBe('Équipe');
@@ -82,17 +59,6 @@ describe('toTournamentLeaderboard', () => {
     expect(table.legend).toBe('V = victoires · Pts+ = points marqués · GA = Goal average');
   });
 
-  it('affiche Score / GA en somme des scores', () => {
-    const table = toTournamentLeaderboard([team(1, 'A', { goalAverage: 0 })], 'score');
-
-    expect(table.columns.map((column) => column.label)).toEqual(['Score', 'GA']);
-    expect(table.rows[0].cells).toEqual([
-      { value: '13', tone: 'neutral' },
-      { value: '0', tone: 'neutral' },
-    ]);
-    expect(table.legend).toBe('Score = somme des scores · GA = Goal average');
-  });
-
   it('affiche les seuls points tournoi, sans légende', () => {
     const table = toTournamentLeaderboard([team(1, 'A')], 'tournament_score');
 
@@ -102,7 +68,10 @@ describe('toTournamentLeaderboard', () => {
   });
 
   it('garde le rang du serveur et marque les égalités d’un « = »', () => {
-    const table = toTournamentLeaderboard([team(1, 'A'), team(1, 'B'), team(3, 'C')], 'victory_ga');
+    const table = toTournamentLeaderboard(
+      [team(1, 'A'), team(1, 'B'), team(3, 'C')],
+      'victory_goal_average',
+    );
 
     expect(table.rows.map((entry) => [entry.id, entry.rank, entry.rankLabel])).toEqual([
       ['A', 1, '1='],
@@ -197,7 +166,7 @@ describe('sections du classement', () => {
         team(3, 'C', { section: 'eliminated_qualifying', sectionLabel: 'Éliminés en qualifs' }),
         team(4, 'D', { section: 'pools', sectionLabel: null }),
       ],
-      'victory_ga',
+      'victory_goal_average',
     );
 
     expect(table.rows.map((entry) => entry.section)).toEqual([
@@ -209,7 +178,9 @@ describe('sections du classement', () => {
   });
 
   it('n’a pas de section pour un classement unique', () => {
-    expect(toTournamentLeaderboard([team(1, 'A')], 'victory_ga').rows[0].section).toBeNull();
+    expect(
+      toTournamentLeaderboard([team(1, 'A')], 'victory_goal_average').rows[0].section,
+    ).toBeNull();
   });
 
   it('insère un intertitre avant chaque nouvelle section, sous le podium', () => {

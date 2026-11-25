@@ -18,7 +18,7 @@ function buildTournament(
     date: new Date(),
     configuration: {
       maxTeamCapacity: overrides.maxTeamCapacity ?? 16,
-      scoreCalculation: 'victory_ga',
+      scoreCalculation: 'victory_goal_average',
       pointsPerGame: 1,
       rematch: false,
       matchAgainstFullSameClub: false,

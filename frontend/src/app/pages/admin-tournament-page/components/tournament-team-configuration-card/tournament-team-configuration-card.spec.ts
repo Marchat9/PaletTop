@@ -16,7 +16,7 @@ function buildTournament(teams: TounamentTeamDto[]): TournamentDto {
     date: new Date(),
     configuration: {
       maxTeamCapacity: 16,
-      scoreCalculation: 'victory_ga',
+      scoreCalculation: 'victory_goal_average',
       pointsPerGame: 1,
       rematch: false,
       matchAgainstFullSameClub: false,

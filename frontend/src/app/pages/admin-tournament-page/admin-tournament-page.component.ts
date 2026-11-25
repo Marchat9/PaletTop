@@ -171,7 +171,7 @@ export class AdminTournamentPageComponent implements OnInit {
   public readonly rankingTable = computed(() =>
     toTournamentLeaderboard(
       this.ranking() ?? [],
-      this.tournament()?.configuration?.scoreCalculation ?? 'victory_ga',
+      this.tournament()?.configuration?.scoreCalculation ?? 'victory_goal_average',
     ),
   );
 

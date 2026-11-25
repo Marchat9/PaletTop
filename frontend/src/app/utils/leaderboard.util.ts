@@ -80,50 +80,6 @@ function sameWinsAndPoints(a: WinsAndPoints, b: WinsAndPoints): boolean {
 
 function tournamentLayout(scoreCalculation: ScoreCalculation): TournamentLayout {
   switch (scoreCalculation) {
-    case 'score':
-      return {
-        columns: [
-          { label: 'Score', title: 'Somme des scores' },
-          { label: 'GA', title: 'Goal average' },
-        ],
-        cells: (entry) => [plain(entry.pointsFor), goalAverage(entry.goalAverage)],
-        summary: (entry) => `${entry.pointsFor} · ${signed(entry.goalAverage)}`,
-        legend: 'Score = somme des scores · GA = Goal average',
-      };
-    case 'victory_buchholz_ga':
-      return {
-        columns: [
-          { label: 'V', title: 'Victoires' },
-          { label: 'Bch.', title: 'Score Buchholz (Somme des victoires des adversaires)' },
-          { label: 'GA', title: 'Goal average' },
-        ],
-        cells: (entry) => [
-          plain(entry.wins),
-          plain(entry.buchholz),
-          goalAverage(entry.goalAverage),
-        ],
-        summary: (entry) =>
-          `${entry.wins} V · ${entry.buchholz} Bch. · ${signed(entry.goalAverage)}`,
-        legend:
-          'V = victoires · Bch. = Score Buchholz (Somme des victoires des adversaires) · GA = Goal average',
-      };
-    case 'score_buchholz_ga':
-      return {
-        columns: [
-          { label: 'Score', title: 'Somme des scores' },
-          { label: 'Bch.', title: 'Score Buchholz (Somme des victoires des adversaires)' },
-          { label: 'GA', title: 'Goal average' },
-        ],
-        cells: (entry) => [
-          plain(entry.pointsFor),
-          plain(entry.buchholz),
-          goalAverage(entry.goalAverage),
-        ],
-        summary: (entry) =>
-          `${entry.pointsFor} · ${entry.buchholz} Bch. · ${signed(entry.goalAverage)}`,
-        legend:
-          'Score = somme des scores · Bch. = Score Buchholz (Somme des victoires des adversaires) · GA = Goal average',
-      };
     case 'tournament_score':
       return {
         columns: [{ label: 'Pts Tournoi', title: 'Points tournoi' }],

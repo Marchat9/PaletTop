@@ -154,7 +154,7 @@ export class SpectatorPageComponent {
   public readonly rankingTable = computed(() =>
     toTournamentLeaderboard(
       this.ranking() ?? [],
-      this.tournament()?.scoreCalculation ?? 'victory_ga',
+      this.tournament()?.scoreCalculation ?? 'victory_goal_average',
     ),
   );
   /** What the ranking tables list (rows and section headings): the pagination counts these. */

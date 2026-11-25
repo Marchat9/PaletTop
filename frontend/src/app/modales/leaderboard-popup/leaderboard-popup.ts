@@ -86,7 +86,7 @@ export class LeaderboardPopup {
       case 'tournament':
         return toTournamentLeaderboard(
           this.tournamentEntries() ?? [],
-          this.data.scoreCalculation ?? 'victory_ga',
+          this.data.scoreCalculation ?? 'victory_goal_average',
         );
       case 'club':
         return toClubLeaderboard(this.clubEntries());

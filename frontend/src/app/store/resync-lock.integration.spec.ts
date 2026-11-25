@@ -71,7 +71,7 @@ function tournament(status: TournamentStatus): TournamentDto {
     date: '2026-01-01T10:00:00.000Z' as unknown as Date,
     configuration: {
       maxTeamCapacity: 16,
-      scoreCalculation: 'victory_ga',
+      scoreCalculation: 'victory_goal_average',
       pointsPerGame: 13,
       rematch: false,
       matchAgainstFullSameClub: false,

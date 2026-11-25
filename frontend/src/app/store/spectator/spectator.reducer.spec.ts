@@ -25,7 +25,7 @@ const TOURNAMENT: SpectatorTournamentDto = {
   name: 'Tournoi du Printemps',
   status: TournamentStatus.ACTIVE,
   phaseName: 'Phase qualificative',
-  scoreCalculation: 'score',
+  scoreCalculation: 'victory_points_scored',
   teamNames: [],
 };
 
@@ -64,7 +64,6 @@ const RANKING: GlobalRankingEntry[] = [
     goalAverage: 6,
     matchesPlayed: 2,
     tournamentPoints: 6,
-    buchholz: 0,
   },
 ];
 

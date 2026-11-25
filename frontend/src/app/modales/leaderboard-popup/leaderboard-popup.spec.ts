@@ -56,7 +56,6 @@ function setup(data: LeaderboardPopupData, dialogRef = { close: vi.fn() }) {
                 pointsAgainst: 12,
                 goalAverage: 27,
                 tournamentPoints: 0,
-                buchholz: 0,
               },
               {
                 teamId: 'T2',
@@ -68,7 +67,6 @@ function setup(data: LeaderboardPopupData, dialogRef = { close: vi.fn() }) {
                 pointsAgainst: 30,
                 goalAverage: -5,
                 tournamentPoints: 0,
-                buchholz: 0,
               },
             ],
           },
@@ -115,7 +113,7 @@ describe('LeaderboardPopup', () => {
       scope: 'tournament',
       highlightedId: 'T2',
       tournamentName: 'Coupe du Laiton',
-      scoreCalculation: 'victory_ga',
+      scoreCalculation: 'victory_goal_average',
     });
 
     expect(element.textContent).toContain('Coupe du Laiton');
