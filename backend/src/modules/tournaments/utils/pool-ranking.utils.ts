@@ -21,5 +21,6 @@ export function computeRanking(
         pointsFor: entry.pointsFor,
         pointsAgainst: entry.pointsAgainst,
         goalAverage: entry.goalAverage,
+        losses: entry.losses,
     }));
 }

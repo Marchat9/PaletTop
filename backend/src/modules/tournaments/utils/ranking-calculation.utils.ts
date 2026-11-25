@@ -13,6 +13,15 @@ export interface TeamRankingStats {
     goalAverage: number;
     matchesPlayed: number;
     tournamentPoints: number;
+    /** Matches lost: never a bye, never a draw. */
+    losses: number;
+    /** Largest losing margin, 0 without any loss. Lower is better. */
+    worstLoss: number;
+    /**
+     * Gap (own score minus the opponent's) of every played match, in session order. Byes are not
+     * part of it.
+     */
+    gaps: number[];
 }
 
 export interface RankedTeamStats extends TeamRankingStats {
@@ -58,6 +67,9 @@ export function computeTeamStats(teams: Team[], matches: TournamentMatch[]): Tea
                 goalAverage: 0,
                 matchesPlayed: 0,
                 tournamentPoints: 0,
+                losses: 0,
+                worstLoss: 0,
+                gaps: [],
             },
         ]),
     );
@@ -72,13 +84,30 @@ export function computeTeamStats(teams: Team[], matches: TournamentMatch[]): Tea
         entry.tournamentPoints += computeTournamentScorePoints(won, own);
     };
 
-    for (const match of matches) {
+    // Gaps and losses only concern played matches, not byes.
+    const creditPlayed = (teamId: string, own: number, opponent: number): void => {
+        const entry = stats.get(teamId);
+        if (!entry) return;
+        entry.gaps.push(own - opponent);
+        if (own < opponent) {
+            entry.losses++;
+            entry.worstLoss = Math.max(entry.worstLoss, opponent - own);
+        }
+    };
+
+    // Session order, so that `gaps` reads game after game (the sort is stable).
+    const chronological = [...matches].sort(
+        (a, b) => (a.sessionNumber ?? 0) - (b.sessionNumber ?? 0),
+    );
+    for (const match of chronological) {
         if (match.isBye || !match.teamB) {
             credit(match.teamA.id, match.scoreA, match.scoreB, isByeWin(match));
             continue;
         }
         credit(match.teamA.id, match.scoreA, match.scoreB, match.scoreA > match.scoreB);
         credit(match.teamB.id, match.scoreB, match.scoreA, match.scoreB > match.scoreA);
+        creditPlayed(match.teamA.id, match.scoreA, match.scoreB);
+        creditPlayed(match.teamB.id, match.scoreB, match.scoreA);
     }
 
     const result = [...stats.values()];
@@ -86,6 +115,20 @@ export function computeTeamStats(teams: Team[], matches: TournamentMatch[]): Tea
         entry.goalAverage = entry.pointsFor - entry.pointsAgainst;
     }
     return result;
+}
+
+/**
+ * Negative when the team with gaps `a` ranks before the one with gaps `b`. Gaps are compared from
+ * the last game back: the higher gap goes first. When one list runs out, the team with more games
+ * goes first.
+ */
+export function compareGaps(a: number[], b: number[]): number {
+    const common = Math.min(a.length, b.length);
+    for (let back = 1; back <= common; back++) {
+        const difference = b[b.length - back] - a[a.length - back];
+        if (difference !== 0) return difference;
+    }
+    return b.length - a.length;
 }
 
 /** Negative when `a` ranks before `b`, 0 when they are tied on every criterion. */

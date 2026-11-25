@@ -20,4 +20,6 @@ export interface PoolRankingEntry {
     pointsFor: number;
     pointsAgainst: number;
     goalAverage: number;
+    /** Matches lost: never a bye, never a draw. */
+    losses: number;
 }

@@ -14,6 +14,8 @@ export interface GlobalRankingEntry {
     goalAverage: number;
     matchesPlayed: number;
     tournamentPoints: number;
+    /** Matches lost: never a bye, never a draw. */
+    losses: number;
     /**
      * Section of the final standings of a structured tournament, once its tables have started
      * (the 3rd-place match belongs to the principal table). Null or absent: a single ranking.

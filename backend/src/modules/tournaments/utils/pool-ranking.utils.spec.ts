@@ -42,6 +42,22 @@ function played(teamA: string, scoreA: number, teamB: string, scoreB: number): T
     } as unknown as TournamentMatch;
 }
 
+describe('computeRanking — défaites', () => {
+    it('expose le nombre de matchs perdus de chaque équipe', () => {
+        const pool = ['A', 'B', 'C'].map((id) => ({ id, name: id }) as Team);
+        const ranking = computeRanking(
+            pool,
+            [played('A', 13, 'B', 4), played('C', 13, 'A', 8), played('B', 11, 'C', 11)],
+            ScoreCalculation.VICTORY_AND_GOAL_AVERAGE,
+        );
+
+        const lossesByTeam = Object.fromEntries(
+            ranking.map((entry) => [entry.teamId, entry.losses]),
+        );
+        expect(lossesByTeam).toEqual({ A: 1, B: 1, C: 0 });
+    });
+});
+
 describe('computeRanking — somme des scores', () => {
     const pool = ['A', 'B', 'C', 'D'].map((id) => ({ id, name: id }) as Team);
 

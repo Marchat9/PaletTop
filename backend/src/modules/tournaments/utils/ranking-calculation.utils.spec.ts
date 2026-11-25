@@ -2,13 +2,19 @@ import { describe, expect, it } from 'vitest';
 import { Team } from 'src/entities/team.entity';
 import { TournamentMatch } from 'src/entities/tounament-match.entity';
 import { ScoreCalculation } from 'src/enum/tounament.enum';
-import { computeTeamStats, isByeWin, rankTeams } from './ranking-calculation.utils';
+import { compareGaps, computeTeamStats, isByeWin, rankTeams } from './ranking-calculation.utils';
 
 function teams(...ids: string[]): Team[] {
     return ids.map((id) => ({ id, name: id }) as Team);
 }
 
-function match(teamA: string, teamB: string, scoreA: number, scoreB: number): TournamentMatch {
+function match(
+    teamA: string,
+    teamB: string,
+    scoreA: number,
+    scoreB: number,
+    sessionNumber?: number,
+): TournamentMatch {
     return {
         teamA: { id: teamA },
         teamB: { id: teamB },
@@ -16,6 +22,7 @@ function match(teamA: string, teamB: string, scoreA: number, scoreB: number): To
         scoreB,
         isBye: false,
         byeWin: false,
+        sessionNumber,
     } as TournamentMatch;
 }
 
@@ -53,6 +60,44 @@ describe('computeTeamStats', () => {
         expect('buchholz' in statsOf(all, [bye('A', true)], 'A')).toBe(false);
     });
 
+    it('tracks the gaps, the worst loss and the losses of a team', () => {
+        const matches = [match('A', 'B', 13, 4, 1), match('C', 'A', 13, 8, 2)];
+        expect(statsOf(all, matches, 'A')).toMatchObject({
+            wins: 1,
+            losses: 1,
+            worstLoss: 5,
+            gaps: [9, -5],
+        });
+    });
+
+    it('orders the gaps by session number, whatever the order of the matches', () => {
+        const matches = [match('C', 'A', 13, 8, 2), match('A', 'B', 13, 4, 1)];
+        expect(statsOf(all, matches, 'A').gaps).toEqual([9, -5]);
+    });
+
+    it('keeps the largest losing margin as the worst loss', () => {
+        const matches = [match('C', 'A', 13, 11, 1), match('D', 'A', 13, 2, 2)];
+        expect(statsOf(all, matches, 'A')).toMatchObject({ worstLoss: 11, losses: 2 });
+    });
+
+    it('counts a draw as neither a win nor a loss, with a gap of 0', () => {
+        const stats = statsOf(all, [match('A', 'B', 11, 11, 1)], 'A');
+        expect(stats).toMatchObject({ wins: 0, losses: 0, worstLoss: 0, gaps: [0] });
+    });
+
+    it('keeps a bye out of the gaps and the losses while it still counts as a win', () => {
+        expect(statsOf(all, [bye('A', true)], 'A')).toMatchObject({
+            wins: 1,
+            losses: 0,
+            worstLoss: 0,
+            gaps: [],
+        });
+    });
+
+    it('gives a team without any match empty gaps and no loss', () => {
+        expect(statsOf(all, [], 'A')).toMatchObject({ losses: 0, worstLoss: 0, gaps: [] });
+    });
+
     it('keeps the effect of a legacy 13-0 bye', () => {
         expect(statsOf(all, [bye('A', false, 13)], 'A')).toMatchObject({
             wins: 1,
@@ -64,7 +109,27 @@ describe('computeTeamStats', () => {
     it('gives nothing for the 0-0 ranking-round bye', () => {
         expect(statsOf(all, [bye('A', false)], 'A')).toMatchObject({ wins: 0, goalAverage: 0 });
     });
+});
 
+describe('compareGaps', () => {
+    it('ranks first the team with the better last game', () => {
+        expect(compareGaps([3, 9], [4, 2])).toBeLessThan(0);
+        expect(compareGaps([4, 2], [3, 9])).toBeGreaterThan(0);
+    });
+
+    it('walks back to the previous game when the last ones are equal', () => {
+        expect(compareGaps([5, 7], [1, 7])).toBeLessThan(0);
+    });
+
+    it('ranks first the team with more games when one list is exhausted', () => {
+        expect(compareGaps([5, 7], [7])).toBeLessThan(0);
+        expect(compareGaps([7], [5, 7])).toBeGreaterThan(0);
+    });
+
+    it('is 0 for identical or empty gaps', () => {
+        expect(compareGaps([3, 9], [3, 9])).toBe(0);
+        expect(compareGaps([], [])).toBe(0);
+    });
 });
 
 describe('rankTeams', () => {
