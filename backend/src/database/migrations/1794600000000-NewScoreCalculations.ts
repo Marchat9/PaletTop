@@ -14,8 +14,10 @@ const CHAMPIONSHIP = '["tournament_score"]';
  * Replaces the score calculations by the three victory-based ones (goal-average, best defeats,
  * points scored) and the championship points; the Buchholz calculations are gone. Postgres cannot
  * drop enum values, so the type is recreated. Existing tournaments are mapped to the closest new
- * calculation, and the per-mode list of the super-admin setting is reset to the new defaults
- * (the removed values it may hold would no longer be valid).
+ * calculation. The per-mode list setting is reset to the new defaults only while it still is the
+ * default one (`app_default` or `migration`): a list chosen by the super-admin or set from an
+ * environment variable is left alone, and if it holds a removed value the app setting service
+ * replaces it at startup (env value when valid, else the default).
  */
 export class NewScoreCalculations1794600000000 implements MigrationInterface {
     name = 'NewScoreCalculations1794600000000';
@@ -44,7 +46,8 @@ export class NewScoreCalculations1794600000000 implements MigrationInterface {
                  "sourceDetail" = $3,
                  "appVersion" = $4,
                  "updatedAt" = now()
-             WHERE "key" = 'score_calculations_by_mode'`,
+             WHERE "key" = 'score_calculations_by_mode'
+               AND "source" IN ('app_default', 'migration')`,
             [NEW_STANDARD_AND_UP_DOWN, CHAMPIONSHIP, this.name, process.env.APP_VERSION || null],
         );
     }
