@@ -192,7 +192,11 @@ describe('AppSettingsService', () => {
 
             const publicSettings = await service.findPublic();
 
-            expect(publicSettings.map((s) => s.key)).toEqual([scoreKey]);
+            expect(publicSettings.map((s) => s.key)).toEqual([
+                scoreKey,
+                AppSettingKey.MAX_CONSOLATION_COUNT,
+                AppSettingKey.BRACKET_FILL_THRESHOLDS,
+            ]);
             expect(Object.keys(publicSettings[0])).toEqual(['key', 'value']);
         });
 
