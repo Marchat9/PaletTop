@@ -98,6 +98,7 @@ const FINAL_RANKING: GlobalRankingEntry[] = [
     goalAverage: 27,
     matchesPlayed: 3,
     tournamentPoints: 9,
+    losses: 0,
   },
 ];
 

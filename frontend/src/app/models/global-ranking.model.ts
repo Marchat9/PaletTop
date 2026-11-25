@@ -16,6 +16,8 @@ export interface GlobalRankingEntry {
   goalAverage: number;
   matchesPlayed: number;
   tournamentPoints: number;
+  /** Matches lost: never a bye, never a draw. */
+  losses: number;
   /** Section of the final standings of a structured tournament; absent or null: one ranking. */
   section?: Nullable<RankingSection>;
   /** French label of `section`; null without section or for a team that never reached a bracket. */

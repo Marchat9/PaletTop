@@ -44,19 +44,28 @@ function rankingPdfMode(scoreCalculation: ScoreCalculation | undefined): Ranking
         stats: [{ label: 'Pts Tournoi', width: 48, value: (entry) => `${entry.tournamentPoints}` }],
         nameCharsPerLine: 30,
       };
+    case 'victory_goal_average':
+    case 'victory_best_defeats':
+    case 'victory_points_scored':
     default:
       return {
         stats: [
-          { label: 'V', width: 22, value: (entry) => `${entry.wins}` },
-          { label: 'Pts+', width: 26, value: (entry) => `${entry.pointsFor}` },
+          { label: 'V', width: 20, value: (entry) => `${entry.wins}` },
+          { label: 'D', width: 20, value: (entry) => `${entry.losses}` },
           {
             label: 'GA',
             width: 26,
             value: (entry) => `${entry.goalAverage > 0 ? '+' : ''}${entry.goalAverage}`,
           },
+          {
+            label: 'PP-PC',
+            width: 42,
+            value: (entry) => `${entry.pointsFor}-${entry.pointsAgainst}`,
+          },
         ],
-        nameCharsPerLine: 24,
-        legend: 'V = victoires · Pts+ = points marqués · GA = Goal average',
+        nameCharsPerLine: 18,
+        legend:
+          'V = victoires · D = défaites · GA = Goal average · PP-PC = points pour - points contre',
       };
   }
 }

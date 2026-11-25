@@ -43,6 +43,14 @@ function signed(value: number): string {
   return value > 0 ? `+${value}` : String(value);
 }
 
+const POINTS_FOR_AGAINST_TITLE =
+  'Points pour - points contre (somme des points marqués - somme des points encaissés)';
+
+/** « 39-20 »: the points scored then conceded. */
+function pointsForAgainst(entry: GlobalRankingEntry): string {
+  return `${entry.pointsFor}-${entry.pointsAgainst}`;
+}
+
 function goalAverage(value: number): LeaderboardCell {
   return {
     value: signed(value),
@@ -87,20 +95,27 @@ function tournamentLayout(scoreCalculation: ScoreCalculation): TournamentLayout 
         summary: (entry) => `${entry.tournamentPoints} pts`,
         legend: null,
       };
+    case 'victory_goal_average':
+    case 'victory_best_defeats':
+    case 'victory_points_scored':
     default:
       return {
         columns: [
           { label: 'V', title: 'Victoires' },
-          { label: 'Pts+', title: 'Points marqués' },
+          { label: 'D', title: 'Défaites' },
           { label: 'GA', title: 'Goal average' },
+          { label: 'PP-PC', title: POINTS_FOR_AGAINST_TITLE },
         ],
         cells: (entry) => [
           plain(entry.wins),
-          plain(entry.pointsFor),
+          plain(entry.losses),
           goalAverage(entry.goalAverage),
+          { value: pointsForAgainst(entry), tone: 'neutral' },
         ],
-        summary: (entry) => `${entry.wins} V · ${entry.pointsFor} · ${signed(entry.goalAverage)}`,
-        legend: 'V = victoires · Pts+ = points marqués · GA = Goal average',
+        summary: (entry) =>
+          `${entry.wins} V · ${entry.losses} D · ${signed(entry.goalAverage)} · ${pointsForAgainst(entry)}`,
+        legend:
+          'V = victoires · D = défaites · GA = Goal average · PP-PC = points pour - points contre',
       };
   }
 }
