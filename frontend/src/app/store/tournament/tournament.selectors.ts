@@ -108,6 +108,10 @@ export const selectStartTournamentError = createSelector(
   selectTournamentState,
   (state) => state.adminRequest.startTournament.error,
 );
+export const selectStartTournamentTeamCountChanged = createSelector(
+  selectTournamentState,
+  (state) => state.adminRequest.startTournament.teamCountChanged,
+);
 // -------------------------------------------------------------------
 
 // ---------- Select about next session -----------

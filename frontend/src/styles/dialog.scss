@@ -87,6 +87,46 @@
   }
 }
 
+// Launch check and start summary: they draw their own frame. The launch check is a wide modal
+// on desktop and a full-screen dialog on mobile (the page picks the class).
+.launch-check-panel,
+.launch-check-fullscreen-panel,
+.start-summary-panel {
+  display: block;
+
+  .cdk-dialog-container {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    outline: none;
+  }
+
+  .cdk-dialog-container:focus,
+  .cdk-dialog-container:focus-visible {
+    outline: none;
+  }
+}
+
+.launch-check-panel {
+  width: min(100vw - 2rem, 72rem);
+}
+
+.start-summary-panel {
+  width: min(100vw - 2rem, 36rem);
+}
+
+.launch-check-fullscreen-panel {
+  width: 100vw;
+  height: 100dvh;
+  max-width: 100vw;
+  max-height: 100dvh;
+
+  .cdk-dialog-container {
+    height: 100dvh;
+  }
+}
+
 // ###################################
 // Common popup shell
 //

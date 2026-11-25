@@ -1,9 +1,10 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { provideMockActions } from '@ngrx/effects/testing';
 import { Action } from '@ngrx/store';
 import { provideMockStore } from '@ngrx/store/testing';
-import { Observable, of, ReplaySubject } from 'rxjs';
+import { Observable, of, ReplaySubject, throwError } from 'rxjs';
 import { describe, expect, it, vi } from 'vitest';
 import { TeamService } from 'src/app/services/team.service';
 import { TournamentService } from 'src/app/services/tournament.service';
@@ -16,6 +17,7 @@ import {
   updateTournamentAdministratorConfiguration,
   updateTournamentAdministratorConfigurationSuccess,
 } from './tournament.admin.actions';
+import { startTournament, startTournamentFailure } from './tournament.match.actions';
 import { TournamentDto } from './tournament.models';
 import { TournamentEffects } from './tournament.effects';
 import { selectCurrentTournamentAdminInformations } from './tournament.selectors';
@@ -157,5 +159,95 @@ describe('TournamentEffects team import summary', () => {
     );
 
     expect(emitted).toEqual([]);
+  });
+});
+
+describe('TournamentEffects start', () => {
+  function runStart(status: number) {
+    const actions$ = new ReplaySubject<Action>(1);
+    const start = vi.fn(() =>
+      throwError(() => new HttpErrorResponse({ status, error: { message: 'Refusé' } })),
+    );
+    TestBed.configureTestingModule({
+      providers: [
+        TournamentEffects,
+        provideMockActions(() => actions$),
+        provideMockStore({
+          selectors: [
+            {
+              selector: selectCurrentTournamentAdminInformations,
+              value: { code: 'ABCD', password: 'secret' },
+            },
+          ],
+        }),
+        { provide: Router, useValue: {} },
+        { provide: TeamService, useValue: {} },
+        { provide: TournamentService, useValue: { start } },
+      ],
+    });
+    const emitted: Action[] = [];
+    TestBed.inject(TournamentEffects).startTournament$.subscribe((a) => emitted.push(a));
+    actions$.next(
+      startTournament({
+        launchChoice: { expectedTeamCount: 117, consolationCount: 2, eliminatedAfterQualifying: 5 },
+      }),
+    );
+    return { emitted, start };
+  }
+
+  it('sends the launch choice with the admin password', () => {
+    const { start } = runStart(409);
+
+    expect(start).toHaveBeenCalledWith('ABCD', {
+      expectedTeamCount: 117,
+      consolationCount: 2,
+      eliminatedAfterQualifying: 5,
+      password: 'secret',
+    });
+  });
+
+  it('flags a 409 as a team count that changed', () => {
+    const { emitted } = runStart(409);
+
+    expect(emitted).toEqual([startTournamentFailure({ error: 'Refusé', teamCountChanged: true })]);
+  });
+
+  it('does not flag another refusal', () => {
+    const { emitted } = runStart(400);
+
+    expect(emitted).toEqual([startTournamentFailure({ error: 'Refusé', teamCountChanged: false })]);
+  });
+});
+
+describe('TournamentEffects action errors', () => {
+  function notified(action: Action): Action[] {
+    const actions$ = new ReplaySubject<Action>(1);
+    TestBed.configureTestingModule({
+      providers: [
+        TournamentEffects,
+        provideMockActions(() => actions$),
+        provideMockStore(),
+        { provide: Router, useValue: {} },
+        { provide: TeamService, useValue: {} },
+        { provide: TournamentService, useValue: {} },
+      ],
+    });
+    const emitted: Action[] = [];
+    TestBed.inject(TournamentEffects).tournamentActionErrors$.subscribe((a) => emitted.push(a));
+    actions$.next(action);
+    return emitted;
+  }
+
+  it('notifies a refused start', () => {
+    const emitted = notified(startTournamentFailure({ error: 'Refusé', teamCountChanged: false }));
+
+    expect(emitted.map((action) => action.type)).toEqual([addNotification.type]);
+  });
+
+  // The page checks again with the teams registered now: the error is answered there.
+  it('does not notify a start refused because the team count changed', () => {
+    expect(notified(startTournamentFailure({ error: 'Refusé', teamCountChanged: true }))).toEqual(
+      [],
+    );
   });
 });

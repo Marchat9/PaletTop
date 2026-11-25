@@ -31,3 +31,20 @@ export const simulatePlanFailure = createAction(
   '[Tournament Plan] Simulate Failure',
   props<{ requestId: string; error: string }>(),
 );
+
+/**
+ * Plan of the launch check: the saved configuration with the teams registered right now. Its own
+ * stream, so that it never replaces the preview of the form nor the simulation.
+ */
+export const previewLaunchPlan = createAction(
+  '[Tournament Plan] Preview Launch',
+  props<{ body: PlanPreviewBody }>(),
+);
+export const previewLaunchPlanSuccess = createAction(
+  '[Tournament Plan] Preview Launch Success',
+  props<{ plan: TournamentPlan }>(),
+);
+export const previewLaunchPlanFailure = createAction(
+  '[Tournament Plan] Preview Launch Failure',
+  props<{ error: string }>(),
+);

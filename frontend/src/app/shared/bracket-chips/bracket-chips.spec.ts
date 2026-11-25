@@ -20,6 +20,7 @@ interface BracketChipsInputs {
   brackets: PlanBracket[];
   slots?: number;
   dense?: boolean;
+  columns?: number;
 }
 
 describe('BracketChips', () => {
@@ -30,6 +31,7 @@ describe('BracketChips', () => {
     fixture.componentRef.setInput('brackets', inputs.brackets);
     if (inputs.slots !== undefined) fixture.componentRef.setInput('slots', inputs.slots);
     if (inputs.dense !== undefined) fixture.componentRef.setInput('dense', inputs.dense);
+    if (inputs.columns !== undefined) fixture.componentRef.setInput('columns', inputs.columns);
     fixture.detectChanges();
     return fixture.nativeElement as HTMLElement;
   }
@@ -111,5 +113,13 @@ describe('BracketChips', () => {
     const root = create({ brackets, dense: true });
 
     expect(root.querySelector('.bracket-chips')?.classList.contains('dense')).toBe(true);
+  });
+
+  it('fixes the number of cards per row when asked', () => {
+    const root = create({ brackets, columns: 3 });
+
+    expect((root.querySelector('.bracket-chips') as HTMLElement).style.gridTemplateColumns).toBe(
+      'repeat(3, minmax(0, 1fr))',
+    );
   });
 });

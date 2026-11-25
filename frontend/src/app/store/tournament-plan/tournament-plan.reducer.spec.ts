@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { PlanPreviewBody, TournamentPlan } from 'src/app/models/tournament-plan.model';
 import {
+  previewLaunchPlan,
+  previewLaunchPlanFailure,
+  previewLaunchPlanSuccess,
   previewPlan,
   previewPlanFailure,
   previewPlanSuccess,
@@ -81,5 +84,40 @@ describe('tournamentPlanReducer', () => {
     expect(state.simulationError).toBeNull();
     state = tournamentPlanReducer(state, simulatePlanFailure({ requestId: 'b', error: 'boom' }));
     expect(state.simulationError).toBe('boom');
+  });
+
+  describe('launch check', () => {
+    it('clears the previous plan while the new one loads', () => {
+      const withPlan = tournamentPlanReducer(
+        initialTournamentPlanState,
+        previewLaunchPlanSuccess({ plan: plan(117) }),
+      );
+      const state = tournamentPlanReducer(withPlan, previewLaunchPlan({ body: BODY }));
+
+      expect(state.launchPlan).toBeNull();
+      expect(state.launchPlanLoading).toBe(true);
+    });
+
+    it('stores the plan, apart from the preview of the form', () => {
+      const state = tournamentPlanReducer(
+        initialTournamentPlanState,
+        previewLaunchPlanSuccess({ plan: plan(117) }),
+      );
+
+      expect(state.launchPlan?.teamCount).toBe(117);
+      expect(state.launchPlanLoading).toBe(false);
+      expect(state.plan).toBeNull();
+    });
+
+    it('stops loading on a failure', () => {
+      const loading = tournamentPlanReducer(
+        initialTournamentPlanState,
+        previewLaunchPlan({ body: BODY }),
+      );
+      const state = tournamentPlanReducer(loading, previewLaunchPlanFailure({ error: 'bad' }));
+
+      expect(state.launchPlanLoading).toBe(false);
+      expect(state.launchPlan).toBeNull();
+    });
   });
 });

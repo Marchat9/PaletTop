@@ -27,3 +27,13 @@ export const selectSimulationError = createSelector(
   selectTournamentPlanState,
   (state) => state.simulationError,
 );
+
+export const selectLaunchPlan = createSelector(
+  selectTournamentPlanState,
+  (state) => state.launchPlan,
+);
+
+export const selectLaunchPlanLoading = createSelector(
+  selectTournamentPlanState,
+  (state) => state.launchPlanLoading,
+);

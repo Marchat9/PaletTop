@@ -148,6 +148,9 @@ export interface StartTournamentBody {
   eliminatedAfterQualifying?: number;
 }
 
+/** What the launch check confirms: the start request without its password. */
+export type LaunchChoice = Omit<StartTournamentBody, 'password'>;
+
 /** What the bracket panel of the structured form shows: the page feeds it from the store. */
 export interface BracketPanelState {
   plan: TournamentPlan | null;

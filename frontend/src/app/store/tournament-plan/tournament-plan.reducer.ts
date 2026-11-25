@@ -3,6 +3,9 @@ import { TournamentPlan } from 'src/app/models/tournament-plan.model';
 import {
   previewPlan,
   previewPlanFailure,
+  previewLaunchPlan,
+  previewLaunchPlanFailure,
+  previewLaunchPlanSuccess,
   previewPlanSuccess,
   simulatePlan,
   simulatePlanFailure,
@@ -20,6 +23,9 @@ export interface TournamentPlanState {
   simulationError: string | null;
   /** Id of the latest simulation request: older results are ignored. */
   latestSimulationRequestId: string | null;
+  /** Plan of the launch check, kept apart from the preview of the form. */
+  launchPlan: TournamentPlan | null;
+  launchPlanLoading: boolean;
 }
 
 export const initialTournamentPlanState: TournamentPlanState = {
@@ -30,6 +36,8 @@ export const initialTournamentPlanState: TournamentPlanState = {
   simulatedPlan: null,
   simulationError: null,
   latestSimulationRequestId: null,
+  launchPlan: null,
+  launchPlanLoading: false,
 };
 
 export const tournamentPlanReducer = createReducer(
@@ -59,4 +67,11 @@ export const tournamentPlanReducer = createReducer(
   on(simulatePlanFailure, (state, { requestId, error }) =>
     requestId === state.latestSimulationRequestId ? { ...state, simulationError: error } : state,
   ),
+  on(previewLaunchPlan, (state) => ({ ...state, launchPlan: null, launchPlanLoading: true })),
+  on(previewLaunchPlanSuccess, (state, { plan }) => ({
+    ...state,
+    launchPlan: plan,
+    launchPlanLoading: false,
+  })),
+  on(previewLaunchPlanFailure, (state) => ({ ...state, launchPlanLoading: false })),
 );

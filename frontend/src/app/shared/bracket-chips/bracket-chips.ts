@@ -27,6 +27,13 @@ export class BracketChips {
   public readonly slots = input<number>(0);
   /** Smaller cards, for a narrow space. */
   public readonly dense = input<boolean>(false);
+  /** Fixed number of cards per row; by default as many as the width allows. */
+  public readonly columns = input<number | null>(null);
+
+  protected readonly gridColumns = computed(() => {
+    const columns = this.columns();
+    return columns === null ? null : `repeat(${columns}, minmax(0, 1fr))`;
+  });
 
   protected readonly chips = computed<BracketChip[]>(() =>
     this.brackets().map((bracket, index) => {

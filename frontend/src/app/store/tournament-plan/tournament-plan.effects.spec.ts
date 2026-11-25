@@ -8,6 +8,9 @@ import { PlanPreviewBody, TournamentPlan } from 'src/app/models/tournament-plan.
 import { TournamentPlanService } from 'src/app/services/tournament-plan.service';
 import { convertErrorToString } from 'src/app/utils/api-call.utils';
 import {
+  previewLaunchPlan,
+  previewLaunchPlanFailure,
+  previewLaunchPlanSuccess,
   previewPlan,
   previewPlanFailure,
   previewPlanSuccess,
@@ -15,6 +18,7 @@ import {
   simulatePlanFailure,
   simulatePlanSuccess,
 } from './tournament-plan.actions';
+import { addNotification } from '../app-config/app-config.actions';
 import { TournamentPlanEffects } from './tournament-plan.effects';
 
 function run(
@@ -61,5 +65,44 @@ describe('TournamentPlanEffects', () => {
     expect(run(() => throwError(() => error), 'simulatePlan$')).toEqual([
       simulatePlanFailure({ requestId: 'r1', error: convertErrorToString(error) }),
     ]);
+  });
+
+  describe('launch check', () => {
+    function runLaunch(preview: TournamentPlanService['preview']) {
+      const actions$ = new ReplaySubject<Action>(1);
+      TestBed.configureTestingModule({
+        providers: [
+          TournamentPlanEffects,
+          provideMockActions(() => actions$),
+          { provide: TournamentPlanService, useValue: { preview } },
+        ],
+      });
+      const effects = TestBed.inject(TournamentPlanEffects);
+      const results: Action[] = [];
+      const notifications: Action[] = [];
+      effects.previewLaunchPlan$.subscribe((action) => results.push(action));
+      effects.launchPlanErrors$.subscribe((action) => notifications.push(action));
+      actions$.next(previewLaunchPlan({ body: {} as PlanPreviewBody }));
+      return { actions$, results, notifications };
+    }
+
+    it('maps a success to previewLaunchPlanSuccess', () => {
+      const plan = { teamCount: 117 } as TournamentPlan;
+      expect(runLaunch(() => of(plan)).results).toEqual([previewLaunchPlanSuccess({ plan })]);
+    });
+
+    it('tells the admin when the plan cannot be computed', () => {
+      const error = new HttpErrorResponse({ status: 400, error: { message: 'bad' } });
+      const { actions$, results, notifications } = runLaunch(() => throwError(() => error));
+      expect(results).toEqual([previewLaunchPlanFailure({ error: 'bad' })]);
+
+      actions$.next(previewLaunchPlanFailure({ error: 'bad' }));
+
+      expect(notifications).toHaveLength(1);
+      expect(notifications[0]).toMatchObject({
+        type: addNotification.type,
+        notification: { message: 'bad', typeIcon: 'error' },
+      });
+    });
   });
 });

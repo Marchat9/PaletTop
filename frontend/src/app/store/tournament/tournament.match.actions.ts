@@ -1,20 +1,21 @@
 import { createAction, props } from '@ngrx/store';
-import { StartTournamentBody } from 'src/app/models/tournament-plan.model';
+import { LaunchChoice } from 'src/app/models/tournament-plan.model';
 import { TournamentDto } from './tournament.models';
 
 // --------- Start Tournament ---------
 /** The launch choice is optional: without it the tournament starts as configured. */
 export const startTournament = createAction(
   '[Tournament] Start Tournament',
-  props<{ launchChoice?: Omit<StartTournamentBody, 'password'> }>(),
+  props<{ launchChoice?: LaunchChoice }>(),
 );
 export const startTournamentSuccess = createAction(
   '[Tournament] Start Tournament Success',
   props<{ tournament: TournamentDto }>(),
 );
+/** `teamCountChanged`: the server refused the start (409), the teams moved since the launch check. */
 export const startTournamentFailure = createAction(
   '[Tournament] Start Tournament Failure',
-  props<{ error: string }>(),
+  props<{ error: string; teamCountChanged: boolean }>(),
 );
 // ------------------------------------
 
