@@ -23,13 +23,16 @@ const planSettings: PlanSettings = {
     thresholds: { okRatio: 0.9, warningRatio: 0.75 },
 };
 
-function setup(prepareTournamentStart: () => Promise<Tournament>) {
+function setup(
+    prepareTournamentStart: () => Promise<Tournament>,
+    competitionMode = CompetitionMode.CHAMPIONSHIP,
+) {
     const tournament = {
         id: 'T1',
         code: 'CODE',
         status: TournamentStatus.DRAFT,
         teams: [{ id: 'team-1' }],
-        configuration: { competitionMode: CompetitionMode.CHAMPIONSHIP },
+        configuration: { competitionMode },
     } as unknown as Tournament;
 
     const tournamentRepo = {
@@ -98,7 +101,7 @@ describe('SessionService.startTournament', () => {
     it('passes the plan settings and the confirmed choice to the strategy', async () => {
         const { service, strategy } = setup(async () => {
             throw new Error('stop after prepare');
-        });
+        }, CompetitionMode.STANDARD);
 
         await expect(
             service.startTournament('CODE', 'pw', {
@@ -114,6 +117,20 @@ describe('SessionService.startTournament', () => {
                 choice: { consolationCount: 3, eliminatedAfterQualifying: 5 },
             },
         );
+    });
+});
+
+describe('SessionService.startTournament (mode without a launch choice)', () => {
+    it('refuses a structured choice before any write', async () => {
+        const { service, sessionRepo, strategy } = setup(async () => {
+            throw new Error('must not be called');
+        });
+
+        await expect(
+            service.startTournament('CODE', 'pw', { expectedTeamCount: 1, consolationCount: 1 }),
+        ).rejects.toThrow(BadRequestException);
+        expect(sessionRepo.save).not.toHaveBeenCalled();
+        expect(strategy.prepareTournamentStart).not.toHaveBeenCalled();
     });
 });
 

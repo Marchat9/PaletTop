@@ -200,12 +200,7 @@ export class TournamentsController {
         return runGuarded(
             this.logger,
             'Erreur lors du démarrage du tournoi.',
-            () =>
-                this.sessionService.startTournament(code, dto.password, {
-                    expectedTeamCount: dto.expectedTeamCount,
-                    consolationCount: dto.consolationCount,
-                    eliminatedAfterQualifying: dto.eliminatedAfterQualifying,
-                }),
+            () => this.sessionService.startTournament(code, dto.password, dto),
             {
                 // Net against two concurrent starts (double click): the loser of the unique
                 // (tournament, session number) constraint gets a clean 409.

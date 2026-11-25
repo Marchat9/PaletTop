@@ -5,6 +5,7 @@ import {
     Logger,
     NotFoundException,
 } from '@nestjs/common';
+import { startChoiceOf } from '../dto/start-tournament.dto';
 import { Transactional } from 'typeorm-transactional';
 import { MatchesSession } from 'src/entities/matches-session.entity';
 import { TournamentMatch } from 'src/entities/tounament-match.entity';
@@ -87,10 +88,7 @@ export class SessionService {
         const strategy = this.strategyFactory.create(tournament.configuration.competitionMode);
         const startOptions: StartOptions = {
             settings: await this.planService.getPlanSettings(),
-            choice: {
-                consolationCount: request.consolationCount,
-                eliminatedAfterQualifying: request.eliminatedAfterQualifying,
-            },
+            choice: startChoiceOf(tournament.configuration.competitionMode, request),
         };
         const { tournamentWithMatches, session } = await this.writeTournamentStart(
             tournament,
