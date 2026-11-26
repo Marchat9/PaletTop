@@ -78,12 +78,25 @@ export abstract class TournamentStrategy {
 
     /** Aggregate ranking over the given matches, sorted by the tournament's score calculation. */
     computeGlobalRanking(tournament: Tournament, matches: TournamentMatch[]): GlobalRankingEntry[] {
+        // Only the display fields leave: the work fields of the ranking (gaps, worst loss, frozen
+        // draw) stay out of the payloads, like in the pool ranking.
         return rankTeams(
             tournament.teams,
             matches,
             tournament.configuration.scoreCalculation,
             tournament.id,
-        );
+        ).map((entry) => ({
+            rank: entry.rank,
+            teamId: entry.teamId,
+            teamName: entry.teamName,
+            wins: entry.wins,
+            pointsFor: entry.pointsFor,
+            pointsAgainst: entry.pointsAgainst,
+            goalAverage: entry.goalAverage,
+            matchesPlayed: entry.matchesPlayed,
+            tournamentPoints: entry.tournamentPoints,
+            losses: entry.losses,
+        }));
     }
 
     /**
