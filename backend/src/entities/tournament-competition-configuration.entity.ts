@@ -21,12 +21,6 @@ export class StructuredCompetitionConfiguration extends TournamentCompetitionCon
     hasThirdPlaceMatch!: boolean;
 
     /**
-     * How the elimination rounds are paired. Missing on tournaments created before the option
-     * existed: read as RANDOM.
-     */
-    eliminationPairingMode?: PairingMode;
-
-    /**
      * How the first round of each elimination bracket is placed. Missing on tournaments created
      * before the option existed: read as PYRAMIDAL.
      */

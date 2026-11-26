@@ -387,11 +387,7 @@ export class StructuredTournamentStrategy extends TournamentStrategy {
         );
     }
 
-    /**
-     * Stopped after the qualifiers (once the elimination phase exists), and the bracket a team was
-     * repêchée into: it lost its first round there yet plays that bracket's second round, as one of
-     * the best losers the plan brings back. Losers dropped into the challenge are not repêchés.
-     */
+    /** Stopped after the qualifiers, once the elimination phase exists. */
     override computeTeamStatus(
         tournament: Tournament,
         matches: TournamentMatch[],
@@ -403,26 +399,7 @@ export class StructuredTournamentStrategy extends TournamentStrategy {
         const eliminatedAfterQualifying =
             eliminationStarted && this.stoppedTeamOrder(tournament, validated).has(teamId);
 
-        const plays = (m: TournamentMatch): boolean =>
-            m.teamA.id === teamId || m.teamB?.id === teamId;
-        const lostFirstRound = validated.find(
-            (m) =>
-                m.sessionNumber === firstRound &&
-                !m.isBye &&
-                !!m.teamB &&
-                plays(m) &&
-                (m.teamA.id === teamId ? m.scoreA < m.scoreB : m.scoreB < m.scoreA),
-        );
-        const bracket = lostFirstRound?.pool?.name;
-        const isBack =
-            !!bracket &&
-            matches.some(
-                (m) => m.sessionNumber === firstRound + 1 && m.pool?.name === bracket && plays(m),
-            );
-        const repechedFrom = isBack ? groupLabel(bracket) : null;
-        return repechedFrom
-            ? { eliminatedAfterQualifying, repechedFrom }
-            : { eliminatedAfterQualifying };
+        return { eliminatedAfterQualifying };
     }
 
     private compareStandings(a: StandingItem, b: StandingItem): number {

@@ -5,7 +5,6 @@ import { TournamentStatus } from 'src/enum/status.enum';
 import {
     CompetitionMode,
     EliminationSeeding,
-    PairingMode,
     ScoreCalculation,
 } from 'src/enum/tounament.enum';
 import { TournamentConfigurationDto } from '../../dto/tournament-configuration.dto';
@@ -140,7 +139,6 @@ describe('StructuredTournamentStrategy configuration', () => {
                 consolationCount: 2,
                 hasChallenges: true,
                 hasThirdPlaceMatch: false,
-                eliminationPairingMode: 'random',
                 eliminationSeeding: 'pyramidal',
             });
         });
@@ -156,23 +154,6 @@ describe('StructuredTournamentStrategy configuration', () => {
                 extract(structuredConfig({ eliminationSeeding: EliminationSeeding.RANDOM })),
             ).toMatchObject({ eliminationSeeding: 'random' });
             expect(extract(structuredConfig())).toMatchObject({ eliminationSeeding: 'pyramidal' });
-        });
-
-        it('keeps the elimination pairing mode, random when missing', () => {
-            const extract = (competitionConfiguration: object): unknown =>
-                extractCompetitionConfiguration({
-                    competitionMode: CompetitionMode.STANDARD,
-                    competitionConfiguration,
-                } as unknown as TournamentConfigurationDto);
-
-            expect(
-                extract(structuredConfig({ eliminationPairingMode: PairingMode.DUTCH })),
-            ).toMatchObject({
-                eliminationPairingMode: 'dutch',
-            });
-            expect(extract(structuredConfig())).toMatchObject({
-                eliminationPairingMode: 'random',
-            });
         });
     });
 });

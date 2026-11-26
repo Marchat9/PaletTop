@@ -39,10 +39,6 @@ export class StructuredTournamentConfig extends SpecificTournamentConfig {
     @IsBoolean()
     hasThirdPlaceMatch!: boolean;
 
-    @IsEnum(PairingMode)
-    @IsOptional()
-    eliminationPairingMode?: PairingMode;
-
     @IsEnum(EliminationSeeding)
     @IsOptional()
     eliminationSeeding?: EliminationSeeding;

@@ -365,26 +365,4 @@ describe('StructuredTournamentStrategy.computeTeamStatus', () => {
             eliminatedAfterQualifying: false,
         });
     });
-
-    it('indique le tableau où une équipe a été repêchée après son 1er tour perdu', () => {
-        const teams = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
-        const matches = [
-            match(GROUP.PRINCIPALE, 2, 'A', 13, 'B', 5),
-            match(GROUP.PRINCIPALE, 2, 'C', 13, 'D', 5),
-            match(GROUP.PRINCIPALE, 2, 'E', 13, 'F', 5),
-            match(bracketKey(1), 2, 'G', 13, 'H', 5),
-            scheduled(GROUP.PRINCIPALE, 3, 'A', 'C'),
-            scheduled(GROUP.PRINCIPALE, 3, 'E', 'D'), // D lost round 1 and is back: repêchée
-            scheduled(challengeKey(0), 3, 'B', 'F'), // challenge entrants are not repêchés
-        ];
-        const t = tournament(teams, { numberOfQualifyingRounds: 1 });
-        const repechedFrom = (id: string): string | undefined =>
-            strategy.computeTeamStatus(t, matches, id).repechedFrom;
-
-        expect(repechedFrom('D')).toBe('Principale');
-        expect(repechedFrom('B')).toBeUndefined();
-        expect(repechedFrom('F')).toBeUndefined();
-        expect(repechedFrom('A')).toBeUndefined();
-        expect(repechedFrom('H')).toBeUndefined();
-    });
 });

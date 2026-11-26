@@ -167,7 +167,6 @@ describe('TournamentsService max consolations', () => {
         expect(saved.configuration.competitionConfiguration).toEqual({
             ...structuredCompetition,
             consolationCount: MAX_CONSOLATIONS,
-            eliminationPairingMode: 'random',
             eliminationSeeding: 'pyramidal',
         });
     });
@@ -195,7 +194,6 @@ describe('TournamentsService max consolations', () => {
         expect(saved.configuration.competitionConfiguration).toEqual({
             ...structuredCompetition,
             consolationCount: 2,
-            eliminationPairingMode: 'random',
             eliminationSeeding: 'pyramidal',
         });
     });
