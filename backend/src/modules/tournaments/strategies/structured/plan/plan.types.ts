@@ -20,8 +20,6 @@ export interface BracketRound {
     matches: number;
     byes: number;
     losers: number;
-    /** Best losers brought back to fill the second round of a partial bracket. */
-    bestLosersIn: number;
 }
 
 /** Everything `computeStructuredPlan` needs: the registered teams, the configuration, the settings. */
@@ -48,8 +46,6 @@ export interface PlanBracket {
     fillLevel: FillLevel;
     /** True for the consolation added on top of the target layout for the surplus teams. */
     extra: boolean;
-    /** Best losers brought back at the end of the bracket's first round. */
-    bestLosersFirstRound: number;
 }
 
 export type PlanRoundKind = 'qualifying' | 'elimination';
@@ -64,8 +60,6 @@ export interface PlanGroup {
     teamCount: number;
     matchCount: number;
     byeCount: number;
-    /** Best losers brought back at the end of this round to complete the group. */
-    bestLosersIn: number;
     plateStart: number;
     plateEnd: number;
 }

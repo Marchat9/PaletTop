@@ -6,7 +6,7 @@ import { StructuredCompetitionConfiguration } from 'src/entities/tournament-comp
 import { TournamentPool } from 'src/entities/tournament-pool.entity';
 import { Tournament } from 'src/entities/tournament.entity';
 import { MatchesSessionStatus, MatchStatus, TournamentStatus } from 'src/enum/status.enum';
-import { CompetitionMode, PairingMode, ScoreCalculation } from 'src/enum/tounament.enum';
+import { CompetitionMode, EliminationSeeding, ScoreCalculation } from 'src/enum/tounament.enum';
 import { TournamentStatusInfo } from '../../responses/tournament-status.dto';
 import { PlanSettings, StartChoice } from '../tournament-strategy.abstract';
 import { PlanRound } from './plan/plan.types';
@@ -25,8 +25,8 @@ interface SimulationInput {
     hasChallenges: boolean;
     hasThirdPlaceMatch: boolean;
     choice: StartChoice;
-    eliminationPairingMode?: PairingMode;
-    /** Rematches allowed: the pairing then follows its first preference. */
+    eliminationSeeding?: EliminationSeeding;
+    /** Rematches allowed. */
     rematch?: boolean;
 }
 
@@ -169,7 +169,7 @@ async function simulate(input: SimulationInput): Promise<SimulationResult> {
                 consolationCount: input.consolationCount,
                 hasChallenges: input.hasChallenges,
                 hasThirdPlaceMatch: input.hasThirdPlaceMatch,
-                eliminationPairingMode: input.eliminationPairingMode,
+                eliminationSeeding: input.eliminationSeeding,
             },
         },
     } as unknown as Tournament;
@@ -331,8 +331,8 @@ describe('Structured elimination generated from the frozen plan', () => {
         expectFinished(result);
     });
 
-    describe('Dutch pairing of the elimination rounds', () => {
-        it('plays the top half of the ranking against the bottom half in the first round', async () => {
+    describe('Placement of the first elimination round', () => {
+        it('pyramidal: the best seeds meet the worst ones, the plates follow the positions', async () => {
             const result = await simulate({
                 teamCount: 8,
                 targetCount: 8,
@@ -341,7 +341,7 @@ describe('Structured elimination generated from the frozen plan', () => {
                 hasChallenges: false,
                 hasThirdPlaceMatch: false,
                 choice: { consolationCount: 0, eliminatedAfterQualifying: 0 },
-                eliminationPairingMode: PairingMode.DUTCH,
+                eliminationSeeding: EliminationSeeding.PYRAMIDAL,
                 rematch: true,
             });
 
@@ -351,28 +351,67 @@ describe('Structured elimination generated from the frozen plan', () => {
                     (m) => (m.sessionNumber ?? 0) <= result.config.numberOfQualifyingRounds,
                 ),
             );
-            // The position in the ranking, not its rank: tied teams share a rank but not a position.
-            const rankOf = new Map(
+            const seedOf = new Map(
                 qualifyingRanking.map((entry, index) => [entry.teamId, index + 1]),
             );
-            const quarterFinals = eliminationRounds(result)[0].matches;
+            const quarterFinals = [...eliminationRounds(result)[0].matches].sort(
+                (a, b) => a.bracketPosition! - b.bracketPosition!,
+            );
 
-            // 1v5, 2v6, 3v7, 4v8, the best pairing on plate 1.
+            // The standard order for 8: 1v8, 4v5, 2v7, 3v6, by position, plates 1 to 4.
             expect(
-                quarterFinals.map((m) => [rankOf.get(m.teamA.id), rankOf.get(m.teamB!.id)]),
+                quarterFinals.map((m) =>
+                    [seedOf.get(m.teamA.id)!, seedOf.get(m.teamB!.id)!].sort((a, b) => a - b),
+                ),
             ).toEqual([
-                [1, 5],
-                [2, 6],
-                [3, 7],
-                [4, 8],
+                [1, 8],
+                [4, 5],
+                [2, 7],
+                [3, 6],
             ]);
             expect(quarterFinals.map((m) => m.plateNumber)).toEqual([1, 2, 3, 4]);
+            expect(quarterFinals.map((m) => m.bracketPosition)).toEqual([0, 1, 2, 3]);
             expectRoundsToFollowThePlan(result);
             expectNoTeamTwiceInARound(result);
             expectFinished(result);
         });
 
-        it('gives the bye of an odd group to the best ranked team and still follows the plan', async () => {
+        it('pyramidal: 12 teams, the 4 byes go to the 4 best seeds and stay 0-0 wins', async () => {
+            const result = await simulate({
+                teamCount: 12,
+                targetCount: 12,
+                consolationCount: 0,
+                numberOfQualifyingRounds: 2,
+                hasChallenges: true,
+                hasThirdPlaceMatch: true,
+                choice: { consolationCount: 0, eliminatedAfterQualifying: 0 },
+                eliminationSeeding: EliminationSeeding.PYRAMIDAL,
+            });
+
+            const qualifyingRanking = result.strategy.computeGlobalRanking(
+                result.tournament,
+                result.allMatches.filter(
+                    (m) => (m.sessionNumber ?? 0) <= result.config.numberOfQualifyingRounds,
+                ),
+            );
+            const seedOf = new Map(
+                qualifyingRanking.map((entry, index) => [entry.teamId, index + 1]),
+            );
+            const first = eliminationRounds(result)[0].matches;
+            const byes = first.filter((m) => m.isBye);
+
+            expect(byes.map((m) => seedOf.get(m.teamA.id)).sort((a, b) => a! - b!)).toEqual([
+                1, 2, 3, 4,
+            ]);
+            expect(byes.every((m) => m.scoreA === 0 && m.scoreB === 0 && m.byeWin)).toBe(true);
+            expect(first.filter((m) => !m.isBye)).toHaveLength(4);
+            expect(first.every((m) => m.plateNumber === null || m.plateNumber <= 4)).toBe(true);
+            expectRoundsToFollowThePlan(result);
+            expectNoTeamTwiceInARound(result);
+            expectFinished(result);
+        });
+
+        it('pyramidal: an odd bracket with a consolation and challenges still follows the plan', async () => {
             const result = await simulate({
                 teamCount: 11,
                 targetCount: 11,
@@ -381,7 +420,7 @@ describe('Structured elimination generated from the frozen plan', () => {
                 hasChallenges: true,
                 hasThirdPlaceMatch: true,
                 choice: { consolationCount: 1, eliminatedAfterQualifying: 0 },
-                eliminationPairingMode: PairingMode.DUTCH,
+                eliminationSeeding: EliminationSeeding.PYRAMIDAL,
             });
 
             expectRoundsToFollowThePlan(result);
@@ -389,7 +428,31 @@ describe('Structured elimination generated from the frozen plan', () => {
             expectFinished(result);
         });
 
-        it('keeps the random draw when the mode is missing', async () => {
+        it('random: plays the whole tournament as planned, the same tree twice', async () => {
+            const input: SimulationInput = {
+                teamCount: 12,
+                targetCount: 12,
+                consolationCount: 0,
+                numberOfQualifyingRounds: 2,
+                hasChallenges: true,
+                hasThirdPlaceMatch: true,
+                choice: { consolationCount: 0, eliminatedAfterQualifying: 0 },
+                eliminationSeeding: EliminationSeeding.RANDOM,
+            };
+            const result = await simulate(input);
+            const again = await simulate(input);
+
+            expectRoundsToFollowThePlan(result);
+            expectNoTeamTwiceInARound(result);
+            expectFinished(result);
+            const tree = (r: SimulationResult) =>
+                eliminationRounds(r)[0].matches.map(
+                    (m) => `${m.bracketPosition}:${m.teamA.id}-${m.teamB?.id ?? 'bye'}`,
+                );
+            expect(tree(result)).toEqual(tree(again));
+        });
+
+        it('reads a missing seeding as pyramidal', async () => {
             const result = await simulate({
                 teamCount: 8,
                 targetCount: 8,
@@ -400,6 +463,8 @@ describe('Structured elimination generated from the frozen plan', () => {
                 choice: { consolationCount: 0, eliminatedAfterQualifying: 0 },
             });
 
+            const quarterFinals = eliminationRounds(result)[0].matches;
+            expect(quarterFinals.map((m) => m.bracketPosition)).toEqual([0, 1, 2, 3]);
             expectRoundsToFollowThePlan(result);
             expectFinished(result);
         });

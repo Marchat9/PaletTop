@@ -272,7 +272,11 @@ export class StructuredTournamentStrategy extends TournamentStrategy {
         let partialMatches: DeepPartial<TournamentMatch>[];
         const generationStartedAt = Date.now();
         if (isElimination) {
-            const ranking = this.computeGlobalRanking(tournament, pastMatches);
+            // The brackets and the challenges are seeded by the qualifying rounds only.
+            const ranking = this.computeGlobalRanking(
+                tournament,
+                pastMatches.filter((match) => (match.sessionNumber ?? 0) <= qualifyingRounds),
+            );
             const groupKeys = eliminationGroupKeys(config, session.sessionNumber);
             this.logger.debug(
                 `Elimination session ${session.sessionNumber} of ${tournament.code}: groups ${groupKeys.join(', ')}`,

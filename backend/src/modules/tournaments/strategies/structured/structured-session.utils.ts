@@ -5,21 +5,26 @@ import { TournamentMatch } from 'src/entities/tounament-match.entity';
 import { StructuredCompetitionConfiguration } from 'src/entities/tournament-competition-configuration.entity';
 import { TournamentPool } from 'src/entities/tournament-pool.entity';
 import { Tournament } from 'src/entities/tournament.entity';
-import { TournamentStatus } from 'src/enum/status.enum';
+import { MatchStatus, TournamentStatus } from 'src/enum/status.enum';
 import { ConstraintConfig } from 'src/model/constraint.model';
-import { PairingMode } from 'src/enum/tounament.enum';
-import { ByeScore, NEUTRAL_BYE_WIN, selectByeTeam } from 'src/modules/tournaments/utils/bye.utils';
+import { EliminationSeeding } from 'src/enum/tounament.enum';
 import {
-    generateMatchesFromPairs,
-    generateMatchesInPool,
-    orderTeamsByRanking,
-} from 'src/modules/tournaments/utils/match.utils';
-import { pairDutch } from '../up-down/dutch-pairing.utils';
+    buildByeMatchData,
+    ByeScore,
+    NEUTRAL_BYE_WIN,
+} from 'src/modules/tournaments/utils/bye.utils';
+import { generateMatchesInPool } from 'src/modules/tournaments/utils/match.utils';
 import { extractContraintConfig } from 'src/modules/tournaments/utils/tournament.utils';
 import { buildSeed, seededRandom } from 'src/modules/tournaments/utils/seeded-random.utils';
-import { toPoolRef } from 'src/modules/tournaments/utils/type-orm-ref.utils';
+import {
+    toPoolRef,
+    toSessionRef,
+    toTeamRef,
+    toTournamentRef,
+} from 'src/modules/tournaments/utils/type-orm-ref.utils';
 import { DeepPartial } from 'typeorm';
 import { GlobalRankingEntry } from '../../../tournaments/responses/ranking.dto';
+import { BracketSlot } from './bracket/bracket.utils';
 import { EliminationTeamsResolver } from './elimination-teams.utils';
 import { PlanRound } from './plan/plan.types';
 
@@ -78,18 +83,53 @@ export function eliminationGroupKeys(
     return eliminationPlanRound(config, sessionNumber)?.groups.map((group) => group.key) ?? [];
 }
 
+/** A slot of a bracket as a match: a bye (neutral win, 0-0) or a match to play, at its position. */
+function slotToMatch(
+    slot: BracketSlot,
+    pool: TournamentPool,
+    tournament: Tournament,
+    session: MatchesSession,
+): DeepPartial<TournamentMatch> {
+    const tournamentRef = toTournamentRef(tournament);
+    const sessionRef = toSessionRef(session);
+    if (!slot.teamB) {
+        return {
+            ...buildByeMatchData(
+                toTeamRef(slot.teamA),
+                tournamentRef,
+                pool,
+                sessionRef,
+                session.sessionNumber,
+                NEUTRAL_BYE_WIN,
+            ),
+            bracketPosition: slot.position,
+        };
+    }
+    return {
+        tournament: tournamentRef,
+        session: sessionRef,
+        sessionNumber: session.sessionNumber,
+        pool,
+        teamA: toTeamRef(slot.teamA),
+        teamB: toTeamRef(slot.teamB),
+        isBye: false,
+        status: MatchStatus.PENDING,
+        bracketPosition: slot.position,
+    };
+}
+
 /**
  * Matches of an elimination round, following the frozen plan: each group of the plan round gets
- * its teams from the earlier results (see `EliminationTeamsResolver`) and is drawn in its own
- * virtual pool with the constrained draw; an odd group gives its bye to the team with the fewest
- * byes, then the best ranked. Groups come in the plan's order, which is the plate order.
+ * the slots of its bracket tree (see `EliminationTeamsResolver`), in its own virtual pool. The
+ * matches come by position inside a group and the groups in the plan's order, which is the plate
+ * order; the byes get no plate.
  */
 export function generateEliminationMatches(
     tournament: Tournament,
     config: StructuredCompetitionConfiguration,
     session: MatchesSession,
     pastMatches: TournamentMatch[],
-    globalRanking: GlobalRankingEntry[],
+    qualifyingRanking: GlobalRankingEntry[],
     virtualPools: TournamentPool[],
 ): DeepPartial<TournamentMatch>[] {
     const round = eliminationPlanRound(config, session.sessionNumber);
@@ -98,80 +138,31 @@ export function generateEliminationMatches(
             `No elimination round planned for session ${session.sessionNumber} of ${tournament.code}.`,
         );
     }
-    const constraintConfig = extractContraintConfig(tournament.configuration);
     const resolver = new EliminationTeamsResolver({
         plan: config.plan,
         teams: tournament.teams,
         pastMatches,
-        globalRanking,
+        qualifyingRanking,
         stoppedCount: config.eliminatedAfterQualifying ?? 0,
-        random: seededRandom(buildSeed(tournament.id, 'bracket', round.number)),
+        seeding: config.eliminationSeeding ?? EliminationSeeding.PYRAMIDAL,
+        tournamentId: tournament.id,
+        constraintConfig: extractContraintConfig(tournament.configuration),
     });
 
     return round.groups.flatMap((group) => {
-        const teams = resolver.teamsOf(group, round.number);
-        if (teams.length !== group.teamCount) {
+        const slots = resolver.slotsOf(group, round.number);
+        const expected = group.matchCount + group.byeCount;
+        if (slots.length !== expected) {
             logger.warn(
-                `${tournament.code} session ${round.number}: ${group.key} has ${teams.length} teams, ${group.teamCount} planned`,
+                `${tournament.code} session ${round.number}: ${group.key} has ${slots.length} slots, ${expected} planned`,
             );
         }
-        if (teams.length < 2) return [];
         logger.debug(
-            `${tournament.code} session ${round.number}: ${group.key}, ${teams.length} teams`,
+            `${tournament.code} session ${round.number}: ${group.key}, ${slots.length} slots`,
         );
         const pool = virtualPools.find((vp) => vp.name === group.key)!;
-        const groupRandom = seededRandom(buildSeed(tournament.id, 'draw', round.number, group.key));
-        if (config.eliminationPairingMode === PairingMode.DUTCH) {
-            return generateDutchGroupMatches(
-                pool,
-                teams,
-                tournament,
-                session,
-                constraintConfig,
-                pastMatches,
-                globalRanking,
-                groupRandom,
-            );
-        }
-        return generateMatchesInPool(
-            pool,
-            teams,
-            tournament,
-            session,
-            constraintConfig,
-            pastMatches,
-            NEUTRAL_BYE_WIN,
-            groupRandom,
-            globalRanking,
-        );
+        return slots.map((slot) => slotToMatch(slot, pool, tournament, session));
     });
-}
-
-/**
- * One elimination group paired by the Dutch Swiss system, from the ranking of every match played
- * so far. All the teams of a group are still in the running, so they share one score group: the
- * top half of the ranking plays the bottom half, within the club and rematch constraints when
- * possible. An odd group gives its bye the elimination way (fewest byes, then best ranked), not
- * the up-down way (worst ranked). Plates follow the pairing order, the best ranked team first.
- */
-function generateDutchGroupMatches(
-    pool: TournamentPool,
-    teams: Team[],
-    tournament: Tournament,
-    session: MatchesSession,
-    constraintConfig: ConstraintConfig,
-    pastMatches: TournamentMatch[],
-    globalRanking: GlobalRankingEntry[],
-    random: () => number,
-): DeepPartial<TournamentMatch>[] {
-    const byeTeam =
-        teams.length % 2 !== 0 ? selectByeTeam(teams, pastMatches, globalRanking, random) : null;
-    const playing = orderTeamsByRanking(
-        teams.filter((team) => team.id !== byeTeam?.id),
-        globalRanking,
-    );
-    const pairs = pairDutch(playing, new Map(), pastMatches, constraintConfig);
-    return generateMatchesFromPairs(pool, pairs, byeTeam, NEUTRAL_BYE_WIN, tournament, session);
 }
 
 /**
