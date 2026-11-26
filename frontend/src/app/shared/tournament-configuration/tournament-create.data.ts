@@ -48,9 +48,11 @@ export const scoreCalculationOptions: {
   icon: string;
   description: string;
   htmlDescription?: string;
+  recommended?: boolean;
 }[] = [
   {
     value: 'victory_goal_average',
+    recommended: true,
     icon: 'calculate',
     label: 'Victoires & Goal Average',
     description: 'Les victoires d’abord, puis l’écart de points sur tout le tournoi',
@@ -109,9 +111,11 @@ export const pairingModeOptions: {
   label: string;
   icon: string;
   description: string;
+  recommended?: boolean;
 }[] = [
   {
     value: 'dutch',
+    recommended: true,
     icon: 'account_tree',
     label: 'Gagnant/Perdant',
     description:
@@ -138,9 +142,11 @@ export const eliminationSeedingOptions: {
   label: string;
   icon: string;
   description: string;
+  recommended?: boolean;
 }[] = [
   {
     value: 'pyramidal',
+    recommended: true,
     icon: 'account_tree',
     label: 'Pyramidal',
     description:

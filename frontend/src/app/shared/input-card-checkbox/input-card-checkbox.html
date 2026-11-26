@@ -1,4 +1,4 @@
-<div class="card-radio-group" role="group" [style.--card-radio-basis]="99 / columns() + '%'">
+<div class="card-radio-group" role="group" [style.--card-radio-columns]="columns()">
   @for (card of cards(); track card.option.value) {
     <button
       type="button"
@@ -14,7 +14,12 @@
       }
 
       <div class="card-radio-content">
-        <p class="card-radio-name">{{ card.option.label }}</p>
+        <p class="card-radio-name">
+          {{ card.option.label }}
+          @if (card.option.recommended) {
+            <span class="card-radio-badge">Recommandé</span>
+          }
+        </p>
         @if (card.option.description) {
           <p class="card-radio-description">{{ card.option.description }}</p>
         }

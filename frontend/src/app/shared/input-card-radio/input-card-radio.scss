@@ -1,12 +1,21 @@
 .card-radio-group {
-  display: flex;
-  flex-wrap: wrap;
+  // Fixed-width columns: a card alone on the last line keeps the width of the others. 99% leaves
+  // room for rounding, so that `--card-radio-columns` cards always fit on one line.
+  // --card-radio-min-width (set by a parent) sends the cards to fewer columns before they get too
+  // narrow.
+  --card-radio-track: calc(
+    (99% - (var(--card-radio-columns, 2) - 1) * 1rem) / var(--card-radio-columns, 2)
+  );
+
+  display: grid;
+  grid-template-columns: repeat(
+    auto-fill,
+    minmax(max(var(--card-radio-track), min(var(--card-radio-min-width, 0px), 100%)), 1fr)
+  );
   gap: 1rem;
 }
 
 .card-radio-button {
-  // --card-radio-min-width (set by a parent) sends a card to its own line before it gets too narrow.
-  flex: 1 1 max(calc(var(--card-radio-basis, 50%) - 0.5rem), var(--card-radio-min-width, 0px));
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -19,12 +28,28 @@
   transition: all 0.2s ease;
 
   .card-radio-content {
+    // Takes the free width: the text stays on the left, the check on the right.
+    flex: 1;
+    min-width: 0;
     padding: 0 1rem;
 
     .card-radio-name {
       margin: 0;
       font-weight: 600;
       color: var(--color-primary);
+
+      .card-radio-badge {
+        display: inline-block;
+        margin-left: 0.4rem;
+        padding: 0.05rem 0.4rem;
+        border-radius: 10rem;
+        background: var(--color-primary);
+        color: var(--color-on-primary);
+        font-size: 0.6rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        vertical-align: middle;
+      }
     }
 
     .card-radio-description {
@@ -89,6 +114,11 @@
 
     .card-radio-content * {
       color: var(--color-on-primary);
+    }
+
+    .card-radio-content .card-radio-name .card-radio-badge {
+      background: var(--color-on-primary);
+      color: var(--color-primary);
     }
   }
 
