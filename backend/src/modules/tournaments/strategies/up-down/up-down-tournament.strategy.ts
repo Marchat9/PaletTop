@@ -15,7 +15,8 @@ import {
 } from 'src/modules/tournaments/utils/tournament.utils';
 import { DeepPartial } from 'typeorm';
 import { TournamentStatusInfo } from '../../../tournaments/responses/tournament-status.dto';
-import { TournamentStrategy } from '../tournament-strategy.abstract';
+import { GenerationOptions, TournamentStrategy } from '../tournament-strategy.abstract';
+import { ByeScore, qualifyingByeScore } from 'src/modules/tournaments/utils/bye.utils';
 import {
     generateMatchesByRanking,
     generateMatchesFromPairs,
@@ -38,6 +39,7 @@ export class UpDownTournamentStrategy extends TournamentStrategy {
     override async generateSessionMatches(
         tournament: Tournament,
         session: MatchesSession,
+        options: GenerationOptions,
     ): Promise<TournamentMatch[]> {
         this.logger.debug(
             'Starting generateSessionMatches with tournament code: ' + tournament.code,
@@ -60,6 +62,7 @@ export class UpDownTournamentStrategy extends TournamentStrategy {
             pool.teams,
             constraintConfig,
             pastMatches,
+            qualifyingByeScore(tournament.configuration.pointsPerGame, options.byeLoserCap),
         );
 
         const matches = partialMatches.map((match) => this.matchRepo.create(match));
@@ -79,6 +82,7 @@ export class UpDownTournamentStrategy extends TournamentStrategy {
         teams: Team[],
         constraintConfig: ConstraintConfig,
         pastMatches: TournamentMatch[],
+        byeScore: ByeScore,
     ): DeepPartial<TournamentMatch>[] {
         const config = this.getConfig(tournament);
 
@@ -100,7 +104,14 @@ export class UpDownTournamentStrategy extends TournamentStrategy {
                 this.logger.log(
                     `Tournament ${tournament.code}: session ${session.sessionNumber} paired by the Dutch Swiss system`,
                 );
-                return generateMatchesFromPairs(pool, pairs, byeTeam, true, tournament, session);
+                return generateMatchesFromPairs(
+                    pool,
+                    pairs,
+                    byeTeam,
+                    byeScore,
+                    tournament,
+                    session,
+                );
             }
             return generateMatchesByRanking(pool, rankedTeams, tournament, session);
         }
@@ -112,6 +123,7 @@ export class UpDownTournamentStrategy extends TournamentStrategy {
             session,
             constraintConfig,
             pastMatches,
+            byeScore,
             seededRandom(buildSeed(tournament.id, 'draw', session.sessionNumber)),
         );
     }

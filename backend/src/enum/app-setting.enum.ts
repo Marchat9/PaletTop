@@ -6,6 +6,7 @@ export enum AppSettingKey {
     TRAINING_LEVEL_HISTORY_DEPTH = 'training_level_history_depth',
     MAX_CONSOLATION_COUNT = 'max_consolation_count',
     BRACKET_FILL_THRESHOLDS = 'bracket_fill_thresholds',
+    BYE_LOSER_SCORE_CAP = 'bye_loser_score_cap',
 }
 
 /** Who may read a setting through the API. */

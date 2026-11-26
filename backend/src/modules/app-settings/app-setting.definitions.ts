@@ -30,6 +30,7 @@ export interface AppSettingValues {
     [AppSettingKey.TRAINING_LEVEL_HISTORY_DEPTH]: number;
     [AppSettingKey.MAX_CONSOLATION_COUNT]: number;
     [AppSettingKey.BRACKET_FILL_THRESHOLDS]: FillThresholds;
+    [AppSettingKey.BYE_LOSER_SCORE_CAP]: number;
 }
 
 export interface AppSettingDefinition<K extends AppSettingKey> {
@@ -175,6 +176,22 @@ export function validateMaxConsolationCount(value: unknown): string[] {
     return [];
 }
 
+export const BYE_LOSER_SCORE_CAP_LIMIT = 12;
+
+export function validateByeLoserScoreCap(value: unknown): string[] {
+    if (
+        typeof value !== 'number' ||
+        !Number.isInteger(value) ||
+        value < 0 ||
+        value > BYE_LOSER_SCORE_CAP_LIMIT
+    ) {
+        return [
+            `Le score du perdant d'un bye doit être un entier entre 0 et ${BYE_LOSER_SCORE_CAP_LIMIT}.`,
+        ];
+    }
+    return [];
+}
+
 export function validateBracketFillThresholds(value: unknown): string[] {
     if (!isRecord(value)) return ['La valeur doit être un objet.'];
     const errors: string[] = [];
@@ -241,6 +258,7 @@ export const DEFAULT_SCORE_CALCULATIONS_BY_MODE: ScoreCalculationsByMode = {
 
 export const DEFAULT_LEVEL_HISTORY_DEPTH = 5;
 export const DEFAULT_MAX_CONSOLATION_COUNT = 4;
+export const DEFAULT_BYE_LOSER_SCORE_CAP = 6;
 export const DEFAULT_BRACKET_FILL_THRESHOLDS: FillThresholds = {
     okRatio: 0.9,
     warningRatio: 0.75,
@@ -287,6 +305,11 @@ export const APP_SETTING_DEFINITIONS: AppSettingDefinitions = {
         scope: AppSettingScope.PUBLIC,
         defaultValue: DEFAULT_BRACKET_FILL_THRESHOLDS,
         validate: validateBracketFillThresholds,
+    },
+    [AppSettingKey.BYE_LOSER_SCORE_CAP]: {
+        scope: AppSettingScope.INTERNAL,
+        defaultValue: DEFAULT_BYE_LOSER_SCORE_CAP,
+        validate: validateByeLoserScoreCap,
     },
 };
 

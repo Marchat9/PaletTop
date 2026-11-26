@@ -1,3 +1,4 @@
+import { NEUTRAL_BYE_WIN } from './bye.utils';
 import { seededRandom } from './seeded-random.utils';
 import { describe, expect, it } from 'vitest';
 import { MatchesSession } from 'src/entities/matches-session.entity';
@@ -126,6 +127,7 @@ describe('generateMatchesInPool', () => {
                 session,
                 constraintConfig,
                 pastMatches,
+                NEUTRAL_BYE_WIN,
                 seededRandom('spec'),
             );
             expect(matches.find((m) => m.isBye)?.teamA?.id).toBe('C');
@@ -144,6 +146,7 @@ describe('generateMatchesInPool', () => {
                 session,
                 constraintConfig,
                 [pastBye('A')],
+                NEUTRAL_BYE_WIN,
                 seededRandom('spec'),
                 ranking,
             );
@@ -151,7 +154,7 @@ describe('generateMatchesInPool', () => {
         }
     });
 
-    it('stores the drawn-round bye 0-0 as a win, so it leaves the goal average untouched', () => {
+    it('stores a neutral bye 0-0 as a win, so it leaves the goal average untouched', () => {
         const matches = generateMatchesInPool(
             pool,
             teams(['A', 'B', 'C']).map((team) => Object.assign(team, { players: [] })),
@@ -159,12 +162,33 @@ describe('generateMatchesInPool', () => {
             session,
             constraintConfig,
             [],
+            NEUTRAL_BYE_WIN,
             seededRandom('spec'),
         );
         expect(matches.find((m) => m.isBye)).toMatchObject({
             scoreA: 0,
             scoreB: 0,
             byeWin: true,
+            status: MatchStatus.VALIDATED,
+        });
+    });
+
+    it('stores a scored bye as a win with its own score', () => {
+        const matches = generateMatchesInPool(
+            pool,
+            teams(['A', 'B', 'C', 'D', 'E']).map((team) => Object.assign(team, { players: [] })),
+            tournamentWithConfig,
+            session,
+            constraintConfig,
+            [],
+            { own: 13, against: 6, isWin: true },
+            seededRandom('spec'),
+        );
+        expect(matches.find((m) => m.isBye)).toMatchObject({
+            scoreA: 13,
+            scoreB: 6,
+            byeWin: true,
+            isBye: true,
             status: MatchStatus.VALIDATED,
         });
     });

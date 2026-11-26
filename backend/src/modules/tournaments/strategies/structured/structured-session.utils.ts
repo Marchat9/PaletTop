@@ -8,7 +8,7 @@ import { Tournament } from 'src/entities/tournament.entity';
 import { TournamentStatus } from 'src/enum/status.enum';
 import { ConstraintConfig } from 'src/model/constraint.model';
 import { PairingMode } from 'src/enum/tounament.enum';
-import { selectByeTeam } from 'src/modules/tournaments/utils/bye.utils';
+import { ByeScore, NEUTRAL_BYE_WIN, selectByeTeam } from 'src/modules/tournaments/utils/bye.utils';
 import {
     generateMatchesFromPairs,
     generateMatchesInPool,
@@ -36,6 +36,7 @@ export function generateQualifyingMatches(
     tournament: Tournament,
     session: MatchesSession,
     pastMatches: TournamentMatch[],
+    byeScore: ByeScore,
 ): DeepPartial<TournamentMatch>[] {
     const constraintConfig: ConstraintConfig = extractContraintConfig(tournament.configuration);
 
@@ -53,6 +54,7 @@ export function generateQualifyingMatches(
                 session,
                 constraintConfig,
                 poolPastMatches,
+                byeScore,
                 seededRandom(buildSeed(tournament.id, 'draw', session.sessionNumber, poolRef.id)),
             ),
         );
@@ -138,6 +140,7 @@ export function generateEliminationMatches(
             session,
             constraintConfig,
             pastMatches,
+            NEUTRAL_BYE_WIN,
             groupRandom,
             globalRanking,
         );
@@ -168,7 +171,7 @@ function generateDutchGroupMatches(
         globalRanking,
     );
     const pairs = pairDutch(playing, new Map(), pastMatches, constraintConfig);
-    return generateMatchesFromPairs(pool, pairs, byeTeam, true, tournament, session);
+    return generateMatchesFromPairs(pool, pairs, byeTeam, NEUTRAL_BYE_WIN, tournament, session);
 }
 
 /**

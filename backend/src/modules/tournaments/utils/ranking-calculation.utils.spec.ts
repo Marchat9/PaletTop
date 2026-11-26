@@ -48,6 +48,20 @@ describe('isByeWin', () => {
 describe('computeTeamStats', () => {
     const all = teams('A', 'B', 'C', 'D');
 
+    it('counts a scored qualifying bye (13-6) in points and goal average, not in the gaps', () => {
+        const scored = { ...bye('A', true, 13), scoreB: 6 } as TournamentMatch;
+        const stats = statsOf(all, [scored], 'A');
+        expect(stats).toMatchObject({
+            wins: 1,
+            pointsFor: 13,
+            pointsAgainst: 6,
+            goalAverage: 7,
+            tournamentPoints: 6,
+            losses: 0,
+            gaps: [],
+        });
+    });
+
     it('gives a new bye one win and 6 tournament points, nothing to the goal average', () => {
         const stats = statsOf(all, [bye('A', true)], 'A');
         expect(stats).toMatchObject({

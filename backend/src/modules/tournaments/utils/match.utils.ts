@@ -8,6 +8,7 @@
  * @param constraintConfig
  * @param pastMatches
  * @param byeRanking when given, a tie on the fewest byes goes to the best ranked team (else random)
+ * @param byeScore what the bye of an odd pool is stored as
  * @param random seeded random function: the draw of the bye and of the pairs
  * @returns DeepPartial<TournamentMatch>[]
  */
@@ -19,7 +20,12 @@ import { TournamentPool } from 'src/entities/tournament-pool.entity';
 import { Tournament } from 'src/entities/tournament.entity';
 import { MatchStatus } from 'src/enum/status.enum';
 import { ConstraintConfig } from 'src/model/constraint.model';
-import { buildByeMatchData, selectByeTeam } from 'src/modules/tournaments/utils/bye.utils';
+import {
+    buildByeMatchData,
+    ByeScore,
+    NO_VALUE_BYE,
+    selectByeTeam,
+} from 'src/modules/tournaments/utils/bye.utils';
 import { generatePairsWithContraints } from 'src/modules/tournaments/utils/draw.utils';
 import { GlobalRankingEntry } from 'src/modules/tournaments/responses/ranking.dto';
 import {
@@ -43,6 +49,7 @@ export function generateMatchesInPool(
     session: MatchesSession,
     constraintConfig: ConstraintConfig,
     pastMatches: TournamentMatch[],
+    byeScore: ByeScore,
     random: () => number,
     byeRanking?: GlobalRankingEntry[],
 ): DeepPartial<TournamentMatch>[] {
@@ -62,7 +69,7 @@ export function generateMatchesInPool(
                 pool,
                 sessionRef,
                 session.sessionNumber,
-                true,
+                byeScore,
             ),
         );
         currentTeams.splice(
@@ -103,13 +110,13 @@ export function orderTeamsByRanking(teams: Team[], ranking: GlobalRankingEntry[]
 
 /**
  * Matches of already decided pairs, in the given order (plates follow it), then the bye of
- * `byeTeam` last: worth one win (`byeIsWin`) or nothing.
+ * `byeTeam` last, stored as `byeScore`.
  */
 export function generateMatchesFromPairs(
     pool: TournamentPool,
     pairs: [Team, Team][],
     byeTeam: Team | null,
-    byeIsWin: boolean,
+    byeScore: ByeScore,
     tournament: Tournament,
     session: MatchesSession,
 ): DeepPartial<TournamentMatch>[] {
@@ -135,7 +142,7 @@ export function generateMatchesFromPairs(
                 pool,
                 sessionRef,
                 session.sessionNumber,
-                byeIsWin,
+                byeScore,
             ),
         );
     }
@@ -158,5 +165,5 @@ export function generateMatchesByRanking(
         pairs.push([rankedTeams[i], rankedTeams[i + 1]]);
     }
     const byeTeam = rankedTeams.length % 2 !== 0 ? rankedTeams[rankedTeams.length - 1] : null;
-    return generateMatchesFromPairs(pool, pairs, byeTeam, false, tournament, session);
+    return generateMatchesFromPairs(pool, pairs, byeTeam, NO_VALUE_BYE, tournament, session);
 }

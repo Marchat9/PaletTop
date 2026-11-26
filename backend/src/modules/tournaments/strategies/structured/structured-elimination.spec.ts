@@ -200,6 +200,7 @@ async function simulate(input: SimulationInput): Promise<SimulationResult> {
         const generated = await strategy.generateSessionMatches(
             { ...tournament, matches: [...allMatches] },
             session,
+            { byeLoserCap: 6 },
         );
         const played = generated.map(play);
         session.matches = played;

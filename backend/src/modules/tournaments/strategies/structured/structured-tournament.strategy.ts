@@ -22,7 +22,13 @@ import {
     generateQualifyingMatches,
     lastRoundNumber,
 } from './structured-session.utils';
-import { PlanSettings, StartOptions, TournamentStrategy } from '../tournament-strategy.abstract';
+import {
+    GenerationOptions,
+    PlanSettings,
+    StartOptions,
+    TournamentStrategy,
+} from '../tournament-strategy.abstract';
+import { qualifyingByeScore } from 'src/modules/tournaments/utils/bye.utils';
 import { StructuredPlanInput, TournamentPlan } from './plan/plan.types';
 import { bracketKey, computeStructuredPlan, THIRD_PLACE_GROUP_KEY } from './plan/structured-plan';
 
@@ -252,6 +258,7 @@ export class StructuredTournamentStrategy extends TournamentStrategy {
     override async generateSessionMatches(
         tournament: Tournament,
         session: MatchesSession,
+        options: GenerationOptions,
     ): Promise<TournamentMatch[]> {
         this.logger.debug(
             'Starting generateSessionMatches with tournament code: ' + tournament.code,
@@ -284,7 +291,12 @@ export class StructuredTournamentStrategy extends TournamentStrategy {
                 virtualPools,
             );
         } else {
-            partialMatches = generateQualifyingMatches(tournament, session, pastMatches);
+            partialMatches = generateQualifyingMatches(
+                tournament,
+                session,
+                pastMatches,
+                qualifyingByeScore(tournament.configuration.pointsPerGame, options.byeLoserCap),
+            );
         }
         this.logger.debug(
             `generateSessionMatches: ${partialMatches.length} matches generated in ${Date.now() - generationStartedAt} ms`,

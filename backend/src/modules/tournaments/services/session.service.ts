@@ -7,6 +7,8 @@ import {
 } from '@nestjs/common';
 import { CompetitionMode } from 'src/enum/tounament.enum';
 import { Transactional } from 'typeorm-transactional';
+import { AppSettingKey } from 'src/enum/app-setting.enum';
+import { AppSettingsService } from 'src/modules/app-settings/app-settings.service';
 import { MatchesSession } from 'src/entities/matches-session.entity';
 import { TournamentMatch } from 'src/entities/tounament-match.entity';
 import { Tournament } from 'src/entities/tournament.entity';
@@ -26,6 +28,7 @@ import { toPlayerMatchDto } from '../responses/player-match.dto';
 import { SessionResponseDto, toSessionResponseDto } from '../responses/session.response';
 import { TournamentStatusInfo } from '../responses/tournament-status.dto';
 import {
+    GenerationOptions,
     StartChoice,
     StartOptions,
     TournamentStrategy,
@@ -58,7 +61,15 @@ export class SessionService {
         private readonly rankingService: RankingService,
         private readonly strategyFactory: TournamentStrategyFactory,
         private readonly planService: TournamentPlanService,
+        private readonly appSettingsService: AppSettingsService,
     ) {}
+
+    /** Settings the strategies need to generate the matches of a session. */
+    private async generationOptions(): Promise<GenerationOptions> {
+        return {
+            byeLoserCap: await this.appSettingsService.get(AppSettingKey.BYE_LOSER_SCORE_CAP),
+        };
+    }
 
     async startTournament(
         code: string,
@@ -174,7 +185,11 @@ export class SessionService {
         const tournamentWithMatches = appendMatchesSessionToTournament(
             tournamentWithPool,
             session,
-            await strategy.generateSessionMatches(tournamentWithPool, session),
+            await strategy.generateSessionMatches(
+                tournamentWithPool,
+                session,
+                await this.generationOptions(),
+            ),
         );
         // ==============================
         this.logger.log(`Tournament ${tournament.code} started with session '1' created`);
@@ -294,7 +309,11 @@ export class SessionService {
         const tournamentWithMatches = appendMatchesSessionToTournament(
             tournamentWithSessionUpdated,
             newSession,
-            await strategy.generateSessionMatches(tournamentWithSessionUpdated, newSession),
+            await strategy.generateSessionMatches(
+                tournamentWithSessionUpdated,
+                newSession,
+                await this.generationOptions(),
+            ),
         );
 
         return { currentSessionClosed, newSession, tournamentWithMatches };
