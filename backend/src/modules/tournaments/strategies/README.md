@@ -60,9 +60,9 @@ among the ones offered for its mode (app setting `score_calculations_by_mode`). 
 
 | Calculation (value)                                          | Criteria, in order                                                             |
 | ------------------------------------------------------------ | ------------------------------------------------------------------------------ |
-| Victoires, puis goal-average (`victory_goal_average`)        | wins, goal average, points scored, gaps, frozen draw                           |
-| Victoires, puis meilleures défaites (`victory_best_defeats`) | wins, worst loss (lower first), goal average, points scored, gaps, frozen draw |
-| Victoires, puis points marqués (`victory_points_scored`)     | wins, points scored, points conceded (lower first), gaps, frozen draw          |
+| Victoires & Goal Average (`victory_goal_average`)            | wins, goal average, points scored, gaps, frozen draw                           |
+| Victoires & Meilleure défaite (`victory_best_defeats`)       | wins, worst loss (lower first), goal average, points scored, gaps, frozen draw |
+| Victoires & Points marqués (`victory_points_scored`)         | wins, points scored, points conceded (lower first), gaps, frozen draw          |
 | Points championnat (`tournament_score`)                      | championship points only: ties keep a shared rank                              |
 
 - **Worst loss**: the largest losing margin (11-13 is 2), 0 without any loss.

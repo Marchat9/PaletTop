@@ -30,15 +30,15 @@ export const competitionModeOptions: {
 ];
 
 const LAST_GAMES_GAP_CRITERION =
-  "Écart de la dernière partie, puis de l'avant-dernière… jusqu'à la 1ère";
+  "Écart de la dernière partie, puis de l'avant-dernière, et ainsi de suite";
 
 const TIE_RULE =
-  'Égalité parfaite sur tous les critères (très rare) : un tirage au sort neutre, fait par PaletHop, départage les équipes.';
+  'Sur une rare égalité parfaite sur tous les critères, les équipes sont départagées par tirage au sort neutre.';
 
-// Numbered criteria, a worked example and the tie rule, shown under the name of a calculation.
-function criteriaHtml(criteria: string[], example: string): string {
+// Numbered criteria and the tie rule, shown under the name of a calculation.
+function criteriaHtml(criteria: string[]): string {
   const items = criteria.map((criterion) => `<li>${criterion}</li>`).join('');
-  return `<ol>${items}</ol><p class="note">Exemple : ${example}</p><p class="note tie-rule">${TIE_RULE}</p>`;
+  return `<ol>${items}</ol><p class="note tie-rule">${TIE_RULE}</p>`;
 }
 
 export const scoreCalculationOptions: {
@@ -51,48 +51,39 @@ export const scoreCalculationOptions: {
   {
     value: 'victory_goal_average',
     icon: 'calculate',
-    label: 'Victoires, puis goal-average',
+    label: 'Victoires & Goal Average',
     description: 'Les victoires d’abord, puis l’écart de points sur tout le tournoi',
-    htmlDescription: criteriaHtml(
-      [
-        'Nombre de victoires',
-        'Goal-average (points marqués moins points encaissés)',
-        'Points marqués',
-        LAST_GAMES_GAP_CRITERION,
-      ],
-      'A finit à +25, B à +18 → A passe devant.',
-    ),
+    htmlDescription: criteriaHtml([
+      'Victoires',
+      'Goal average',
+      'Points marqués',
+      LAST_GAMES_GAP_CRITERION,
+    ]),
   },
   {
     value: 'victory_best_defeats',
     icon: 'military_tech',
-    label: 'Victoires, puis meilleures défaites',
+    label: 'Victoires & Meilleure défaite',
     description: 'Les victoires d’abord, puis la défaite la moins lourde',
-    htmlDescription: criteriaHtml(
-      [
-        'Nombre de victoires',
-        'Pire défaite (celui qui a le mieux résisté passe devant)',
-        'Goal-average',
-        'Points marqués',
-        LAST_GAMES_GAP_CRITERION,
-      ],
-      'A a perdu au pire 11-13, B 4-13 → A passe devant.',
-    ),
+    htmlDescription: criteriaHtml([
+      'Victoires',
+      'Meilleure défaite',
+      'Goal average',
+      'Points marqués',
+      LAST_GAMES_GAP_CRITERION,
+    ]),
   },
   {
     value: 'victory_points_scored',
     icon: 'sports_score',
-    label: 'Victoires, puis points marqués',
+    label: 'Victoires & Points marqués',
     description: 'Les victoires d’abord, puis le total de points marqués',
-    htmlDescription: criteriaHtml(
-      [
-        'Nombre de victoires',
-        'Points marqués',
-        'Points encaissés (le moins passe devant)',
-        LAST_GAMES_GAP_CRITERION,
-      ],
-      'A a marqué 78 points, B 74 → A passe devant.',
-    ),
+    htmlDescription: criteriaHtml([
+      'Victoires',
+      'Points marqués',
+      'Moins de points encaissés',
+      LAST_GAMES_GAP_CRITERION,
+    ]),
   },
   {
     value: 'tournament_score',

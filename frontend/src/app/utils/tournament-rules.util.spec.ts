@@ -30,7 +30,7 @@ describe('buildTournamentRules', () => {
   it('liste les réglages communs et uniquement les options activées', () => {
     expect(labels(configuration({ rematch: true }))).toEqual([
       '13 points',
-      'Victoires, puis goal-average',
+      'Victoires & Goal Average',
       'Rematch autorisés',
     ]);
   });
