@@ -214,7 +214,7 @@ export class PlanTable {
     if (group.teamCount <= 2) return 'Finale';
     if (group.teamCount <= 4) return 'Demies';
     if (group.teamCount <= 8) return 'Quarts';
-    return `${group.matchCount} matchs`;
+    return group.matchCount === 1 ? '1 match' : `${group.matchCount} matchs`;
   }
 
   private noteLabel(group: PlanGroup): string {

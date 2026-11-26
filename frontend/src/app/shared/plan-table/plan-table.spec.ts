@@ -98,6 +98,7 @@ function buildPlan(): TournamentPlan {
 }
 
 interface PlanTableInputs {
+  plan?: TournamentPlan;
   doneRounds?: number;
   currentRound?: number | null;
   minColumns?: number;
@@ -108,7 +109,7 @@ describe('PlanTable', () => {
 
   function create(inputs: PlanTableInputs = {}): HTMLElement {
     fixture = TestBed.createComponent(PlanTable);
-    fixture.componentRef.setInput('plan', buildPlan());
+    fixture.componentRef.setInput('plan', inputs.plan ?? buildPlan());
     if (inputs.doneRounds !== undefined)
       fixture.componentRef.setInput('doneRounds', inputs.doneRounds);
     if (inputs.currentRound !== undefined)
@@ -121,6 +122,23 @@ describe('PlanTable', () => {
 
   const text = (el: Element | null | undefined): string =>
     (el?.textContent ?? '').replace(/\s+/g, ' ').trim();
+
+  it('says « 1 match » for a first round with a single real match and many byes', () => {
+    const plan = buildPlan();
+    const first = plan.rounds.find((round) => round.number === 4)!;
+    first.groups[0] = group('principale', 'Principale', 'main', 9, {
+      matchCount: 1,
+      byeCount: 7,
+    });
+
+    const root = create({ plan });
+
+    const principale = Array.from(root.querySelectorAll('tbody tr')[0].querySelectorAll('td')).map(
+      (td) => text(td),
+    );
+    expect(principale[0]).toContain('1 match');
+    expect(principale[0]).not.toContain('1 matchs');
+  });
 
   it('renders one row per bracket plus the 3rd place and challenge sub-rows', () => {
     const root = create();
