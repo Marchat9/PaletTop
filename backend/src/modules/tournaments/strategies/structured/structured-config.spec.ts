@@ -2,11 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { StructuredCompetitionConfiguration } from 'src/entities/tournament-competition-configuration.entity';
 import { Tournament } from 'src/entities/tournament.entity';
 import { TournamentStatus } from 'src/enum/status.enum';
-import {
-    CompetitionMode,
-    EliminationSeeding,
-    ScoreCalculation,
-} from 'src/enum/tounament.enum';
+import { CompetitionMode, EliminationSeeding, ScoreCalculation } from 'src/enum/tounament.enum';
 import { TournamentConfigurationDto } from '../../dto/tournament-configuration.dto';
 import { extractCompetitionConfiguration } from '../../utils/tournament.utils';
 import { PlanSettings } from '../tournament-strategy.abstract';
