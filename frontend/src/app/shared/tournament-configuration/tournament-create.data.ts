@@ -38,7 +38,7 @@ const TIE_RULE =
 // Numbered criteria, a worked example and the tie rule, shown under the name of a calculation.
 function criteriaHtml(criteria: string[], example: string): string {
   const items = criteria.map((criterion) => `<li>${criterion}</li>`).join('');
-  return `<ol>${items}</ol><p class="example">Exemple : ${example}</p><p class="tie-rule">${TIE_RULE}</p>`;
+  return `<ol>${items}</ol><p class="note">Exemple : ${example}</p><p class="note tie-rule">${TIE_RULE}</p>`;
 }
 
 export const scoreCalculationOptions: {

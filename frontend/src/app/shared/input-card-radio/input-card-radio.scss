@@ -43,13 +43,12 @@
         padding-left: 1.1rem;
       }
 
-      ::ng-deep .example,
-      ::ng-deep .tie-rule {
+      ::ng-deep .note {
         margin: 0.25rem 0 0;
-      }
 
-      ::ng-deep .tie-rule {
-        font-style: italic;
+        &.tie-rule {
+          font-style: italic;
+        }
       }
 
       ::ng-deep .flex {
