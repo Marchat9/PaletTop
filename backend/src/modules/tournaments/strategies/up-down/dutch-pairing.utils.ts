@@ -21,7 +21,7 @@ export interface PairingResult {
 }
 
 /** Preferred opponents of each team, best first. */
-type Preferences = Map<string, Team[]>;
+export type Preferences = Map<string, Team[]>;
 
 /**
  * The team that sits out: the lowest-ranked one among those with the fewest byes, so a team never
@@ -53,7 +53,7 @@ export function buildScoreGroups(rankedTeams: Team[], winsByTeam: Map<string, nu
 }
 
 /** `items` sorted by distance to `index` (closest first), the item at `index` excluded. */
-function byDistance(items: Team[], index: number): Team[] {
+export function byDistance(items: Team[], index: number): Team[] {
     return items
         .map((team, i) => ({ team, distance: Math.abs(i - index) }))
         .filter((_, i) => i !== index)
@@ -110,7 +110,7 @@ export function buildDutchPreferences(groups: Team[][]): Preferences {
  * order: the first complete solution is the most preferred one. Null when none exists within the
  * budget.
  */
-function searchPairs(
+export function searchPairs(
     rankedTeams: Team[],
     preferences: Preferences,
     isAllowed: (a: Team, b: Team) => boolean,
@@ -165,7 +165,7 @@ export function buildDutchLevels(config: ConstraintConfig): ConstraintLevel[] {
  * Tries the levels in order; the last one has no constraint and always succeeds, following the
  * Dutch preference order.
  */
-function pairAtFirstPossibleLevel(
+export function pairAtFirstPossibleLevel(
     rankedTeams: Team[],
     preferences: Preferences,
     levels: ConstraintLevel[],
