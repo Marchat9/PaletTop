@@ -1,8 +1,8 @@
 .card-radio-group {
   // Fixed-width columns: a card alone on the last line keeps the width of the others. 99% leaves
   // room for rounding, so that `--card-radio-columns` cards always fit on one line.
-  // --card-radio-min-width (set by a parent) sends the cards to fewer columns before they get too
-  // narrow.
+  // Below --card-radio-min-width (14rem unless a parent sets it), the cards go to fewer columns
+  // rather than get too narrow to read.
   --card-radio-track: calc(
     (99% - (var(--card-radio-columns, 2) - 1) * 1rem) / var(--card-radio-columns, 2)
   );
@@ -10,7 +10,7 @@
   display: grid;
   grid-template-columns: repeat(
     auto-fill,
-    minmax(max(var(--card-radio-track), min(var(--card-radio-min-width, 0px), 100%)), 1fr)
+    minmax(max(var(--card-radio-track), min(var(--card-radio-min-width, 14rem), 100%)), 1fr)
   );
   gap: 1rem;
 }
