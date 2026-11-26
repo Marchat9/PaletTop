@@ -180,16 +180,9 @@ export class PlayerTeamMatchPageComponent {
       this.currentSession()?.matches.find((match) => match.id === this.currentMatch()?.id)?.group
         ?.label ?? null,
   );
-  /** Told to a team brought back to a bracket after losing its first match there. */
-  public readonly repechedNotice = computed(() => {
-    const bracket = this.team()?.repechedFrom;
-    return bracket
-      ? `Bonne nouvelle : vous êtes repêchés dans la ${bracket} ! Vous avez perdu votre premier match de ce tableau, mais vous faites partie des meilleurs perdants : vous continuez.`
-      : null;
-  });
   public readonly parcoursSteps = computed(() => {
     const team = this.team();
-    return team ? computePlayerParcours(this.sessions() ?? [], team.id, team.repechedFrom) : [];
+    return team ? computePlayerParcours(this.sessions() ?? [], team.id) : [];
   });
   public readonly recentResults = computed(() => historyToResults(this.matchHistory()));
 

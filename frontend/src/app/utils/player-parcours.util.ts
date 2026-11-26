@@ -97,13 +97,11 @@ function isLost(round: TeamRound, teamId: string): boolean {
 
 /**
  * The way of a team through the rounds already drawn: its qualifiers in one line, then one line per
- * elimination round it played, the one in progress last. A loss followed by a round in the same
- * bracket is the team being brought back (`repechedFrom`).
+ * elimination round it played, the one in progress last. A first-round bye reads « exempt ».
  */
 export function computePlayerParcours(
   sessions: MatchesSessionDto[],
   teamId: string,
-  repechedFrom: string | null | undefined,
 ): PlayerParcoursStep[] {
   const ordered = [...sessions].sort((a, b) => a.sessionNumber - b.sessionNumber);
   const teamRounds = (list: MatchesSessionDto[]): TeamRound[] =>
@@ -116,20 +114,12 @@ export function computePlayerParcours(
   const steps = qualifyingStep(teamRounds(qualifyingSessions), teamId);
 
   const eliminations = teamRounds(ordered.filter(isElimination));
-  eliminations.forEach((round, index) => {
+  eliminations.forEach((round) => {
     const roundLabel = `Élim. ${round.session.sessionNumber - qualifyingSessions.length}`;
-    let text = eliminationText(round, teamId, roundLabel);
-    if (
-      repechedFrom &&
-      isLost(round, teamId) &&
-      eliminations[index + 1]?.match.group?.label === repechedFrom
-    ) {
-      text += ', repêchés';
-    }
     steps.push({
       key: `elimination-${round.session.sessionNumber}`,
       state: round.session.status === SessionStatus.OPEN ? 'current' : 'done',
-      text,
+      text: eliminationText(round, teamId, roundLabel),
     });
   });
   return steps;

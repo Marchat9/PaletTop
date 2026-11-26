@@ -26,8 +26,6 @@ import {
   toTournamentRoundHistories,
 } from 'src/app/utils/rounds-history.util';
 import { toTournamentAdminMatchGroups } from 'src/app/utils/match-groups.util';
-import { computeRepechedByBracket } from 'src/app/utils/repeched.util';
-import { RepechedList } from 'src/app/shared/repeched-list/repeched-list';
 import { TournamentParcours } from 'src/app/shared/tournament-parcours/tournament-parcours';
 import { PdfExportService } from 'src/app/services/pdf-export.service';
 import { TournamentStatus } from 'src/app/models/tournament-status.enum';
@@ -123,7 +121,6 @@ const TEAM_COUNT_CHANGED_NOTICE =
     Leaderboard,
     Button,
     RoundsHistory,
-    RepechedList,
     TournamentParcours,
     AnimateOnChangeDirective,
   ],
@@ -227,9 +224,6 @@ export class AdminTournamentPageComponent implements OnInit {
     () =>
       (this.sessions() ?? []).find((session) => session.status === SessionStatus.OPEN)
         ?.sessionNumber ?? null,
-  );
-  public readonly repechedBrackets = computed(() =>
-    computeRepechedByBracket(this.sessions() ?? []),
   );
   public readonly showCurrentRound = computed(() => this.isActive() && !!this.currentSession());
   /** Where the tournament stands while no round is listed. */

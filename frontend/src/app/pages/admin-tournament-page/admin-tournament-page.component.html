@@ -45,10 +45,6 @@
       />
     }
 
-    @if (repechedBrackets().length > 0) {
-      <app-repeched-list [brackets]="repechedBrackets()" />
-    }
-
     <app-leaderboard
       [table]="rankingTable()"
       [isLoading]="rankingLoading()"
