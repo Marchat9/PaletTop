@@ -353,6 +353,50 @@ describe('computeStructuredPlan', () => {
         });
     });
 
+    describe('main bracket of 4 with challenges and a 3rd place match', () => {
+        const plan = computeStructuredPlan(
+            input({
+                teamCount: 4,
+                targetCount: 4,
+                consolationCount: 0,
+                hasChallenges: true,
+                hasThirdPlaceMatch: true,
+            }),
+        );
+
+        it('keeps the 3rd place match but drops the main challenge: they would use the same two teams', () => {
+            const keys = plan.rounds.flatMap((round) => round.groups.map((group) => group.key));
+            expect(keys).toContain('third_place_match');
+            expect(keys).not.toContain('challenge_principale');
+        });
+
+        it('says why the challenge is missing', () => {
+            const warning = plan.warnings.find(
+                (w) => w.code === 'BRACKET_TOO_SMALL' && w.bracketKey === 'challenge_principale',
+            );
+            expect(warning?.message).toContain('match pour la 3e place');
+        });
+
+        it('has no group twice in the same round for the same teams: the last round holds 2 matches', () => {
+            const last = plan.rounds[plan.rounds.length - 1];
+            expect(last.groups.map((g) => g.key)).toEqual(['principale', 'third_place_match']);
+        });
+    });
+
+    it('still gives a challenge to a main bracket of 4 without a 3rd place match', () => {
+        const plan = computeStructuredPlan(
+            input({
+                teamCount: 4,
+                targetCount: 4,
+                consolationCount: 0,
+                hasChallenges: true,
+                hasThirdPlaceMatch: false,
+            }),
+        );
+        const keys = plan.rounds.flatMap((round) => round.groups.map((group) => group.key));
+        expect(keys).toContain('challenge_principale');
+    });
+
     describe('small brackets', () => {
         const plan = computeStructuredPlan(
             input({

@@ -334,9 +334,11 @@ function buildPlan(input: StructuredPlanInput): TournamentPlan {
             rounds,
         });
 
+        let hasThirdPlaceTrack = false;
         if (index === 0 && input.hasThirdPlaceMatch) {
             const semiFinal = rounds[rounds.length - 2];
             if (semiFinal?.matches === 2) {
+                hasThirdPlaceTrack = true;
                 tracks.push({
                     key: THIRD_PLACE_GROUP_KEY,
                     label: 'Match pour la 3e place',
@@ -356,7 +358,17 @@ function buildPlan(input: StructuredPlanInput): TournamentPlan {
 
         if (input.hasChallenges) {
             const challengeTeams = rounds[0].losers;
-            if (challengeTeams >= 2) {
+            // A main bracket of 4: its first round is the semi-finals, so the challenge would play
+            // the very match of the 3rd place, with the same two teams in the same round.
+            const duplicatesThirdPlace = hasThirdPlaceTrack && rounds.length === 2;
+            if (duplicatesThirdPlace) {
+                warnings.push({
+                    code: 'BRACKET_TOO_SMALL',
+                    level: 'info',
+                    message: `Pas de ${challengeLabel(index).toLowerCase()} : le match pour la 3e place oppose déjà les perdants des demi-finales.`,
+                    bracketKey: challengeKey(index),
+                });
+            } else if (challengeTeams >= 2) {
                 tracks.push({
                     key: challengeKey(index),
                     label: challengeLabel(index),
