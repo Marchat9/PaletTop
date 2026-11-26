@@ -68,7 +68,10 @@ among the ones offered for its mode (app setting `score_calculations_by_mode`). 
 - **Worst loss**: the largest losing margin (11-13 is 2), 0 without any loss.
 - **Gaps**: the gap of every played match, in session order, compared from the last game back. When
   one team has fewer games, the one with more games goes first.
-- **Byes** are a win, but are left out of the worst loss and of the gaps.
+- **Byes** are a win, but are left out of the worst loss and of the gaps. A qualifying bye is
+  stored 13-6 (`pointsPerGame` against `clamp(pointsPerGame − 1, 0, cap)`, `bye_loser_score_cap` app
+  setting, 6 by default) and counts in points and goal average; elimination and frozen-round byes are
+  stored 0-0.
 - **Frozen draw**: `fixedDraw(`${tournamentId}:${teamId}`)` (`../utils/fixed-draw.utils.ts`, FNV-1a),
   the lowest hash first; a hash collision falls back to the team id. Nothing is stored, and the
   three victory-based calculations never share a rank.
