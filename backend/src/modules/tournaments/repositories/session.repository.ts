@@ -49,18 +49,6 @@ export class SessionRepository {
         });
     }
 
-    findOneByTournamentAndNumber(
-        tournamentId: string,
-        sessionNumber: number,
-    ): Promise<MatchesSession | null> {
-        return this.repo.findOne({
-            where: { tournament: { id: tournamentId }, sessionNumber },
-            relations: {
-                matches: { teamA: { players: true }, teamB: { players: true } },
-            },
-        });
-    }
-
     async updateStatus(
         session: MatchesSession,
         status: MatchesSessionStatus,
