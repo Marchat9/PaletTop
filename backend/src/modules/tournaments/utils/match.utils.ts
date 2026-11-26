@@ -33,6 +33,7 @@ import {
     toTeamRef,
     toTournamentRef,
 } from 'src/modules/tournaments/utils/type-orm-ref.utils';
+import { shuffleFisherYates } from 'src/modules/tournaments/utils/global.utils';
 import { DeepPartial } from 'typeorm';
 
 // A match only ever needs id/name/code from its teams (see toSessionMatchResponseDto,
@@ -166,4 +167,44 @@ export function generateMatchesByRanking(
     }
     const byeTeam = rankedTeams.length % 2 !== 0 ? rankedTeams[rankedTeams.length - 1] : null;
     return generateMatchesFromPairs(pool, pairs, byeTeam, NO_VALUE_BYE, tournament, session);
+}
+
+/** Rank position of every team of `ranking`, best first (ties keep the ranking order). */
+function rankingPositions(ranking: GlobalRankingEntry[]): Map<string, number> {
+    return new Map(
+        [...ranking].sort((a, b) => a.rank - b.rank).map((entry, index) => [entry.teamId, index]),
+    );
+}
+
+/**
+ * Orders the matches of a round so that plate 1 is the match of the best ranked team, then the
+ * plates go down the ranking. A match counts for its best ranked team; a team missing from the
+ * ranking counts as last. Byes come last (they get no plate). The sort is stable.
+ */
+export function orderMatchesByRanking(
+    matches: DeepPartial<TournamentMatch>[],
+    ranking: GlobalRankingEntry[],
+): DeepPartial<TournamentMatch>[] {
+    const positions = rankingPositions(ranking);
+    const positionOf = (teamId?: string): number =>
+        (teamId === undefined ? undefined : positions.get(teamId)) ?? Number.MAX_SAFE_INTEGER;
+    const bestPosition = (match: DeepPartial<TournamentMatch>): number =>
+        Math.min(positionOf(match.teamA?.id), positionOf(match.teamB?.id));
+    return [...matches].sort((a, b) => {
+        if (!!a.isBye !== !!b.isBye) return a.isBye ? 1 : -1;
+        return bestPosition(a) - bestPosition(b);
+    });
+}
+
+/**
+ * Orders the matches of a first round (no ranking yet): the real matches shuffled with the seeded
+ * `random`, so plate 1 is not always the first pair drawn; byes last.
+ */
+export function orderFirstRoundMatches(
+    matches: DeepPartial<TournamentMatch>[],
+    random: () => number,
+): DeepPartial<TournamentMatch>[] {
+    const real = matches.filter((match) => !match.isBye);
+    const byes = matches.filter((match) => match.isBye);
+    return [...shuffleFisherYates(real, random), ...byes];
 }

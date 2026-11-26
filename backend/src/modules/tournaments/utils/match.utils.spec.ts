@@ -12,6 +12,8 @@ import { GlobalRankingEntry } from '../responses/ranking.dto';
 import {
     generateMatchesByRanking,
     generateMatchesInPool,
+    orderFirstRoundMatches,
+    orderMatchesByRanking,
     orderTeamsByRanking,
 } from './match.utils';
 
@@ -191,5 +193,58 @@ describe('generateMatchesInPool', () => {
             isBye: true,
             status: MatchStatus.VALIDATED,
         });
+    });
+});
+
+describe('orderMatchesByRanking', () => {
+    const match = (a: string, b: string) => ({ teamA: { id: a }, teamB: { id: b }, isBye: false });
+    const bye = (a: string) => ({ teamA: { id: a }, teamB: null, isBye: true });
+    const ranking = [entry('A', 1), entry('B', 2), entry('C', 3), entry('D', 4), entry('E', 5)];
+
+    it('puts the match of the best ranked team first, byes last', () => {
+        const ordered = orderMatchesByRanking(
+            [bye('E'), match('D', 'C'), match('B', 'A')] as never,
+            ranking,
+        );
+        expect(ordered.map((m) => [m.teamA?.id, m.teamB?.id ?? null])).toEqual([
+            ['B', 'A'],
+            ['D', 'C'],
+            ['E', null],
+        ]);
+    });
+
+    it('orders a match by its best ranked team, whichever side it is on', () => {
+        const ordered = orderMatchesByRanking([match('E', 'C'), match('D', 'A')] as never, ranking);
+        expect(ordered.map((m) => m.teamB?.id)).toEqual(['A', 'C']);
+    });
+
+    it('counts a team missing from the ranking as last, without dropping its match', () => {
+        const ordered = orderMatchesByRanking([match('X', 'Y'), match('A', 'B')] as never, ranking);
+        expect(ordered.map((m) => m.teamA?.id)).toEqual(['A', 'X']);
+    });
+});
+
+describe('orderFirstRoundMatches', () => {
+    const match = (a: string, b: string) => ({ teamA: { id: a }, teamB: { id: b }, isBye: false });
+    const bye = (a: string) => ({ teamA: { id: a }, teamB: null, isBye: true });
+    const input = [match('A', 'B'), match('C', 'D'), match('E', 'F'), match('G', 'H'), bye('I')];
+
+    it('shuffles the real matches with the seed and keeps the byes last', () => {
+        const first = orderFirstRoundMatches(input as never, seededRandom('t1:draw:1:0:plates'));
+        const again = orderFirstRoundMatches(input as never, seededRandom('t1:draw:1:0:plates'));
+        expect(first).toEqual(again);
+        expect(first[first.length - 1].isBye).toBe(true);
+        expect(first.map((m) => m.teamA?.id).sort()).toEqual(['A', 'C', 'E', 'G', 'I']);
+    });
+
+    it('changes the order from one seed to another', () => {
+        const orders = new Set(
+            [1, 2, 3, 4, 5, 6].map((session) =>
+                orderFirstRoundMatches(input as never, seededRandom(`t1:draw:${session}:0`))
+                    .map((m) => m.teamA?.id)
+                    .join(),
+            ),
+        );
+        expect(orders.size).toBeGreaterThan(1);
     });
 });
