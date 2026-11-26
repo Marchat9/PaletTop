@@ -9,12 +9,14 @@ import { GlobalRankingEntry } from 'src/modules/tournaments/responses/ranking.dt
 
 /**
  * The team getting the bye: the one with the fewest byes so far. On a tie, the best ranked of
- * `ranking` when given (elimination rounds), otherwise one drawn at random.
+ * `ranking` when given (elimination rounds), otherwise one drawn with `random` (seeded, so the
+ * same round always gives the same bye).
  */
 export function selectByeTeam(
     teams: Team[],
     pastMatches: TournamentMatch[],
-    ranking?: GlobalRankingEntry[],
+    ranking: GlobalRankingEntry[] | undefined,
+    random: () => number,
 ): Team {
     const byeCountByTeam = new Map<string, number>(teams.map((t) => [t.id, 0]));
 
@@ -25,7 +27,9 @@ export function selectByeTeam(
     }
 
     const minByes = Math.min(...byeCountByTeam.values());
-    const candidates = teams.filter((t) => byeCountByTeam.get(t.id) === minByes);
+    const candidates = teams
+        .filter((t) => byeCountByTeam.get(t.id) === minByes)
+        .sort((a, b) => a.id.localeCompare(b.id));
     if (ranking) {
         const position = new Map(
             [...ranking].sort((a, b) => a.rank - b.rank).map((e, index) => [e.teamId, index]),
@@ -35,7 +39,7 @@ export function selectByeTeam(
             positionOf(team) < positionOf(best) ? team : best,
         );
     }
-    return candidates[Math.floor(Math.random() * candidates.length)];
+    return candidates[Math.floor(random() * candidates.length)];
 }
 
 /**

@@ -25,6 +25,7 @@ export function generatePairsWithContraints(
     config: ConstraintConfig,
     teams: Team[],
     pastMatches: TournamentMatch[],
+    random: () => number,
 ): TeamPair[] {
     // Odd/empty pools can never yield a perfect matching — skip straight to the answer
     // instead of running the constraint ladder for nothing (bye handling stays with the caller).
@@ -36,8 +37,13 @@ export function generatePairsWithContraints(
     );
 
     const counts = buildMatchCountMap(pastMatches);
-    // Shuffle so tie-breaks between otherwise-equivalent teams aren't biased by array order.
-    const shuffledTeams = shuffleFisherYates(teams);
+    // Shuffle so tie-breaks between otherwise-equivalent teams aren't biased by array order. The
+    // teams are put in id order first, so the same seed gives the same pairs whatever the order
+    // they were loaded in.
+    const shuffledTeams = shuffleFisherYates(
+        [...teams].sort((a, b) => a.id.localeCompare(b.id)),
+        random,
+    );
 
     for (const level of buildConstraintLadder(config)) {
         const pairs = matchTeamsAtLevel(shuffledTeams, counts, level);

@@ -16,6 +16,7 @@ import {
 } from 'src/modules/tournaments/utils/match.utils';
 import { pairDutch } from '../up-down/dutch-pairing.utils';
 import { extractContraintConfig } from 'src/modules/tournaments/utils/tournament.utils';
+import { buildSeed, seededRandom } from 'src/modules/tournaments/utils/seeded-random.utils';
 import { toPoolRef } from 'src/modules/tournaments/utils/type-orm-ref.utils';
 import { DeepPartial } from 'typeorm';
 import { GlobalRankingEntry } from '../../../tournaments/responses/ranking.dto';
@@ -52,6 +53,7 @@ export function generateQualifyingMatches(
                 session,
                 constraintConfig,
                 poolPastMatches,
+                seededRandom(buildSeed(tournament.id, 'draw', session.sessionNumber, poolRef.id)),
             ),
         );
 }
@@ -101,7 +103,7 @@ export function generateEliminationMatches(
         pastMatches,
         globalRanking,
         stoppedCount: config.eliminatedAfterQualifying ?? 0,
-        random: Math.random,
+        random: seededRandom(buildSeed(tournament.id, 'bracket', round.number)),
     });
 
     return round.groups.flatMap((group) => {
@@ -116,6 +118,7 @@ export function generateEliminationMatches(
             `${tournament.code} session ${round.number}: ${group.key}, ${teams.length} teams`,
         );
         const pool = virtualPools.find((vp) => vp.name === group.key)!;
+        const groupRandom = seededRandom(buildSeed(tournament.id, 'draw', round.number, group.key));
         if (config.eliminationPairingMode === PairingMode.DUTCH) {
             return generateDutchGroupMatches(
                 pool,
@@ -125,6 +128,7 @@ export function generateEliminationMatches(
                 constraintConfig,
                 pastMatches,
                 globalRanking,
+                groupRandom,
             );
         }
         return generateMatchesInPool(
@@ -134,6 +138,7 @@ export function generateEliminationMatches(
             session,
             constraintConfig,
             pastMatches,
+            groupRandom,
             globalRanking,
         );
     });
@@ -154,9 +159,10 @@ function generateDutchGroupMatches(
     constraintConfig: ConstraintConfig,
     pastMatches: TournamentMatch[],
     globalRanking: GlobalRankingEntry[],
+    random: () => number,
 ): DeepPartial<TournamentMatch>[] {
     const byeTeam =
-        teams.length % 2 !== 0 ? selectByeTeam(teams, pastMatches, globalRanking) : null;
+        teams.length % 2 !== 0 ? selectByeTeam(teams, pastMatches, globalRanking, random) : null;
     const playing = orderTeamsByRanking(
         teams.filter((team) => team.id !== byeTeam?.id),
         globalRanking,

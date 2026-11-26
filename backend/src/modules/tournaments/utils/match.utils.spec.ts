@@ -1,3 +1,4 @@
+import { seededRandom } from './seeded-random.utils';
 import { describe, expect, it } from 'vitest';
 import { MatchesSession } from 'src/entities/matches-session.entity';
 import { Team } from 'src/entities/team.entity';
@@ -125,6 +126,7 @@ describe('generateMatchesInPool', () => {
                 session,
                 constraintConfig,
                 pastMatches,
+                seededRandom('spec'),
             );
             expect(matches.find((m) => m.isBye)?.teamA?.id).toBe('C');
         }
@@ -142,6 +144,7 @@ describe('generateMatchesInPool', () => {
                 session,
                 constraintConfig,
                 [pastBye('A')],
+                seededRandom('spec'),
                 ranking,
             );
             expect(matches.find((m) => m.isBye)?.teamA?.id).toBe('C');
@@ -156,6 +159,7 @@ describe('generateMatchesInPool', () => {
             session,
             constraintConfig,
             [],
+            seededRandom('spec'),
         );
         expect(matches.find((m) => m.isBye)).toMatchObject({
             scoreA: 0,

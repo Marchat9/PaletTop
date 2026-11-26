@@ -22,6 +22,7 @@ import {
     generateMatchesInPool,
     orderTeamsByRanking,
 } from 'src/modules/tournaments/utils/match.utils';
+import { buildSeed, seededRandom } from 'src/modules/tournaments/utils/seeded-random.utils';
 import { generateDutchPairs } from './dutch-pairing.utils';
 import { computePhaseName, isDutchRound, isRankingRound } from './up-down-session.utils';
 
@@ -111,6 +112,7 @@ export class UpDownTournamentStrategy extends TournamentStrategy {
             session,
             constraintConfig,
             pastMatches,
+            seededRandom(buildSeed(tournament.id, 'draw', session.sessionNumber)),
         );
     }
 
