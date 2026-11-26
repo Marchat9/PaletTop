@@ -1,6 +1,5 @@
 import { Logger } from '@nestjs/common';
 import { MatchesSession } from 'src/entities/matches-session.entity';
-import { Team } from 'src/entities/team.entity';
 import { TournamentMatch } from 'src/entities/tounament-match.entity';
 import { StructuredCompetitionConfiguration } from 'src/entities/tournament-competition-configuration.entity';
 import { TournamentPool } from 'src/entities/tournament-pool.entity';
