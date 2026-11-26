@@ -116,6 +116,30 @@ describe('buildTournamentRules', () => {
     expect(neighbors).not.toContain('Gagnant/Perdant');
   });
 
+  it('indique le placement aléatoire de l’élimination, rien pour le placement pyramidal', () => {
+    const random = labels(
+      configuration({
+        competitionConfiguration: {
+          numberOfQualifyingRounds: 3,
+          consolationCount: 0,
+          eliminationSeeding: 'random',
+        },
+      }),
+    );
+    expect(random).toContain('Élimination : placement aléatoire');
+
+    const pyramidal = labels(
+      configuration({
+        competitionConfiguration: {
+          numberOfQualifyingRounds: 3,
+          consolationCount: 0,
+          eliminationSeeding: 'pyramidal',
+        },
+      }),
+    );
+    expect(pyramidal).not.toContain('Élimination : placement aléatoire');
+  });
+
   it('indique les deux clubs du championnat', () => {
     const result = labels(
       configuration({

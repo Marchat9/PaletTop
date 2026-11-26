@@ -23,11 +23,14 @@ export interface StructuredTournamentConfig extends SpecificTournamentConfig {
   /** One switch for the challenges of every bracket. */
   hasChallenges?: boolean;
   hasThirdPlaceMatch?: boolean;
-  /** How the elimination rounds are paired. Missing on older tournaments: random. */
-  eliminationPairingMode?: PairingMode;
+  /** How the first round of each elimination bracket is placed. Missing: pyramidal. */
+  eliminationSeeding?: EliminationSeeding;
 }
 
-/** How the up-down rounds after the first one, or the structured elimination rounds, are paired. */
+/** Pyramidal: seeds by qualifying rank, byes to the best. Random: drawn with the draw constraints. */
+export type EliminationSeeding = 'pyramidal' | 'random';
+
+/** How the up-down rounds after the first one are paired. */
 export type PairingMode = 'random' | 'dutch' | 'neighbors';
 
 export interface UpDownTournamentConfig extends SpecificTournamentConfig {

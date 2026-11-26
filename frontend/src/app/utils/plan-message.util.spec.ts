@@ -17,7 +17,7 @@ function planWith(...warnings: PlanWarning[]): TournamentPlan {
 
 const error: PlanWarning = { code: 'IMPOSSIBLE', level: 'error', message: 'Impossible.' };
 const extra: PlanWarning = { code: 'EXTRA_BRACKET', level: 'info', message: 'Consolante en plus.' };
-const mid: PlanWarning = { code: 'MID_FILL', level: 'info', message: 'Quelques repêchés.' };
+const mid: PlanWarning = { code: 'MID_FILL', level: 'info', message: 'Quelques exemptés.' };
 const low: PlanWarning = { code: 'LOW_FILL', level: 'warning', message: 'Peu rempli.' };
 const noThirdPlace: PlanWarning = {
   code: 'NO_THIRD_PLACE',
@@ -50,14 +50,14 @@ describe('pickPlanMessage', () => {
   });
 
   it('shows the fill message, the red one before the orange one', () => {
-    expect(pickPlanMessage(planWith(mid))?.text).toBe('Quelques repêchés.');
+    expect(pickPlanMessage(planWith(mid))?.text).toBe('Quelques exemptés.');
     const red = pickPlanMessage(planWith(mid, low));
     expect(red?.text).toBe('Peu rempli.');
     expect(red?.tone).toBe('alert');
   });
 
   it('shows the other warnings after the fill ones', () => {
-    expect(pickPlanMessage(planWith(noThirdPlace, mid))?.text).toBe('Quelques repêchés.');
+    expect(pickPlanMessage(planWith(noThirdPlace, mid))?.text).toBe('Quelques exemptés.');
     expect(pickPlanMessage(planWith(noThirdPlace))?.text).toBe('Pas de 3e place.');
   });
 });

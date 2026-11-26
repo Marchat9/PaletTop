@@ -219,9 +219,6 @@ export class PlanTable {
 
   private noteLabel(group: PlanGroup): string {
     const notes: string[] = [];
-    if (group.bestLosersIn > 0) {
-      notes.push(`+${group.bestLosersIn} ${plural(group.bestLosersIn, 'repêché')}`);
-    }
     if (group.byeCount > 0) notes.push(`${group.byeCount} exempt${group.byeCount > 1 ? 's' : ''}`);
     return notes.join(' · ');
   }

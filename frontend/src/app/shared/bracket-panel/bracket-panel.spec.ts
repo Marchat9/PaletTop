@@ -11,7 +11,6 @@ function bracket(overrides: Partial<PlanBracket> = {}): PlanBracket {
     fillRatio: 1,
     fillLevel: 'ok',
     extra: false,
-    bestLosersFirstRound: 0,
     ...overrides,
   };
 }

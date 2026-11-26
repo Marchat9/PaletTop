@@ -24,7 +24,6 @@ export function planBracket(
     fillRatio: teamCount / capacity,
     fillLevel,
     extra: false,
-    bestLosersFirstRound: 0,
   };
 }
 

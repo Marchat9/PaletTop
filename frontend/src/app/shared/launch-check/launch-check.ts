@@ -24,8 +24,8 @@ interface FillBadge {
 
 const FILL_BADGES: Record<FillLevel, FillBadge> = {
   ok: { tone: 'success', label: 'Complet ou presque' },
-  mid: { tone: 'draft', label: 'Quelques repêchés' },
-  low: { tone: 'error', label: 'Beaucoup de repêchés' },
+  mid: { tone: 'draft', label: 'Quelques exemptés' },
+  low: { tone: 'error', label: "Beaucoup d'exemptés" },
 };
 /** An option without any bracket: it cannot be launched. */
 const IMPOSSIBLE_BADGE: FillBadge = { tone: 'error', label: 'Impossible' };

@@ -77,7 +77,7 @@ describe('LaunchCheck', () => {
     const { root } = create();
 
     expect(cards(root).map((card) => text(card.querySelector('.option-card__fill')))).toEqual([
-      'Beaucoup de repêchés',
+      "Beaucoup d'exemptés",
       'Complet ou presque',
       'Complet ou presque',
     ]);

@@ -22,20 +22,13 @@ function group(
     teamCount,
     matchCount: Math.floor(teamCount / 2),
     byeCount: 0,
-    bestLosersIn: 0,
     plateStart: 1,
     plateEnd: Math.floor(teamCount / 2),
     ...extra,
   };
 }
 
-function bracket(
-  key: string,
-  label: string,
-  capacity: number,
-  teamCount: number,
-  bestLosersFirstRound = 0,
-): PlanBracket {
+function bracket(key: string, label: string, capacity: number, teamCount: number): PlanBracket {
   return {
     key,
     label,
@@ -44,7 +37,6 @@ function bracket(
     fillRatio: teamCount / capacity,
     fillLevel: teamCount === capacity ? 'ok' : 'mid',
     extra: false,
-    bestLosersFirstRound,
   };
 }
 
@@ -70,7 +62,7 @@ function buildPlan(): TournamentPlan {
     elimination(4, 'Élimination 1', [
       group('principale', 'Principale', 'main', 64),
       group('consolante_1', 'Consolante A', 'consolation', 32),
-      group('consolante_2', 'Consolante B', 'consolation', 24, { bestLosersIn: 4 }),
+      group('consolante_2', 'Consolante B', 'consolation', 24, { byeCount: 8 }),
     ]),
     elimination(5, 'Élimination 2', [
       group('principale', 'Principale', 'main', 32),
@@ -94,7 +86,7 @@ function buildPlan(): TournamentPlan {
     brackets: [
       bracket('principale', 'Principale', 64, 64),
       bracket('consolante_1', 'Consolante A', 32, 32),
-      bracket('consolante_2', 'Consolante B', 32, 24, 4),
+      bracket('consolante_2', 'Consolante B', 32, 24),
     ],
     rounds,
     totalRounds: rounds.length,
@@ -168,13 +160,13 @@ describe('PlanTable', () => {
     ]);
   });
 
-  it('shows the best losers brought back in the first cell of the consolante B', () => {
+  it('shows the byes of the first round in the first cell of the consolante B', () => {
     const root = create();
 
     const row = Array.from(root.querySelectorAll('tbody tr')).find((r) =>
       text(r.querySelector('th')).startsWith('Consolante B'),
     );
-    expect(text(row?.querySelector('td'))).toContain('+4 repêchés');
+    expect(text(row?.querySelector('td'))).toContain('8 exempts');
   });
 
   it('adds up the plates of each round in the last row', () => {

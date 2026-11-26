@@ -17,7 +17,6 @@ function bracket(key: string, label: string, teamCount: number, extra = false): 
     fillRatio: teamCount / 32,
     fillLevel: 'ok',
     extra,
-    bestLosersFirstRound: 0,
   };
 }
 
@@ -29,7 +28,6 @@ function eliminationRound(number: number, teamCount: number): PlanRound {
     teamCount,
     matchCount: Math.floor(teamCount / 2),
     byeCount: 0,
-    bestLosersIn: 0,
     plateStart: 1,
     plateEnd: Math.floor(teamCount / 2),
   };

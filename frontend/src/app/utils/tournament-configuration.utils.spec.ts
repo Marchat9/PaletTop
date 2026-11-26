@@ -51,7 +51,7 @@ function structuredForm(
         consolationCount: new FormControl(2, { nonNullable: true }),
         hasChallenges: new FormControl(true, { nonNullable: true }),
         hasThirdPlaceMatch: new FormControl(false, { nonNullable: true }),
-        eliminationPairingMode: new FormControl('dutch', { nonNullable: true }),
+        eliminationSeeding: new FormControl('random', { nonNullable: true }),
       }),
     }),
   }) as unknown as TournamentConfigurationForm;
@@ -66,7 +66,7 @@ describe('extractCompetitionConfiguration (structured)', () => {
       consolationCount: 2,
       hasChallenges: true,
       hasThirdPlaceMatch: false,
-      eliminationPairingMode: 'dutch',
+      eliminationSeeding: 'random',
     });
   });
 });

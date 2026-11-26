@@ -50,7 +50,7 @@ export class StructuredTournament {
   public readonly numberOfQualifyingRoundsConfig =
     environment.tournamentConfiguration.numberOfQualifyingRounds;
   public readonly targetCountConfig = environment.tournamentConfiguration.maxTeamCapacity;
-  public readonly eliminationPairingModeOptions = configuration.eliminationPairingModeOptions;
+  public readonly eliminationSeedingOptions = configuration.eliminationSeedingOptions;
   protected readonly consolationCount: Signal<number> = controlValue(
     computed(() => this.group().controls.consolationCount),
     0,
