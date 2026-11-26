@@ -2,7 +2,12 @@ import { describe, expect, it } from 'vitest';
 import { StructuredCompetitionConfiguration } from 'src/entities/tournament-competition-configuration.entity';
 import { Tournament } from 'src/entities/tournament.entity';
 import { TournamentStatus } from 'src/enum/status.enum';
-import { CompetitionMode, PairingMode, ScoreCalculation } from 'src/enum/tounament.enum';
+import {
+    CompetitionMode,
+    EliminationSeeding,
+    PairingMode,
+    ScoreCalculation,
+} from 'src/enum/tounament.enum';
 import { TournamentConfigurationDto } from '../../dto/tournament-configuration.dto';
 import { extractCompetitionConfiguration } from '../../utils/tournament.utils';
 import { PlanSettings } from '../tournament-strategy.abstract';
@@ -136,7 +141,21 @@ describe('StructuredTournamentStrategy configuration', () => {
                 hasChallenges: true,
                 hasThirdPlaceMatch: false,
                 eliminationPairingMode: 'random',
+                eliminationSeeding: 'pyramidal',
             });
+        });
+
+        it('keeps the elimination seeding, pyramidal when missing', () => {
+            const extract = (competitionConfiguration: object): unknown =>
+                extractCompetitionConfiguration({
+                    competitionMode: CompetitionMode.STANDARD,
+                    competitionConfiguration,
+                } as unknown as TournamentConfigurationDto);
+
+            expect(
+                extract(structuredConfig({ eliminationSeeding: EliminationSeeding.RANDOM })),
+            ).toMatchObject({ eliminationSeeding: 'random' });
+            expect(extract(structuredConfig())).toMatchObject({ eliminationSeeding: 'pyramidal' });
         });
 
         it('keeps the elimination pairing mode, random when missing', () => {

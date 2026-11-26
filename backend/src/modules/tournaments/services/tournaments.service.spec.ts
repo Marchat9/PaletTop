@@ -168,6 +168,7 @@ describe('TournamentsService max consolations', () => {
             ...structuredCompetition,
             consolationCount: MAX_CONSOLATIONS,
             eliminationPairingMode: 'random',
+            eliminationSeeding: 'pyramidal',
         });
     });
 
@@ -195,6 +196,7 @@ describe('TournamentsService max consolations', () => {
             ...structuredCompetition,
             consolationCount: 2,
             eliminationPairingMode: 'random',
+            eliminationSeeding: 'pyramidal',
         });
     });
 });

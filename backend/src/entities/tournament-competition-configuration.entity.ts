@@ -1,4 +1,4 @@
-import { PairingMode } from 'src/enum/tounament.enum';
+import { EliminationSeeding, PairingMode } from 'src/enum/tounament.enum';
 import { TournamentPlan } from 'src/modules/tournaments/strategies/structured/plan/plan.types';
 
 export abstract class TournamentCompetitionConfiguration {}
@@ -25,6 +25,12 @@ export class StructuredCompetitionConfiguration extends TournamentCompetitionCon
      * existed: read as RANDOM.
      */
     eliminationPairingMode?: PairingMode;
+
+    /**
+     * How the first round of each elimination bracket is placed. Missing on tournaments created
+     * before the option existed: read as PYRAMIDAL.
+     */
+    eliminationSeeding?: EliminationSeeding;
 
     /** The last X teams of the qualifiers play no elimination match. */
     eliminatedAfterQualifying?: number;
