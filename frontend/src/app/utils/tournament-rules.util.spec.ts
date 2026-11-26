@@ -69,14 +69,14 @@ describe('buildTournamentRules', () => {
     expect(result).toEqual(expect.arrayContaining(['1 consolante', 'Challenges']));
   });
 
-  it('indique le nombre de parties et la dernière partie au classement en montée / descente', () => {
+  it('indique le nombre de parties et la dernière partie figée en montée / descente', () => {
     const result = labels(
       configuration({
         competitionMode: 'up_down',
         competitionConfiguration: { numberOfRound: 5, lastRoundByRanking: true },
       }),
     );
-    expect(result).toEqual(expect.arrayContaining(['5 parties', 'Dernière partie au classement']));
+    expect(result).toEqual(expect.arrayContaining(['5 parties', 'Dernière partie figée']));
   });
 
   it('indique des parties illimitées sans nombre de parties', () => {
@@ -84,17 +84,17 @@ describe('buildTournamentRules', () => {
       configuration({ competitionMode: 'up_down', competitionConfiguration: {} }),
     );
     expect(result).toContain('Parties illimitées');
-    expect(result).not.toContain('Dernière partie au classement');
+    expect(result).not.toContain('Dernière partie figée');
   });
 
-  it('indique le système suisse hollandais quand il est choisi', () => {
+  it('indique le mode Gagnant/Perdant quand il est choisi', () => {
     const dutch = labels(
       configuration({
         competitionMode: 'up_down',
         competitionConfiguration: { numberOfRound: 4, pairingMode: 'dutch' },
       }),
     );
-    expect(dutch).toContain('Système suisse (version hollandaise)');
+    expect(dutch).toContain('Gagnant/Perdant');
 
     const random = labels(
       configuration({
@@ -102,7 +102,18 @@ describe('buildTournamentRules', () => {
         competitionConfiguration: { numberOfRound: 4, pairingMode: 'random' },
       }),
     );
-    expect(random).not.toContain('Système suisse (version hollandaise)');
+    expect(random).not.toContain('Gagnant/Perdant');
+  });
+
+  it('indique les voisins de classement quand ils sont choisis', () => {
+    const neighbors = labels(
+      configuration({
+        competitionMode: 'up_down',
+        competitionConfiguration: { numberOfRound: 4, pairingMode: 'neighbors' },
+      }),
+    );
+    expect(neighbors).toContain('Voisins de classement');
+    expect(neighbors).not.toContain('Gagnant/Perdant');
   });
 
   it('indique les deux clubs du championnat', () => {

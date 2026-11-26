@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_SCORE_CALCULATIONS_BY_MODE } from './app-setting.model';
+import {
+  DEFAULT_BYE_LOSER_SCORE_CAP,
+  DEFAULT_SCORE_CALCULATIONS_BY_MODE,
+} from './app-setting.model';
 
 describe('DEFAULT_SCORE_CALCULATIONS_BY_MODE', () => {
   it('offers the three victory-based calculations to the standard and up-down modes, goal-average first', () => {
@@ -10,5 +13,11 @@ describe('DEFAULT_SCORE_CALCULATIONS_BY_MODE', () => {
 
   it('offers only the championship points to the championship', () => {
     expect(DEFAULT_SCORE_CALCULATIONS_BY_MODE.championship).toEqual(['tournament_score']);
+  });
+});
+
+describe('DEFAULT_BYE_LOSER_SCORE_CAP', () => {
+  it('mirrors the backend default: the loser of a bye gets at most 6 points', () => {
+    expect(DEFAULT_BYE_LOSER_SCORE_CAP).toBe(6);
   });
 });

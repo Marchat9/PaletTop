@@ -34,14 +34,30 @@ function normalize(value: string): string {
   return value.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
 }
 
-/** Up-down round paired by results: every round after the first in Dutch mode, but the last by ranking. */
-function isSwissRound(
+/** The up-down round frozen by ranking: the last one, when the option is on. */
+function isFrozenRound(
   session: MatchesSessionDto,
   config: UpDownTournamentConfig | undefined,
 ): boolean {
-  const isRankingRound =
-    !!config?.lastRoundByRanking && session.sessionNumber === config.numberOfRound;
-  return config?.pairingMode === 'dutch' && !session.isDrawnRound && !isRankingRound;
+  return !!config?.lastRoundByRanking && session.sessionNumber === config.numberOfRound;
+}
+
+/** Label of an up-down round paired by results (not drawn). */
+function upDownResultsLabel(
+  session: MatchesSessionDto,
+  config: UpDownTournamentConfig | undefined,
+): string {
+  if (isFrozenRound(session, config)) {
+    return 'Dernière partie figée';
+  }
+  switch (config?.pairingMode) {
+    case 'dutch':
+      return 'Gagnant/Perdant';
+    case 'neighbors':
+      return 'Voisins de classement';
+    default:
+      return 'Au classement';
+  }
 }
 
 function roundLabel(
@@ -65,7 +81,7 @@ function roundLabel(
       if (session.isDrawnRound) {
         return 'Tirage au sort';
       }
-      return isSwissRound(session, upDownConfig) ? 'Système suisse' : 'Au classement';
+      return upDownResultsLabel(session, upDownConfig);
     case 'championship':
       return 'Championnat';
     default:

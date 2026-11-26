@@ -99,10 +99,13 @@ function buildUpDownRules(config: UpDownTournamentConfig): TournamentRule[] {
       : { icon: 'all_inclusive', label: 'Parties illimitées' },
   ];
   if (config.pairingMode === 'dutch') {
-    rules.push({ icon: 'account_tree', label: 'Système suisse (version hollandaise)' });
+    rules.push({ icon: 'account_tree', label: 'Gagnant/Perdant' });
+  }
+  if (config.pairingMode === 'neighbors') {
+    rules.push({ icon: 'leaderboard', label: 'Voisins de classement' });
   }
   if (config.lastRoundByRanking) {
-    rules.push({ icon: 'leaderboard', label: 'Dernière partie au classement' });
+    rules.push({ icon: 'leaderboard', label: 'Dernière partie figée' });
   }
   return rules;
 }

@@ -90,7 +90,7 @@ describe('buildRoundHistoryViews', () => {
     ]);
   });
 
-  it('labels the up-down rounds paired by results as Swiss rounds, the ranking one apart', () => {
+  it('labels the up-down rounds paired by results Gagnant/Perdant, the frozen one apart', () => {
     const dutch = [
       session(1, SessionStatus.CLOSED, true, [match('a', 'A', 'B')]),
       session(2, SessionStatus.CLOSED, false, [match('b', 'A', 'B')]),
@@ -100,7 +100,19 @@ describe('buildRoundHistoryViews', () => {
 
     expect(
       buildRoundHistoryViews(dutch, 'up_down', true, config).map((view) => view.label),
-    ).toEqual(['Au classement', 'Système suisse', 'Tirage au sort']);
+    ).toEqual(['Dernière partie figée', 'Gagnant/Perdant', 'Tirage au sort']);
+  });
+
+  it('labels the neighbour rounds Voisins de classement', () => {
+    const neighbors = [
+      session(1, SessionStatus.CLOSED, true, [match('a', 'A', 'B')]),
+      session(2, SessionStatus.CLOSED, false, [match('b', 'A', 'B')]),
+    ];
+    const config = { pairingMode: 'neighbors' as const, numberOfRound: 4 };
+
+    expect(
+      buildRoundHistoryViews(neighbors, 'up_down', true, config).map((view) => view.label),
+    ).toEqual(['Voisins de classement', 'Tirage au sort']);
   });
 
   it('keeps only the matches and rounds of the searched team, accents and case ignored', () => {

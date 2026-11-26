@@ -112,14 +112,21 @@ export const pairingModeOptions: {
   {
     value: 'dutch',
     icon: 'account_tree',
-    label: 'Système suisse (version hollandaise)',
+    label: 'Gagnant/Perdant',
     description:
-      '1re partie tirée au sort. Ensuite, les équipes au même nombre de victoires se rencontrent : la moitié haute du groupe joue la moitié basse. Les meilleures équipes se retrouvent en fin de tournoi.',
+      '1re partie tirée au sort. Ensuite, les équipes qui ont le même nombre de victoires se rencontrent : la moitié haute du groupe joue la moitié basse. Les meilleures équipes se retrouvent en fin de tournoi.',
+  },
+  {
+    value: 'neighbors',
+    icon: 'leaderboard',
+    label: 'Voisins de classement',
+    description:
+      '1re partie tirée au sort. Ensuite, 1er contre 2e, 3e contre 4e… selon le classement du moment. Les contraintes (revanche, même club) sont respectées autant que possible, mais peuvent être contournées pour garder des voisins de classement.',
   },
   {
     value: 'random',
     icon: 'shuffle',
-    label: 'Entièrement aléatoire',
+    label: 'Aléatoire',
     description:
       'Chaque partie est tirée au sort, en respectant les règles de tirage (clubs, revanches).',
   },

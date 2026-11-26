@@ -28,7 +28,7 @@ export interface StructuredTournamentConfig extends SpecificTournamentConfig {
 }
 
 /** How the up-down rounds after the first one, or the structured elimination rounds, are paired. */
-export type PairingMode = 'random' | 'dutch';
+export type PairingMode = 'random' | 'dutch' | 'neighbors';
 
 export interface UpDownTournamentConfig extends SpecificTournamentConfig {
   numberOfRound?: number;
