@@ -27,7 +27,7 @@ Plates are numbered 1, 2, 3… after each generation; byes get none.
 | `consolationCount`          | Consolation brackets under the main one (0 = main only)          |
 | `hasChallenges`             | One challenge per bracket, for its first-round losers            |
 | `hasThirdPlaceMatch`        | Third-place match between the main semi-final losers             |
-| `eliminationPairingMode`    | `random` (default, also when missing) or `dutch`: see Elimination |
+| `eliminationSeeding`        | `pyramidal` (default, also when missing) or `random`: see Elimination |
 | `eliminatedAfterQualifying` | Written at launch: the last X teams of the qualifiers stop       |
 | `plan`                      | Written at launch: the frozen plan the elimination rounds follow |
 
@@ -68,10 +68,13 @@ pool holding the group's matches.
 
 In each pool, `generateMatchesInPool` (`../../utils/match.utils.ts`):
 
-- With an odd number of teams, the team with the fewest past byes gets a bye (random on a tie):
-  stored `0-0`, `VALIDATED`, `isBye = true`, `byeWin = true`: one win, nothing added to the goal
-  average nor to the sum of scores, and left out of the worst loss and the game-by-game gaps.
-  (Byes created before `byeWin` existed were stored `pointsPerGame`-0 and keep counting that way.)
+- With an odd number of teams, the team with the fewest past byes gets a bye (drawn with the seed
+  on a tie): stored `pointsPerGame` against `clamp(pointsPerGame - 1, 0, cap)` (13-6 at 13 points),
+  `VALIDATED`, `isBye = true`, `byeWin = true`: one win, counted in points and goal average, left
+  out of the worst loss and the game-by-game gaps. `cap` is the `bye_loser_score_cap` app setting
+  (6 by default), see `../up-down/README.md`.
+- Every draw is seeded (`../../utils/seeded-random.utils.ts`): the same tournament always gives the
+  same rounds.
 - Pairs are drawn by `generatePairsWithContraints` (`../../utils/draw.utils.ts`). It tries
   constraint levels from strictest to loosest (no rematch, no same club, no partial same club…),
   starting with the levels allowed by the tournament config (`buildConstraintLadder`). The last
@@ -81,52 +84,43 @@ In each pool, `generateMatchesInPool` (`../../utils/match.utils.ts`):
 
 The elimination rounds follow the plan frozen at launch (`config.plan`, see `plan/`): the session
 `n` plays the groups of the plan round `n`, in the plan's order (Main, 3rd place, Challenge main,
-A, Challenge A, B…), which is the plate order. Each group is drawn with the constrained draw in a
-virtual pool named after its group key (`principale`, `third_place_match`, `challenge_principale`,
-`consolante_1`, `challenge_consolante_1`…). `EliminationTeamsResolver`
-(`elimination-teams.utils.ts`) gives each group its teams:
+A, Challenge A, B…), which is the plate order. Each group is a fixed bracket tree in a virtual pool
+named after its group key (`principale`, `third_place_match`, `challenge_principale`,
+`consolante_1`, `challenge_consolante_1`…). There is no repêchage: a partial bracket gets byes.
 
-- **Main / consolations**: at elimination 1, their slice of the qualifying ranking over the
-  non-stopped teams (the last `eliminatedAfterQualifying` teams play no elimination match); then
-  their own winners (byes count as wins), plus the plan's `bestLosersIn` best losers after the
-  first round of an incomplete bracket.
-- **Challenges**: from elimination 2, the parent's first-round losers minus the best losers
-  brought back to the parent; then like any bracket.
-- **Third place**: the two main semi-final losers, played with the final.
+### The tree
 
-An odd group gives one bye to the team with the fewest byes, then the best ranked; it counts as
-a win.
+For a bracket of `n` teams, `size = powerOfTwoCeil(n)`; the first round has `size / 2` slots,
+`size - n` of them byes and `n - size / 2` real matches (`plan/bracket-rounds.ts`,
+`bracket/bracket.utils.ts`). Every match stores a `bracketPosition` (0-based in its round); in the
+next round, match `k` takes the winners of positions `2k` and `2k + 1` (a bye winner is its team),
+with no new draw and no constraint. `seedingOrder(size)` is the standard order: `order(2) = [1, 2]`,
+then every position `p` of `order(k)` becomes `[p, 2k + 1 - p]` (`order(8) = [1, 8, 4, 5, 2, 7, 3,
+6]`), so seed 1 and seed 2 can only meet in the final.
 
-### Pairing mode (`eliminationPairingMode`)
+Byes are stored `0-0`, `isBye`, `byeWin`, `VALIDATED`: a win worth no point, shown « Exempté »,
+never with a score. They get no plate.
 
-Who plays whom inside a group, once its teams are known:
+### Seeding (`eliminationSeeding`)
 
-- `random` (default): the constrained draw above.
-- `dutch`: the Dutch Swiss pairing of the up-down mode (`pairDutch`,
-  `../up-down/dutch-pairing.utils.ts`), from the ranking of **every match played so far**
-  (qualifying and elimination, `computeGlobalRanking`), so the seeds move from round to round. All
-  the teams of a group are still in the running, so they form one score group: the top half of the
-  ranking plays the bottom half (1v5, 2v6, 3v7, 4v8 for 8 teams), not 1v8. The club and rematch
-  constraints of the tournament apply first, then are relaxed (`buildDutchLevels`). The bye is
-  still the elimination one (fewest byes, then best ranked), unlike the up-down one. Plates follow
-  the pairing order: plate 1 is the best ranked team's match.
+Who plays whom in the first round of a bracket (qualifiers are always drawn with the constraints):
 
-Best losers are ranked by `rankBestLosers` (`best-losers.utils.ts`): goal average of the
-lost match, cumulative ranking, previous matches' goal average walking back, then a random draw.
+- `pyramidal` (default): seed = rank in the qualifiers (inside the bracket's slice); the byes go to
+  the best seeds, the standard order sets the matchups (`buildPyramidalFirstRound`).
+- `random`: the exempt teams are drawn with the seed (usage `bracket`), the others are paired by the
+  constrained draw (rematches and clubs, `generatePairsWithContraints`), and the matches are
+  shuffled over the positions with the same seed (`buildRandomFirstRound`). The same tournament
+  always gives the same tree, but it is fixed after the first round: a rematch or two teams of the
+  same club can meet later.
 
-## Best losers chain
+### Who plays where (`EliminationTeamsResolver.slotsOf`, `elimination-teams.utils.ts`)
 
-When a bracket is not a power of 2, its first round has fewer teams than the capacity and the plan
-brings back `bestLosersIn` of its first-round losers at round 2 (the repêchés). Losers are ranked by
-`rankBestLosers` (`best-losers.utils.ts`), each criterion splitting ties of the previous one:
-
-1. goal average of the lost match;
-2. rank in the cumulative ranking;
-3. goal average of the previous matches, walking back;
-4. random draw.
-
-A bracket and its challenge share one ranking per round, so they agree on who was brought back.
-The challenge gets the first-round losers that were not repêchés.
+- **Main / consolations**: at their first round, their slice of the **qualifying** ranking over the
+  non-stopped teams (the last `eliminatedAfterQualifying` teams play no elimination match), placed by
+  the seeding; then the winners of their previous round, by position.
+- **Challenges**: at elimination 2, the losers of the parent's first-round **real** matches (never a
+  bye), seeded by their qualifying rank; then like any bracket.
+- **Third place**: the two main semi-final losers, one match at position 0, played with the final.
 
 ## Teams stopped after the qualifiers
 
@@ -145,8 +139,7 @@ come after every bracket team, in section `eliminated_qualifying` (« Éliminés
   (group key, `pools` for a team that reached no bracket without being stopped) and `sectionLabel`
   (French label).
 - `computeTeamStatus` feeds `GET /tournaments/:code/teams/:teamCode` (`PlayerTeamDto`):
-  `eliminatedAfterQualifying`, and `repechedFrom`, the label of the bracket where the team lost its
-  first round and still plays the second one. Losers falling into a challenge are not repêchés.
+  `eliminatedAfterQualifying`.
 
 ## Phase name and end (`computeTournamentStatus`)
 
