@@ -9,10 +9,11 @@ import {
   signal,
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { Icon } from '../icon/icon';
 
 @Component({
   selector: 'app-switch',
-  imports: [],
+  imports: [Icon],
   templateUrl: './switch.html',
   styleUrl: './switch.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -29,6 +30,8 @@ export class Switch implements ControlValueAccessor {
   readonly disabled = input<boolean>(false);
   readonly label = input<string>('');
   readonly description = input<string>('');
+  /** Emphasised line under the description, preceded by a warning icon. */
+  readonly warning = input<string>('');
 
   readonly checkedChange = output<boolean>();
 

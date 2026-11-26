@@ -15,6 +15,12 @@
       @if (description()) {
         <span class="switch-description">{{ description() }}</span>
       }
+      @if (warning()) {
+        <span class="switch-warning">
+          <app-icon name="warning" iconClass="switch-warning-icon" [ariaHidden]="true" />
+          {{ warning() }}
+        </span>
+      }
     </div>
   }
 </label>

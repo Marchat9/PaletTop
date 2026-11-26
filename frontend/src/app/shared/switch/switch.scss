@@ -67,6 +67,21 @@
     .switch-description {
       font-size: 0.8rem;
       color: var(--color-on-surface-variant);
+      // A line break in the description starts a new line.
+      white-space: pre-line;
+    }
+
+    .switch-warning {
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--color-warning);
+
+      ::ng-deep .switch-warning-icon {
+        font-size: 1.1rem;
+      }
     }
   }
 }
