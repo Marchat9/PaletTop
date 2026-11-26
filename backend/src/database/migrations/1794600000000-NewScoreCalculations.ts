@@ -29,11 +29,12 @@ export class NewScoreCalculations1794600000000 implements MigrationInterface {
         await queryRunner.query(`CREATE TYPE ${ENUM_NAME} AS ENUM(${NEW_VALUES})`);
         await queryRunner.query(
             `ALTER TABLE "tournament" ALTER COLUMN "scoreCalculation" TYPE ${ENUM_NAME}
-             USING (CASE "scoreCalculation"::text
-                 WHEN 'victory_ga' THEN 'victory_goal_average'
-                 WHEN 'victory_buchholz_ga' THEN 'victory_goal_average'
-                 WHEN 'score' THEN 'victory_points_scored'
-                 WHEN 'score_buchholz_ga' THEN 'victory_points_scored'
+             USING (CASE
+                 WHEN "competitionMode"::text = 'championship' THEN 'tournament_score'
+                 WHEN "scoreCalculation"::text IN ('victory_ga', 'victory_buchholz_ga')
+                     THEN 'victory_goal_average'
+                 WHEN "scoreCalculation"::text IN ('score', 'score_buchholz_ga')
+                     THEN 'victory_points_scored'
                  ELSE "scoreCalculation"::text
              END)::${ENUM_NAME}`,
         );
