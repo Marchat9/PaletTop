@@ -304,13 +304,35 @@ describe('rankTeams', () => {
 
         it('draws with the id of the tournament', () => {
             const ids = ['A', 'B', 'C', 'D', 'E', 'F'];
-            const ranked = rankTeams(
-                teams(...ids),
-                [],
-                ScoreCalculation.VICTORY_GOAL_AVERAGE,
-                't2',
+            const rankIn = (tournamentId: string) =>
+                order(
+                    rankTeams(
+                        teams(...ids),
+                        [],
+                        ScoreCalculation.VICTORY_GOAL_AVERAGE,
+                        tournamentId,
+                    ),
+                );
+
+            expect(rankIn('t1')).toEqual(byHash('t1', ids));
+            expect(rankIn('t2')).toEqual(byHash('t2', ids));
+            // Another tournament id really changes the draw, it is not just the team ids.
+            expect(rankIn('t2')).not.toEqual(rankIn('t1'));
+        });
+
+        it('falls back to the team id when two teams draw the same hash', () => {
+            // Real FNV-1a collision for the tournament 't1': both teams get 3319751732.
+            const [first, second] = ['team5941', 'team976030'];
+            expect(fixedDraw(`${TOURNAMENT_ID}:${first}`)).toBe(
+                fixedDraw(`${TOURNAMENT_ID}:${second}`),
             );
-            expect(order(ranked)).toEqual(byHash('t2', ids));
+
+            const forward = rank([first, second], [], ScoreCalculation.VICTORY_GOAL_AVERAGE);
+            const backward = rank([second, first], [], ScoreCalculation.VICTORY_GOAL_AVERAGE);
+
+            expect(order(forward)).toEqual([first, second]);
+            expect(order(backward)).toEqual([first, second]);
+            expect(forward.map((entry) => entry.rank)).toEqual([1, 2]);
         });
 
         it('ranks a team with no match, or with only a bye, without failing', () => {
