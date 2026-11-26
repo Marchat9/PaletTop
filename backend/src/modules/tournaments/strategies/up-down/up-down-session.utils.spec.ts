@@ -148,6 +148,14 @@ describe('computeFrozenStandings', () => {
         expect(standings[1]).toMatchObject({ teamId: 'A', rank: 2, wins: 4 });
     });
 
+    it('breaks a rank tie among the teams missing from the last round by team id', () => {
+        const tied = [entry('D', 1), entry('C', 1), entry('B', 1), entry('A', 1)];
+        const standings = computeFrozenStandings(tied, [played(1, 'B', 'A', 13, 2)]);
+        expect(standings.map((e) => e.teamId)).toEqual(['B', 'A', 'C', 'D']);
+        const reversed = computeFrozenStandings([...tied].reverse(), [played(1, 'B', 'A', 13, 2)]);
+        expect(reversed.map((e) => e.teamId)).toEqual(['B', 'A', 'C', 'D']);
+    });
+
     it('puts a team missing from the last round after the others, in ranking order', () => {
         const ranking = [entry('A', 1), entry('B', 2), entry('C', 3)];
         const standings = computeFrozenStandings(ranking, [played(1, 'B', 'C', 13, 2)]);

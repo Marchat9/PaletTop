@@ -98,15 +98,28 @@ export function generateMatchesInPool(
 }
 
 /**
- * Orders teams by their ranking; teams tied on rank are ordered by id so the result
- * never depends on the order the teams were loaded in. Teams missing from the ranking are dropped.
+ * Ranking entries, best first. Entries tied on rank are ordered by team id, so the order never
+ * depends on the order the entries were given in (the database does not keep one).
+ */
+export function sortRankingEntries(ranking: GlobalRankingEntry[]): GlobalRankingEntry[] {
+    return [...ranking].sort((a, b) => a.rank - b.rank || a.teamId.localeCompare(b.teamId));
+}
+
+/**
+ * Orders teams by their ranking; teams tied on rank are ordered by id so the result never depends
+ * on the order the teams were loaded in. A team missing from the ranking is not dropped: it comes
+ * after the ranked ones, in id order.
  */
 export function orderTeamsByRanking(teams: Team[], ranking: GlobalRankingEntry[]): Team[] {
     const teamsById = new Map(teams.map((team) => [team.id, team]));
-    return [...ranking]
-        .sort((a, b) => a.rank - b.rank || a.teamId.localeCompare(b.teamId))
+    const ranked = sortRankingEntries(ranking)
         .map((entry) => teamsById.get(entry.teamId))
         .filter((team): team is Team => !!team);
+    const rankedIds = new Set(ranked.map((team) => team.id));
+    const unranked = teams
+        .filter((team) => !rankedIds.has(team.id))
+        .sort((a, b) => a.id.localeCompare(b.id));
+    return [...ranked, ...unranked];
 }
 
 /**
@@ -169,11 +182,9 @@ export function generateMatchesByRanking(
     return generateMatchesFromPairs(pool, pairs, byeTeam, NO_VALUE_BYE, tournament, session);
 }
 
-/** Rank position of every team of `ranking`, best first (ties keep the ranking order). */
+/** Rank position of every team of `ranking`, best first (ties broken by team id). */
 function rankingPositions(ranking: GlobalRankingEntry[]): Map<string, number> {
-    return new Map(
-        [...ranking].sort((a, b) => a.rank - b.rank).map((entry, index) => [entry.teamId, index]),
-    );
+    return new Map(sortRankingEntries(ranking).map((entry, index) => [entry.teamId, index]));
 }
 
 /**

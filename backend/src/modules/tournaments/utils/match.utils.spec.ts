@@ -61,6 +61,18 @@ describe('orderTeamsByRanking', () => {
     });
 });
 
+describe('orderTeamsByRanking with unranked teams', () => {
+    it('keeps a team missing from the ranking, after the ranked ones, in id order', () => {
+        const ranking = [entry('B', 1), entry('A', 2)];
+        expect(ids(orderTeamsByRanking(teams(['Z', 'A', 'Y', 'B']), ranking))).toEqual([
+            'B',
+            'A',
+            'Y',
+            'Z',
+        ]);
+    });
+});
+
 describe('generateMatchesByRanking', () => {
     it('apparie chaque équipe avec son voisin de classement, dans l’ordre du classement', () => {
         const matches = generateMatchesByRanking(
@@ -216,6 +228,17 @@ describe('orderMatchesByRanking', () => {
     it('orders a match by its best ranked team, whichever side it is on', () => {
         const ordered = orderMatchesByRanking([match('E', 'C'), match('D', 'A')] as never, ranking);
         expect(ordered.map((m) => m.teamB?.id)).toEqual(['A', 'C']);
+    });
+
+    it('breaks a rank tie by team id, whatever the order of the ranking entries', () => {
+        const tied = [entry('C', 1), entry('B', 1), entry('A', 1)];
+        const ordered = orderMatchesByRanking([match('C', 'X'), match('A', 'Y')] as never, tied);
+        expect(ordered.map((m) => m.teamA?.id)).toEqual(['A', 'C']);
+        const reversed = orderMatchesByRanking(
+            [match('C', 'X'), match('A', 'Y')] as never,
+            [...tied].reverse(),
+        );
+        expect(reversed.map((m) => m.teamA?.id)).toEqual(['A', 'C']);
     });
 
     it('counts a team missing from the ranking as last, without dropping its match', () => {

@@ -3,6 +3,7 @@ import { UpDownCompetitionConfiguration } from 'src/entities/tournament-competit
 import { TournamentMatch } from 'src/entities/tounament-match.entity';
 import { PairingMode } from 'src/enum/tounament.enum';
 import { GlobalRankingEntry } from '../../responses/ranking.dto';
+import { sortRankingEntries } from '../../utils/match.utils';
 
 const MODE_LABEL = 'Montée / Descente';
 
@@ -82,8 +83,7 @@ export function computeFrozenStandings(
     }
     const placed = new Set(orderedIds);
     const byeIds = byes.map((match) => match.teamA.id);
-    const missing = [...ranking]
-        .sort((a, b) => a.rank - b.rank)
+    const missing = sortRankingEntries(ranking)
         .map((entry) => entry.teamId)
         .filter((teamId) => !placed.has(teamId) && !byeIds.includes(teamId));
 
