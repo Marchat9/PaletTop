@@ -470,6 +470,73 @@ describe('Structured elimination generated from the frozen plan', () => {
         });
     });
 
+    describe('Standings of a pyramidal bracket with byes', () => {
+        async function playTwelve() {
+            return simulate({
+                teamCount: 12,
+                targetCount: 12,
+                consolationCount: 0,
+                numberOfQualifyingRounds: 2,
+                hasChallenges: true,
+                hasThirdPlaceMatch: true,
+                choice: { consolationCount: 0, eliminatedAfterQualifying: 0 },
+                eliminationSeeding: EliminationSeeding.PYRAMIDAL,
+            });
+        }
+
+        it('ranks the 12 teams 1 to 12 once, the winner of the final first', async () => {
+            const result = await playTwelve();
+            const standings = result.strategy.computeStandings(
+                result.tournament,
+                result.allMatches,
+            );
+
+            expect(standings.map((entry) => entry.rank)).toEqual(
+                Array.from({ length: 12 }, (_, i) => i + 1),
+            );
+            const finalRound = result.rounds[result.rounds.length - 1];
+            const final = finalRound.matches.find((m) => m.pool!.name === 'principale')!;
+            const winner = final.scoreA > final.scoreB ? final.teamA : final.teamB!;
+            const loser = final.scoreA > final.scoreB ? final.teamB! : final.teamA;
+            expect(standings[0].teamId).toBe(winner.id);
+            expect(standings[1].teamId).toBe(loser.id);
+        });
+
+        it('keeps the teams with a first-round bye in the principal table, never in the challenge', async () => {
+            const result = await playTwelve();
+            const standings = result.strategy.computeStandings(
+                result.tournament,
+                result.allMatches,
+            );
+            const sectionOf = new Map(standings.map((entry) => [entry.teamId, entry.section]));
+            const firstRound = eliminationRounds(result)[0].matches;
+
+            const byeTeams = firstRound.filter((m) => m.isBye).map((m) => m.teamA.id);
+            expect(byeTeams).toHaveLength(4);
+            for (const teamId of byeTeams) {
+                expect(sectionOf.get(teamId)).toBe('principale');
+            }
+        });
+
+        it('sends the 4 teams that lost a first-round match to the challenge', async () => {
+            const result = await playTwelve();
+            const standings = result.strategy.computeStandings(
+                result.tournament,
+                result.allMatches,
+            );
+            const sectionOf = new Map(standings.map((entry) => [entry.teamId, entry.section]));
+            const firstRound = eliminationRounds(result)[0].matches;
+
+            const losers = firstRound
+                .filter((m) => !m.isBye)
+                .map((m) => (m.scoreA > m.scoreB ? m.teamB!.id : m.teamA.id));
+            expect(losers).toHaveLength(4);
+            for (const teamId of losers) {
+                expect(sectionOf.get(teamId)).toBe('challenge_principale');
+            }
+        });
+    });
+
     it('never puts the 6 teams stopped after the qualifiers in an elimination match', async () => {
         const result = await simulate({
             teamCount: 70,
