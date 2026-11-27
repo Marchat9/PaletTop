@@ -1,15 +1,4 @@
 .card-content {
-  .info-text {
-    display: flex;
-    gap: 0.5rem;
-    align-items: center;
-    color: var(--color-on-surface-variant);
-
-    .info-label {
-      font-size: 0.9rem;
-    }
-  }
-
   .field-error {
     font-size: 0.85rem;
     color: var(--color-error);
