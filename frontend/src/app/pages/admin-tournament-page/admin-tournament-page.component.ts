@@ -253,6 +253,8 @@ export class AdminTournamentPageComponent implements OnInit {
     switch (this.tournament()?.status) {
       case TournamentStatus.DRAFT:
         return "Le tournoi n'a pas encore démarré : les rounds apparaîtront ici une fois lancé depuis la carte « Prochaine étape ».";
+      case TournamentStatus.FINISHED:
+        return '🎉 Le tournoi est terminé, félicitation à tout le monde. 🎉';
       case TournamentStatus.CANCELLED:
         return "Le tournoi est annulé. Contactez l'administrateur pour plus d'informations.";
       default:

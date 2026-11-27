@@ -522,12 +522,13 @@ describe('AdminTournamentPageComponent', { timeout: 15_000 }, () => {
   });
 
   describe('donation', () => {
-    it('shows the donation card and hides the rounds card once the tournament is finished', () => {
+    it('shows the donation card above the finished message once the tournament is over', () => {
       const { fixture } = setup({ status: TournamentStatus.FINISHED });
       fixture.detectChanges();
 
       expect(fixture.debugElement.query(By.directive(DonationCard))).not.toBeNull();
-      expect(fixture.debugElement.query(By.directive(CurrentRoundCard))).toBeNull();
+      expect(fixture.debugElement.query(By.directive(CurrentRoundCard))).not.toBeNull();
+      expect(fixture.nativeElement.textContent).toContain('Le tournoi est terminé');
     });
 
     it('shows the rounds card and no donation card while the tournament is active', () => {
