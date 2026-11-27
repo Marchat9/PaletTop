@@ -2,13 +2,18 @@
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
-  font-size: 0.8rem;
+  // A parent can size the timer on its own text (`--match-timer-size: 1em`).
+  font-size: var(--match-timer-size, 0.8rem);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
+  line-height: 1;
   color: var(--color-on-surface-variant);
 
-  &__icon {
-    font-size: 1rem;
+  // The icon is rendered by app-icon: only a deep rule reaches it. Sized on the digits, so that
+  // it neither stretches the line nor sits off their centre.
+  ::ng-deep .timer__icon {
+    font-size: 1.15em;
+    line-height: 1;
   }
 
   &--running {

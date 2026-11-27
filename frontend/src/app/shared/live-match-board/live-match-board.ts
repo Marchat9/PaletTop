@@ -15,7 +15,7 @@ interface LiveMatchTile extends LiveMatchView {
 }
 
 /** Height of a tile plus the gap below it, in rem: what a page is cut by. */
-export const LIVE_MATCH_TILE_REM = 6.6;
+export const LIVE_MATCH_TILE_REM = 7.1;
 
 /**
  * Matches of the round on the spectator screens, one tile each with its status colour and large
