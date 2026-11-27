@@ -71,6 +71,8 @@ export function toTournamentLiveMatches(matches: SessionMatchDto[]): LiveMatchVi
       teamB: match.teamB?.name ?? null,
       scoreA: match.scoreA,
       scoreB: match.scoreB,
+      startedAt: match.startedAt,
+      finishedAt: match.finishedAt,
     })),
   );
 }
@@ -88,6 +90,8 @@ export function toTrainingLiveMatches(matches: TrainingMatchDto[]): LiveMatchVie
     teamB: match.teamB ? teamLabel(match.teamB) : null,
     scoreA: match.scoreA,
     scoreB: match.scoreB,
+    startedAt: match.startedAt ?? null,
+    finishedAt: match.finishedAt ?? null,
   }));
 }
 
