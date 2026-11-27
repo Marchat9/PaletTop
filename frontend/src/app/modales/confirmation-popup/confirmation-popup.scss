@@ -40,13 +40,45 @@
   color: var(--color-on-surface-variant);
 }
 
-.actions {
+.footer {
   display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
+  flex-direction: column;
 
-  app-button {
-    flex: 1;
-    min-width: 8rem;
+  .actions {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+
+    app-button {
+      flex: 1;
+      min-width: 8rem;
+    }
+  }
+
+  // "Don't ask again" at the bottom left, the buttons on the right; on a narrow screen the box
+  // takes its own line and the buttons stay right-aligned below it.
+  &.with-opt-out {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1rem;
+
+    .opt-out ::ng-deep .checkbox-option {
+      font-size: 0.85rem;
+
+      .checkbox-label {
+        color: var(--color-on-surface-variant);
+      }
+    }
+
+    .actions {
+      margin-left: auto;
+      gap: 0.75rem;
+
+      app-button {
+        flex: none;
+        min-width: 0;
+      }
+    }
   }
 }

@@ -31,7 +31,13 @@ import {
 import { BackLink } from 'src/app/shared/back-link/back-link';
 import { AdminHeaderInfo } from 'src/app/shared/admin-page-header/admin-page-header.model';
 import { AnimateOnChangeDirective } from 'src/app/shared/animate-on-change/animate-on-change.directive';
-import { addNotification } from 'src/app/store/app-config/app-config.actions';
+import { addNotification, setLocalStorageData } from 'src/app/store/app-config/app-config.actions';
+import {
+  SKIP_ROUND_CONFIRMATION_STORAGE_KEY,
+  selectSkipRoundConfirmation,
+} from 'src/app/store/app-config/app-config.selectors';
+import { withSkippedRound } from 'src/app/store/app-config/round-confirmation';
+import { buildTrainingRoundConfirmation } from 'src/app/utils/round-confirmation.util';
 import { connectTrainingAdministrator } from 'src/app/store/training/training.admin.actions';
 import { adminUpdateTrainingScore } from 'src/app/store/training/training.match.actions';
 import {
@@ -142,6 +148,9 @@ export class AdminTrainingSessionPage implements OnInit, OnDestroy {
     selectGenerateTrainingRoundLoading,
   );
   public readonly closeSessionLoading = this.store.selectSignal(selectCloseTrainingSessionLoading);
+  private readonly skipRoundConfirmation = this.store.selectSignal(selectSkipRoundConfirmation);
+  /** A double click lands before the dialog covers the button: a single dialog opens. */
+  private isConfirmingRound = false;
   private readonly closeSessionRequestError = this.store.selectSignal(
     selectCloseTrainingSessionError,
   );
@@ -586,10 +595,39 @@ export class AdminTrainingSessionPage implements OnInit, OnDestroy {
 
   public generateRound(): void {
     const sessionCode = this.sessionCode();
-    if (!sessionCode) {
+    if (!sessionCode || this.generateRoundLoading() || this.isConfirmingRound) {
       return;
     }
-    this.store.dispatch(generateTrainingRound({ sessionCode }));
+    if (this.skipRoundConfirmation().training.includes(sessionCode)) {
+      this.store.dispatch(generateTrainingRound({ sessionCode }));
+      return;
+    }
+
+    const data: ConfirmationData = {
+      ...buildTrainingRoundConfirmation(),
+      onDontAskAgain: () =>
+        this.store.dispatch(
+          setLocalStorageData({
+            key: SKIP_ROUND_CONFIRMATION_STORAGE_KEY,
+            value: withSkippedRound(this.skipRoundConfirmation(), 'training', sessionCode),
+          }),
+        ),
+    };
+
+    this.isConfirmingRound = true;
+    this.dialog
+      .open<boolean, ConfirmationData>(ConfirmationPopupComponent, {
+        data,
+        panelClass: 'dialog-panel',
+        backdropClass: 'dialog-backdrop-light',
+        disableClose: false,
+      })
+      .closed.subscribe((confirmed) => {
+        this.isConfirmingRound = false;
+        if (confirmed) {
+          this.store.dispatch(generateTrainingRound({ sessionCode }));
+        }
+      });
   }
 
   public updateScore(update: ScoreUpdate): void {

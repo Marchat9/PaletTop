@@ -94,6 +94,13 @@ import { Nullable } from 'src/app/models/nullable.model';
 import { TournamentHeaderComponent } from './components/tournament-header/tournament-header.component';
 import { TournamentTeamConfigurationCard } from './components/tournament-team-configuration-card/tournament-team-configuration-card';
 import { DonationCard } from './components/donation-card/donation-card';
+import { buildTournamentRoundConfirmation } from 'src/app/utils/round-confirmation.util';
+import {
+  SKIP_ROUND_CONFIRMATION_STORAGE_KEY,
+  selectSkipRoundConfirmation,
+} from 'src/app/store/app-config/app-config.selectors';
+import { setLocalStorageData } from 'src/app/store/app-config/app-config.actions';
+import { withSkippedRound } from 'src/app/store/app-config/round-confirmation';
 import { environment } from 'src/environments/environment';
 import {
   clearTournamentClubSuggestions,
@@ -202,6 +209,9 @@ export class AdminTournamentPageComponent implements OnInit {
     () => this.tournament()?.status === TournamentStatus.FINISHED,
   );
   public readonly donationUrl = environment.about.donationUrl;
+  private readonly skipRoundConfirmation = this.store.selectSignal(selectSkipRoundConfirmation);
+  /** A double click lands before the dialog covers the button: a single dialog opens. */
+  private isConfirmingRound = false;
   /** Once the tournament is over, the organiser is invited to support the app. */
   public readonly showDonation = computed(() => this.isFinished() && !!this.donationUrl);
   public readonly canGenerateNewSession = computed(
@@ -659,10 +669,41 @@ export class AdminTournamentPageComponent implements OnInit {
   public nextSession(): void {
     // The button only re-renders as loading on the next change detection: a double click can
     // land in between. The store signal is already up to date after the first dispatch.
-    if (this.nextLoading()) {
+    if (this.nextLoading() || this.isConfirmingRound) {
       return;
     }
-    this.store.dispatch(nextSession());
+    const code = this.tournament()?.code;
+    if (!code || this.skipRoundConfirmation().tournament.includes(code)) {
+      this.store.dispatch(nextSession());
+      return;
+    }
+
+    const roundNumber = (this.currentSession()?.sessionNumber ?? 0) + 1;
+    const data: ConfirmationData = {
+      ...buildTournamentRoundConfirmation(roundNumber, this.tournament()?.plan ?? null),
+      onDontAskAgain: () =>
+        this.store.dispatch(
+          setLocalStorageData({
+            key: SKIP_ROUND_CONFIRMATION_STORAGE_KEY,
+            value: withSkippedRound(this.skipRoundConfirmation(), 'tournament', code),
+          }),
+        ),
+    };
+
+    this.isConfirmingRound = true;
+    this.dialog
+      .open<boolean, ConfirmationData>(ConfirmationPopupComponent, {
+        data,
+        panelClass: 'dialog-panel',
+        backdropClass: 'dialog-backdrop-light',
+        disableClose: false,
+      })
+      .closed.subscribe((confirmed) => {
+        this.isConfirmingRound = false;
+        if (confirmed) {
+          this.store.dispatch(nextSession());
+        }
+      });
   }
 
   public completeTournament(): void {

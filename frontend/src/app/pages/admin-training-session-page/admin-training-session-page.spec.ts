@@ -1,4 +1,9 @@
 import { Dialog } from '@angular/cdk/dialog';
+import { selectSkipRoundConfirmation } from 'src/app/store/app-config/app-config.selectors';
+import { setLocalStorageData } from 'src/app/store/app-config/app-config.actions';
+import { SkipRoundConfirmation } from 'src/app/store/app-config/round-confirmation';
+import { ConfirmationPopupComponent } from 'src/app/modales/confirmation-popup/confirmation-popup';
+import { generateTrainingRound } from 'src/app/store/training/training.round.actions';
 import { LeaderboardPopup } from 'src/app/modales/leaderboard-popup/leaderboard-popup';
 import {
   followTrainingClubLeaderboard,
@@ -77,7 +82,15 @@ function buildSession(): TrainingSessionAdminDto {
   };
 }
 
-function setup() {
+interface SetupOptions {
+  skipRoundConfirmation?: SkipRoundConfirmation;
+  generateLoading?: boolean;
+}
+
+function setup({
+  skipRoundConfirmation = { tournament: [], training: [] },
+  generateLoading = false,
+}: SetupOptions = {}) {
   const activatedRoute = {
     paramMap: of(convertToParamMap({ trainingCode: 'LAITON-2026', sessionCode: '1234' })),
   } as unknown as ActivatedRoute;
@@ -109,7 +122,8 @@ function setup() {
           { selector: selectLastCheckedInTrainingParticipant, value: null },
           { selector: selectCheckinTrainingParticipantLoading, value: false },
           { selector: selectCreateTrainingTeamLoading, value: false },
-          { selector: selectGenerateTrainingRoundLoading, value: false },
+          { selector: selectGenerateTrainingRoundLoading, value: generateLoading },
+          { selector: selectSkipRoundConfirmation, value: skipRoundConfirmation },
           { selector: selectCloseTrainingSessionLoading, value: false },
           { selector: selectCloseTrainingSessionError, value: null },
           { selector: selectAdminUpdateTrainingScoreLoading, value: false },
@@ -126,6 +140,81 @@ function setup() {
 }
 
 describe('AdminTrainingSessionPage', () => {
+  describe('nouveau round', () => {
+    const generate = generateTrainingRound({ sessionCode: '1234' });
+
+    it('demande confirmation avant de générer un round', () => {
+      const { fixture, store, dialogMock } = setup();
+      dialogMock.open.mockReturnValue({ closed: of(true) });
+      const dispatchSpy = vi.spyOn(store, 'dispatch');
+
+      fixture.componentInstance.generateRound();
+
+      expect(dialogMock.open.mock.calls[0][0]).toBe(ConfirmationPopupComponent);
+      expect(dialogMock.open.mock.calls[0][1].data.title).toBe('Générer un nouveau round ?');
+      expect(dispatchSpy).toHaveBeenCalledWith(generate);
+    });
+
+    it('ne génère rien quand l’admin annule', () => {
+      const { fixture, store, dialogMock } = setup();
+      dialogMock.open.mockReturnValue({ closed: of(false) });
+      const dispatchSpy = vi.spyOn(store, 'dispatch');
+
+      fixture.componentInstance.generateRound();
+
+      expect(dispatchSpy).not.toHaveBeenCalledWith(generate);
+    });
+
+    it('génère directement quand l’admin ne veut plus être sollicité pour cette séance', () => {
+      const { fixture, store, dialogMock } = setup({
+        skipRoundConfirmation: { tournament: [], training: ['1234'] },
+      });
+      const dispatchSpy = vi.spyOn(store, 'dispatch');
+
+      fixture.componentInstance.generateRound();
+
+      expect(dialogMock.open).not.toHaveBeenCalled();
+      expect(dispatchSpy).toHaveBeenCalledWith(generate);
+    });
+
+    it('demande encore quand seul un tournoi de même code a été désactivé', () => {
+      const { fixture, dialogMock } = setup({
+        skipRoundConfirmation: { tournament: ['1234'], training: [] },
+      });
+      dialogMock.open.mockReturnValue({ closed: of(false) });
+
+      fixture.componentInstance.generateRound();
+
+      expect(dialogMock.open).toHaveBeenCalledTimes(1);
+    });
+
+    it('retient le choix « ne plus demander » de cette séance dans le stockage local', () => {
+      const { fixture, store, dialogMock } = setup();
+      dialogMock.open.mockReturnValue({ closed: of(true) });
+      const dispatchSpy = vi.spyOn(store, 'dispatch');
+
+      fixture.componentInstance.generateRound();
+      dialogMock.open.mock.calls[0][1].data.onDontAskAgain();
+
+      expect(dispatchSpy).toHaveBeenCalledWith(
+        setLocalStorageData({
+          key: 'skipRoundConfirmation',
+          value: { tournament: [], training: ['1234'] },
+        }),
+      );
+    });
+
+    it('ne fait rien pendant la génération d’un round', () => {
+      const { fixture, store, dialogMock } = setup({ generateLoading: true });
+      const dispatchSpy = vi.spyOn(store, 'dispatch');
+
+      fixture.componentInstance.generateRound();
+
+      expect(dialogMock.open).not.toHaveBeenCalled();
+      expect(dispatchSpy).not.toHaveBeenCalledWith(generate);
+    });
+  });
+
   it('ouvre la popup de check-in avec le code de la séance', () => {
     const { fixture, dialogMock } = setup();
 
