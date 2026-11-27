@@ -22,7 +22,7 @@ function tournament(teams: TounamentTeamDto[]): TournamentDto {
     date: new Date(),
     configuration: {
       maxTeamCapacity: 64,
-      scoreCalculation: 'victory_ga',
+      scoreCalculation: 'victory_goal_average',
       pointsPerGame: 13,
       rematch: false,
       matchAgainstFullSameClub: false,

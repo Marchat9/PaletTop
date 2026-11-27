@@ -4,11 +4,10 @@ export enum CompetitionMode {
     CHAMPIONSHIP = 'championship',
 }
 export enum ScoreCalculation {
-    VICTORY_AND_GOAL_AVERAGE = 'victory_ga',
-    SCORE = 'score',
+    VICTORY_GOAL_AVERAGE = 'victory_goal_average',
+    VICTORY_BEST_DEFEATS = 'victory_best_defeats',
+    VICTORY_POINTS_SCORED = 'victory_points_scored',
     TOURNAMENT_SCORE = 'tournament_score',
-    VICTORY_BUCHHOLZ_GOAL_AVERAGE = 'victory_buchholz_ga',
-    SCORE_BUCHHOLZ_GOAL_AVERAGE = 'score_buchholz_ga',
 }
 /** How the up-down rounds after the first one are paired. */
 export enum PairingMode {

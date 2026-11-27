@@ -29,6 +29,18 @@ export const competitionModeOptions: {
   },
 ];
 
+const LAST_GAMES_GAP_CRITERION =
+  "Écart de la dernière partie, puis de l'avant-dernière, et ainsi de suite";
+
+const TIE_RULE =
+  'Sur une rare égalité parfaite sur tous les critères, les équipes sont départagées par tirage au sort neutre.';
+
+// Numbered criteria and the tie rule, shown under the name of a calculation.
+function criteriaHtml(criteria: string[]): string {
+  const items = criteria.map((criterion) => `<li>${criterion}</li>`).join('');
+  return `<ol>${items}</ol><p class="note tie-rule">${TIE_RULE}</p>`;
+}
+
 export const scoreCalculationOptions: {
   value: ScoreCalculation;
   label: string;
@@ -37,29 +49,41 @@ export const scoreCalculationOptions: {
   htmlDescription?: string;
 }[] = [
   {
-    value: 'victory_ga',
+    value: 'victory_goal_average',
     icon: 'calculate',
-    label: 'Victoire & Goal Average',
-    description: 'Nombre de victoires, puis Goal Average, puis points marqués',
+    label: 'Victoires & Goal Average',
+    description: 'Les victoires d’abord, puis l’écart de points sur tout le tournoi',
+    htmlDescription: criteriaHtml([
+      'Victoires',
+      'Goal average',
+      'Points marqués',
+      LAST_GAMES_GAP_CRITERION,
+    ]),
   },
   {
-    value: 'score',
-    icon: 'swap_vert',
-    label: 'Somme des scores & Goal Average',
-    description: 'Scores de chaque manche additionnés, puis Goal Average, puis victoires',
-  },
-  {
-    value: 'victory_buchholz_ga',
+    value: 'victory_best_defeats',
     icon: 'military_tech',
-    label: 'Victoire, Bch. & Goal Average',
-    description:
-      'Nombre de victoires, puis score Buchholz (somme des victoires des adversaires), puis Goal Average',
+    label: 'Victoires & Meilleure défaite',
+    description: 'Les victoires d’abord, puis la défaite la moins lourde',
+    htmlDescription: criteriaHtml([
+      'Victoires',
+      'Meilleure défaite',
+      'Goal average',
+      'Points marqués',
+      LAST_GAMES_GAP_CRITERION,
+    ]),
   },
   {
-    value: 'score_buchholz_ga',
-    icon: 'stacked_line_chart',
-    label: 'Somme des scores, Bch. & Goal Average',
-    description: 'Scores additionnés, puis score Buchholz, puis Goal Average',
+    value: 'victory_points_scored',
+    icon: 'sports_score',
+    label: 'Victoires & Points marqués',
+    description: 'Les victoires d’abord, puis le total de points marqués',
+    htmlDescription: criteriaHtml([
+      'Victoires',
+      'Points marqués',
+      'Moins de points encaissés',
+      LAST_GAMES_GAP_CRITERION,
+    ]),
   },
   {
     value: 'tournament_score',

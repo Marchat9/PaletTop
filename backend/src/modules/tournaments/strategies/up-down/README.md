@@ -71,9 +71,8 @@ When `isRankingRound(config, sessionNumber)` is true:
 
 `computeGlobalRanking` is not overridden: the base class ranks with the generic module
 `../../utils/ranking-calculation.utils.ts` (`rankTeams`), by the tournament's `scoreCalculation`.
-The up-down mode offers « Victoire, Bch. & GA » and « Score, Bch. & GA » by default (app setting
-`score_calculations_by_mode`). Bch. = Buchholz: the sum of the wins of the opponents met, byes
-excluded.
+The up-down mode offers the three victory-based calculations by default, goal-average first (app
+setting `score_calculations_by_mode`). See « Score calculations » in `../README.md`.
 
 ## Injected dependencies
 

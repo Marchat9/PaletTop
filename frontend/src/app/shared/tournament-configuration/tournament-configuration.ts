@@ -123,7 +123,7 @@ export class TournamentConfiguration implements OnInit {
     const initialScoreCalculation =
       tournament?.configuration.scoreCalculation ??
       this.scoreCalculationsByMode()[initialCompetitionMode]?.[0] ??
-      'victory_ga';
+      'victory_goal_average';
 
     this.form = new FormGroup({
       parameters: new FormGroup({

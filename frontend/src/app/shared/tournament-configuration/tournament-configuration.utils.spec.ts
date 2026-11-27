@@ -84,20 +84,25 @@ describe('differentFromHomeClub', () => {
 
 describe('offeredScoreCalculations', () => {
   const byMode = {
-    standard: ['victory_ga' as const, 'score' as const],
-    up_down: ['score' as const],
+    standard: ['victory_goal_average' as const, 'victory_points_scored' as const],
+    up_down: ['victory_points_scored' as const],
     championship: ['tournament_score' as const],
   };
 
   it('offers the calculations of the selected mode, in the setting order', () => {
-    expect(offeredScoreCalculations(byMode, 'standard', null)).toEqual(['victory_ga', 'score']);
+    expect(offeredScoreCalculations(byMode, 'standard', null)).toEqual([
+      'victory_goal_average',
+      'victory_points_scored',
+    ]);
   });
 
   it('keeps the calculation of an edited tournament even when no longer offered', () => {
-    expect(offeredScoreCalculations(byMode, 'up_down', 'victory_ga')).toEqual([
-      'score',
-      'victory_ga',
+    expect(offeredScoreCalculations(byMode, 'up_down', 'victory_goal_average')).toEqual([
+      'victory_points_scored',
+      'victory_goal_average',
     ]);
-    expect(offeredScoreCalculations(byMode, 'up_down', 'score')).toEqual(['score']);
+    expect(offeredScoreCalculations(byMode, 'up_down', 'victory_points_scored')).toEqual([
+      'victory_points_scored',
+    ]);
   });
 });

@@ -24,7 +24,7 @@ function entries(count: number, name = (index: number) => `Equipe ${index}`): Gl
     goalAverage: index === 0 ? 19 : -4,
     matchesPlayed: 3,
     tournamentPoints: 9,
-    buchholz: 0,
+    losses: 1,
   }));
 }
 
@@ -85,22 +85,31 @@ describe('paginateRanking', () => {
 });
 
 describe('buildRankingPdf', () => {
-  it('shows victories, points and a signed goal average with its legend by default', () => {
-    const document = buildRankingPdf(tournament('victory_ga'), entries(3), APP_URL);
-    const content = document.content as unknown[];
-    const table = lastTable(content);
+  it.each(['victory_goal_average', 'victory_best_defeats', 'victory_points_scored'] as const)(
+    'shows victories, defeats, a signed goal average and PP-PC with its legend (%s)',
+    (scoreCalculation) => {
+      const document = buildRankingPdf(tournament(scoreCalculation), entries(3), APP_URL);
+      const content = document.content as unknown[];
+      const table = lastTable(content);
 
-    expect(table.table.body[0].map((cell) => (cell as { text: string }).text)).toEqual([
-      '#',
-      'Équipe',
-      'V',
-      'Pts+',
-      'GA',
-    ]);
-    expect((table.table.body[1][4] as { text: string }).text).toBe('+19');
-    expect((table.table.body[2][4] as { text: string }).text).toBe('-4');
-    expect(content[content.length - 1]).toEqual(expect.objectContaining({ style: 'legend' }));
-  });
+      expect(table.table.body[0].map((cell) => (cell as { text: string }).text)).toEqual([
+        '#',
+        'Équipe',
+        'V',
+        'D',
+        'GA',
+        'PP-PC',
+      ]);
+      expect((table.table.body[1][2] as { text: string }).text).toBe('3');
+      expect((table.table.body[1][3] as { text: string }).text).toBe('1');
+      expect((table.table.body[1][4] as { text: string }).text).toBe('+19');
+      expect((table.table.body[1][5] as { text: string }).text).toBe('39-20');
+      expect((table.table.body[2][4] as { text: string }).text).toBe('-4');
+      expect(JSON.stringify(content[content.length - 1])).toContain(
+        'PP-PC = points pour - points contre',
+      );
+    },
+  );
 
   it('shows only the tournament points column in tournament score mode', () => {
     const table = lastTable(
@@ -114,54 +123,9 @@ describe('buildRankingPdf', () => {
     ]);
   });
 
-  it('shows the score then the signed goal average that breaks its ties in score mode', () => {
-    const table = lastTable(
-      buildRankingPdf(tournament('score'), entries(2), APP_URL).content as unknown[],
-    );
-
-    expect(table.table.body[0].map((cell) => (cell as { text: string }).text)).toEqual([
-      '#',
-      'Équipe',
-      'Score',
-      'GA',
-    ]);
-    expect((table.table.body[1][3] as { text: string }).text).toBe('+19');
-  });
-
-  it('shows the Buchholz between the victories and the goal average, with its legend', () => {
-    const document = buildRankingPdf(tournament('victory_buchholz_ga'), entries(2), APP_URL);
-    const content = document.content as unknown[];
-    const table = lastTable(content);
-
-    expect(table.table.body[0].map((cell) => (cell as { text: string }).text)).toEqual([
-      '#',
-      'Équipe',
-      'V',
-      'Bch.',
-      'GA',
-    ]);
-    expect(JSON.stringify(content[content.length - 1])).toContain(
-      'Bch. = Score Buchholz (Somme des victoires des adversaires)',
-    );
-  });
-
-  it('shows the score, the Buchholz and the goal average in score + Buchholz mode', () => {
-    const table = lastTable(
-      buildRankingPdf(tournament('score_buchholz_ga'), entries(2), APP_URL).content as unknown[],
-    );
-
-    expect(table.table.body[0].map((cell) => (cell as { text: string }).text)).toEqual([
-      '#',
-      'Équipe',
-      'Score',
-      'Bch.',
-      'GA',
-    ]);
-  });
-
   it('lays a long ranking out in two columns with a page break before each extra page', () => {
     const content = buildRankingPdf(
-      tournament('score'),
+      tournament('victory_points_scored'),
       entries(RANKING_FIRST_PAGE_ROWS * 2 + 1),
       APP_URL,
     ).content as unknown[];
@@ -174,6 +138,8 @@ describe('buildRankingPdf', () => {
   });
 
   it('names the file after the tournament', () => {
-    expect(rankingPdfFileName(tournament('score'))).toBe('classement-open-2026.pdf');
+    expect(rankingPdfFileName(tournament('victory_points_scored'))).toBe(
+      'classement-open-2026.pdf',
+    );
   });
 });

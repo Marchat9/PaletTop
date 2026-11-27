@@ -17,8 +17,8 @@ import {
 } from './app-settings.selectors';
 
 const SCORE_CALCULATIONS = {
-  standard: ['score'],
-  up_down: ['victory_ga'],
+  standard: ['victory_points_scored'],
+  up_down: ['victory_goal_average'],
   championship: ['tournament_score'],
 };
 

@@ -72,8 +72,8 @@ export interface AppSettingDetailDto extends PublicAppSettingDto {
 
 /** Same default as the backend: used until the public settings are loaded, or if they fail. */
 export const DEFAULT_SCORE_CALCULATIONS_BY_MODE: ScoreCalculationsByMode = {
-  standard: ['victory_ga', 'score'],
-  up_down: ['victory_buchholz_ga', 'score_buchholz_ga'],
+  standard: ['victory_goal_average', 'victory_best_defeats', 'victory_points_scored'],
+  up_down: ['victory_goal_average', 'victory_best_defeats', 'victory_points_scored'],
   championship: ['tournament_score'],
 };
 

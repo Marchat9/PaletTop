@@ -7,7 +7,7 @@ function configuration(
 ): TournamentConfigurationDetailsDto {
   return {
     maxTeamCapacity: 16,
-    scoreCalculation: 'victory_ga',
+    scoreCalculation: 'victory_goal_average',
     pointsPerGame: 13,
     rematch: false,
     matchAgainstFullSameClub: false,
@@ -30,7 +30,7 @@ describe('buildTournamentRules', () => {
   it('liste les réglages communs et uniquement les options activées', () => {
     expect(labels(configuration({ rematch: true }))).toEqual([
       '13 points',
-      'Victoire & Goal Average',
+      'Victoires & Goal Average',
       'Rematch autorisés',
     ]);
   });

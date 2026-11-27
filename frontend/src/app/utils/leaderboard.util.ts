@@ -43,6 +43,14 @@ function signed(value: number): string {
   return value > 0 ? `+${value}` : String(value);
 }
 
+const POINTS_FOR_AGAINST_TITLE =
+  'Points pour - points contre (somme des points marqués - somme des points encaissés)';
+
+/** « 39-20 »: the points scored then conceded. */
+function pointsForAgainst(entry: GlobalRankingEntry): string {
+  return `${entry.pointsFor}-${entry.pointsAgainst}`;
+}
+
 function goalAverage(value: number): LeaderboardCell {
   return {
     value: signed(value),
@@ -80,50 +88,6 @@ function sameWinsAndPoints(a: WinsAndPoints, b: WinsAndPoints): boolean {
 
 function tournamentLayout(scoreCalculation: ScoreCalculation): TournamentLayout {
   switch (scoreCalculation) {
-    case 'score':
-      return {
-        columns: [
-          { label: 'Score', title: 'Somme des scores' },
-          { label: 'GA', title: 'Goal average' },
-        ],
-        cells: (entry) => [plain(entry.pointsFor), goalAverage(entry.goalAverage)],
-        summary: (entry) => `${entry.pointsFor} · ${signed(entry.goalAverage)}`,
-        legend: 'Score = somme des scores · GA = Goal average',
-      };
-    case 'victory_buchholz_ga':
-      return {
-        columns: [
-          { label: 'V', title: 'Victoires' },
-          { label: 'Bch.', title: 'Score Buchholz (Somme des victoires des adversaires)' },
-          { label: 'GA', title: 'Goal average' },
-        ],
-        cells: (entry) => [
-          plain(entry.wins),
-          plain(entry.buchholz),
-          goalAverage(entry.goalAverage),
-        ],
-        summary: (entry) =>
-          `${entry.wins} V · ${entry.buchholz} Bch. · ${signed(entry.goalAverage)}`,
-        legend:
-          'V = victoires · Bch. = Score Buchholz (Somme des victoires des adversaires) · GA = Goal average',
-      };
-    case 'score_buchholz_ga':
-      return {
-        columns: [
-          { label: 'Score', title: 'Somme des scores' },
-          { label: 'Bch.', title: 'Score Buchholz (Somme des victoires des adversaires)' },
-          { label: 'GA', title: 'Goal average' },
-        ],
-        cells: (entry) => [
-          plain(entry.pointsFor),
-          plain(entry.buchholz),
-          goalAverage(entry.goalAverage),
-        ],
-        summary: (entry) =>
-          `${entry.pointsFor} · ${entry.buchholz} Bch. · ${signed(entry.goalAverage)}`,
-        legend:
-          'Score = somme des scores · Bch. = Score Buchholz (Somme des victoires des adversaires) · GA = Goal average',
-      };
     case 'tournament_score':
       return {
         columns: [{ label: 'Pts Tournoi', title: 'Points tournoi' }],
@@ -131,20 +95,27 @@ function tournamentLayout(scoreCalculation: ScoreCalculation): TournamentLayout 
         summary: (entry) => `${entry.tournamentPoints} pts`,
         legend: null,
       };
+    case 'victory_goal_average':
+    case 'victory_best_defeats':
+    case 'victory_points_scored':
     default:
       return {
         columns: [
           { label: 'V', title: 'Victoires' },
-          { label: 'Pts+', title: 'Points marqués' },
+          { label: 'D', title: 'Défaites' },
           { label: 'GA', title: 'Goal average' },
+          { label: 'PP-PC', title: POINTS_FOR_AGAINST_TITLE },
         ],
         cells: (entry) => [
           plain(entry.wins),
-          plain(entry.pointsFor),
+          plain(entry.losses),
           goalAverage(entry.goalAverage),
+          { value: pointsForAgainst(entry), tone: 'neutral' },
         ],
-        summary: (entry) => `${entry.wins} V · ${entry.pointsFor} · ${signed(entry.goalAverage)}`,
-        legend: 'V = victoires · Pts+ = points marqués · GA = Goal average',
+        summary: (entry) =>
+          `${entry.wins} V · ${entry.losses} D · ${signed(entry.goalAverage)} · ${pointsForAgainst(entry)}`,
+        legend:
+          'V = victoires · D = défaites · GA = Goal average · PP-PC = points pour - points contre',
       };
   }
 }

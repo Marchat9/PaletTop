@@ -28,7 +28,7 @@ const TOURNAMENT = {
   name: 'Tournoi',
   status: TournamentStatus.ACTIVE,
   phaseName: 'Phase qualificative',
-  scoreCalculation: 'victory_ga',
+  scoreCalculation: 'victory_goal_average',
   teamNames: ['Équipe 2', 'Équipe 11'],
 };
 
@@ -71,7 +71,7 @@ const RANKING = [
     goalAverage: 26,
     matchesPlayed: 3,
     tournamentPoints: 9,
-    buchholz: 0,
+    losses: 0,
   },
 ];
 
@@ -125,7 +125,7 @@ describe('SpectatorPageComponent', () => {
       code: 'ABC123',
       name: 'Tournoi',
       status: TournamentStatus.ACTIVE,
-      scoreCalculation: 'score',
+      scoreCalculation: 'victory_points_scored',
     });
     const dispatchSpy = vi.spyOn(store, 'dispatch');
 
@@ -142,7 +142,7 @@ describe('SpectatorPageComponent', () => {
       code: 'ABC123',
       name: 'Tournoi',
       status: TournamentStatus.ACTIVE,
-      scoreCalculation: 'score',
+      scoreCalculation: 'victory_points_scored',
     });
     fixture.detectChanges();
     const dispatchSpy = vi.spyOn(store, 'dispatch');

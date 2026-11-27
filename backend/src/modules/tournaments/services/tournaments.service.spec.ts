@@ -26,7 +26,7 @@ function configuration(
 ) {
     return {
         maxTeamCapacity,
-        scoreCalculation: ScoreCalculation.VICTORY_AND_GOAL_AVERAGE,
+        scoreCalculation: ScoreCalculation.VICTORY_GOAL_AVERAGE,
         pointsPerGame: 13,
         competitionMode,
         competitionConfiguration,

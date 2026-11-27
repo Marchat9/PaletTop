@@ -20,6 +20,14 @@ describe('APP_SETTING_DEFINITIONS', () => {
         }
     });
 
+    it('offers the three victory-based calculations to the standard and up-down modes, goal-average first', () => {
+        const defaults =
+            APP_SETTING_DEFINITIONS[AppSettingKey.SCORE_CALCULATIONS_BY_MODE].defaultValue;
+        const expected = ['victory_goal_average', 'victory_best_defeats', 'victory_points_scored'];
+        expect(defaults.standard).toEqual(expected);
+        expect(defaults.up_down).toEqual(expected);
+    });
+
     it('offers only « Points tournoi » to the championship by default', () => {
         expect(
             APP_SETTING_DEFINITIONS[AppSettingKey.SCORE_CALCULATIONS_BY_MODE].defaultValue
@@ -30,13 +38,32 @@ describe('APP_SETTING_DEFINITIONS', () => {
 
 describe('validateScoreCalculationsByMode', () => {
     const valid = {
-        standard: ['victory_ga', 'score'],
-        up_down: ['score'],
-        championship: ['tournament_score', 'victory_ga'],
+        standard: ['victory_goal_average', 'victory_points_scored'],
+        up_down: ['victory_points_scored'],
+        championship: ['tournament_score', 'victory_goal_average'],
     };
 
     it('accepts any calculation for any mode', () => {
         expect(validateScoreCalculationsByMode(valid)).toEqual([]);
+    });
+
+    it.each(['victory_ga', 'score', 'victory_buchholz_ga', 'score_buchholz_ga'])(
+        'rejects the removed calculation « %s »',
+        (removed) => {
+            expect(validateScoreCalculationsByMode({ ...valid, standard: [removed] })).toHaveLength(
+                1,
+            );
+        },
+    );
+
+    it('accepts the new calculations', () => {
+        expect(
+            validateScoreCalculationsByMode({
+                ...valid,
+                standard: ['victory_best_defeats'],
+                up_down: ['victory_goal_average', 'victory_points_scored'],
+            }),
+        ).toEqual([]);
     });
 
     it('requires at least one calculation per mode', () => {
@@ -46,12 +73,17 @@ describe('validateScoreCalculationsByMode', () => {
     });
 
     it('rejects unknown modes, unknown calculations and duplicates', () => {
-        expect(validateScoreCalculationsByMode({ ...valid, other: ['score'] })).toHaveLength(1);
+        expect(
+            validateScoreCalculationsByMode({ ...valid, other: ['victory_points_scored'] }),
+        ).toHaveLength(1);
         expect(validateScoreCalculationsByMode({ ...valid, standard: ['nope'] })).toHaveLength(1);
         expect(
-            validateScoreCalculationsByMode({ ...valid, standard: ['score', 'score'] }),
+            validateScoreCalculationsByMode({
+                ...valid,
+                standard: ['victory_points_scored', 'victory_points_scored'],
+            }),
         ).toHaveLength(1);
-        expect(validateScoreCalculationsByMode('score')).toHaveLength(1);
+        expect(validateScoreCalculationsByMode('victory_points_scored')).toHaveLength(1);
     });
 });
 
@@ -114,9 +146,9 @@ describe('readEnv', () => {
         const readEnv = APP_SETTING_DEFINITIONS[AppSettingKey.SCORE_CALCULATIONS_BY_MODE].readEnv!;
         const env = readEnv({
             APP_SETTING_SCORE_CALCULATIONS_BY_MODE:
-                '{"standard":["score"],"up_down":["score"],"championship":["tournament_score"]}',
+                '{"standard":["victory_points_scored"],"up_down":["victory_points_scored"],"championship":["tournament_score"]}',
         });
-        expect(env?.value.standard).toEqual(['score']);
+        expect(env?.value.standard).toEqual(['victory_points_scored']);
         // Invalid JSON is passed on as-is so that the validation rejects it.
         expect(readEnv({ APP_SETTING_SCORE_CALCULATIONS_BY_MODE: '{oops' })?.value).toBe('{oops');
     });

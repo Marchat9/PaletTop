@@ -20,6 +20,6 @@ export interface PoolRankingEntry {
     pointsFor: number;
     pointsAgainst: number;
     goalAverage: number;
-    /** Score Buchholz: sum of the wins of the opponents met (byes excluded). */
-    buchholz: number;
+    /** Matches lost: never a bye, never a draw. */
+    losses: number;
 }

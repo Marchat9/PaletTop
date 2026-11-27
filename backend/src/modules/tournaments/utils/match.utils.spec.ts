@@ -32,7 +32,7 @@ function entry(teamId: string, rank: number): GlobalRankingEntry {
         goalAverage: 0,
         matchesPlayed: 0,
         tournamentPoints: 0,
-        buchholz: 0,
+        losses: 0,
     };
 }
 

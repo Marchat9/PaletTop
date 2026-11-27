@@ -2,13 +2,22 @@ import { describe, expect, it } from 'vitest';
 import { Team } from 'src/entities/team.entity';
 import { TournamentMatch } from 'src/entities/tounament-match.entity';
 import { ScoreCalculation } from 'src/enum/tounament.enum';
-import { computeTeamStats, isByeWin, rankTeams } from './ranking-calculation.utils';
+import { fixedDraw } from './fixed-draw.utils';
+import { compareGaps, computeTeamStats, isByeWin, rankTeams } from './ranking-calculation.utils';
+
+const TOURNAMENT_ID = 't1';
 
 function teams(...ids: string[]): Team[] {
     return ids.map((id) => ({ id, name: id }) as Team);
 }
 
-function match(teamA: string, teamB: string, scoreA: number, scoreB: number): TournamentMatch {
+function match(
+    teamA: string,
+    teamB: string,
+    scoreA: number,
+    scoreB: number,
+    sessionNumber?: number,
+): TournamentMatch {
     return {
         teamA: { id: teamA },
         teamB: { id: teamB },
@@ -16,6 +25,7 @@ function match(teamA: string, teamB: string, scoreA: number, scoreB: number): To
         scoreB,
         isBye: false,
         byeWin: false,
+        sessionNumber,
     } as TournamentMatch;
 }
 
@@ -24,7 +34,7 @@ function bye(team: string, byeWin: boolean, scoreA = 0): TournamentMatch {
 }
 
 function statsOf(teamIds: Team[], matches: TournamentMatch[], id: string) {
-    return computeTeamStats(teamIds, matches).find((s) => s.teamId === id)!;
+    return computeTeamStats(teamIds, matches, TOURNAMENT_ID).find((s) => s.teamId === id)!;
 }
 
 describe('isByeWin', () => {
@@ -45,9 +55,50 @@ describe('computeTeamStats', () => {
             pointsFor: 0,
             goalAverage: 0,
             tournamentPoints: 6,
-            buchholz: 0,
             matchesPlayed: 1,
         });
+    });
+
+    it('no longer computes a Buchholz score', () => {
+        expect('buchholz' in statsOf(all, [bye('A', true)], 'A')).toBe(false);
+    });
+
+    it('tracks the gaps, the worst loss and the losses of a team', () => {
+        const matches = [match('A', 'B', 13, 4, 1), match('C', 'A', 13, 8, 2)];
+        expect(statsOf(all, matches, 'A')).toMatchObject({
+            wins: 1,
+            losses: 1,
+            worstLoss: 5,
+            gaps: [9, -5],
+        });
+    });
+
+    it('orders the gaps by session number, whatever the order of the matches', () => {
+        const matches = [match('C', 'A', 13, 8, 2), match('A', 'B', 13, 4, 1)];
+        expect(statsOf(all, matches, 'A').gaps).toEqual([9, -5]);
+    });
+
+    it('keeps the largest losing margin as the worst loss', () => {
+        const matches = [match('C', 'A', 13, 11, 1), match('D', 'A', 13, 2, 2)];
+        expect(statsOf(all, matches, 'A')).toMatchObject({ worstLoss: 11, losses: 2 });
+    });
+
+    it('counts a draw as neither a win nor a loss, with a gap of 0', () => {
+        const stats = statsOf(all, [match('A', 'B', 11, 11, 1)], 'A');
+        expect(stats).toMatchObject({ wins: 0, losses: 0, worstLoss: 0, gaps: [0] });
+    });
+
+    it('keeps a bye out of the gaps and the losses while it still counts as a win', () => {
+        expect(statsOf(all, [bye('A', true)], 'A')).toMatchObject({
+            wins: 1,
+            losses: 0,
+            worstLoss: 0,
+            gaps: [],
+        });
+    });
+
+    it('gives a team without any match empty gaps and no loss', () => {
+        expect(statsOf(all, [], 'A')).toMatchObject({ losses: 0, worstLoss: 0, gaps: [] });
     });
 
     it('keeps the effect of a legacy 13-0 bye', () => {
@@ -61,121 +112,250 @@ describe('computeTeamStats', () => {
     it('gives nothing for the 0-0 ranking-round bye', () => {
         expect(statsOf(all, [bye('A', false)], 'A')).toMatchObject({ wins: 0, goalAverage: 0 });
     });
+});
 
-    it('sums the final wins of the opponents met into the Buchholz', () => {
-        // A beat B and C; B beat D; C beat D. Wins: A 2, B 1, C 1, D 0.
-        const matches = [
-            match('A', 'B', 13, 5),
-            match('A', 'C', 13, 7),
-            match('B', 'D', 13, 2),
-            match('C', 'D', 13, 9),
-        ];
-        const stats = computeTeamStats(all, matches);
-        const buchholz = Object.fromEntries(stats.map((s) => [s.teamId, s.buchholz]));
-        expect(buchholz).toEqual({ A: 2, B: 2, C: 2, D: 2 });
+describe('compareGaps', () => {
+    it('ranks first the team with the better last game', () => {
+        expect(compareGaps([3, 9], [4, 2])).toBeLessThan(0);
+        expect(compareGaps([4, 2], [3, 9])).toBeGreaterThan(0);
     });
 
-    it('counts an opponent met twice twice, and ignores byes', () => {
-        const matches = [
-            match('A', 'B', 13, 5),
-            match('A', 'B', 13, 5),
-            match('B', 'C', 13, 0),
-            bye('B', true),
-        ];
-        // Wins: A 2, B 2 (C + bye), C 0. A met B twice → 4; B met A twice + C → 4.
-        expect(statsOf(teams('A', 'B', 'C'), matches, 'A').buchholz).toBe(4);
-        expect(statsOf(teams('A', 'B', 'C'), matches, 'B').buchholz).toBe(4);
+    it('walks back to the previous game when the last ones are equal', () => {
+        expect(compareGaps([5, 7], [1, 7])).toBeLessThan(0);
+    });
+
+    it('ranks first the team with more games when one list is exhausted', () => {
+        expect(compareGaps([5, 7], [7])).toBeLessThan(0);
+        expect(compareGaps([7], [5, 7])).toBeGreaterThan(0);
+    });
+
+    it('is 0 for identical or empty gaps', () => {
+        expect(compareGaps([3, 9], [3, 9])).toBe(0);
+        expect(compareGaps([], [])).toBe(0);
     });
 });
 
 describe('rankTeams', () => {
-    // A and B both have 2 wins. A met stronger opponents (Bch.) but has a worse goal average.
-    const all = teams('A', 'B', 'C', 'D', 'E', 'F');
-    const matches = [
-        match('C', 'E', 13, 0),
-        match('D', 'F', 13, 0),
-        match('C', 'F', 13, 0),
-        match('D', 'E', 13, 0),
-        match('A', 'C', 13, 12),
-        match('A', 'D', 13, 12),
-        match('B', 'E', 13, 0),
-        match('B', 'F', 13, 0),
-    ];
-    const order = (calculation: ScoreCalculation) =>
-        rankTeams(all, matches, calculation)
-            .filter((s) => s.teamId === 'A' || s.teamId === 'B')
-            .map((s) => s.teamId);
+    const rank = (ids: string[], matches: TournamentMatch[], calculation: ScoreCalculation) =>
+        rankTeams(teams(...ids), matches, calculation, TOURNAMENT_ID);
+    const order = (ranked: { teamId: string }[]) => ranked.map((entry) => entry.teamId);
+    const firstTwo = (ranked: { teamId: string }[]) => order(ranked).slice(0, 2);
 
-    it('breaks a tie on wins with the goal average in « Victoire & GA »', () => {
-        expect(order(ScoreCalculation.VICTORY_AND_GOAL_AVERAGE)).toEqual(['B', 'A']);
+    describe('« Victoires, puis goal-average »', () => {
+        const calculation = ScoreCalculation.VICTORY_GOAL_AVERAGE;
+
+        it('ranks by wins first, even against a better goal average', () => {
+            const ranked = rank(
+                ['A', 'B', 'C', 'D'],
+                [match('A', 'C', 13, 12), match('B', 'D', 13, 0), match('B', 'C', 0, 13)],
+                calculation,
+            );
+            // A: 1 win, GA +1. B: 1 win, GA +13 - 13 = 0. C: 1 win (vs B), lost to A. D: no win.
+            expect(order(ranked).indexOf('A')).toBeLessThan(order(ranked).indexOf('D'));
+        });
+
+        it('puts +25 before +18 on equal wins', () => {
+            const ranked = rank(
+                ['A', 'B', 'C', 'D', 'E', 'F'],
+                [
+                    match('A', 'C', 13, 0),
+                    match('A', 'D', 13, 1),
+                    match('B', 'E', 13, 5),
+                    match('B', 'F', 13, 3),
+                ],
+                calculation,
+            );
+            expect(firstTwo(ranked)).toEqual(['A', 'B']);
+        });
+
+        it('breaks a tie on wins and goal average with the points scored', () => {
+            const ranked = rank(
+                ['A', 'B', 'C', 'D'],
+                [match('A', 'C', 11, 3), match('B', 'D', 13, 5)],
+                calculation,
+            );
+            // Same wins, same goal average (+8): B scored 13, A 11.
+            expect(firstTwo(ranked)).toEqual(['B', 'A']);
+        });
+
+        it('compares the gap of the last game first, then the previous one', () => {
+            const lastGameBetterForA = rank(
+                ['A', 'B', 'C', 'D', 'E', 'F'],
+                [
+                    match('A', 'C', 13, 9, 1),
+                    match('A', 'D', 13, 7, 2),
+                    match('B', 'E', 13, 7, 1),
+                    match('B', 'F', 13, 9, 2),
+                ],
+                calculation,
+            );
+            // A: gaps [4, 6]. B: gaps [6, 4]. Same wins, goal average (+10) and points (26).
+            expect(firstTwo(lastGameBetterForA)).toEqual(['A', 'B']);
+
+            const lastGameBetterForB = rank(
+                ['A', 'B', 'C', 'D', 'E', 'F'],
+                [
+                    match('A', 'C', 13, 7, 1),
+                    match('A', 'D', 13, 9, 2),
+                    match('B', 'E', 13, 9, 1),
+                    match('B', 'F', 13, 7, 2),
+                ],
+                calculation,
+            );
+            // A: gaps [6, 4]. B: gaps [4, 6].
+            expect(firstTwo(lastGameBetterForB)).toEqual(['B', 'A']);
+        });
     });
 
-    it('breaks the same tie with the Buchholz in « Victoire, Bch. & GA »', () => {
-        expect(order(ScoreCalculation.VICTORY_BUCHHOLZ_GOAL_AVERAGE)).toEqual(['A', 'B']);
+    describe('« Victoires, puis meilleures défaites »', () => {
+        const calculation = ScoreCalculation.VICTORY_BEST_DEFEATS;
+
+        it('puts the team that resisted best first, whatever the goal average', () => {
+            const ranked = rank(
+                ['A', 'B', 'C', 'D', 'E', 'F'],
+                [
+                    match('A', 'C', 13, 12, 1),
+                    match('D', 'A', 13, 11, 2),
+                    match('B', 'E', 13, 0, 1),
+                    match('F', 'B', 13, 4, 2),
+                ],
+                calculation,
+            );
+            // A: 1 win, worst loss 2 (11-13), GA -1. B: 1 win, worst loss 9 (4-13), GA +4.
+            const ids = order(ranked);
+            expect(ids.indexOf('A')).toBeLessThan(ids.indexOf('B'));
+        });
+
+        it('puts a team without any loss before a team that lost, on equal wins', () => {
+            const ranked = rank(
+                ['A', 'B', 'C', 'D'],
+                [match('A', 'C', 13, 12), match('B', 'D', 13, 0), match('D', 'B', 13, 12)],
+                calculation,
+            );
+            // A: 1 win, no loss. B: 1 win, 1 loss (12-13).
+            const ids = order(ranked);
+            expect(ids.indexOf('A')).toBeLessThan(ids.indexOf('B'));
+        });
     });
 
-    it('ranks by points scored, then Buchholz, then GA in « Score, Bch. & GA »', () => {
-        const ranked = rankTeams(
-            teams('A', 'B', 'C'),
-            [match('A', 'C', 13, 2), match('B', 'C', 13, 2), match('A', 'B', 10, 13)],
-            ScoreCalculation.SCORE_BUCHHOLZ_GOAL_AVERAGE,
+    describe('« Victoires, puis points marqués »', () => {
+        const calculation = ScoreCalculation.VICTORY_POINTS_SCORED;
+
+        it('ranks by the points scored on equal wins, whatever the goal average', () => {
+            const ranked = rank(
+                ['A', 'B', 'C', 'D'],
+                [
+                    match('A', 'C', 13, 12, 1),
+                    match('D', 'A', 13, 9, 2),
+                    match('B', 'D', 13, 0, 1),
+                    match('C', 'B', 13, 4, 2),
+                ],
+                calculation,
+            );
+            // A: 1 win, 22 points, GA -3. B: 1 win, 17 points, GA +4.
+            const ids = order(ranked);
+            expect(ids.indexOf('A')).toBeLessThan(ids.indexOf('B'));
+        });
+
+        it('puts the team that conceded less first on equal points scored', () => {
+            const ranked = rank(
+                ['A', 'B', 'C', 'D'],
+                [match('A', 'C', 13, 9), match('B', 'D', 13, 5)],
+                calculation,
+            );
+            expect(firstTwo(ranked)).toEqual(['B', 'A']);
+        });
+    });
+
+    describe('frozen draw', () => {
+        const newCalculations = [
+            ScoreCalculation.VICTORY_GOAL_AVERAGE,
+            ScoreCalculation.VICTORY_BEST_DEFEATS,
+            ScoreCalculation.VICTORY_POINTS_SCORED,
+        ];
+        const byHash = (tournamentId: string, ids: string[]) =>
+            [...ids].sort(
+                (a, b) => fixedDraw(`${tournamentId}:${a}`) - fixedDraw(`${tournamentId}:${b}`),
+            );
+
+        it.each(newCalculations)(
+            'orders a perfect tie by hash, without sharing rank (%s)',
+            (calculation) => {
+                const ranked = rank(['A', 'B', 'C', 'D'], [], calculation);
+                expect(order(ranked)).toEqual(byHash(TOURNAMENT_ID, ['A', 'B', 'C', 'D']));
+                expect(ranked.map((entry) => entry.rank)).toEqual([1, 2, 3, 4]);
+            },
         );
-        // A 23 points, B 26 points.
-        expect(ranked.map((s) => s.teamId)).toEqual(['B', 'A', 'C']);
+
+        it('does not depend on the order of the teams or of the matches', () => {
+            const results = [match('A', 'C', 13, 5, 1), match('B', 'D', 13, 5, 1)];
+            const forward = rank(
+                ['A', 'B', 'C', 'D'],
+                results,
+                ScoreCalculation.VICTORY_GOAL_AVERAGE,
+            );
+            const shuffled = rank(
+                ['D', 'B', 'C', 'A'],
+                [...results].reverse(),
+                ScoreCalculation.VICTORY_GOAL_AVERAGE,
+            );
+            expect(order(shuffled)).toEqual(order(forward));
+        });
+
+        it('draws with the id of the tournament', () => {
+            const ids = ['A', 'B', 'C', 'D', 'E', 'F'];
+            const rankIn = (tournamentId: string) =>
+                order(
+                    rankTeams(
+                        teams(...ids),
+                        [],
+                        ScoreCalculation.VICTORY_GOAL_AVERAGE,
+                        tournamentId,
+                    ),
+                );
+
+            expect(rankIn('t1')).toEqual(byHash('t1', ids));
+            expect(rankIn('t2')).toEqual(byHash('t2', ids));
+            // Another tournament id really changes the draw, it is not just the team ids.
+            expect(rankIn('t2')).not.toEqual(rankIn('t1'));
+        });
+
+        it('falls back to the team id when two teams draw the same hash', () => {
+            // Real FNV-1a collision for the tournament 't1': both teams get 3319751732.
+            const [first, second] = ['team5941', 'team976030'];
+            expect(fixedDraw(`${TOURNAMENT_ID}:${first}`)).toBe(
+                fixedDraw(`${TOURNAMENT_ID}:${second}`),
+            );
+
+            const forward = rank([first, second], [], ScoreCalculation.VICTORY_GOAL_AVERAGE);
+            const backward = rank([second, first], [], ScoreCalculation.VICTORY_GOAL_AVERAGE);
+
+            expect(order(forward)).toEqual([first, second]);
+            expect(order(backward)).toEqual([first, second]);
+            expect(forward.map((entry) => entry.rank)).toEqual([1, 2]);
+        });
+
+        it('ranks a team with no match, or with only a bye, without failing', () => {
+            const ranked = rank(
+                ['A', 'B'],
+                [bye('A', true)],
+                ScoreCalculation.VICTORY_GOAL_AVERAGE,
+            );
+            expect(order(ranked)).toEqual(['A', 'B']);
+        });
     });
 
-    it('shares the rank only when every criterion is equal', () => {
-        const ranked = rankTeams(
-            teams('A', 'B'),
-            [bye('A', true), bye('B', true)],
-            ScoreCalculation.VICTORY_BUCHHOLZ_GOAL_AVERAGE,
-        );
-        expect(ranked.map((s) => s.rank)).toEqual([1, 1]);
-    });
-
-    it('ranks « Victoire & GA » by wins then goal average, without points scored', () => {
-        const ranked = rankTeams(
-            teams('A', 'B', 'C', 'D'),
-            [match('A', 'C', 13, 0), match('B', 'D', 11, 0)],
-            ScoreCalculation.VICTORY_AND_GOAL_AVERAGE,
-        );
-        // Same wins, A (+13) before B (+11).
-        expect(ranked[0].teamId).toBe('A');
-        expect(ranked[1].teamId).toBe('B');
-    });
-
-    it('breaks a tie on wins and goal average with the points scored in « Victoire & GA »', () => {
-        const ranked = rankTeams(
-            teams('A', 'B', 'C', 'D'),
-            [match('A', 'C', 13, 5), match('B', 'D', 11, 3)],
-            ScoreCalculation.VICTORY_AND_GOAL_AVERAGE,
-        );
-        // Same wins, same GA (+8): A scored 13, B 11.
-        expect(ranked.slice(0, 2).map((s) => [s.teamId, s.rank])).toEqual([
-            ['A', 1],
-            ['B', 2],
-        ]);
-    });
-
-    it('breaks a tie on points scored and goal average with the wins in « Somme des scores »', () => {
-        const ranked = rankTeams(
-            teams('A', 'B', 'C', 'D'),
-            // A: 13 scored, GA +13, 1 win. B: 13 scored (7 + 6), GA +13, 2 wins.
-            [match('A', 'C', 13, 0), match('B', 'D', 7, 0), match('B', 'D', 6, 0)],
-            ScoreCalculation.SCORE,
-        );
-        expect(ranked.slice(0, 2).map((s) => s.teamId)).toEqual(['B', 'A']);
-    });
-
-    it('keeps teams on equal championship points tied', () => {
-        const ranked = rankTeams(
-            teams('A', 'B', 'C', 'D', 'E'),
-            // A: one win (6 pts). B: two losses at 11 (4 pts) and 6 (2 pts) = 6 pts, no win.
-            [match('A', 'C', 13, 0), match('D', 'B', 13, 11), match('E', 'B', 13, 6)],
-            ScoreCalculation.TOURNAMENT_SCORE,
-        );
-        const a = ranked.find((s) => s.teamId === 'A');
-        const b = ranked.find((s) => s.teamId === 'B');
-        expect(a?.rank).toBe(b?.rank);
+    describe('« Points championnat »', () => {
+        it('keeps teams on equal championship points tied', () => {
+            const ranked = rank(
+                ['A', 'B', 'C', 'D', 'E'],
+                // A: one win (6 pts). B: two losses at 11 (4 pts) and 6 (2 pts) = 6 pts, no win.
+                [match('A', 'C', 13, 0), match('D', 'B', 13, 11), match('E', 'B', 13, 6)],
+                ScoreCalculation.TOURNAMENT_SCORE,
+            );
+            const a = ranked.find((entry) => entry.teamId === 'A');
+            const b = ranked.find((entry) => entry.teamId === 'B');
+            expect(a?.rank).toBe(b?.rank);
+        });
     });
 });

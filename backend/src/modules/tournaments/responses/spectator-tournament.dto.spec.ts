@@ -13,7 +13,7 @@ describe('toSpectatorTournamentDto', () => {
             adminPassword: 'super-secret',
             status: TournamentStatus.ACTIVE,
             configuration: {
-                scoreCalculation: ScoreCalculation.SCORE,
+                scoreCalculation: ScoreCalculation.VICTORY_POINTS_SCORED,
             },
         } as Tournament;
 
@@ -25,14 +25,14 @@ describe('toSpectatorTournamentDto', () => {
             name: 'Tournoi du Printemps',
             status: TournamentStatus.ACTIVE,
             phaseName: 'phaseName',
-            scoreCalculation: ScoreCalculation.SCORE,
+            scoreCalculation: ScoreCalculation.VICTORY_POINTS_SCORED,
             teamNames: [],
         });
     });
 
     it('lists the registered teams in natural order (Équipe 2 before Équipe 11)', () => {
         const tournament = {
-            configuration: { scoreCalculation: ScoreCalculation.SCORE },
+            configuration: { scoreCalculation: ScoreCalculation.VICTORY_POINTS_SCORED },
             teams: [{ name: 'Équipe 11' }, { name: 'Les Fondus' }, { name: 'Équipe 2' }],
         } as Tournament;
 

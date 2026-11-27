@@ -52,6 +52,27 @@ await strategy.generateSessionMatches(tournament, session);
 
 Shared helpers live in `../utils/` (`match.utils.ts`, `draw.utils.ts`, `bye.utils.ts`, …).
 
+## Score calculations
+
+A tournament ranks its teams with one `ScoreCalculation` (`src/enum/tounament.enum.ts`), chosen
+among the ones offered for its mode (app setting `score_calculations_by_mode`). The criteria live in
+`../utils/ranking-calculation.utils.ts` (`rankTeams`), which takes the tournament id.
+
+| Calculation (value)                                          | Criteria, in order                                                             |
+| ------------------------------------------------------------ | ------------------------------------------------------------------------------ |
+| Victoires & Goal Average (`victory_goal_average`)            | wins, goal average, points scored, gaps, frozen draw                           |
+| Victoires & Meilleure défaite (`victory_best_defeats`)       | wins, worst loss (lower first), goal average, points scored, gaps, frozen draw |
+| Victoires & Points marqués (`victory_points_scored`)         | wins, points scored, points conceded (lower first), gaps, frozen draw          |
+| Points championnat (`tournament_score`)                      | championship points only: ties keep a shared rank                              |
+
+- **Worst loss**: the largest losing margin (11-13 is 2), 0 without any loss.
+- **Gaps**: the gap of every played match, in session order, compared from the last game back. When
+  one team has fewer games, the one with more games goes first.
+- **Byes** are a win, but are left out of the worst loss and of the gaps.
+- **Frozen draw**: `fixedDraw(`${tournamentId}:${teamId}`)` (`../utils/fixed-draw.utils.ts`, FNV-1a),
+  the lowest hash first; a hash collision falls back to the team id. Nothing is stored, and the
+  three victory-based calculations never share a rank.
+
 ---
 
 ## Adding a new mode

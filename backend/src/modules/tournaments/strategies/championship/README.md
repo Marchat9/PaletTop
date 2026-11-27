@@ -36,7 +36,9 @@ The tournament ends after 4 sessions (`8 / 2`): every home team has played every
 
 ## Ranking
 
-Uses the default `computeGlobalRanking` (sort by the tournament's `scoreCalculation`).
+Uses the default `computeGlobalRanking` (sort by the tournament's `scoreCalculation`, the
+championship points). Unlike the victory-based calculations, this one has no frozen draw: teams on
+equal points share a rank.
 
 ## Injected dependencies
 

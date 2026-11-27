@@ -117,6 +117,7 @@ export class ScoreService {
             matchId,
             match.pool?.id,
             tournament.configuration.scoreCalculation,
+            tournament.id,
         );
         this.gateway.emitMatchUpdated(
             code,
@@ -192,6 +193,7 @@ export class ScoreService {
             matchId,
             match.pool?.id,
             tournament.configuration.scoreCalculation,
+            tournament.id,
         );
         this.logger.log(`Match ${matchId} validated (tournament: ${tournamentCode})`);
         this.gateway.emitMatchUpdated(
@@ -259,6 +261,7 @@ export class ScoreService {
             matchId,
             match.pool?.id,
             tournament.configuration.scoreCalculation,
+            tournament.id,
         );
         this.logger.log(
             `Admin force-updated score for match ${matchId} (tournament: ${code}, ${scoreA}-${scoreB})`,
@@ -358,6 +361,7 @@ export class ScoreService {
     ): Promise<{
         match: TournamentMatch;
         tournament: {
+            id: string;
             status: TournamentStatus;
             configuration: { pointsPerGame: number; scoreCalculation: ScoreCalculation };
         };
@@ -413,6 +417,7 @@ export class ScoreService {
         matchId: string,
         poolId: string | null | undefined,
         scoreCalculation: ScoreCalculation,
+        tournamentId: string,
     ): Promise<RawScoreUpdateResult> {
         const match = await this.matchRepo.findByIdWithSession(matchId);
         if (!match) throw new NotFoundException('Match introuvable après mise à jour.');
@@ -423,7 +428,7 @@ export class ScoreService {
         if (!pool) return { match, ranking: [] };
 
         const poolMatches = await this.matchRepo.findByPool(poolId);
-        const ranking = computeRanking(pool.teams, poolMatches, scoreCalculation);
+        const ranking = computeRanking(pool.teams, poolMatches, scoreCalculation, tournamentId);
         return { match, ranking };
     }
 }
