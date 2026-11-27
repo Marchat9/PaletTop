@@ -27,10 +27,11 @@ describe('buildTournamentRules', () => {
     expect(buildTournamentRules(null)).toEqual([]);
   });
 
-  it('liste les réglages communs et uniquement les options activées', () => {
+  it('liste les réglages communs, le mode choisi et uniquement les options activées', () => {
     expect(labels(configuration({ rematch: true }))).toEqual([
       '13 points',
       'Victoires & Goal Average',
+      'Élimination : placement pyramidal',
       'Rematch autorisés',
     ]);
   });
@@ -103,6 +104,14 @@ describe('buildTournamentRules', () => {
       }),
     );
     expect(random).not.toContain('Gagnant/Perdant');
+    expect(random).toContain('Appariement aléatoire');
+  });
+
+  it('indique l’appariement aléatoire quand le mode est absent (anciens tournois)', () => {
+    const legacy = labels(
+      configuration({ competitionMode: 'up_down', competitionConfiguration: { numberOfRound: 4 } }),
+    );
+    expect(legacy).toContain('Appariement aléatoire');
   });
 
   it('indique les voisins de classement quand ils sont choisis', () => {
@@ -116,7 +125,7 @@ describe('buildTournamentRules', () => {
     expect(neighbors).not.toContain('Gagnant/Perdant');
   });
 
-  it('indique le placement aléatoire de l’élimination, rien pour le placement pyramidal', () => {
+  it('indique le placement de l’élimination, aléatoire comme pyramidal', () => {
     const random = labels(
       configuration({
         competitionConfiguration: {
@@ -137,7 +146,15 @@ describe('buildTournamentRules', () => {
         },
       }),
     );
+    expect(pyramidal).toContain('Élimination : placement pyramidal');
     expect(pyramidal).not.toContain('Élimination : placement aléatoire');
+
+    const legacy = labels(
+      configuration({
+        competitionConfiguration: { numberOfQualifyingRounds: 3, consolationCount: 0 },
+      }),
+    );
+    expect(legacy).toContain('Élimination : placement pyramidal');
   });
 
   it('indique les deux clubs du championnat', () => {

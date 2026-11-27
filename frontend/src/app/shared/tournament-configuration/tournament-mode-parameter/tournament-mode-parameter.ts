@@ -1,3 +1,4 @@
+import { DEFAULT_RECOMMENDED_OPTIONS, RecommendedOptions } from 'src/app/models/app-setting.model';
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { Card } from '../../card/card';
@@ -40,6 +41,8 @@ export class TournamentModeParameter {
   public readonly hiddenFields = input<TournamentConfigurationField[]>([]);
   /** Score calculations of the selected mode (filtered by the parent). */
   public readonly scoreCalculationOptions = input<InputCardRadioOption<ScoreCalculation>[]>([]);
+  /** Options badged « Recommandé », passed on to the mode settings. */
+  public readonly recommendedOptions = input<RecommendedOptions>(DEFAULT_RECOMMENDED_OPTIONS);
 
   public readonly simulationTeamCountChange = output<number>();
   public readonly simulationSheetRequested = output<number>();

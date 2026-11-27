@@ -52,8 +52,17 @@ export class CodeNumberInputComponent implements OnInit {
     }
   }
 
-  public onDigitInput(value: string, index: number): void {
-    const numericValue = value.replace(/[^0-9]/g, '').slice(-1);
+  /**
+   * Keeps the digit just typed (`typed`, the character the input event inserted), wherever the
+   * caret was: clicked before the old digit, the box reads « 75 » and the last character would be
+   * the old one. Without it (autofill, deletion), the last digit of the box. The digit is written
+   * back into the box: when the stored digit does not change, the binding leaves the box as it is
+   * and it would show everything typed (« 11 »).
+   */
+  public onDigitInput(input: HTMLInputElement, index: number, typed: string | null = null): void {
+    const numericValue =
+      typed && /^[0-9]$/.test(typed) ? typed : input.value.replace(/[^0-9]/g, '').slice(-1);
+    input.value = numericValue;
 
     this.codeDigits.update((digits) => {
       const updated = [...digits];

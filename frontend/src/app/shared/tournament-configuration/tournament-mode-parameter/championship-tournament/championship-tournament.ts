@@ -3,11 +3,10 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { InputText } from 'src/app/shared/input-text/input-text';
 import { TournamentConfigurationField } from '../../tournament-configuration-form.model';
 import { ChampionshipTournamentForm } from './championship-tournament-form.model';
-import { Icon } from 'src/app/shared/icon/icon';
 
 @Component({
   selector: 'app-championship-tournament',
-  imports: [ReactiveFormsModule, InputText, Icon],
+  imports: [ReactiveFormsModule, InputText],
   templateUrl: './championship-tournament.html',
   styleUrls: ['../../shared-config.scss', './championship-tournament.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,

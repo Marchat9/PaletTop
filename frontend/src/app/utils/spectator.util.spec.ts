@@ -20,6 +20,8 @@ function live(id: string, status: string): LiveMatchView {
     teamB: 'B',
     scoreA: 0,
     scoreB: 0,
+    startedAt: null,
+    finishedAt: null,
   };
 }
 
@@ -84,7 +86,7 @@ describe('toTournamentLiveMatches', () => {
         teamB: { id: 'b', name: 'Fanny Club' },
         poolNumber: null,
         group: null,
-        startedAt: null,
+        startedAt: '2026-11-27T10:00:00.000Z',
         finishedAt: null,
         duration: null,
       },
@@ -113,6 +115,8 @@ describe('toTournamentLiveMatches', () => {
       scoreA: 9,
       scoreB: 6,
       status: 'ONGOING',
+      startedAt: '2026-11-27T10:00:00.000Z',
+      finishedAt: null,
     });
     expect(matches[1]).toMatchObject({ isBye: true, teamB: null });
   });
@@ -161,6 +165,7 @@ describe('toTrainingLiveMatches', () => {
     ] as unknown as TrainingMatchDto[]);
 
     expect(match.plateNumber).toBe(3);
+    expect(match).toMatchObject({ startedAt: null, finishedAt: null });
   });
 
   it('marque un joueur au repos comme un repos, pas comme un exempt', () => {

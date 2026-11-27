@@ -37,6 +37,7 @@
           [targetControl]="targetControl()"
           [planState]="planState()"
           [simulation]="simulation()"
+          [recommendedEliminationSeeding]="recommendedOptions().eliminationSeeding"
           (simulationTeamCountChange)="simulationTeamCountChange.emit($event)"
           (simulationSheetRequested)="simulationSheetRequested.emit($event)"
           [readonlyFields]="readonlyFields()"
@@ -46,6 +47,7 @@
       @case ('up_down') {
         <app-up-down-tournament
           [group]="group().controls.upDownMode"
+          [recommendedPairingMode]="recommendedOptions().pairingMode"
           [readonlyFields]="readonlyFields()"
           [hiddenFields]="hiddenFields()"
         />

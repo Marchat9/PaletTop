@@ -1,4 +1,9 @@
-import { CompetitionMode, ScoreCalculation } from './tournament-configuration-detail.model';
+import {
+  CompetitionMode,
+  EliminationSeeding,
+  PairingMode,
+  ScoreCalculation,
+} from './tournament-configuration-detail.model';
 import { FillThresholds } from './tournament-plan.model';
 
 /** Mirror of the backend `AppSettingKey`. */
@@ -10,7 +15,8 @@ export type AppSettingKey =
   | 'training_level_history_depth'
   | 'max_consolation_count'
   | 'bracket_fill_thresholds'
-  | 'bye_loser_score_cap';
+  | 'bye_loser_score_cap'
+  | 'recommended_options';
 
 export type AppSettingScope = 'public' | 'super_admin' | 'internal';
 
@@ -18,6 +24,13 @@ export type AppSettingSource = 'app_default' | 'super_admin' | 'migration' | 'en
 
 /** Score calculations offered at tournament creation, per competition mode (display order). */
 export type ScoreCalculationsByMode = Record<CompetitionMode, ScoreCalculation[]>;
+
+/** Option badged « Recommandé » at tournament creation, per choice; null shows no badge. */
+export interface RecommendedOptions {
+  scoreCalculation: ScoreCalculation | null;
+  pairingMode: PairingMode | null;
+  eliminationSeeding: EliminationSeeding | null;
+}
 
 export interface CleanupRuleConfig {
   enabled: boolean;
@@ -57,6 +70,7 @@ export interface AppSettingValues {
   max_consolation_count: number;
   bracket_fill_thresholds: FillThresholds;
   bye_loser_score_cap: number;
+  recommended_options: RecommendedOptions;
 }
 
 export interface PublicAppSettingDto {
@@ -85,4 +99,9 @@ export const DEFAULT_BYE_LOSER_SCORE_CAP = 6;
 export const DEFAULT_BRACKET_FILL_THRESHOLDS: FillThresholds = {
   okRatio: 0.9,
   warningRatio: 0.75,
+};
+export const DEFAULT_RECOMMENDED_OPTIONS: RecommendedOptions = {
+  scoreCalculation: 'victory_goal_average',
+  pairingMode: 'dutch',
+  eliminationSeeding: 'pyramidal',
 };

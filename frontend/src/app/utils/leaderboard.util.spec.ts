@@ -10,6 +10,7 @@ import {
   toClubLeaderboard,
   toSessionLeaderboard,
   toTournamentLeaderboard,
+  VICTORY_RANKING_LEGEND,
 } from './leaderboard.util';
 
 function team(rank: number, teamId: string, overrides: Partial<GlobalRankingEntry> = {}) {
@@ -81,9 +82,8 @@ describe('toTournamentLeaderboard', () => {
       ]);
       expect(table.rows[1].cells[2]).toEqual({ value: '-8', tone: 'negative' });
       expect(table.rows[0].summary).toBe('2 V · 0 D · +8 · 26-18');
-      expect(table.legend).toBe(
-        'V = victoires · D = défaites · GA = Goal average · PP-PC = points pour - points contre',
-      );
+      expect(table.legend).toBe(VICTORY_RANKING_LEGEND);
+      expect(table.legend).toContain('tirage au sort figé');
     },
   );
 
@@ -240,13 +240,47 @@ describe('sections du classement', () => {
     );
 
     const page = itemTables(items, 2, 3, 1);
-    expect(page.map(labels)).toEqual([['# Principal', 'B', 'C', '# Consolante']]);
+    expect(page.map(labels)).toEqual([['# Suite Principal', 'B', 'C']]);
 
     const columns = itemTables(items, 0, null, 2);
     expect(columns.map(labels)).toEqual([
       ['# Principal', 'A', 'B'],
-      ['# Principal', 'C', '# Consolante', 'D'],
+      ['# Suite Principal', 'C', '# Consolante', 'D'],
     ]);
+  });
+
+  describe('pages d’un classement par tableaux', () => {
+    const items = leaderboardItems(
+      [
+        ...[1, 2, 3, 4, 5, 6, 7, 8].map((rank) =>
+          row(`P${rank}`, rank, String(rank), 'Principale'),
+        ),
+        ...[9, 10, 11].map((rank) => row(`C${rank}`, rank, String(rank), 'Consolante A')),
+      ],
+      false,
+    );
+    const pages = (size: number) =>
+      [0, size, 2 * size].map((start) =>
+        itemTables(items, start, size, 1)
+          .flat()
+          .map((item) => (item.kind === 'section' ? `# ${item.label}` : item.row.id)),
+      );
+
+    it('ouvre chaque page sur l’intitulé de sa section, « Suite » quand elle a commencé avant', () => {
+      expect(pages(6)).toEqual([
+        ['# Principale', 'P1', 'P2', 'P3', 'P4', 'P5'],
+        ['# Suite Principale', 'P6', 'P7', 'P8', '# Consolante A', 'C9', 'C10'],
+        ['# Suite Consolante A', 'C11'],
+      ]);
+    });
+
+    it('ne finit jamais une page sur un intitulé : la page suivante s’ouvre sur lui', () => {
+      expect(pages(5)).toEqual([
+        ['# Principale', 'P1', 'P2', 'P3', 'P4'],
+        ['# Suite Principale', 'P5', 'P6', 'P7', 'P8'],
+        ['# Consolante A', 'C9', 'C10', 'C11'],
+      ]);
+    });
   });
 });
 

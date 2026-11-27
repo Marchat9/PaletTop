@@ -7,6 +7,11 @@ function setup() {
   return fixture.componentInstance;
 }
 
+/** A box holding what was typed in it. */
+function box(value: string): HTMLInputElement {
+  return { value } as HTMLInputElement;
+}
+
 function pasteEvent(text: string): ClipboardEvent {
   return {
     preventDefault: () => undefined,
@@ -20,10 +25,10 @@ describe('CodeNumberInputComponent', () => {
     const completed = vi.fn();
     component.completed.subscribe(completed);
 
-    ['1', '2', '3'].forEach((digit, index) => component.onDigitInput(digit, index));
+    ['1', '2', '3'].forEach((digit, index) => component.onDigitInput(box(digit), index));
     expect(completed).not.toHaveBeenCalled();
 
-    component.onDigitInput('4', 3);
+    component.onDigitInput(box('4'), 3);
     expect(completed).toHaveBeenCalledTimes(1);
   });
 
@@ -42,5 +47,38 @@ describe('CodeNumberInputComponent', () => {
     const component = setup();
     component.fill('5678');
     expect(component.getCode()).toBe('5678');
+  });
+
+  it('keeps a single digit in a box, even when the same digit is typed again', () => {
+    const component = setup();
+    const input = box('11');
+
+    component.onDigitInput(input, 0);
+
+    expect(input.value).toBe('1');
+    expect(component.getCode()).toBe('1');
+  });
+
+  it('keeps the last digit typed and drops anything else', () => {
+    const component = setup();
+    const replaced = box('57');
+    const letters = box('e-');
+
+    component.onDigitInput(replaced, 0);
+    component.onDigitInput(letters, 1);
+
+    expect(replaced.value).toBe('7');
+    expect(letters.value).toBe('');
+    expect(component.getCode()).toBe('7');
+  });
+
+  it('replaces the old digit with the one typed, even with the caret before it', () => {
+    const component = setup();
+    const input = box('75');
+
+    component.onDigitInput(input, 0, '7');
+
+    expect(input.value).toBe('7');
+    expect(component.getCode()).toBe('7');
   });
 });

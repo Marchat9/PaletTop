@@ -5,6 +5,7 @@ import {
   isLastRoundByRankingAllowed,
   offeredScoreCalculations,
   syncLastRoundByRankingAvailability,
+  withRecommended,
 } from './tournament-configuration.utils';
 
 function upDownForm(numberOfRound: number | undefined, lastRoundByRanking: boolean) {
@@ -104,5 +105,23 @@ describe('offeredScoreCalculations', () => {
     expect(offeredScoreCalculations(byMode, 'up_down', 'victory_points_scored')).toEqual([
       'victory_points_scored',
     ]);
+  });
+});
+
+describe('withRecommended', () => {
+  const options = [
+    { value: 'dutch', label: 'Gagnant/Perdant' },
+    { value: 'random', label: 'Aléatoire' },
+  ];
+
+  it('badges only the recommended option', () => {
+    expect(withRecommended(options, 'dutch').map((option) => option.recommended)).toEqual([
+      true,
+      false,
+    ]);
+  });
+
+  it('badges nothing without a recommendation', () => {
+    expect(withRecommended(options, null).some((option) => option.recommended)).toBe(false);
   });
 });

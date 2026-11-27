@@ -80,6 +80,14 @@ export function offeredScoreCalculations(
 }
 
 // The ranking-based last round needs at least one drawn round before it, so at least 2 rounds.
+/** The options with the « Recommandé » badge on the recommended one (none when null). */
+export function withRecommended<T, O extends { value: T }>(
+  options: readonly O[],
+  recommended: NoInfer<T> | null,
+): (O & { recommended: boolean })[] {
+  return options.map((option) => ({ ...option, recommended: option.value === recommended }));
+}
+
 export function isLastRoundByRankingAllowed(numberOfRound: number | undefined | null): boolean {
   return !!numberOfRound && numberOfRound >= 2;
 }

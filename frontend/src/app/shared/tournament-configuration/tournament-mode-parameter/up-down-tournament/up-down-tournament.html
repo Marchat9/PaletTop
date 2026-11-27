@@ -3,7 +3,7 @@
     <div class="form-group">
       <label class="form-label">Mode d'appariement</label>
       <app-input-card-radio
-        [options]="pairingModeOptions"
+        [options]="pairingModeOptions()"
         [formControl]="group().controls.pairingMode"
       ></app-input-card-radio>
     </div>

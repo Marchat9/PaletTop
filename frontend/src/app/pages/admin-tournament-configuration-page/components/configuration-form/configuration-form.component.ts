@@ -1,6 +1,8 @@
 import {
   ScoreCalculationsByMode,
+  DEFAULT_RECOMMENDED_OPTIONS,
   DEFAULT_SCORE_CALCULATIONS_BY_MODE,
+  RecommendedOptions,
 } from 'src/app/models/app-setting.model';
 import { CommonModule } from '@angular/common';
 import {
@@ -44,6 +46,8 @@ export class ConfigurationFormComponent {
   public readonly scoreCalculationsByMode = input<ScoreCalculationsByMode>(
     DEFAULT_SCORE_CALCULATIONS_BY_MODE,
   );
+  /** Options badged « Recommandé » (app setting, read by the page). */
+  public readonly recommendedOptions = input<RecommendedOptions>(DEFAULT_RECOMMENDED_OPTIONS);
 
   public readonly planState = input<Nullable<BracketPanelState>>(null);
   public readonly simulation = input<Nullable<PlanSimulationState>>(null);

@@ -17,7 +17,9 @@ import { environment } from '@environment';
 import { Nullable } from 'src/app/models/nullable.model';
 import { BracketPanelState, PlanSimulationState } from 'src/app/models/tournament-plan.model';
 import {
+  DEFAULT_RECOMMENDED_OPTIONS,
   DEFAULT_SCORE_CALCULATIONS_BY_MODE,
+  RecommendedOptions,
   ScoreCalculationsByMode,
 } from 'src/app/models/app-setting.model';
 import {
@@ -42,6 +44,7 @@ import {
   getInvalidFieldNames,
   homeClubValidators,
   syncLastRoundByRankingAvailability,
+  withRecommended,
 } from './tournament-configuration.utils';
 import { TournamentModeParameter } from './tournament-mode-parameter/tournament-mode-parameter';
 import { TournamentParameters } from './tournament-parameters/tournament-parameters';
@@ -77,6 +80,8 @@ export class TournamentConfiguration implements OnInit {
   public readonly scoreCalculationsByMode = input<ScoreCalculationsByMode>(
     DEFAULT_SCORE_CALCULATIONS_BY_MODE,
   );
+  /** Options badged « Recommandé » (app setting, read by the page). */
+  public readonly recommendedOptions = input<RecommendedOptions>(DEFAULT_RECOMMENDED_OPTIONS);
   /** Preview of the structured brackets (the page runs the requests); no panel when null. */
   public readonly planState = input<Nullable<BracketPanelState>>(null);
 
@@ -97,11 +102,14 @@ export class TournamentConfiguration implements OnInit {
   private readonly storedScoreCalculation = signal<ScoreCalculation | null>(null);
 
   public readonly scoreCalculationOptions = computed<InputCardRadioOption<ScoreCalculation>[]>(() =>
-    offeredScoreCalculations(
-      this.scoreCalculationsByMode(),
-      this.selectedCompetitionMode(),
-      this.storedScoreCalculation(),
-    ).flatMap((value) => scoreCalculationOptions.filter((option) => option.value === value)),
+    withRecommended(
+      offeredScoreCalculations(
+        this.scoreCalculationsByMode(),
+        this.selectedCompetitionMode(),
+        this.storedScoreCalculation(),
+      ).flatMap((value) => scoreCalculationOptions.filter((option) => option.value === value)),
+      this.recommendedOptions().scoreCalculation,
+    ),
   );
 
   private readonly injector = inject(Injector);

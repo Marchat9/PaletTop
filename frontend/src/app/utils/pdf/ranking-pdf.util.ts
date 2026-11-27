@@ -7,6 +7,7 @@ import type {
 import { GlobalRankingEntry } from 'src/app/models/global-ranking.model';
 import { ScoreCalculation } from 'src/app/models/tournament-configuration-detail.model';
 import { TournamentDto } from 'src/app/store/tournament/tournament.models';
+import { VICTORY_RANKING_LEGEND } from 'src/app/utils/leaderboard.util';
 import {
   buildPdfFooter,
   buildTournamentPdfHeader,
@@ -64,8 +65,7 @@ function rankingPdfMode(scoreCalculation: ScoreCalculation | undefined): Ranking
           },
         ],
         nameCharsPerLine: 18,
-        legend:
-          'V = victoires · D = défaites · GA = Goal average · PP-PC = points pour - points contre',
+        legend: VICTORY_RANKING_LEGEND,
       };
   }
 }

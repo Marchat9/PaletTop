@@ -17,6 +17,9 @@ export interface LiveMatchView {
   teamB: Nullable<string>;
   scoreA: number;
   scoreB: number;
+  /** When the match started and ended, for its timer; null while not started. */
+  startedAt: Nullable<string>;
+  finishedAt: Nullable<string>;
 }
 
 /**

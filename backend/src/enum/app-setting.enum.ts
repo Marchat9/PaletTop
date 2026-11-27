@@ -7,6 +7,7 @@ export enum AppSettingKey {
     MAX_CONSOLATION_COUNT = 'max_consolation_count',
     BRACKET_FILL_THRESHOLDS = 'bracket_fill_thresholds',
     BYE_LOSER_SCORE_CAP = 'bye_loser_score_cap',
+    RECOMMENDED_OPTIONS = 'recommended_options',
 }
 
 /** Who may read a setting through the API. */

@@ -25,14 +25,18 @@
     overflow: hidden;
 
     .tile {
-      height: 6rem;
+      // Meta line and two team lines, with room to breathe: below that they are cut off.
+      // Keep LIVE_MATCH_TILE_REM (height + gap) in line.
+      height: 6.5rem;
 
       .meta {
-        font-size: 0.8rem;
+        font-size: 1rem;
+        line-height: 1.2;
       }
 
       .team {
         font-size: 1.2rem;
+        line-height: 1.2;
 
         .score {
           font-size: 1.6rem;
@@ -53,7 +57,7 @@
     gap: 0.2rem;
     flex: none;
     box-sizing: border-box;
-    padding: 0.5rem 0.9rem 0.5rem 1.25rem;
+    padding: 0.5rem 1.1rem 0.5rem 1.25rem;
     border-radius: 0.8rem;
     background: var(--color-surface-container);
     overflow: hidden;
@@ -107,11 +111,23 @@
         white-space: nowrap;
       }
 
+      // Timer then status, on the line of the plate: the timer is slightly smaller than that text.
       .status {
+        --match-timer-size: 0.9em;
+
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
         margin-left: auto;
         color: var(--status-color);
         font-weight: 700;
         white-space: nowrap;
+
+        // Optical nudge: the digits sit higher than the status letters. A translation, unlike a
+        // margin, leaves the height of the line as it is.
+        app-match-timer {
+          translate: 0 1.5px;
+        }
       }
     }
 
