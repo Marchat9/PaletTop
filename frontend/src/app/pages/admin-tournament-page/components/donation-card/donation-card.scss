@@ -56,13 +56,38 @@
     .actions {
       display: flex;
 
-      // The PayPal mark on a white chip, legible on the brass of the button.
-      .paypal-logo {
-        box-sizing: content-box;
-        padding: 0.15rem;
-        border-radius: 0.3rem;
-        background: #fff;
-        object-fit: contain;
+      // A real link (open in a new tab, copy the address), dressed as the primary button.
+      .donate-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5em;
+        border-radius: 0.6rem;
+        padding: 0.7rem 1rem;
+        background: var(--gradient-brass);
+        color: var(--color-on-primary);
+        font-family: var(--font-label);
+        font-size: 0.64rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        text-decoration: none;
+        transition:
+          filter 0.2s ease,
+          transform 0.2s ease;
+
+        &:hover {
+          filter: brightness(1.06);
+        }
+
+        &:focus-visible {
+          outline: 2px solid var(--color-primary);
+          outline-offset: 2px;
+        }
+
+        ::ng-deep .donate-icon {
+          font-size: 1rem;
+          line-height: 0.64rem;
+        }
       }
     }
   }

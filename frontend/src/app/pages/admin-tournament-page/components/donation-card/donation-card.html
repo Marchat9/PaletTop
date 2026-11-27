@@ -11,7 +11,10 @@
       service aujourd'hui, un petit don aide à payer l'hébergement et à continuer de l'améliorer.
     </p>
     <div class="actions">
-      <app-button title="Soutenir PaletTop via PayPal" icon="favorite" (clicked)="openDonation()" />
+      <a class="donate-link" [href]="donationUrl()" target="_blank" rel="noopener noreferrer">
+        <app-icon name="favorite" iconClass="donate-icon" [ariaHidden]="true" />
+        <span>Soutenir PaletTop via PayPal</span>
+      </a>
     </div>
   </div>
 </app-card>

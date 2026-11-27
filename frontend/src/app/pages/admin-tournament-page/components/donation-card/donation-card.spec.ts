@@ -1,7 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { By } from '@angular/platform-browser';
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import { Button } from 'src/app/shared/button/button';
+import { describe, expect, it } from 'vitest';
 import { DonationCard } from './donation-card';
 
 const DONATION_URL = 'https://www.paypal.com/donate/?hosted_button_id=TEST';
@@ -15,8 +13,6 @@ function setup() {
 }
 
 describe('DonationCard', () => {
-  afterEach(() => vi.restoreAllMocks());
-
   it('invites the organiser to support PaletTop', () => {
     const text = setup().nativeElement.textContent;
 
@@ -25,14 +21,12 @@ describe('DonationCard', () => {
     expect(text).toContain('Soutenir PaletTop via PayPal');
   });
 
-  it('opens the donation page in a new tab', () => {
-    const open = vi.spyOn(window, 'open').mockReturnValue(null);
-    const fixture = setup();
+  it('links to the donation page, opened in a new tab', () => {
+    const link = setup().nativeElement.querySelector('a.donate-link') as HTMLAnchorElement | null;
 
-    fixture.debugElement
-      .query(By.directive(Button))
-      .componentInstance.clicked.emit(new Event('click'));
-
-    expect(open).toHaveBeenCalledWith(DONATION_URL, '_blank', 'noopener');
+    expect(link?.getAttribute('href')).toBe(DONATION_URL);
+    expect(link?.getAttribute('target')).toBe('_blank');
+    expect(link?.getAttribute('rel')).toContain('noopener');
+    expect(link?.textContent).toContain('Soutenir PaletTop via PayPal');
   });
 });
