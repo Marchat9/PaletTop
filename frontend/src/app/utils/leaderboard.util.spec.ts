@@ -10,6 +10,7 @@ import {
   toClubLeaderboard,
   toSessionLeaderboard,
   toTournamentLeaderboard,
+  VICTORY_RANKING_LEGEND,
 } from './leaderboard.util';
 
 function team(rank: number, teamId: string, overrides: Partial<GlobalRankingEntry> = {}) {
@@ -81,9 +82,8 @@ describe('toTournamentLeaderboard', () => {
       ]);
       expect(table.rows[1].cells[2]).toEqual({ value: '-8', tone: 'negative' });
       expect(table.rows[0].summary).toBe('2 V · 0 D · +8 · 26-18');
-      expect(table.legend).toBe(
-        'V = victoires · D = défaites · GA = Goal average · PP-PC = points pour - points contre',
-      );
+      expect(table.legend).toBe(VICTORY_RANKING_LEGEND);
+      expect(table.legend).toContain('tirage au sort figé');
     },
   );
 

@@ -46,6 +46,16 @@ function signed(value: number): string {
 const POINTS_FOR_AGAINST_TITLE =
   'Points pour - points contre (somme des points marqués - somme des points encaissés)';
 
+/**
+ * Legend of the victory-based calculations: the abbreviations, then the last resort the server
+ * uses when two teams are tied on every criterion (game-by-game gaps from the last one, then the
+ * frozen draw), so that no two teams ever share a rank.
+ */
+export const VICTORY_RANKING_LEGEND =
+  'V = victoires · D = défaites · GA = Goal average · PP-PC = points pour - points contre.\n' +
+  'Égalité sur tous les critères : départage par l’écart de la dernière partie jouée, puis de la ' +
+  'précédente, etc., puis par un tirage au sort figé.';
+
 /** « 39-20 »: the points scored then conceded. */
 function pointsForAgainst(entry: GlobalRankingEntry): string {
   return `${entry.pointsFor}-${entry.pointsAgainst}`;
@@ -114,8 +124,7 @@ function tournamentLayout(scoreCalculation: ScoreCalculation): TournamentLayout 
         ],
         summary: (entry) =>
           `${entry.wins} V · ${entry.losses} D · ${signed(entry.goalAverage)} · ${pointsForAgainst(entry)}`,
-        legend:
-          'V = victoires · D = défaites · GA = Goal average · PP-PC = points pour - points contre',
+        legend: VICTORY_RANKING_LEGEND,
       };
   }
 }

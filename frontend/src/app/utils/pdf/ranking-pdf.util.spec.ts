@@ -108,6 +108,7 @@ describe('buildRankingPdf', () => {
       expect(JSON.stringify(content[content.length - 1])).toContain(
         'PP-PC = points pour - points contre',
       );
+      expect(JSON.stringify(content[content.length - 1])).toContain('tirage au sort figé');
     },
   );
 

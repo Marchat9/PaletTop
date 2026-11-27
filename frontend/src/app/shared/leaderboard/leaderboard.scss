@@ -74,6 +74,8 @@
     margin: 0;
     font-size: 0.75rem;
     color: var(--color-on-surface-variant);
+    // The tie-break explanation goes on its own line.
+    white-space: pre-line;
   }
 }
 
