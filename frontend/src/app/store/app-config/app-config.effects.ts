@@ -30,6 +30,22 @@ export const STORAGE_TRAINING_PASSWORD_KEY = 'training-pass';
 export const STORAGE_TRAINING_SESSION_CODE_KEY = 'training-session-code';
 export const STORAGE_TRAINING_SESSION_PLAYER_CODE_KEY = 'training-player-code';
 
+/**
+ * Rewrites the cached data from what the storage holds now (another tab may have written since).
+ * A storage that refuses to write (private mode, full quota) only costs the persistence: the store
+ * keeps the value for this page, and the effect stream must not die on it.
+ */
+function writeStoredData(
+  update: (current: Record<string, unknown>) => Record<string, unknown>,
+): void {
+  try {
+    const current = JSON.parse(localStorage.getItem(LOCAL_STORAGE_DATA_KEY) || '{}');
+    localStorage.setItem(LOCAL_STORAGE_DATA_KEY, JSON.stringify(update(current)));
+  } catch (e) {
+    console.error('Failed to write localStorage data:', e);
+  }
+}
+
 @Injectable()
 export class AppConfigEffects {
   private readonly actions$ = inject(Actions);
@@ -79,13 +95,7 @@ export class AppConfigEffects {
     () =>
       this.actions$.pipe(
         ofType(setLocalStorageData),
-        tap(({ key, value }) => {
-          const currentData = JSON.parse(localStorage.getItem(LOCAL_STORAGE_DATA_KEY) || '{}');
-          localStorage.setItem(
-            LOCAL_STORAGE_DATA_KEY,
-            JSON.stringify({ ...currentData, [key]: value }),
-          );
-        }),
+        tap(({ key, value }) => writeStoredData((current) => ({ ...current, [key]: value }))),
       ),
     { dispatch: false },
   );
@@ -94,10 +104,7 @@ export class AppConfigEffects {
     () =>
       this.actions$.pipe(
         ofType(updateLocalStorageData),
-        tap(({ data }) => {
-          const currentData = JSON.parse(localStorage.getItem(LOCAL_STORAGE_DATA_KEY) || '{}');
-          localStorage.setItem(LOCAL_STORAGE_DATA_KEY, JSON.stringify({ ...currentData, ...data }));
-        }),
+        tap(({ data }) => writeStoredData((current) => ({ ...current, ...data }))),
       ),
     { dispatch: false },
   );
@@ -106,11 +113,12 @@ export class AppConfigEffects {
     () =>
       this.actions$.pipe(
         ofType(removeLocalStorageData),
-        tap(({ key }) => {
-          const currentData = JSON.parse(localStorage.getItem(LOCAL_STORAGE_DATA_KEY) || '{}');
-          const { [key]: _, ...rest } = currentData;
-          localStorage.setItem(LOCAL_STORAGE_DATA_KEY, JSON.stringify(rest));
-        }),
+        tap(({ key }) =>
+          writeStoredData((current) => {
+            const { [key]: _, ...rest } = current;
+            return rest;
+          }),
+        ),
       ),
     { dispatch: false },
   );
