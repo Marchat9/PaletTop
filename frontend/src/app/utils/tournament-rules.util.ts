@@ -9,7 +9,10 @@ import { scoreCalculationOptions } from 'src/app/shared/tournament-configuration
 
 export type TournamentRule = RulePill;
 
-/** The tournament settings that are switched on, summed up as a row of pills. */
+/**
+ * The tournament settings summed up as a row of pills: every mode choice (default included), and
+ * the options that are switched on.
+ */
 export function buildTournamentRules(
   configuration: TournamentConfigurationDetailsDto | null | undefined,
 ): TournamentRule[] {
@@ -82,9 +85,12 @@ function buildStructuredRules(config: StructuredTournamentConfig): TournamentRul
   if (config.hasThirdPlaceMatch) {
     rules.push({ icon: 'military_tech', label: 'Match pour la 3e place' });
   }
-  if (config.eliminationSeeding === 'random') {
-    rules.push({ icon: 'shuffle', label: 'Élimination : placement aléatoire' });
-  }
+  // Absent on the tournaments created before the choice: the backend places them pyramidally.
+  rules.push(
+    (config.eliminationSeeding ?? 'pyramidal') === 'random'
+      ? { icon: 'shuffle', label: 'Élimination : placement aléatoire' }
+      : { icon: 'account_tree', label: 'Élimination : placement pyramidal' },
+  );
 
   return rules;
 }
@@ -95,11 +101,17 @@ function buildUpDownRules(config: UpDownTournamentConfig): TournamentRule[] {
       ? { icon: 'format_list_numbered', label: `${config.numberOfRound} parties` }
       : { icon: 'all_inclusive', label: 'Parties illimitées' },
   ];
-  if (config.pairingMode === 'dutch') {
-    rules.push({ icon: 'account_tree', label: 'Gagnant/Perdant' });
-  }
-  if (config.pairingMode === 'neighbors') {
-    rules.push({ icon: 'leaderboard', label: 'Voisins de classement' });
+  // Absent on the tournaments created before the choice: the backend pairs them at random.
+  switch (config.pairingMode ?? 'random') {
+    case 'dutch':
+      rules.push({ icon: 'account_tree', label: 'Gagnant/Perdant' });
+      break;
+    case 'neighbors':
+      rules.push({ icon: 'leaderboard', label: 'Voisins de classement' });
+      break;
+    case 'random':
+      rules.push({ icon: 'shuffle', label: 'Appariement aléatoire' });
+      break;
   }
   if (config.lastRoundByRanking) {
     rules.push({ icon: 'leaderboard', label: 'Dernière partie figée' });
