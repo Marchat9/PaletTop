@@ -1,4 +1,5 @@
 import {
+  EliminationSeeding,
   PairingMode,
   ScoreCalculation,
 } from 'src/app/models/tournament-configuration-detail.model';
@@ -47,9 +48,11 @@ export const scoreCalculationOptions: {
   icon: string;
   description: string;
   htmlDescription?: string;
+  recommended?: boolean;
 }[] = [
   {
     value: 'victory_goal_average',
+    recommended: true,
     icon: 'calculate',
     label: 'Victoires & Goal Average',
     description: 'Les victoires d’abord, puis l’écart de points sur tout le tournoi',
@@ -108,9 +111,11 @@ export const pairingModeOptions: {
   label: string;
   icon: string;
   description: string;
+  recommended?: boolean;
 }[] = [
   {
     value: 'dutch',
+    recommended: true,
     icon: 'account_tree',
     label: 'Gagnant/Perdant',
     description:
@@ -132,25 +137,27 @@ export const pairingModeOptions: {
   },
 ];
 
-export const eliminationPairingModeOptions: {
-  value: PairingMode;
+export const eliminationSeedingOptions: {
+  value: EliminationSeeding;
   label: string;
   icon: string;
   description: string;
+  recommended?: boolean;
 }[] = [
+  {
+    value: 'pyramidal',
+    recommended: true,
+    icon: 'account_tree',
+    label: 'Pyramidal',
+    description:
+      "Les meilleures équipes des qualifications sont protégées : la 1re est opposée à la dernière, et les deux meilleures ne se croisent qu'en finale. Si un tableau n'est pas complet, les exemptés du 1er tour sont les mieux classées.",
+  },
   {
     value: 'random',
     icon: 'shuffle',
-    label: 'Tirage au sort',
+    label: 'Aléatoire',
     description:
-      'Dans chaque tableau, les équipes sont tirées au sort à chaque tour, en respectant les règles de tirage (clubs, revanches).',
-  },
-  {
-    value: 'dutch',
-    icon: 'account_tree',
-    label: 'Système suisse (version hollandaise)',
-    description:
-      'À chaque tour, les équipes encore en lice sont classées selon tous les matchs déjà joués : la moitié haute joue la moitié basse (1re contre 5e, 2e contre 6e… pour 8 équipes).',
+      "Les exemptés et les adversaires du 1er tour sont tirés au sort, en respectant les règles de tirage (clubs, revanches). L'arbre est fixé après ce 1er tour : une revanche ou deux équipes d'un même club peuvent donc se rencontrer aux tours suivants.",
   },
 ];
 

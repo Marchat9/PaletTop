@@ -152,9 +152,9 @@ function fillWarning(bracket: PlanBracket, firstRound: BracketRound): PlanWarnin
         return null;
     }
     let message = `${bracket.label} : ${bracket.teamCount} équipes sur ${bracket.capacity}.`;
-    const repeched = firstRound.bestLosersIn;
-    if (repeched > 0) {
-        message += ` ${repeched} des ${firstRound.losers} perdants du 1er tour ${plural(repeched, 'sera repêché', 'seront repêchés')}.`;
+    const byes = firstRound.byes;
+    if (byes > 0) {
+        message += ` ${byes} ${plural(byes, 'équipe exemptée', 'équipes exemptées')} au 1er tour.`;
     }
     return {
         code: bracket.fillLevel === 'low' ? 'LOW_FILL' : 'MID_FILL',
@@ -192,7 +192,6 @@ function qualifyingRounds(registered: number, count: number): PlanRound[] {
                     teamCount: registered,
                     matchCount,
                     byeCount: registered % 2,
-                    bestLosersIn: 0,
                     plateStart: 1,
                     plateEnd: matchCount,
                 },
@@ -224,7 +223,6 @@ function eliminationRounds(
                 teamCount: round.teams,
                 matchCount: round.matches,
                 byeCount: round.byes,
-                bestLosersIn: round.bestLosersIn,
                 plateStart: plate + 1,
                 plateEnd: plate + round.matches,
             });
@@ -268,16 +266,14 @@ function computeComfort(input: StructuredPlanInput): ComfortRange | null {
         `Configuration optimale : ${optimalCount} équipes (${single ? 'le tableau est' : 'chaque tableau est'} une puissance de 2 : ${capacities.join(' + ')}).`,
     ];
     if (okFrom < optimalCount) {
-        const completed = single
-            ? 'le tableau reste le même : il est complété'
-            : `les tableaux restent les mêmes : la consolante ${lastLetter} est complétée`;
-        sentences.push(
-            `De ${okFrom} à ${optimalCount - 1} équipes, ${completed} par ses meilleurs perdants.`,
-        );
+        const exempt = single
+            ? 'le tableau reste le même : des équipes sont exemptées au 1er tour'
+            : `les tableaux restent les mêmes : la consolante ${lastLetter} a des équipes exemptées au 1er tour`;
+        sentences.push(`De ${okFrom} à ${optimalCount - 1} équipes, ${exempt}.`);
     }
     if (okFrom > 2) {
         const reason = lowBelow
-            ? `beaucoup de perdants ${single ? 'du tableau principal' : `de ${lastLetter}`} seraient repêchés`
+            ? `${single ? 'le tableau principal serait trop peu rempli' : `la consolante ${lastLetter} serait trop peu remplie`}`
             : 'les tableaux changent';
         sentences.push(
             `En dessous de ${okFrom}, ${reason} : l'app vous proposera une autre configuration.`,
@@ -324,7 +320,6 @@ function buildPlan(input: StructuredPlanInput): TournamentPlan {
             fillRatio: size.count / size.capacity,
             fillLevel: fillLevel(size.count, size.capacity, input.thresholds),
             extra: !!size.extra,
-            bestLosersFirstRound: rounds[0].bestLosersIn,
         };
         brackets.push(bracket);
         const fill = fillWarning(bracket, rounds[0]);
@@ -339,15 +334,17 @@ function buildPlan(input: StructuredPlanInput): TournamentPlan {
             rounds,
         });
 
+        let hasThirdPlaceTrack = false;
         if (index === 0 && input.hasThirdPlaceMatch) {
             const semiFinal = rounds[rounds.length - 2];
             if (semiFinal?.matches === 2) {
+                hasThirdPlaceTrack = true;
                 tracks.push({
                     key: THIRD_PLACE_GROUP_KEY,
                     label: 'Match pour la 3e place',
                     kind: 'third_place',
                     startRound: rounds.length,
-                    rounds: [{ teams: 2, matches: 1, byes: 0, losers: 1, bestLosersIn: 0 }],
+                    rounds: [{ teams: 2, matches: 1, byes: 0, losers: 1 }],
                 });
             } else {
                 warnings.push({
@@ -360,8 +357,18 @@ function buildPlan(input: StructuredPlanInput): TournamentPlan {
         }
 
         if (input.hasChallenges) {
-            const challengeTeams = rounds[0].losers - rounds[0].bestLosersIn;
-            if (challengeTeams >= 2) {
+            const challengeTeams = rounds[0].losers;
+            // A main bracket of 4: its first round is the semi-finals, so the challenge would play
+            // the very match of the 3rd place, with the same two teams in the same round.
+            const duplicatesThirdPlace = hasThirdPlaceTrack && rounds.length === 2;
+            if (duplicatesThirdPlace) {
+                warnings.push({
+                    code: 'BRACKET_TOO_SMALL',
+                    level: 'info',
+                    message: `Pas de ${challengeLabel(index).toLowerCase()} : le match pour la 3e place oppose déjà les perdants des demi-finales.`,
+                    bracketKey: challengeKey(index),
+                });
+            } else if (challengeTeams >= 2) {
                 tracks.push({
                     key: challengeKey(index),
                     label: challengeLabel(index),

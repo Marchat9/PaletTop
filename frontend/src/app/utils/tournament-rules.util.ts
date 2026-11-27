@@ -82,11 +82,8 @@ function buildStructuredRules(config: StructuredTournamentConfig): TournamentRul
   if (config.hasThirdPlaceMatch) {
     rules.push({ icon: 'military_tech', label: 'Match pour la 3e place' });
   }
-  if (config.eliminationPairingMode === 'dutch') {
-    rules.push({
-      icon: 'account_tree',
-      label: 'Élimination : système suisse (version hollandaise)',
-    });
+  if (config.eliminationSeeding === 'random') {
+    rules.push({ icon: 'shuffle', label: 'Élimination : placement aléatoire' });
   }
 
   return rules;

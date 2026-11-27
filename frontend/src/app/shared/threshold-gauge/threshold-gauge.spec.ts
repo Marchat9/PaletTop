@@ -41,12 +41,12 @@ describe('ThresholdGauge', () => {
     expect(zones.map((zone) => zone.level)).toEqual(['ok', 'mid', 'low']);
   });
 
-  it('counts the best losers brought back in each zone', () => {
+  it('counts the byes of the first round in each zone', () => {
     setup();
-    expect(component.exampleZones().map((zone) => zone.bestLosers)).toEqual([
-      '0 à 1 repêché',
-      '2 à 4 repêchés',
-      '4 à 7 repêchés',
+    expect(component.exampleZones().map((zone) => zone.byes)).toEqual([
+      '0 à 3 exemptés',
+      '4 à 8 exemptés',
+      '9 à 15 exemptés',
     ]);
   });
 
@@ -55,7 +55,7 @@ describe('ThresholdGauge', () => {
     const zones = component.exampleZones();
     expect(zones[0].range).toBe('8');
     expect(zones[1].range).toBe('aucun cas');
-    expect(zones[0].bestLosers).toBe('aucun repêché');
+    expect(zones[0].byes).toBe('aucun exempté');
     expect(zones[2].range).toBe('de 5 à 7');
     component.onExampleSizeSelect(16);
     expect(component.exampleZones()[0].range).toBe('16');

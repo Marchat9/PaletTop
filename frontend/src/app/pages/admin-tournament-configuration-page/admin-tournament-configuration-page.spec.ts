@@ -72,7 +72,7 @@ function structuredForm(target = 128): TournamentConfigurationForm {
         consolationCount: new FormControl(1, { nonNullable: true }),
         hasChallenges: new FormControl(false, { nonNullable: true }),
         hasThirdPlaceMatch: new FormControl(false, { nonNullable: true }),
-        eliminationPairingMode: new FormControl('random', { nonNullable: true }),
+        eliminationSeeding: new FormControl('pyramidal', { nonNullable: true }),
       }),
     }),
   }) as unknown as TournamentConfigurationForm;
@@ -199,8 +199,8 @@ describe('AdminTournamentConfigurationPage', { timeout: 15_000 }, () => {
       vi.advanceTimersByTime(300);
       expect(previewCalls(dispatchSpy)).toHaveLength(1);
 
-      form.controls.modeParameter.controls.structuredMode.controls.eliminationPairingMode.setValue(
-        'dutch',
+      form.controls.modeParameter.controls.structuredMode.controls.eliminationSeeding.setValue(
+        'random',
       );
       vi.advanceTimersByTime(1000);
 

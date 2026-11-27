@@ -214,14 +214,11 @@ export class PlanTable {
     if (group.teamCount <= 2) return 'Finale';
     if (group.teamCount <= 4) return 'Demies';
     if (group.teamCount <= 8) return 'Quarts';
-    return `${group.matchCount} matchs`;
+    return group.matchCount === 1 ? '1 match' : `${group.matchCount} matchs`;
   }
 
   private noteLabel(group: PlanGroup): string {
     const notes: string[] = [];
-    if (group.bestLosersIn > 0) {
-      notes.push(`+${group.bestLosersIn} ${plural(group.bestLosersIn, 'repêché')}`);
-    }
     if (group.byeCount > 0) notes.push(`${group.byeCount} exempt${group.byeCount > 1 ? 's' : ''}`);
     return notes.join(' · ');
   }

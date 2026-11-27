@@ -13,7 +13,7 @@ import {
     ValidatorConstraint,
     ValidatorConstraintInterface,
 } from 'class-validator';
-import { CompetitionMode, PairingMode } from 'src/enum/tounament.enum';
+import { CompetitionMode, EliminationSeeding, PairingMode } from 'src/enum/tounament.enum';
 
 export abstract class SpecificTournamentConfig {}
 
@@ -39,9 +39,9 @@ export class StructuredTournamentConfig extends SpecificTournamentConfig {
     @IsBoolean()
     hasThirdPlaceMatch!: boolean;
 
-    @IsEnum(PairingMode)
+    @IsEnum(EliminationSeeding)
     @IsOptional()
-    eliminationPairingMode?: PairingMode;
+    eliminationSeeding?: EliminationSeeding;
 }
 
 @ValidatorConstraint({ name: 'lastRoundByRanking', async: false })

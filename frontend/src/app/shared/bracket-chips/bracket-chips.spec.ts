@@ -11,7 +11,6 @@ function bracket(overrides: Partial<PlanBracket>): PlanBracket {
     fillRatio: 1,
     fillLevel: 'ok',
     extra: false,
-    bestLosersFirstRound: 0,
     ...overrides,
   };
 }
@@ -48,18 +47,17 @@ describe('BracketChips', () => {
       teamCount: 24,
       fillRatio: 0.75,
       fillLevel: 'mid',
-      bestLosersFirstRound: 4,
     }),
   ];
 
-  it('shows the name, count / capacity and the best losers of a partial bracket', () => {
+  it('shows the name, count / capacity and the byes of a partial bracket', () => {
     const root = create({ brackets });
 
     const chips = root.querySelectorAll('.bracket-chip');
     expect(chips.length).toBe(2);
     expect(text(chips[1])).toContain('Consolante A');
     expect(text(chips[1])).toContain('24 / 32');
-    expect(text(chips[1])).toContain('+4 meilleurs perdants');
+    expect(text(chips[1])).toContain('8 exemptés au 1er tour');
   });
 
   it('shows a full bracket as complete, without capacity', () => {
@@ -71,13 +69,13 @@ describe('BracketChips', () => {
     expect(text(first)).toContain('Complet');
   });
 
-  it('does not claim a partial bracket without best losers is complete', () => {
+  it('never claims a partial bracket is complete: it shows its byes', () => {
     const root = create({
       brackets: [bracket({ capacity: 32, teamCount: 24, fillRatio: 0.75, fillLevel: 'mid' })],
     });
 
     const detail = root.querySelector('.bracket-chip__detail');
-    expect(text(detail)).toBe('');
+    expect(text(detail)).toBe('8 exemptés au 1er tour');
     expect(text(root)).not.toContain('Complet');
   });
 
@@ -90,16 +88,14 @@ describe('BracketChips', () => {
     expect(bars[1].style.width).toBe('75%');
   });
 
-  it('uses the singular for one best loser and flags the extra bracket', () => {
+  it('uses the singular for one bye and flags the extra bracket', () => {
     const root = create({
-      brackets: [
-        bracket({ extra: true, label: 'Consolante B', teamCount: 31, bestLosersFirstRound: 1 }),
-      ],
+      brackets: [bracket({ extra: true, label: 'Consolante B', capacity: 32, teamCount: 31 })],
     });
 
     expect(text(root)).toContain('Consolante B (en plus)');
-    expect(text(root)).toContain('+1 meilleur perdant');
-    expect(text(root)).not.toContain('meilleurs perdants');
+    expect(text(root)).toContain('1 exempté au 1er tour');
+    expect(text(root)).not.toContain('exemptés');
   });
 
   it('fills the missing slots with dashed placeholders', () => {

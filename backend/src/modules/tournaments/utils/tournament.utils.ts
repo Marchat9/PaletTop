@@ -8,7 +8,7 @@ import {
     TournamentCompetitionConfiguration,
     UpDownCompetitionConfiguration,
 } from 'src/entities/tournament-competition-configuration.entity';
-import { CompetitionMode, PairingMode } from 'src/enum/tounament.enum';
+import { CompetitionMode, EliminationSeeding, PairingMode } from 'src/enum/tounament.enum';
 import { TournamentConfiguration } from 'src/entities/tournament-configuration.entity';
 import { ConstraintConfig } from 'src/model/constraint.model';
 
@@ -78,8 +78,8 @@ export function extractCompetitionConfiguration(
                 consolationCount: structuredConfig.consolationCount,
                 hasChallenges: structuredConfig.hasChallenges,
                 hasThirdPlaceMatch: structuredConfig.hasThirdPlaceMatch,
-                eliminationPairingMode:
-                    structuredConfig.eliminationPairingMode ?? PairingMode.RANDOM,
+                eliminationSeeding:
+                    structuredConfig.eliminationSeeding ?? EliminationSeeding.PYRAMIDAL,
             };
             return extracted;
         }

@@ -9,6 +9,13 @@ export enum ScoreCalculation {
     VICTORY_POINTS_SCORED = 'victory_points_scored',
     TOURNAMENT_SCORE = 'tournament_score',
 }
+/** How the first round of an elimination bracket is placed. */
+export enum EliminationSeeding {
+    /** Seeds by qualifying rank in a fixed tree; the byes go to the best seeds. */
+    PYRAMIDAL = 'pyramidal',
+    /** Byes, pairs and slots drawn with the seed, within the draw constraints. */
+    RANDOM = 'random',
+}
 /** How the up-down rounds after the first one are paired. */
 export enum PairingMode {
     /** Every round is drawn. */

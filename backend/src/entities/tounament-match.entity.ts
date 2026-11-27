@@ -51,6 +51,14 @@ export class TournamentMatch {
     @Column({ type: 'int', nullable: true })
     plateNumber!: number | null;
 
+    /**
+     * Position of the match in its elimination round, 0-based, inside its bracket: match `k` of a
+     * round takes the winners of positions `2k` and `2k + 1` of the previous one. Null outside the
+     * elimination brackets.
+     */
+    @Column({ type: 'int', nullable: true })
+    bracketPosition!: number | null;
+
     @Column({ default: false })
     isBye!: boolean;
 

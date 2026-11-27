@@ -52,7 +52,6 @@ import { GlobalRankingEntry } from 'src/app/models/global-ranking.model';
 import { MatchesSessionDto, SessionStatus } from 'src/app/models/matches-session.model';
 import type { TDocumentDefinitions } from 'pdfmake/interfaces';
 import { PdfExportService } from 'src/app/services/pdf-export.service';
-import { RepechedList } from 'src/app/shared/repeched-list/repeched-list';
 import { TournamentParcours } from 'src/app/shared/tournament-parcours/tournament-parcours';
 import { TournamentTeamConfigurationCard } from './components/tournament-team-configuration-card/tournament-team-configuration-card';
 
@@ -438,38 +437,6 @@ describe('AdminTournamentPageComponent', { timeout: 15_000 }, () => {
       fixture.detectChanges();
 
       expect(parcours(fixture)).toBeUndefined();
-    });
-
-    it('lists the repêchés of each bracket', () => {
-      const match = (id: string, a: string, b: string, scoreA: number, scoreB: number) => ({
-        id,
-        status: 'VALIDATED',
-        isBye: false,
-        scoreA,
-        scoreB,
-        plateNumber: 1,
-        teamA: { id: a, name: a },
-        teamB: { id: b, name: b },
-        poolNumber: null,
-        group: { order: 6, name: 'consolante_2', label: 'Consolante B' },
-        startedAt: null,
-        finishedAt: null,
-        duration: null,
-      });
-      const { fixture } = setup({
-        tournament: { ...buildTournament(TournamentStatus.ACTIVE), plan: exactCountPlan() },
-        sessions: [
-          { ...closed(5), matches: [match('m1', 'Fer et Fier', 'Les Mouettes', 10, 11)] },
-          { ...closed(6), matches: [match('m2', 'Fer et Fier', 'Les Bigorneaux', 0, 0)] },
-        ],
-      });
-      fixture.detectChanges();
-
-      const list = fixture.debugElement.query(By.directive(RepechedList))
-        .componentInstance as RepechedList;
-      expect(list.brackets().map((bracket) => [bracket.label, bracket.teams[0].teamName])).toEqual([
-        ['Consolante B', 'Fer et Fier'],
-      ]);
     });
   });
 

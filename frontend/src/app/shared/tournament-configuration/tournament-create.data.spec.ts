@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { pairingModeOptions, scoreCalculationOptions } from './tournament-create.data';
+import {
+  eliminationSeedingOptions,
+  pairingModeOptions,
+  scoreCalculationOptions,
+} from './tournament-create.data';
 
 const TIE_RULE = 'égalité parfaite';
 
@@ -80,5 +84,27 @@ describe('pairingModeOptions', () => {
   it('keeps the winners-against-winners rule in the Gagnant/Perdant text', () => {
     const dutch = pairingModeOptions.find((option) => option.value === 'dutch')!;
     expect(dutch.description).toContain('même nombre de victoires');
+  });
+});
+
+describe('eliminationSeedingOptions', () => {
+  it('lists pyramidal first, then random', () => {
+    expect(eliminationSeedingOptions.map((option) => option.value)).toEqual([
+      'pyramidal',
+      'random',
+    ]);
+  });
+
+  it('says the best teams are protected and get the byes with the pyramidal placement', () => {
+    const pyramidal = eliminationSeedingOptions.find((option) => option.value === 'pyramidal')!;
+    expect(pyramidal.description).toContain('protégées');
+    expect(pyramidal.description).toContain('exemptés');
+  });
+
+  it('warns that a rematch or a same-club match is possible later with the random placement', () => {
+    const random = eliminationSeedingOptions.find((option) => option.value === 'random')!;
+    expect(random.description).toContain('arbre est fixé');
+    expect(random.description).toContain('revanche');
+    expect(random.description).toContain('même club');
   });
 });

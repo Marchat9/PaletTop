@@ -16,6 +16,8 @@ export interface InputCardRadioOption<T> {
   description?: string;
   htmlDescription?: string;
   icon?: string;
+  /** Shows a « Recommandé » badge next to the label. */
+  recommended?: boolean;
 }
 
 @Component({

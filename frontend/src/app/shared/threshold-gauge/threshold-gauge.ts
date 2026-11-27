@@ -43,8 +43,8 @@ interface ExampleZone {
   range: string;
   /** False when no team count falls in the zone. */
   hasTeams: boolean;
-  /** « 0 à 1 repêché », empty when no team count falls in the zone. */
-  bestLosers: string;
+  /** « 1 à 3 exemptés », empty when no team count falls in the zone. */
+  byes: string;
 }
 
 /** Same comparisons as the backend `fillLevel`, so that the example matches the real plans. */
@@ -59,9 +59,9 @@ function levelOf(
   return ratio >= warningRatio ? 'mid' : 'low';
 }
 
-/** Teams brought back at the end of the first round so that the next one fills `capacity / 2`. */
-function bestLosersOf(count: number, capacity: number): number {
-  return Math.max(0, capacity / 2 - Math.ceil(count / 2));
+/** Teams exempt from the first round of a bracket of `capacity` slots holding `count` teams. */
+function byesOf(count: number, capacity: number): number {
+  return Math.max(0, capacity - count);
 }
 
 function keyDirection(key: string): 1 | -1 | null {
@@ -85,10 +85,10 @@ function positionOf(percent: number): string {
   return `${(percent - MIN_PERCENT) * 2}%`;
 }
 
-function bestLosersText(min: number, max: number): string {
-  if (max === 0) return 'aucun repêché';
+function byesText(min: number, max: number): string {
+  if (max === 0) return 'aucun exempté';
   const range = min === max ? `${min}` : `${min} à ${max}`;
-  return `${range} repêché${max > 1 ? 's' : ''}`;
+  return `${range} exempté${max > 1 ? 's' : ''}`;
 }
 
 /**
@@ -164,8 +164,7 @@ export class ThresholdGauge {
       const inZone = counts.filter(
         (count) => levelOf(count, capacity, this.okRatio(), this.warningRatio()) === level,
       );
-      if (!inZone.length)
-        return { level, name, range: 'aucun cas', hasTeams: false, bestLosers: '' };
+      if (!inZone.length) return { level, name, range: 'aucun cas', hasTeams: false, byes: '' };
       const first = inZone[0];
       const last = inZone[inZone.length - 1];
       return {
@@ -173,14 +172,14 @@ export class ThresholdGauge {
         name,
         range: first === last ? `${first}` : `de ${first} à ${last}`,
         hasTeams: true,
-        // The fewer teams, the more best losers: the first count gives the maximum.
-        bestLosers: bestLosersText(bestLosersOf(last, capacity), bestLosersOf(first, capacity)),
+        // The fewer teams, the more byes: the first count gives the maximum.
+        byes: byesText(byesOf(last, capacity), byesOf(first, capacity)),
       };
     };
     return [
       zone('ok', 'Complet ou presque'),
-      zone('mid', 'Quelques repêchés'),
-      zone('low', 'Beaucoup de repêchés'),
+      zone('mid', 'Quelques exemptés'),
+      zone('low', "Beaucoup d'exemptés"),
     ];
   });
 

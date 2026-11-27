@@ -52,7 +52,7 @@
   <div class="form-group">
     <app-switch
       label="Challenges"
-      description="Un tableau de repêchage pour les perdants du 2e tour de chaque tableau."
+      description="Un tableau supplémentaire pour les perdants du 1er tour de chaque tableau."
       [formControl]="group().controls.hasChallenges"
     ></app-switch>
   </div>
@@ -66,14 +66,15 @@
   </div>
 
   <div class="form-group">
-    <label class="form-label">Appariement des phases éliminatoires</label>
+    <label class="form-label">Placement des phases éliminatoires</label>
     <p class="form-label-description">
-      Comment sont formés les matchs de chaque tour des tableaux. Les parties qualificatives restent
-      tirées au sort.
+      Comment sont placées les équipes au 1er tour de chaque tableau. Ensuite l'arbre est fixé : les
+      vainqueurs se rencontrent sans nouveau tirage. Les parties qualificatives restent tirées au
+      sort.
     </p>
     <app-input-card-radio
-      [options]="eliminationPairingModeOptions"
-      [formControl]="group().controls.eliminationPairingMode"
+      [options]="eliminationSeedingOptions"
+      [formControl]="group().controls.eliminationSeeding"
     ></app-input-card-radio>
   </div>
 

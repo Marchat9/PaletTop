@@ -208,6 +208,7 @@
   .col-stat {
     width: 3.5rem;
     text-align: right;
+    white-space: nowrap;
     font-variant-numeric: tabular-nums;
     color: var(--color-on-surface-variant);
 

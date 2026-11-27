@@ -95,6 +95,14 @@ describe('TournamentConfigurationDto', () => {
             },
         );
 
+        it('accepts the pyramidal and random seedings, and rejects the other values', () => {
+            expect(validate(structured({ ...base, eliminationSeeding: 'pyramidal' }))).toEqual([]);
+            expect(validate(structured({ ...base, eliminationSeeding: 'random' }))).toEqual([]);
+            expect(validate(structured({ ...base, eliminationSeeding: 'dutch' }))).toContain(
+                'competitionConfiguration',
+            );
+        });
+
         it('rejects the removed table fields', () => {
             expect(validate(structured({ ...base, hasConsolanteTable: true }))).toContain(
                 'competitionConfiguration',

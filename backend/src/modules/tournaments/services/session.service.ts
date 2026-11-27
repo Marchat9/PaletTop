@@ -410,22 +410,6 @@ export class SessionService {
         return sessions.map((session) => this.toSessionDto(strategy, tournament, session));
     }
 
-    async getSessionByNumber(
-        tournamentCode: string,
-        sessionNumber: number,
-    ): Promise<SessionResponseDto> {
-        const tournament = await this.tournamentRepo.findByCode(tournamentCode);
-        if (!tournament) throw new NotFoundException('Tournoi introuvable');
-
-        const session = await this.sessionRepo.findOneByTournamentAndNumber(
-            tournament.id,
-            sessionNumber,
-        );
-        if (!session) throw new NotFoundException('Round introuvable');
-        const strategy = this.strategyFactory.create(tournament.configuration.competitionMode);
-        return this.toSessionDto(strategy, tournament, session);
-    }
-
     /** Session as sent to the clients, flagged when its scores stay correctable once closed. */
     private toSessionDto(
         strategy: TournamentStrategy,

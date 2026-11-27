@@ -59,7 +59,6 @@ describe('RankingService.getPlayerTeam', () => {
     it('adds the team status computed by the strategy to the team', async () => {
         const { service, computeTeamStatus } = build({
             eliminatedAfterQualifying: false,
-            repechedFrom: 'Consolante A',
         });
 
         const team = await service.getPlayerTeam('TRN', 'AAA');
@@ -68,7 +67,6 @@ describe('RankingService.getPlayerTeam', () => {
             id: 'team-1',
             name: 'Les Rouges',
             eliminatedAfterQualifying: false,
-            repechedFrom: 'Consolante A',
         });
         expect(computeTeamStatus).toHaveBeenCalledWith(tournament, [], 'team-1');
     });

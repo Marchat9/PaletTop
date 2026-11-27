@@ -18,6 +18,11 @@
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 0.6rem;
+
+    // The button labels do not wrap: side by side they would push the form past a phone screen.
+    @media (width < 600px) {
+      grid-template-columns: 1fr;
+    }
   }
 
   &__comfort {

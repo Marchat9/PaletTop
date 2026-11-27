@@ -59,7 +59,7 @@ export function extractCompetitionConfiguration(
         consolationCount: structuredConfigControls.consolationCount.value,
         hasChallenges: structuredConfigControls.hasChallenges.value,
         hasThirdPlaceMatch: structuredConfigControls.hasThirdPlaceMatch.value,
-        eliminationPairingMode: structuredConfigControls.eliminationPairingMode.value,
+        eliminationSeeding: structuredConfigControls.eliminationSeeding.value,
       };
     case 'up_down':
       const upDownConfigControls = tournamentModeParameter.controls.upDownMode.controls;
@@ -97,12 +97,12 @@ export function buildPlanPreviewBody(
     return null;
   }
 
-  // The plan does not depend on how the elimination rounds are paired: changing it must not
+  // The plan does not depend on how the first round of a bracket is placed: changing it must not
   // ask for a new preview.
   const planConfiguration: StructuredTournamentConfig = {
     ...(extractCompetitionConfiguration(modeParameter) as StructuredTournamentConfig),
   };
-  delete planConfiguration.eliminationPairingMode;
+  delete planConfiguration.eliminationSeeding;
 
   const targetCount = targetControl.value;
   return {

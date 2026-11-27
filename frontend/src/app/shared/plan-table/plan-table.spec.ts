@@ -22,20 +22,13 @@ function group(
     teamCount,
     matchCount: Math.floor(teamCount / 2),
     byeCount: 0,
-    bestLosersIn: 0,
     plateStart: 1,
     plateEnd: Math.floor(teamCount / 2),
     ...extra,
   };
 }
 
-function bracket(
-  key: string,
-  label: string,
-  capacity: number,
-  teamCount: number,
-  bestLosersFirstRound = 0,
-): PlanBracket {
+function bracket(key: string, label: string, capacity: number, teamCount: number): PlanBracket {
   return {
     key,
     label,
@@ -44,7 +37,6 @@ function bracket(
     fillRatio: teamCount / capacity,
     fillLevel: teamCount === capacity ? 'ok' : 'mid',
     extra: false,
-    bestLosersFirstRound,
   };
 }
 
@@ -70,7 +62,7 @@ function buildPlan(): TournamentPlan {
     elimination(4, 'Élimination 1', [
       group('principale', 'Principale', 'main', 64),
       group('consolante_1', 'Consolante A', 'consolation', 32),
-      group('consolante_2', 'Consolante B', 'consolation', 24, { bestLosersIn: 4 }),
+      group('consolante_2', 'Consolante B', 'consolation', 24, { byeCount: 8 }),
     ]),
     elimination(5, 'Élimination 2', [
       group('principale', 'Principale', 'main', 32),
@@ -94,7 +86,7 @@ function buildPlan(): TournamentPlan {
     brackets: [
       bracket('principale', 'Principale', 64, 64),
       bracket('consolante_1', 'Consolante A', 32, 32),
-      bracket('consolante_2', 'Consolante B', 32, 24, 4),
+      bracket('consolante_2', 'Consolante B', 32, 24),
     ],
     rounds,
     totalRounds: rounds.length,
@@ -106,6 +98,7 @@ function buildPlan(): TournamentPlan {
 }
 
 interface PlanTableInputs {
+  plan?: TournamentPlan;
   doneRounds?: number;
   currentRound?: number | null;
   minColumns?: number;
@@ -116,7 +109,7 @@ describe('PlanTable', () => {
 
   function create(inputs: PlanTableInputs = {}): HTMLElement {
     fixture = TestBed.createComponent(PlanTable);
-    fixture.componentRef.setInput('plan', buildPlan());
+    fixture.componentRef.setInput('plan', inputs.plan ?? buildPlan());
     if (inputs.doneRounds !== undefined)
       fixture.componentRef.setInput('doneRounds', inputs.doneRounds);
     if (inputs.currentRound !== undefined)
@@ -129,6 +122,23 @@ describe('PlanTable', () => {
 
   const text = (el: Element | null | undefined): string =>
     (el?.textContent ?? '').replace(/\s+/g, ' ').trim();
+
+  it('says « 1 match » for a first round with a single real match and many byes', () => {
+    const plan = buildPlan();
+    const first = plan.rounds.find((round) => round.number === 4)!;
+    first.groups[0] = group('principale', 'Principale', 'main', 9, {
+      matchCount: 1,
+      byeCount: 7,
+    });
+
+    const root = create({ plan });
+
+    const principale = Array.from(root.querySelectorAll('tbody tr')[0].querySelectorAll('td')).map(
+      (td) => text(td),
+    );
+    expect(principale[0]).toContain('1 match');
+    expect(principale[0]).not.toContain('1 matchs');
+  });
 
   it('renders one row per bracket plus the 3rd place and challenge sub-rows', () => {
     const root = create();
@@ -168,13 +178,13 @@ describe('PlanTable', () => {
     ]);
   });
 
-  it('shows the best losers brought back in the first cell of the consolante B', () => {
+  it('shows the byes of the first round in the first cell of the consolante B', () => {
     const root = create();
 
     const row = Array.from(root.querySelectorAll('tbody tr')).find((r) =>
       text(r.querySelector('th')).startsWith('Consolante B'),
     );
-    expect(text(row?.querySelector('td'))).toContain('+4 repêchés');
+    expect(text(row?.querySelector('td'))).toContain('8 exempts');
   });
 
   it('adds up the plates of each round in the last row', () => {

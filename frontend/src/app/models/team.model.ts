@@ -15,8 +15,6 @@ export interface TeamDto {
 export interface PlayerTeamDto extends TeamDto {
   /** Stopped after the qualifiers: no elimination match, the qualifying rank is final. */
   eliminatedAfterQualifying: boolean;
-  /** Label of the bracket the team was brought back to after losing its first round there. */
-  repechedFrom?: string;
 }
 
 export interface UpdateTeamRequest {

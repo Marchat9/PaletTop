@@ -183,24 +183,6 @@ describe('PlayerTeamMatchPageComponent', () => {
     const text = (fixture: { nativeElement: unknown }): string =>
       ((fixture.nativeElement as HTMLElement).textContent ?? '').replace(/\s+/g, ' ');
 
-    it('tells a repêché team which bracket it was brought back to', () => {
-      const { fixture } = setup(false, 'ABCD', {
-        team: buildTeam({ repechedFrom: 'Consolante B' }),
-      });
-      fixture.detectChanges();
-
-      expect(fixture.componentInstance.repechedNotice()).toContain('repêchés dans la Consolante B');
-      expect(text(fixture)).toContain('vous êtes repêchés dans la Consolante B');
-    });
-
-    it('shows no notice for a team that was not brought back', () => {
-      const { fixture } = setup(false, 'ABCD', { team: buildTeam() });
-      fixture.detectChanges();
-
-      expect(fixture.componentInstance.repechedNotice()).toBeNull();
-      expect(text(fixture)).not.toContain('repêchés');
-    });
-
     it('shows « Mon parcours » from the rounds the team played', () => {
       const { fixture } = setup(false, 'ABCD', {
         team: buildTeam(),

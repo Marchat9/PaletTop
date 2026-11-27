@@ -209,12 +209,9 @@ export class TournamentConfiguration implements OnInit {
           hasThirdPlaceMatch: new FormControl(structuredConfig.hasThirdPlaceMatch ?? false, {
             nonNullable: true,
           }),
-          eliminationPairingMode: new FormControl(
-            structuredConfig.eliminationPairingMode ?? 'random',
-            {
-              nonNullable: true,
-            },
-          ),
+          eliminationSeeding: new FormControl(structuredConfig.eliminationSeeding ?? 'pyramidal', {
+            nonNullable: true,
+          }),
         }),
         upDownMode: new FormGroup({
           numberOfRound: new FormControl(upDownConfig.numberOfRound ?? undefined, {

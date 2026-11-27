@@ -24,10 +24,6 @@
         (tileClicked)="openRankModale()"
       />
 
-      @if (repechedNotice(); as notice) {
-        <app-inline-notice icon="celebration">{{ notice }}</app-inline-notice>
-      }
-
       <section class="current-match">
         @if (matchTitle(); as title) {
           <h3>{{ title }}</h3>

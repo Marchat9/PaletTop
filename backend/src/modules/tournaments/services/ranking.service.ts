@@ -73,7 +73,7 @@ export class RankingService {
         return toPlayerMatchDto(match);
     }
 
-    /** The team with its place in the tournament: stopped after the qualifiers, repêchée. */
+    /** The team with its place in the tournament: stopped after the qualifiers or not. */
     async getPlayerTeam(tournamentCode: string, teamCode: string): Promise<PlayerTeamDto> {
         const tournament = await this.tournamentRepo.findWithRelations(
             { code: tournamentCode },

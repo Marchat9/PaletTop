@@ -4,8 +4,6 @@ import { TeamDto } from './admin-tournament.dto';
 export interface TeamTournamentStatus {
     /** Stopped after the qualifiers: no elimination match, the qualifying rank is final. */
     eliminatedAfterQualifying: boolean;
-    /** Label of the bracket the team was brought back to after losing its first round there. */
-    repechedFrom?: string;
 }
 
 /** The team as the player and spectator screens read it. */

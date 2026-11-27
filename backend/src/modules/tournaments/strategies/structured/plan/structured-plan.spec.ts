@@ -90,9 +90,8 @@ describe('computeStructuredPlan', () => {
             expect(plates(eliminationRound(plan, 1))).toEqual([
                 'principale 1-32',
                 'consolante_1 33-48',
-                'consolante_2 49-60',
+                'consolante_2 49-56',
             ]);
-            expect(eliminationRound(plan, 1).groups[2].bestLosersIn).toBe(4);
             expect(plates(eliminationRound(plan, 2))).toEqual([
                 'principale 1-16',
                 'challenge_principale 17-32',
@@ -131,7 +130,7 @@ describe('computeStructuredPlan', () => {
             ]);
         });
 
-        it('fills the challenge of B with its first-round losers minus the repêchés', () => {
+        it('fills the challenge of B with its first-round losers', () => {
             const challengeB = eliminationRound(plan, 2).groups.find(
                 (g) => g.key === 'challenge_consolante_2',
             ) as PlanGroup;
@@ -171,7 +170,6 @@ describe('computeStructuredPlan', () => {
                     fillRatio: 1,
                     fillLevel: 'ok',
                     extra: false,
-                    bestLosersFirstRound: 0,
                 },
                 {
                     key: 'consolante_1',
@@ -181,7 +179,6 @@ describe('computeStructuredPlan', () => {
                     fillRatio: 1,
                     fillLevel: 'ok',
                     extra: false,
-                    bestLosersFirstRound: 0,
                 },
                 {
                     key: 'consolante_2',
@@ -191,7 +188,6 @@ describe('computeStructuredPlan', () => {
                     fillRatio: 0.75,
                     fillLevel: 'mid',
                     extra: false,
-                    bestLosersFirstRound: 4,
                 },
             ]);
             expect(plan.maxPlates).toBe(60);
@@ -225,8 +221,7 @@ describe('computeStructuredPlan', () => {
                 code: 'LOW_FILL',
                 level: 'warning',
                 bracketKey: 'consolante_2',
-                message:
-                    'Consolante B : 21 équipes sur 32. 5 des 10 perdants du 1er tour seront repêchés.',
+                message: 'Consolante B : 21 équipes sur 32. 11 équipes exemptées au 1er tour.',
             });
         });
 
@@ -358,6 +353,50 @@ describe('computeStructuredPlan', () => {
         });
     });
 
+    describe('main bracket of 4 with challenges and a 3rd place match', () => {
+        const plan = computeStructuredPlan(
+            input({
+                teamCount: 4,
+                targetCount: 4,
+                consolationCount: 0,
+                hasChallenges: true,
+                hasThirdPlaceMatch: true,
+            }),
+        );
+
+        it('keeps the 3rd place match but drops the main challenge: they would use the same two teams', () => {
+            const keys = plan.rounds.flatMap((round) => round.groups.map((group) => group.key));
+            expect(keys).toContain('third_place_match');
+            expect(keys).not.toContain('challenge_principale');
+        });
+
+        it('says why the challenge is missing', () => {
+            const warning = plan.warnings.find(
+                (w) => w.code === 'BRACKET_TOO_SMALL' && w.bracketKey === 'challenge_principale',
+            );
+            expect(warning?.message).toContain('match pour la 3e place');
+        });
+
+        it('has no group twice in the same round for the same teams: the last round holds 2 matches', () => {
+            const last = plan.rounds[plan.rounds.length - 1];
+            expect(last.groups.map((g) => g.key)).toEqual(['principale', 'third_place_match']);
+        });
+    });
+
+    it('still gives a challenge to a main bracket of 4 without a 3rd place match', () => {
+        const plan = computeStructuredPlan(
+            input({
+                teamCount: 4,
+                targetCount: 4,
+                consolationCount: 0,
+                hasChallenges: true,
+                hasThirdPlaceMatch: false,
+            }),
+        );
+        const keys = plan.rounds.flatMap((round) => round.groups.map((group) => group.key));
+        expect(keys).toContain('challenge_principale');
+    });
+
     describe('small brackets', () => {
         const plan = computeStructuredPlan(
             input({
@@ -407,8 +446,8 @@ describe('computeStructuredPlan', () => {
                 okFrom: 120,
                 text:
                     'Configuration optimale : 128 équipes (chaque tableau est une puissance de 2 : 64 + 32 + 32). ' +
-                    'De 120 à 127 équipes, les tableaux restent les mêmes : la consolante B est complétée par ses meilleurs perdants. ' +
-                    "En dessous de 120, beaucoup de perdants de B seraient repêchés : l'app vous proposera une autre configuration. " +
+                    'De 120 à 127 équipes, les tableaux restent les mêmes : la consolante B a des équipes exemptées au 1er tour. ' +
+                    "En dessous de 120, la consolante B serait trop peu remplie : l'app vous proposera une autre configuration. " +
                     'Au-delà de 128, les équipes en plus forment une consolante C.',
             });
         });
@@ -419,8 +458,8 @@ describe('computeStructuredPlan', () => {
             );
             expect(plan.comfort?.text).toBe(
                 'Configuration optimale : 64 équipes (le tableau est une puissance de 2 : 64). ' +
-                    'De 48 à 63 équipes, le tableau reste le même : il est complété par ses meilleurs perdants. ' +
-                    "En dessous de 48, beaucoup de perdants du tableau principal seraient repêchés : l'app vous proposera une autre configuration. " +
+                    'De 48 à 63 équipes, le tableau reste le même : des équipes sont exemptées au 1er tour. ' +
+                    "En dessous de 48, le tableau principal serait trop peu rempli : l'app vous proposera une autre configuration. " +
                     "Au-delà de 64, il n'y a plus de place pour une consolante : les équipes sont réparties autrement.",
             );
         });
