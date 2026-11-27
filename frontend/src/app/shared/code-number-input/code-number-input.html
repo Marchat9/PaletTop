@@ -6,7 +6,7 @@
       [value]="digit"
       [attr.data-digit-index]="$index"
       [attr.aria-label]="'Chiffre ' + ($index + 1)"
-      (input)="onDigitInput($any($event.target), $index)"
+      (input)="onDigitInput($any($event.target), $index, $any($event).data)"
       (keydown)="onDigitKeyDown($event, $index)"
       (paste)="onDigitPaste($event, $index)"
       inputmode="numeric"

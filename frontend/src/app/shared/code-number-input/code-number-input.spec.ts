@@ -71,4 +71,14 @@ describe('CodeNumberInputComponent', () => {
     expect(letters.value).toBe('');
     expect(component.getCode()).toBe('7');
   });
+
+  it('replaces the old digit with the one typed, even with the caret before it', () => {
+    const component = setup();
+    const input = box('75');
+
+    component.onDigitInput(input, 0, '7');
+
+    expect(input.value).toBe('7');
+    expect(component.getCode()).toBe('7');
+  });
 });
