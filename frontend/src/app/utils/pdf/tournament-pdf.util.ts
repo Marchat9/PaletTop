@@ -106,9 +106,14 @@ export function buildTournamentPdfHeader(header: TournamentPdfHeader): Content[]
       columnGap: 12,
       columns: [
         { width: '*', stack: titleBlock },
-        qrFigure(header.appUrl, { text: header.appUrl, style: 'qrCaption', margin: [0, 3, 0, 0] }),
+        qrFigure(header.appUrl, {
+          text: 'PaletTop',
+          style: 'qrCaption',
+          bold: true,
+          margin: [0, 3, 0, 0],
+        }),
         qrFigure(header.spectatorUrl, {
-          text: 'Spectateur',
+          text: 'Spectateur du tournoi',
           style: 'qrCaption',
           bold: true,
           margin: [0, 3, 0, 0],
