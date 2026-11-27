@@ -39,4 +39,16 @@ describe('Switch', () => {
 
     expect(input.checked).toBe(true);
   });
+
+  it('shows the warning line only when one is given', () => {
+    const { fixture } = setup(false);
+    expect(fixture.nativeElement.querySelector('.switch-warning')).toBeNull();
+
+    fixture.componentRef.setInput('warning', 'Attention : rematchs possibles.');
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.switch-warning')?.textContent).toContain(
+      'Attention : rematchs possibles.',
+    );
+  });
 });

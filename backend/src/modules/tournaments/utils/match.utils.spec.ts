@@ -1,3 +1,5 @@
+import { NEUTRAL_BYE_WIN } from './bye.utils';
+import { seededRandom } from './seeded-random.utils';
 import { describe, expect, it } from 'vitest';
 import { MatchesSession } from 'src/entities/matches-session.entity';
 import { Team } from 'src/entities/team.entity';
@@ -10,6 +12,8 @@ import { GlobalRankingEntry } from '../responses/ranking.dto';
 import {
     generateMatchesByRanking,
     generateMatchesInPool,
+    orderFirstRoundMatches,
+    orderMatchesByRanking,
     orderTeamsByRanking,
 } from './match.utils';
 
@@ -53,6 +57,18 @@ describe('orderTeamsByRanking', () => {
             'M',
             'Z',
             'B',
+        ]);
+    });
+});
+
+describe('orderTeamsByRanking with unranked teams', () => {
+    it('keeps a team missing from the ranking, after the ranked ones, in id order', () => {
+        const ranking = [entry('B', 1), entry('A', 2)];
+        expect(ids(orderTeamsByRanking(teams(['Z', 'A', 'Y', 'B']), ranking))).toEqual([
+            'B',
+            'A',
+            'Y',
+            'Z',
         ]);
     });
 });
@@ -125,6 +141,8 @@ describe('generateMatchesInPool', () => {
                 session,
                 constraintConfig,
                 pastMatches,
+                NEUTRAL_BYE_WIN,
+                seededRandom('spec'),
             );
             expect(matches.find((m) => m.isBye)?.teamA?.id).toBe('C');
         }
@@ -142,13 +160,15 @@ describe('generateMatchesInPool', () => {
                 session,
                 constraintConfig,
                 [pastBye('A')],
+                NEUTRAL_BYE_WIN,
+                seededRandom('spec'),
                 ranking,
             );
             expect(matches.find((m) => m.isBye)?.teamA?.id).toBe('C');
         }
     });
 
-    it('stores the drawn-round bye 0-0 as a win, so it leaves the goal average untouched', () => {
+    it('stores a neutral bye 0-0 as a win, so it leaves the goal average untouched', () => {
         const matches = generateMatchesInPool(
             pool,
             teams(['A', 'B', 'C']).map((team) => Object.assign(team, { players: [] })),
@@ -156,6 +176,8 @@ describe('generateMatchesInPool', () => {
             session,
             constraintConfig,
             [],
+            NEUTRAL_BYE_WIN,
+            seededRandom('spec'),
         );
         expect(matches.find((m) => m.isBye)).toMatchObject({
             scoreA: 0,
@@ -163,5 +185,89 @@ describe('generateMatchesInPool', () => {
             byeWin: true,
             status: MatchStatus.VALIDATED,
         });
+    });
+
+    it('stores a scored bye as a win with its own score', () => {
+        const matches = generateMatchesInPool(
+            pool,
+            teams(['A', 'B', 'C', 'D', 'E']).map((team) => Object.assign(team, { players: [] })),
+            tournamentWithConfig,
+            session,
+            constraintConfig,
+            [],
+            { own: 13, against: 6, isWin: true },
+            seededRandom('spec'),
+        );
+        expect(matches.find((m) => m.isBye)).toMatchObject({
+            scoreA: 13,
+            scoreB: 6,
+            byeWin: true,
+            isBye: true,
+            status: MatchStatus.VALIDATED,
+        });
+    });
+});
+
+describe('orderMatchesByRanking', () => {
+    const match = (a: string, b: string) => ({ teamA: { id: a }, teamB: { id: b }, isBye: false });
+    const bye = (a: string) => ({ teamA: { id: a }, teamB: null, isBye: true });
+    const ranking = [entry('A', 1), entry('B', 2), entry('C', 3), entry('D', 4), entry('E', 5)];
+
+    it('puts the match of the best ranked team first, byes last', () => {
+        const ordered = orderMatchesByRanking(
+            [bye('E'), match('D', 'C'), match('B', 'A')] as never,
+            ranking,
+        );
+        expect(ordered.map((m) => [m.teamA?.id, m.teamB?.id ?? null])).toEqual([
+            ['B', 'A'],
+            ['D', 'C'],
+            ['E', null],
+        ]);
+    });
+
+    it('orders a match by its best ranked team, whichever side it is on', () => {
+        const ordered = orderMatchesByRanking([match('E', 'C'), match('D', 'A')] as never, ranking);
+        expect(ordered.map((m) => m.teamB?.id)).toEqual(['A', 'C']);
+    });
+
+    it('breaks a rank tie by team id, whatever the order of the ranking entries', () => {
+        const tied = [entry('C', 1), entry('B', 1), entry('A', 1)];
+        const ordered = orderMatchesByRanking([match('C', 'X'), match('A', 'Y')] as never, tied);
+        expect(ordered.map((m) => m.teamA?.id)).toEqual(['A', 'C']);
+        const reversed = orderMatchesByRanking(
+            [match('C', 'X'), match('A', 'Y')] as never,
+            [...tied].reverse(),
+        );
+        expect(reversed.map((m) => m.teamA?.id)).toEqual(['A', 'C']);
+    });
+
+    it('counts a team missing from the ranking as last, without dropping its match', () => {
+        const ordered = orderMatchesByRanking([match('X', 'Y'), match('A', 'B')] as never, ranking);
+        expect(ordered.map((m) => m.teamA?.id)).toEqual(['A', 'X']);
+    });
+});
+
+describe('orderFirstRoundMatches', () => {
+    const match = (a: string, b: string) => ({ teamA: { id: a }, teamB: { id: b }, isBye: false });
+    const bye = (a: string) => ({ teamA: { id: a }, teamB: null, isBye: true });
+    const input = [match('A', 'B'), match('C', 'D'), match('E', 'F'), match('G', 'H'), bye('I')];
+
+    it('shuffles the real matches with the seed and keeps the byes last', () => {
+        const first = orderFirstRoundMatches(input as never, seededRandom('t1:draw:1:0:plates'));
+        const again = orderFirstRoundMatches(input as never, seededRandom('t1:draw:1:0:plates'));
+        expect(first).toEqual(again);
+        expect(first[first.length - 1].isBye).toBe(true);
+        expect(first.map((m) => m.teamA?.id).sort()).toEqual(['A', 'C', 'E', 'G', 'I']);
+    });
+
+    it('changes the order from one seed to another', () => {
+        const orders = new Set(
+            [1, 2, 3, 4, 5, 6].map((session) =>
+                orderFirstRoundMatches(input as never, seededRandom(`t1:draw:${session}:0`))
+                    .map((m) => m.teamA?.id)
+                    .join(),
+            ),
+        );
+        expect(orders.size).toBeGreaterThan(1);
     });
 });

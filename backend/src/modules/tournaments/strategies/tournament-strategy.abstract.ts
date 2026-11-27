@@ -23,6 +23,12 @@ export interface StartChoice {
     eliminatedAfterQualifying?: number;
 }
 
+/** App settings a session generation depends on, read by the service layer. */
+export interface GenerationOptions {
+    /** Highest score the loser of a qualifying bye is given (the winner gets `pointsPerGame`). */
+    byeLoserCap: number;
+}
+
 /** What a strategy may need to prepare the start, read by the service layer. */
 export interface StartOptions {
     settings: PlanSettings;
@@ -194,6 +200,7 @@ export abstract class TournamentStrategy {
     async generateSessionMatches(
         _tournament: Tournament,
         _session: MatchesSession,
+        _options: GenerationOptions,
     ): Promise<TournamentMatch[]> {
         throw new NotImplementedException(
             `generateSessionMatches must be implemented for ${this.constructor.name}`,

@@ -4,6 +4,7 @@ import {
     APP_SETTING_DEFINITIONS,
     isValidCronExpression,
     validateBracketFillThresholds,
+    validateByeLoserScoreCap,
     validateCleanupConfig,
     validateLevelHistoryDepth,
     validateMaxConsolationCount,
@@ -175,6 +176,20 @@ describe('structured bracket settings', () => {
         ).not.toEqual([]);
         expect(validateBracketFillThresholds({ okRatio: 0.9 })).not.toEqual([]);
         expect(validateBracketFillThresholds('x')).not.toEqual([]);
+    });
+
+    it('registers the bye loser score cap as an internal setting, 6 by default', () => {
+        const cap = APP_SETTING_DEFINITIONS[AppSettingKey.BYE_LOSER_SCORE_CAP];
+        expect(cap.defaultValue).toBe(6);
+        expect(cap.scope).toBe(AppSettingScope.INTERNAL);
+    });
+
+    it('accepts a bye loser score cap between 0 and 12 only', () => {
+        expect(validateByeLoserScoreCap(0)).toEqual([]);
+        expect(validateByeLoserScoreCap(12)).toEqual([]);
+        for (const invalid of [13, -1, 1.5, '6', null]) {
+            expect(validateByeLoserScoreCap(invalid), String(invalid)).not.toEqual([]);
+        }
     });
 
     it('registers both settings as public with their defaults', () => {

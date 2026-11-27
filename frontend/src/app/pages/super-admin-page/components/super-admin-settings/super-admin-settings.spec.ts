@@ -25,6 +25,7 @@ const SETTINGS: AppSettingDetailDto[] = [
   },
   detail('training_level_history_depth', 5),
   { ...detail('max_consolation_count', 4), scope: 'public' },
+  { ...detail('bye_loser_score_cap', 6), scope: 'internal' },
   { ...detail('bracket_fill_thresholds', { okRatio: 0.9, warningRatio: 0.75 }), scope: 'public' },
   {
     ...detail('training_cleanup', { enabled: true, cronExpression: '0 6 * * 1', retentionDays: 7 }),
@@ -112,6 +113,26 @@ describe('SuperAdminSettingsComponent', () => {
       component.onSave('max_consolation_count');
       expect(saved).toEqual([{ key: 'max_consolation_count', value: 6 }]);
       expect(component.meta().bracket_fill_thresholds?.isDirty).toBe(false);
+    });
+  });
+
+  describe('bye loser score cap', () => {
+    it('shows the stored cap', () => {
+      expect(component.byeLoserScoreCap()).toBe(6);
+    });
+
+    it('clamps the value to 0..12', () => {
+      component.onByeLoserScoreCapChange(40);
+      expect(component.byeLoserScoreCap()).toBe(12);
+      component.onByeLoserScoreCapChange(-3);
+      expect(component.byeLoserScoreCap()).toBe(0);
+    });
+
+    it('saves its own setting only', () => {
+      component.onByeLoserScoreCapChange(8);
+      component.onSave('bye_loser_score_cap');
+      expect(saved).toEqual([{ key: 'bye_loser_score_cap', value: 8 }]);
+      expect(component.meta().max_consolation_count?.isDirty).toBe(false);
     });
   });
 

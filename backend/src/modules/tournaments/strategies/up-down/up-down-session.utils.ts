@@ -1,6 +1,9 @@
 import { TournamentStatus } from 'src/enum/status.enum';
 import { UpDownCompetitionConfiguration } from 'src/entities/tournament-competition-configuration.entity';
+import { TournamentMatch } from 'src/entities/tounament-match.entity';
 import { PairingMode } from 'src/enum/tounament.enum';
+import { GlobalRankingEntry } from '../../responses/ranking.dto';
+import { sortRankingEntries } from '../../utils/match.utils';
 
 const MODE_LABEL = 'Montée / Descente';
 
@@ -38,6 +41,59 @@ export function isDutchRound(
     );
 }
 
+/**
+ * True when this session is paired by ranking neighbours (1st-2nd, 3rd-4th…): every round after
+ * the first one, except the frozen last round.
+ */
+export function isNeighborRound(
+    config: UpDownCompetitionConfiguration,
+    sessionNumber: number,
+): boolean {
+    return (
+        resolvePairingMode(config) === PairingMode.NEIGHBORS &&
+        sessionNumber > 1 &&
+        !isRankingRound(config, sessionNumber)
+    );
+}
+
+/**
+ * Final standings of a tournament whose last round is frozen: the winner of plate 1 is 1st, its
+ * opponent 2nd, the winner of plate 2 3rd, and so on; the team with the bye is last. The stats are
+ * those of the aggregate `ranking`, only the rank is rewritten (1..n). A team missing from the last
+ * round goes after the others, in ranking order.
+ */
+export function computeFrozenStandings(
+    ranking: GlobalRankingEntry[],
+    lastRoundMatches: TournamentMatch[],
+): GlobalRankingEntry[] {
+    const byPlate = lastRoundMatches
+        .filter((match) => !match.isBye && match.teamB)
+        .sort(
+            (a, b) =>
+                (a.plateNumber ?? Number.MAX_SAFE_INTEGER) -
+                (b.plateNumber ?? Number.MAX_SAFE_INTEGER),
+        );
+    const byes = lastRoundMatches.filter((match) => match.isBye);
+
+    const orderedIds: string[] = [];
+    for (const match of byPlate) {
+        const aWon = match.scoreA > match.scoreB;
+        orderedIds.push(aWon ? match.teamA.id : match.teamB!.id);
+        orderedIds.push(aWon ? match.teamB!.id : match.teamA.id);
+    }
+    const placed = new Set(orderedIds);
+    const byeIds = byes.map((match) => match.teamA.id);
+    const missing = sortRankingEntries(ranking)
+        .map((entry) => entry.teamId)
+        .filter((teamId) => !placed.has(teamId) && !byeIds.includes(teamId));
+
+    const entries = new Map(ranking.map((entry) => [entry.teamId, entry]));
+    return [...orderedIds, ...missing, ...byeIds]
+        .map((teamId) => entries.get(teamId))
+        .filter((entry): entry is GlobalRankingEntry => !!entry)
+        .map((entry, index) => ({ ...entry, rank: index + 1 }));
+}
+
 export function computePhaseName(
     tournamentStatus: TournamentStatus,
     currentSessionNumber: number,
@@ -52,7 +108,7 @@ export function computePhaseName(
             return `${MODE_LABEL} terminée`;
         case tournamentStatus === TournamentStatus.ACTIVE &&
             isRankingRound(config, currentSessionNumber):
-            return `${MODE_LABEL} — Dernière partie (au classement)`;
+            return `${MODE_LABEL} — Dernière partie figée`;
         case tournamentStatus === TournamentStatus.ACTIVE && !!config.numberOfRound:
             return `Partie ${currentSessionNumber}/${config.numberOfRound}`;
         case tournamentStatus === TournamentStatus.ACTIVE:

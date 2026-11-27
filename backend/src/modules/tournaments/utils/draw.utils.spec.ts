@@ -5,6 +5,7 @@ import { Team } from 'src/entities/team.entity';
 import { TournamentMatch } from 'src/entities/tounament-match.entity';
 import { ConstraintConfig } from 'src/model/constraint.model';
 import { generatePairsWithContraints, TeamPair } from './draw.utils';
+import { seededRandom } from './seeded-random.utils';
 
 let teamCounter = 0;
 let playerCounter = 0;
@@ -58,24 +59,30 @@ function allTeamIds(pairs: TeamPair[]): string[] {
 describe('generatePairsWithContraints', () => {
     describe('cas à la marge', () => {
         it("retourne un tableau vide pour une liste d'équipes vide", () => {
-            expect(generatePairsWithContraints(STRICT_CONFIG, [], [])).toEqual([]);
+            expect(
+                generatePairsWithContraints(STRICT_CONFIG, [], [], seededRandom('spec')),
+            ).toEqual([]);
         });
 
         it('retourne un tableau vide pour une seule équipe (impossible à apparier)', () => {
             const team = makeTeam();
-            expect(generatePairsWithContraints(STRICT_CONFIG, [team], [])).toEqual([]);
+            expect(
+                generatePairsWithContraints(STRICT_CONFIG, [team], [], seededRandom('spec')),
+            ).toEqual([]);
         });
 
         it("retourne un tableau vide pour un nombre impair d'équipes (le bye est géré par l'appelant, pas ici)", () => {
             const teams = [makeTeam(), makeTeam(), makeTeam()];
-            expect(generatePairsWithContraints(STRICT_CONFIG, teams, [])).toEqual([]);
+            expect(
+                generatePairsWithContraints(STRICT_CONFIG, teams, [], seededRandom('spec')),
+            ).toEqual([]);
         });
 
         it("ne mute pas le tableau d'équipes reçu en entrée", () => {
             const teams = [makeTeam(), makeTeam(), makeTeam(), makeTeam()];
             const snapshot = [...teams];
 
-            generatePairsWithContraints(STRICT_CONFIG, teams, []);
+            generatePairsWithContraints(STRICT_CONFIG, teams, [], seededRandom('spec'));
 
             expect(teams).toEqual(snapshot);
         });
@@ -84,7 +91,12 @@ describe('generatePairsWithContraints', () => {
             const [a, b] = [makeTeam(), makeTeam()];
             const pastMatches = [makeMatch(a, b)];
 
-            const pairs = generatePairsWithContraints(STRICT_CONFIG, [a, b], pastMatches);
+            const pairs = generatePairsWithContraints(
+                STRICT_CONFIG,
+                [a, b],
+                pastMatches,
+                seededRandom('spec'),
+            );
 
             expect(pairs).toHaveLength(1);
             expect(pairContains(pairs, a, b)).toBe(true);
@@ -94,7 +106,12 @@ describe('generatePairsWithContraints', () => {
             const a = makeTeam([null, null]);
             const b = makeTeam([null, null]);
 
-            const pairs = generatePairsWithContraints(STRICT_CONFIG, [a, b], []);
+            const pairs = generatePairsWithContraints(
+                STRICT_CONFIG,
+                [a, b],
+                [],
+                seededRandom('spec'),
+            );
 
             expect(pairs).toHaveLength(1);
             expect(pairContains(pairs, a, b)).toBe(true);
@@ -103,7 +120,7 @@ describe('generatePairsWithContraints', () => {
 
     it('apparie chaque équipe exactement une fois pour une poule simple sans historique', () => {
         const teams = [makeTeam(), makeTeam(), makeTeam(), makeTeam()];
-        const pairs = generatePairsWithContraints(STRICT_CONFIG, teams, []);
+        const pairs = generatePairsWithContraints(STRICT_CONFIG, teams, [], seededRandom('spec'));
 
         expect(pairs).toHaveLength(2);
         expect(allTeamIds(pairs).sort()).toEqual(teams.map((t) => t.id).sort());
@@ -112,7 +129,7 @@ describe('generatePairsWithContraints', () => {
     it('produit un appariement complet et sans chevauchement pour une poule plus grande', () => {
         const teams = Array.from({ length: 8 }, () => makeTeam());
 
-        const pairs = generatePairsWithContraints(STRICT_CONFIG, teams, []);
+        const pairs = generatePairsWithContraints(STRICT_CONFIG, teams, [], seededRandom('spec'));
 
         expect(pairs).toHaveLength(4);
         const ids = allTeamIds(pairs);
@@ -124,7 +141,12 @@ describe('generatePairsWithContraints', () => {
         const [a, b, c, d] = [makeTeam(), makeTeam(), makeTeam(), makeTeam()];
         const pastMatches = [makeMatch(a, b), makeMatch(c, d)];
 
-        const pairs = generatePairsWithContraints(STRICT_CONFIG, [a, b, c, d], pastMatches);
+        const pairs = generatePairsWithContraints(
+            STRICT_CONFIG,
+            [a, b, c, d],
+            pastMatches,
+            seededRandom('spec'),
+        );
 
         expect(pairContains(pairs, a, b)).toBe(false);
         expect(pairContains(pairs, c, d)).toBe(false);
@@ -145,6 +167,7 @@ describe('generatePairsWithContraints', () => {
             },
             [a, b, c, d],
             [],
+            seededRandom('spec'),
         );
 
         expect(pairContains(pairs, a, b)).toBe(false);
@@ -165,6 +188,7 @@ describe('generatePairsWithContraints', () => {
             },
             [a, b, c, d],
             [],
+            seededRandom('spec'),
         );
 
         expect(pairContains(pairs, a, b)).toBe(false);
@@ -183,7 +207,12 @@ describe('generatePairsWithContraints', () => {
             makeMatch(b, d),
         ];
 
-        const pairs = generatePairsWithContraints(PERMISSIVE_CONFIG, [a, b, c, d], pastMatches);
+        const pairs = generatePairsWithContraints(
+            PERMISSIVE_CONFIG,
+            [a, b, c, d],
+            pastMatches,
+            seededRandom('spec'),
+        );
 
         expect(pairContains(pairs, a, b)).toBe(false);
     });
@@ -203,7 +232,12 @@ describe('generatePairsWithContraints', () => {
             }
 
             const start = Date.now();
-            const pairs = generatePairsWithContraints(STRICT_CONFIG, teams, []);
+            const pairs = generatePairsWithContraints(
+                STRICT_CONFIG,
+                teams,
+                [],
+                seededRandom('spec'),
+            );
             const elapsedMs = Date.now() - start;
 
             expect(elapsedMs).toBeLessThan(2000);
@@ -222,7 +256,12 @@ describe('generatePairsWithContraints', () => {
 
             for (let session = 0; session < 3; session++) {
                 const start = Date.now();
-                const pairs = generatePairsWithContraints(STRICT_CONFIG, teams, pastMatches);
+                const pairs = generatePairsWithContraints(
+                    STRICT_CONFIG,
+                    teams,
+                    pastMatches,
+                    seededRandom('spec'),
+                );
                 const elapsedMs = Date.now() - start;
 
                 expect(elapsedMs).toBeLessThan(2000);
@@ -232,5 +271,34 @@ describe('generatePairsWithContraints', () => {
                 pastMatches = [...pastMatches, ...pairs.map(([a, b]) => makeMatch(a, b))];
             }
         });
+    });
+});
+
+describe('generatePairsWithContraints with a seed', () => {
+    it('gives the same pairs for the same seeded random', () => {
+        const teams = Array.from({ length: 8 }, () => makeTeam());
+        const pairsOf = (seed: string): string[] =>
+            generatePairsWithContraints(PERMISSIVE_CONFIG, teams, [], seededRandom(seed)).map(
+                ([a, b]) => `${a.id}-${b.id}`,
+            );
+
+        expect(pairsOf('t1:draw:1:0')).toEqual(pairsOf('t1:draw:1:0'));
+        const others = new Set(
+            [2, 3, 4, 5, 6].map((session) => pairsOf(`t1:draw:${session}:0`).join()),
+        );
+        expect(others.size).toBeGreaterThan(1);
+    });
+
+    it('gives the same pairs whatever the order the teams come in', () => {
+        const teams = Array.from({ length: 8 }, () => makeTeam());
+        const pairsOf = (input: Team[]): string[] =>
+            generatePairsWithContraints(
+                PERMISSIVE_CONFIG,
+                input,
+                [],
+                seededRandom('t1:draw:1:0'),
+            ).map(([a, b]) => `${a.id}-${b.id}`);
+
+        expect(pairsOf([...teams].reverse())).toEqual(pairsOf(teams));
     });
 });

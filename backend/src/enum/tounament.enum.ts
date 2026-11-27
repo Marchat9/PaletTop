@@ -15,4 +15,6 @@ export enum PairingMode {
     RANDOM = 'random',
     /** Swiss system, Dutch variant: same wins, top half of the group against the bottom half. */
     DUTCH = 'dutch',
+    /** Ranking neighbours: 1st against 2nd, 3rd against 4th, within the constraints when possible. */
+    NEIGHBORS = 'neighbors',
 }

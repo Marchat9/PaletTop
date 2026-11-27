@@ -173,6 +173,17 @@ describe('AdminMatchRow', () => {
     expect(root.querySelector('button')).toBeNull();
   });
 
+  it('does not print the stored score of a qualifying bye (13-6)', () => {
+    const { root } = render({
+      match: { ...MATCH, isBye: true, teamB: null, scoreA: 13, scoreB: 6, byeWin: true },
+    });
+
+    const text = root.textContent ?? '';
+    expect(text).toContain('Exempté');
+    expect(text).not.toContain('13');
+    expect(text).not.toContain('6');
+  });
+
   it('shows a training rest as a rest, not as an exempt', () => {
     const { root } = render({ match: { ...MATCH, isBye: true, isRest: true, teamB: null } });
 

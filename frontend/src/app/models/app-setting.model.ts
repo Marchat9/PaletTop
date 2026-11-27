@@ -9,7 +9,8 @@ export type AppSettingKey =
   | 'training_auto_close'
   | 'training_level_history_depth'
   | 'max_consolation_count'
-  | 'bracket_fill_thresholds';
+  | 'bracket_fill_thresholds'
+  | 'bye_loser_score_cap';
 
 export type AppSettingScope = 'public' | 'super_admin' | 'internal';
 
@@ -55,6 +56,7 @@ export interface AppSettingValues {
   training_level_history_depth: number;
   max_consolation_count: number;
   bracket_fill_thresholds: FillThresholds;
+  bye_loser_score_cap: number;
 }
 
 export interface PublicAppSettingDto {
@@ -79,6 +81,7 @@ export const DEFAULT_SCORE_CALCULATIONS_BY_MODE: ScoreCalculationsByMode = {
 
 /** Same defaults as the backend: used until the public settings are loaded, or if they fail. */
 export const DEFAULT_MAX_CONSOLATION_COUNT = 4;
+export const DEFAULT_BYE_LOSER_SCORE_CAP = 6;
 export const DEFAULT_BRACKET_FILL_THRESHOLDS: FillThresholds = {
   okRatio: 0.9,
   warningRatio: 0.75,

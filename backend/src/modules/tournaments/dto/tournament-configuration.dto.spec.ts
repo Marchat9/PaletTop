@@ -134,6 +134,7 @@ describe('TournamentConfigurationDto', () => {
         it('accepte le mode d’appariement aléatoire ou hollandais, et rejette les autres', () => {
             expect(validate(upDown({ pairingMode: 'random' }))).toEqual([]);
             expect(validate(upDown({ pairingMode: 'dutch', numberOfRound: 4 }))).toEqual([]);
+            expect(validate(upDown({ pairingMode: 'neighbors', numberOfRound: 4 }))).toEqual([]);
             expect(validate(upDown({ pairingMode: 'monrad' }))).toContain(
                 'competitionConfiguration',
             );

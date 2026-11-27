@@ -5,6 +5,7 @@ import { Tournament } from 'src/entities/tournament.entity';
 import { TournamentPool } from 'src/entities/tournament-pool.entity';
 import { Team } from 'src/entities/team.entity';
 import { shuffleFisherYates } from 'src/modules/tournaments/utils/global.utils';
+import { buildSeed, seededRandom } from 'src/modules/tournaments/utils/seeded-random.utils';
 
 @Injectable()
 export class PoolService {
@@ -20,7 +21,11 @@ export class PoolService {
         numberOfPools: number | undefined | null,
     ): Promise<TournamentPool[]> {
         numberOfPools = numberOfPools ?? 1;
-        const teams = shuffleFisherYates([...tournament.teams]);
+        // Seeded, from teams in a fixed order: the same tournament always gets the same pools.
+        const teams = shuffleFisherYates(
+            [...tournament.teams].sort((a, b) => a.id.localeCompare(b.id)),
+            seededRandom(buildSeed(tournament.id, 'draw', 0, 'pools')),
+        );
 
         // `tournament` is stubbed to its id here — embedding the full entity would make
         // `pool.tournament.teams` point back to these same teams once `team.pool` is set

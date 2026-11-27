@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { scoreCalculationOptions } from './tournament-create.data';
+import { pairingModeOptions, scoreCalculationOptions } from './tournament-create.data';
 
 const TIE_RULE = 'égalité parfaite';
 
@@ -54,5 +54,31 @@ describe('scoreCalculationOptions', () => {
     const text = fullText('tournament_score');
     expect(text).toContain('Victoire = 6pts');
     expect(text).not.toContain(TIE_RULE);
+  });
+});
+
+describe('pairingModeOptions', () => {
+  it('lists Gagnant/Perdant, Voisins de classement, then Aléatoire', () => {
+    expect(pairingModeOptions.map((option) => option.value)).toEqual([
+      'dutch',
+      'neighbors',
+      'random',
+    ]);
+    expect(pairingModeOptions.map((option) => option.label)).toEqual([
+      'Gagnant/Perdant',
+      'Voisins de classement',
+      'Aléatoire',
+    ]);
+  });
+
+  it('warns that the constraints can be bypassed with the neighbours pairing', () => {
+    const neighbors = pairingModeOptions.find((option) => option.value === 'neighbors')!;
+    expect(neighbors.description).toContain('contraintes');
+    expect(neighbors.description).toContain('contourn');
+  });
+
+  it('keeps the winners-against-winners rule in the Gagnant/Perdant text', () => {
+    const dutch = pairingModeOptions.find((option) => option.value === 'dutch')!;
+    expect(dutch.description).toContain('même nombre de victoires');
   });
 });

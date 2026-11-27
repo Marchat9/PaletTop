@@ -60,6 +60,7 @@ function setup(prepareTournamentStart: () => Promise<Tournament>) {
             buildPlan: vi.fn(async () => null),
             getPlanSettings: vi.fn(async () => planSettings),
         } as never,
+        { get: vi.fn(async () => 6) } as never,
     );
     return { service, gateway, rankingService, tournamentRepo, sessionRepo, strategy };
 }
@@ -184,11 +185,12 @@ function setupStructured(teamCount: number, consolationCount: number, maxTeamCap
             buildPlan: vi.fn(async () => null),
             getPlanSettings: vi.fn(async () => planSettings),
         } as never,
+        { get: vi.fn(async () => 6) } as never,
     );
     const storedConfig = (): StructuredCompetitionConfiguration =>
         tournamentRepo.save.mock.calls[0][0].configuration
             .competitionConfiguration as StructuredCompetitionConfiguration;
-    return { service, tournament, tournamentRepo, gateway, storedConfig };
+    return { service, tournament, tournamentRepo, gateway, storedConfig, strategy };
 }
 
 describe('SessionService.startTournament (structured plan frozen at launch)', () => {
@@ -207,6 +209,18 @@ describe('SessionService.startTournament (structured plan frozen at launch)', ()
         expect(config.plan!.brackets.length).toBe(4);
         expect(config.plan!.brackets.map((b) => b.teamCount)).toEqual([64, 32, 32, 8]);
         expect(config.plan!.brackets[3].extra).toBe(true);
+    });
+
+    it('hands the bye loser score cap setting to the strategy that generates the first session', async () => {
+        const { service, strategy } = setupStructured(128, 2);
+
+        await service.startTournament('CODE', 'pw');
+
+        expect(strategy.generateSessionMatches).toHaveBeenCalledWith(
+            expect.anything(),
+            expect.anything(),
+            { byeLoserCap: 6 },
+        );
     });
 
     it('keeps the stored configuration when an old client sends no choice', async () => {
@@ -294,6 +308,7 @@ function setupActive(status: { canGenerateNewSession: boolean; canFinishTourname
         rankingService as never,
         { create: vi.fn(() => strategy) } as never,
         { buildPlan: vi.fn(async () => null) } as never,
+        { get: vi.fn(async () => 6) } as never,
     );
     return { service, sessionRepo, tournament, validatedSession, rankingService };
 }

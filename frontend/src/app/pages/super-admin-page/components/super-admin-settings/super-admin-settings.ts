@@ -65,6 +65,8 @@ const CLEANUP_RULE_LABELS: Record<CleanupRuleName, string> = {
 
 const MIN_CONSOLATION_COUNT = 1;
 const MAX_CONSOLATION_COUNT_LIMIT = 26;
+const MIN_BYE_LOSER_SCORE_CAP = 0;
+const MAX_BYE_LOSER_SCORE_CAP = 12;
 const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
 const SOURCE_LABELS: Record<AppSettingDetailDto['source'], string> = {
@@ -111,6 +113,8 @@ export class SuperAdminSettingsComponent {
   );
 
   public readonly maxConsolationCountLimit = MAX_CONSOLATION_COUNT_LIMIT;
+  public readonly byeLoserScoreCapMin = MIN_BYE_LOSER_SCORE_CAP;
+  public readonly byeLoserScoreCapMax = MAX_BYE_LOSER_SCORE_CAP;
 
   public readonly scoreCalculationOptions: InputCardRadioOption<ScoreCalculation>[] =
     scoreCalculationOptions;
@@ -159,6 +163,7 @@ export class SuperAdminSettingsComponent {
   );
 
   public readonly maxConsolationCount = computed(() => this.drafts().max_consolation_count ?? null);
+  public readonly byeLoserScoreCap = computed(() => this.drafts().bye_loser_score_cap ?? null);
   public readonly consolationPreview = computed(() =>
     [
       'Principale',
@@ -220,6 +225,11 @@ export class SuperAdminSettingsComponent {
   onMaxConsolationCountChange(count: number): void {
     const clamped = Math.min(MAX_CONSOLATION_COUNT_LIMIT, Math.max(MIN_CONSOLATION_COUNT, count));
     this.patchDraft('max_consolation_count', clamped);
+  }
+
+  onByeLoserScoreCapChange(cap: number): void {
+    const clamped = Math.min(MAX_BYE_LOSER_SCORE_CAP, Math.max(MIN_BYE_LOSER_SCORE_CAP, cap));
+    this.patchDraft('bye_loser_score_cap', clamped);
   }
 
   onFillThresholdsChange(patch: Partial<FillThresholds>): void {

@@ -7,18 +7,18 @@ describe('shuffleFisherYates', () => {
     });
 
     it('returns an empty array when given an empty array', () => {
-        expect(shuffleFisherYates([])).toEqual([]);
+        expect(shuffleFisherYates([], Math.random)).toEqual([]);
     });
 
     it('returns the same single element when given a 1-element array', () => {
-        expect(shuffleFisherYates(['only'])).toEqual(['only']);
+        expect(shuffleFisherYates(['only'], Math.random)).toEqual(['only']);
     });
 
     it('does not mutate the input array', () => {
         const input = [1, 2, 3, 4, 5];
         const snapshot = [...input];
 
-        const result = shuffleFisherYates(input);
+        const result = shuffleFisherYates(input, Math.random);
 
         expect(input).toEqual(snapshot);
         expect(result).not.toBe(input);
@@ -27,7 +27,7 @@ describe('shuffleFisherYates', () => {
     it('preserves every element (same multiset, only reordered)', () => {
         const input = Array.from({ length: 30 }, (_, i) => i);
 
-        const result = shuffleFisherYates(input);
+        const result = shuffleFisherYates(input, Math.random);
 
         expect(result).toHaveLength(input.length);
         expect([...result].sort((a, b) => a - b)).toEqual(input);
@@ -37,14 +37,14 @@ describe('shuffleFisherYates', () => {
         vi.spyOn(Math, 'random').mockReturnValue(0);
 
         // Each step swaps position i with position 0 (j = floor(0 * (i+1)) = 0).
-        expect(shuffleFisherYates([1, 2, 3, 4])).toEqual([2, 3, 4, 1]);
+        expect(shuffleFisherYates([1, 2, 3, 4], Math.random)).toEqual([2, 3, 4, 1]);
     });
 
     it('leaves the array unchanged when Math.random always returns a value that rounds up to i (upper bound, j clamped)', () => {
         // With random just under 1, floor(random * (i + 1)) === i, so every swap is a no-op.
         vi.spyOn(Math, 'random').mockReturnValue(0.999999999);
 
-        expect(shuffleFisherYates([1, 2, 3, 4])).toEqual([1, 2, 3, 4]);
+        expect(shuffleFisherYates([1, 2, 3, 4], Math.random)).toEqual([1, 2, 3, 4]);
     });
 
     it('never produces an out-of-bounds swap when Math.random returns exactly 1 (edge case guarded by Math.min)', () => {
@@ -52,7 +52,7 @@ describe('shuffleFisherYates', () => {
         // without the Math.min(..., i) clamp, j would be i + 1, which is out of bounds.
         vi.spyOn(Math, 'random').mockReturnValue(1);
 
-        const result = shuffleFisherYates([1, 2, 3, 4]);
+        const result = shuffleFisherYates([1, 2, 3, 4], Math.random);
 
         expect(result).toHaveLength(4);
         expect(result).not.toContain(undefined);
