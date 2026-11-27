@@ -239,8 +239,31 @@ export function leaderboardItems(rows: LeaderboardRow[], showPodium: boolean): L
 }
 
 /**
- * The window of items shown (all of them without a size), cut into one or two tables. A table
- * starting in the middle of a section repeats its heading, so every line says where it stands.
+ * A table of the window, `offset` being the index of its first item in `items`. It always opens on
+ * the heading of its section: « Suite Principale » when the section began before, « Principale »
+ * when it begins here (its heading ended the previous table and was left out there). A heading
+ * that would end the table, with no row under it, is left out: the next table opens on it.
+ */
+function sectionTable(
+  items: LeaderboardItem[],
+  chunk: LeaderboardItem[],
+  offset: number,
+): LeaderboardItem[] {
+  const last = chunk[chunk.length - 1];
+  const kept = chunk.length > 1 && last.kind === 'section' ? chunk.slice(0, -1) : chunk;
+  const first = kept[0];
+  if (first.kind !== 'row' || !first.row.section) {
+    return kept;
+  }
+  const previous = items[offset - 1];
+  const continued = previous?.kind === 'row' && previous.row.section === first.row.section;
+  const label = continued ? `Suite ${first.row.section}` : first.row.section;
+  return [{ kind: 'section', key: `continued-${first.key}`, label }, ...kept];
+}
+
+/**
+ * The window of items shown (all of them without a size), cut into one or two tables, each opening
+ * on the heading of its section (see `sectionTable`), so every line says where it stands.
  */
 export function itemTables(
   items: LeaderboardItem[],
@@ -248,24 +271,20 @@ export function itemTables(
   size: Nullable<number>,
   columns: 1 | 2,
 ): LeaderboardItem[][] {
+  const windowStart = size ? start : 0;
   const window = size ? items.slice(start, start + size) : items;
   if (window.length === 0) {
     return [];
   }
+  const half = Math.ceil(window.length / 2);
   const chunks =
     columns === 2 && window.length > 1
-      ? [window.slice(0, Math.ceil(window.length / 2)), window.slice(Math.ceil(window.length / 2))]
-      : [window];
-  return chunks.map((chunk) => {
-    const first = chunk[0];
-    if (first.kind === 'row' && first.row.section) {
-      return [
-        { kind: 'section', key: `continued-${first.key}`, label: first.row.section },
-        ...chunk,
-      ];
-    }
-    return chunk;
-  });
+      ? [
+          { items: window.slice(0, half), offset: windowStart },
+          { items: window.slice(half), offset: windowStart + half },
+        ]
+      : [{ items: window, offset: windowStart }];
+  return chunks.map((chunk) => sectionTable(items, chunk.items, chunk.offset));
 }
 
 /** « Rangs 4 – 15 »: what a page of a paginated leaderboard shows; null on an empty page. */
