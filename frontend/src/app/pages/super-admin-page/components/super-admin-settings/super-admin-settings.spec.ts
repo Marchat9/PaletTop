@@ -125,6 +125,17 @@ describe('SuperAdminSettingsComponent', () => {
   });
 
   describe('bye loser score cap', () => {
+    it('comes right after the recommended options', () => {
+      const titles = Array.from(
+        fixture.nativeElement.querySelectorAll('.setting-title') as NodeListOf<HTMLElement>,
+        (title) => title.textContent?.trim(),
+      );
+      const recommended = titles.indexOf('Options recommandées');
+
+      expect(recommended).toBeGreaterThanOrEqual(0);
+      expect(titles[recommended + 1]).toBe("Score du perdant d'un bye (plafond)");
+    });
+
     it('shows the stored cap', () => {
       expect(component.byeLoserScoreCap()).toBe(6);
     });
