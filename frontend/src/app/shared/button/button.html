@@ -8,6 +8,8 @@
   (click)="onClick($event)"
 >
   <div class="button-content">
+    <!-- A picture (a brand logo) in place of the icon. -->
+    <ng-content select="[buttonImage]" />
     @if (icon()) {
       <app-icon [name]="icon()!" iconClass="button-icon" [ariaHidden]="true" />
     }

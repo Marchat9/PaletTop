@@ -1,3 +1,4 @@
+import { NgOptimizedImage } from '@angular/common';
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { Button } from 'src/app/shared/button/button';
 import { Card } from 'src/app/shared/card/card';
@@ -6,7 +7,7 @@ import { Icon } from 'src/app/shared/icon/icon';
 /** Gentle invitation to support PaletTop, shown to the organiser once their tournament is over. */
 @Component({
   selector: 'app-donation-card',
-  imports: [Button, Card, Icon],
+  imports: [Button, Card, Icon, NgOptimizedImage],
   templateUrl: './donation-card.html',
   styleUrl: './donation-card.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

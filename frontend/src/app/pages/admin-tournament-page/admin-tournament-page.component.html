@@ -22,10 +22,6 @@
       (startTournament)="startTournament()"
     />
 
-    @if (showDonation()) {
-      <app-donation-card [donationUrl]="donationUrl" />
-    }
-
     <app-current-round-card
       [roundNumber]="currentRoundNumber()"
       [groups]="currentRoundGroups()"
@@ -39,6 +35,10 @@
       (scoreUpdate)="adminScoreUpdate($event)"
       (nextRound)="nextSession()"
     />
+
+    @if (showDonation()) {
+      <app-donation-card [donationUrl]="donationUrl" />
+    }
 
     @if (parcoursPlan(); as plan) {
       <app-tournament-parcours
