@@ -22,19 +22,25 @@
       (startTournament)="startTournament()"
     />
 
-    <app-current-round-card
-      [roundNumber]="currentRoundNumber()"
-      [groups]="currentRoundGroups()"
-      [showMatches]="showCurrentRound()"
-      [pointsPerGame]="pointsPerGame()"
-      [scoreUpdateLoading]="scoreUpdateLoading()"
-      [message]="currentRoundMessage()"
-      [showNextButton]="isActive()"
-      [canGenerateNext]="canGenerateNewSession()"
-      [nextLoading]="nextLoading()"
-      (scoreUpdate)="adminScoreUpdate($event)"
-      (nextRound)="nextSession()"
-    />
+    @if (showDonation()) {
+      <app-donation-card [donationUrl]="donationUrl" />
+    }
+
+    @if (!isFinished()) {
+      <app-current-round-card
+        [roundNumber]="currentRoundNumber()"
+        [groups]="currentRoundGroups()"
+        [showMatches]="showCurrentRound()"
+        [pointsPerGame]="pointsPerGame()"
+        [scoreUpdateLoading]="scoreUpdateLoading()"
+        [message]="currentRoundMessage()"
+        [showNextButton]="isActive()"
+        [canGenerateNext]="canGenerateNewSession()"
+        [nextLoading]="nextLoading()"
+        (scoreUpdate)="adminScoreUpdate($event)"
+        (nextRound)="nextSession()"
+      />
+    }
 
     @if (parcoursPlan(); as plan) {
       <app-tournament-parcours

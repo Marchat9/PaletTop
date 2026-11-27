@@ -93,6 +93,8 @@ import { MatchesSessionDto, SessionStatus } from 'src/app/models/matches-session
 import { Nullable } from 'src/app/models/nullable.model';
 import { TournamentHeaderComponent } from './components/tournament-header/tournament-header.component';
 import { TournamentTeamConfigurationCard } from './components/tournament-team-configuration-card/tournament-team-configuration-card';
+import { DonationCard } from './components/donation-card/donation-card';
+import { environment } from 'src/environments/environment';
 import {
   clearTournamentClubSuggestions,
   searchTournamentClubs,
@@ -117,6 +119,7 @@ const TEAM_COUNT_CHANGED_NOTICE =
     TournamentHeaderComponent,
     TournamentTeamConfigurationCard,
     CurrentRoundCard,
+    DonationCard,
     TournamentNextStep,
     Leaderboard,
     Button,
@@ -195,6 +198,12 @@ export class AdminTournamentPageComponent implements OnInit {
     Number(this.tournament()?.configuration?.pointsPerGame ?? 13),
   );
   public readonly isActive = computed(() => this.tournament()?.status === TournamentStatus.ACTIVE);
+  public readonly isFinished = computed(
+    () => this.tournament()?.status === TournamentStatus.FINISHED,
+  );
+  public readonly donationUrl = environment.about.donationUrl;
+  /** Once the tournament is over, the organiser is invited to support the app. */
+  public readonly showDonation = computed(() => this.isFinished() && !!this.donationUrl);
   public readonly canGenerateNewSession = computed(
     () => this.tournament()?.tournamentStatus?.canGenerateNewSession ?? false,
   );

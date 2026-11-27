@@ -54,6 +54,8 @@ import type { TDocumentDefinitions } from 'pdfmake/interfaces';
 import { PdfExportService } from 'src/app/services/pdf-export.service';
 import { TournamentParcours } from 'src/app/shared/tournament-parcours/tournament-parcours';
 import { TournamentTeamConfigurationCard } from './components/tournament-team-configuration-card/tournament-team-configuration-card';
+import { DonationCard } from './components/donation-card/donation-card';
+import { CurrentRoundCard } from 'src/app/shared/current-round-card/current-round-card';
 
 function buildTeams(count: number): TounamentTeamDto[] {
   return Array.from({ length: count }, (_, index) => ({
@@ -384,6 +386,24 @@ describe('AdminTournamentPageComponent', { timeout: 15_000 }, () => {
     expect(pdfExport.download).toHaveBeenCalledTimes(1);
     expect(pdfExport.download.mock.calls[0][1]).toBe('matchs-tournoi-test.pdf');
     expect(fixture.componentInstance.isMatchesExporting()).toBe(false);
+  });
+
+  describe('donation', () => {
+    it('shows the donation card and hides the rounds card once the tournament is finished', () => {
+      const { fixture } = setup({ status: TournamentStatus.FINISHED });
+      fixture.detectChanges();
+
+      expect(fixture.debugElement.query(By.directive(DonationCard))).not.toBeNull();
+      expect(fixture.debugElement.query(By.directive(CurrentRoundCard))).toBeNull();
+    });
+
+    it('shows the rounds card and no donation card while the tournament is active', () => {
+      const { fixture } = setup({ status: TournamentStatus.ACTIVE });
+      fixture.detectChanges();
+
+      expect(fixture.debugElement.query(By.directive(DonationCard))).toBeNull();
+      expect(fixture.debugElement.query(By.directive(CurrentRoundCard))).not.toBeNull();
+    });
   });
 
   describe('parcours', () => {

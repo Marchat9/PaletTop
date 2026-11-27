@@ -1,0 +1,17 @@
+<app-card class="donation-card">
+  <div class="donation">
+    <div class="head">
+      <span class="icon-box" aria-hidden="true">
+        <app-icon name="volunteer_activism" iconClass="donation-icon" [ariaHidden]="true" />
+      </span>
+      <h2 class="title">Votre tournoi s'est bien passé ?</h2>
+    </div>
+    <p class="text">
+      PaletTop est gratuit, sans publicité et développé bénévolement. Si l'application vous a rendu
+      service aujourd'hui, un petit don aide à payer l'hébergement et à continuer de l'améliorer.
+    </p>
+    <div class="actions">
+      <app-button title="Soutenir PaletTop" icon="favorite" (clicked)="openDonation()" />
+    </div>
+  </div>
+</app-card>
