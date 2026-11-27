@@ -33,6 +33,7 @@ import {
 } from 'src/app/shared/tournament-configuration/tournament-configuration-form.model';
 import {
   selectMaxConsolationCount,
+  selectRecommendedOptions,
   selectScoreCalculationsByMode,
 } from 'src/app/store/app-settings/app-settings.selectors';
 import { disconnectTournamentAdministrator } from 'src/app/store/tournament/tournament.actions';
@@ -103,6 +104,7 @@ export class AdminTournamentConfigurationPage implements OnInit {
   private readonly tournamentFetching = this.store.selectSignal(selectCurrentTournamentIsLoading);
   public readonly saveLoading = this.store.selectSignal(selectTournamentUpdateConfigLoading);
   public readonly scoreCalculationsByMode = this.store.selectSignal(selectScoreCalculationsByMode);
+  public readonly recommendedOptions = this.store.selectSignal(selectRecommendedOptions);
 
   private readonly tournamentLoading = computed(
     () => !this.tournament() && this.tournamentFetching(),

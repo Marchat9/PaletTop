@@ -1,9 +1,10 @@
-import { ChangeDetectionStrategy, Component, input, Signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, Signal } from '@angular/core';
+import { PairingMode } from 'src/app/models/tournament-configuration-detail.model';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { ReactiveFormsModule } from '@angular/forms';
 import { InputNumber } from 'src/app/shared/input-number/input-number';
 import { TournamentConfigurationField } from '../../tournament-configuration-form.model';
-import { isLastRoundByRankingAllowed } from '../../tournament-configuration.utils';
+import { isLastRoundByRankingAllowed, withRecommended } from '../../tournament-configuration.utils';
 import * as configuration from '../../tournament-create.data';
 import { UpDownTournamentForm } from './up-down-tournament-form.model';
 import { Switch } from 'src/app/shared/switch/switch';
@@ -21,9 +22,13 @@ export class UpDownTournament {
   public readonly group = input.required<UpDownTournamentForm>();
   public readonly readonlyFields = input<TournamentConfigurationField[]>([]);
   public readonly hiddenFields = input<TournamentConfigurationField[]>([]);
+  /** Pairing mode badged « Recommandé »; none when null. */
+  public readonly recommendedPairingMode = input<PairingMode | null>(null);
 
   public readonly competitionModeOptions = configuration.competitionModeOptions;
-  public readonly pairingModeOptions = configuration.pairingModeOptions;
+  public readonly pairingModeOptions = computed(() =>
+    withRecommended(configuration.pairingModeOptions, this.recommendedPairingMode()),
+  );
 
   public readonly isLastRoundByRankingAllowed: Signal<boolean> = toSignal(
     toObservable(this.group).pipe(

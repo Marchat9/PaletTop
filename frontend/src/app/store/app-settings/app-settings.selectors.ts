@@ -2,6 +2,7 @@ import { createFeatureSelector, createSelector } from '@ngrx/store';
 import {
   DEFAULT_BRACKET_FILL_THRESHOLDS,
   DEFAULT_MAX_CONSOLATION_COUNT,
+  DEFAULT_RECOMMENDED_OPTIONS,
   DEFAULT_SCORE_CALCULATIONS_BY_MODE,
 } from 'src/app/models/app-setting.model';
 import { AppSettingsState } from './app-settings.reducer';
@@ -27,6 +28,12 @@ export const selectMaxConsolationCount = createSelector(
 export const selectFillThresholds = createSelector(
   selectAppSettingsState,
   (state) => state.values.bracket_fill_thresholds ?? DEFAULT_BRACKET_FILL_THRESHOLDS,
+);
+
+/** Options badged « Recommandé » at tournament creation; default while loading or on failure. */
+export const selectRecommendedOptions = createSelector(
+  selectAppSettingsState,
+  (state) => state.values.recommended_options ?? DEFAULT_RECOMMENDED_OPTIONS,
 );
 
 export const selectAppSettingDetails = createSelector(

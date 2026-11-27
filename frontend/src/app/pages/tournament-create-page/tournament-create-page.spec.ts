@@ -4,10 +4,14 @@ import { FormControl, FormGroup } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MockStore, provideMockStore } from '@ngrx/store/testing';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { DEFAULT_SCORE_CALCULATIONS_BY_MODE } from 'src/app/models/app-setting.model';
+import {
+  DEFAULT_RECOMMENDED_OPTIONS,
+  DEFAULT_SCORE_CALCULATIONS_BY_MODE,
+} from 'src/app/models/app-setting.model';
 import { TournamentConfigurationForm } from 'src/app/shared/tournament-configuration/tournament-configuration-form.model';
 import {
   selectMaxConsolationCount,
+  selectRecommendedOptions,
   selectScoreCalculationsByMode,
 } from 'src/app/store/app-settings/app-settings.selectors';
 import { Action } from '@ngrx/store';
@@ -53,6 +57,7 @@ function setup() {
       provideMockStore({
         selectors: [
           { selector: selectScoreCalculationsByMode, value: DEFAULT_SCORE_CALCULATIONS_BY_MODE },
+          { selector: selectRecommendedOptions, value: DEFAULT_RECOMMENDED_OPTIONS },
           { selector: selectTournamentCreationIsLoading, value: false },
           { selector: selectTournamentCreationError, value: null },
           { selector: selectMaxConsolationCount, value: 6 },

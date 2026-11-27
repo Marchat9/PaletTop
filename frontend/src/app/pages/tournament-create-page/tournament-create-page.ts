@@ -4,6 +4,7 @@ import { BreakpointObserver } from '@angular/cdk/layout';
 import { Overlay } from '@angular/cdk/overlay';
 import {
   selectMaxConsolationCount,
+  selectRecommendedOptions,
   selectScoreCalculationsByMode,
 } from 'src/app/store/app-settings/app-settings.selectors';
 import { normalizeCode } from 'src/app/utils/code-format.util';
@@ -66,6 +67,7 @@ export class TournamentCreatePageComponent {
 
   public readonly isCreationLoading = this.store.selectSignal(selectTournamentCreationIsLoading);
   public readonly scoreCalculationsByMode = this.store.selectSignal(selectScoreCalculationsByMode);
+  public readonly recommendedOptions = this.store.selectSignal(selectRecommendedOptions);
   public readonly creationError = this.store.selectSignal(selectTournamentCreationError);
   private readonly plan = this.store.selectSignal(selectPlanPreview);
   private readonly planLoading = this.store.selectSignal(selectPlanPreviewLoading);

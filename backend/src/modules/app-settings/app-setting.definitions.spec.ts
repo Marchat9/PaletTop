@@ -8,6 +8,7 @@ import {
     validateCleanupConfig,
     validateLevelHistoryDepth,
     validateMaxConsolationCount,
+    validateRecommendedOptions,
     validateScoreCalculationsByMode,
     validateTrainingAutoCloseConfig,
     validateTrainingCleanupConfig,
@@ -199,5 +200,42 @@ describe('structured bracket settings', () => {
         expect(max.scope).toBe(AppSettingScope.PUBLIC);
         expect(thresholds.defaultValue).toEqual({ okRatio: 0.9, warningRatio: 0.75 });
         expect(thresholds.scope).toBe(AppSettingScope.PUBLIC);
+    });
+});
+
+describe('recommended options', () => {
+    it('registers them as a public setting: goal average, winner/loser and pyramidal', () => {
+        const recommended = APP_SETTING_DEFINITIONS[AppSettingKey.RECOMMENDED_OPTIONS];
+        expect(recommended.scope).toBe(AppSettingScope.PUBLIC);
+        expect(recommended.defaultValue).toEqual({
+            scoreCalculation: 'victory_goal_average',
+            pairingMode: 'dutch',
+            eliminationSeeding: 'pyramidal',
+        });
+    });
+
+    it('accepts no recommendation for a choice', () => {
+        expect(
+            validateRecommendedOptions({
+                scoreCalculation: null,
+                pairingMode: null,
+                eliminationSeeding: null,
+            }),
+        ).toEqual([]);
+    });
+
+    it('rejects an unknown option, an unknown key or a missing one', () => {
+        const valid = {
+            scoreCalculation: 'victory_points_scored',
+            pairingMode: 'neighbors',
+            eliminationSeeding: 'random',
+        };
+        expect(validateRecommendedOptions(valid)).toEqual([]);
+        expect(validateRecommendedOptions({ ...valid, pairingMode: 'swiss' })).toHaveLength(1);
+        expect(validateRecommendedOptions({ ...valid, extra: true })).toHaveLength(1);
+        expect(
+            validateRecommendedOptions({ scoreCalculation: null, pairingMode: null }),
+        ).toHaveLength(1);
+        expect(validateRecommendedOptions('dutch')).not.toEqual([]);
     });
 });

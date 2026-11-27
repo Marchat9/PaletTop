@@ -4,6 +4,7 @@ import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { environment } from '@environment';
 import { startWith, switchMap } from 'rxjs';
 import { Nullable } from 'src/app/models/nullable.model';
+import { EliminationSeeding } from 'src/app/models/tournament-configuration-detail.model';
 import { BracketPanelState, PlanSimulationState } from 'src/app/models/tournament-plan.model';
 import { Button } from 'src/app/shared/button/button';
 import { BracketPanel } from 'src/app/shared/bracket-panel/bracket-panel';
@@ -14,6 +15,7 @@ import { Switch } from 'src/app/shared/switch/switch';
 import { PlanSimulation } from './plan-simulation/plan-simulation';
 import { TournamentConfigurationField } from '../../tournament-configuration-form.model';
 import * as configuration from '../../tournament-create.data';
+import { withRecommended } from '../../tournament-configuration.utils';
 import { StructuredTournamentForm } from './structured-tournament-form.model';
 
 @Component({
@@ -42,6 +44,8 @@ export class StructuredTournament {
   public readonly simulation = input<Nullable<PlanSimulationState>>(null);
   public readonly readonlyFields = input<TournamentConfigurationField[]>([]);
   public readonly hiddenFields = input<TournamentConfigurationField[]>([]);
+  /** Elimination seeding badged « Recommandé »; none when null. */
+  public readonly recommendedEliminationSeeding = input<Nullable<EliminationSeeding>>(null);
 
   public readonly simulationTeamCountChange = output<number>();
   /** Narrow screens: the page opens the simulation in a bottom sheet, for this target count. */
@@ -50,7 +54,9 @@ export class StructuredTournament {
   public readonly numberOfQualifyingRoundsConfig =
     environment.tournamentConfiguration.numberOfQualifyingRounds;
   public readonly targetCountConfig = environment.tournamentConfiguration.maxTeamCapacity;
-  public readonly eliminationSeedingOptions = configuration.eliminationSeedingOptions;
+  public readonly eliminationSeedingOptions = computed(() =>
+    withRecommended(configuration.eliminationSeedingOptions, this.recommendedEliminationSeeding()),
+  );
   protected readonly consolationCount: Signal<number> = controlValue(
     computed(() => this.group().controls.consolationCount),
     0,

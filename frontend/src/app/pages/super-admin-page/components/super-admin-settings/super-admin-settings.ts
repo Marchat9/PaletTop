@@ -11,6 +11,7 @@ import {
   AppSettingKey,
   AppSettingValues,
   CleanupRuleConfig,
+  RecommendedOptions,
   ScoreCalculationsByMode,
   TournamentCleanupConfig,
   TrainingAutoCloseConfig,
@@ -18,19 +19,26 @@ import {
 } from 'src/app/models/app-setting.model';
 import {
   CompetitionMode,
+  EliminationSeeding,
+  PairingMode,
   ScoreCalculation,
 } from 'src/app/models/tournament-configuration-detail.model';
 import { FillThresholds } from 'src/app/models/tournament-plan.model';
 import { CardCollapsible } from 'src/app/shared/card-collapsible/card-collapsible';
 import { Icon } from 'src/app/shared/icon/icon';
 import { InputCardCheckbox } from 'src/app/shared/input-card-checkbox/input-card-checkbox';
-import { InputCardRadioOption } from 'src/app/shared/input-card-radio/input-card-radio';
+import {
+  InputCardRadio,
+  InputCardRadioOption,
+} from 'src/app/shared/input-card-radio/input-card-radio';
 import { InputNumber } from 'src/app/shared/input-number/input-number';
 import { InputText } from 'src/app/shared/input-text/input-text';
 import { Switch } from 'src/app/shared/switch/switch';
 import { ThresholdGauge } from 'src/app/shared/threshold-gauge/threshold-gauge';
 import {
   competitionModeOptions,
+  eliminationSeedingOptions,
+  pairingModeOptions,
   scoreCalculationOptions,
 } from 'src/app/shared/tournament-configuration/tournament-create.data';
 import { CronFieldsComponent } from './cron-fields/cron-fields';
@@ -76,6 +84,16 @@ const SOURCE_LABELS: Record<AppSettingDetailDto['source'], string> = {
   env: "Variable d'environnement",
 };
 
+/** Choice of a recommended option: « Aucune » first, then the options by name only. */
+function recommendationChoices<T>(
+  options: readonly InputCardRadioOption<T>[],
+): InputCardRadioOption<T | null>[] {
+  return [
+    { value: null, label: 'Aucune', icon: 'block', description: 'Pas de badge' },
+    ...options.map(({ value, label, icon }) => ({ value, label, icon })),
+  ];
+}
+
 function sourceLabel(detail: AppSettingDetailDto): string {
   const label = SOURCE_LABELS[detail.source];
   return detail.sourceDetail ? `${label} (${detail.sourceDetail})` : label;
@@ -88,6 +106,7 @@ function sourceLabel(detail: AppSettingDetailDto): string {
     CronFieldsComponent,
     Icon,
     InputCardCheckbox,
+    InputCardRadio,
     SettingFooterComponent,
     InputNumber,
     InputText,
@@ -118,6 +137,12 @@ export class SuperAdminSettingsComponent {
 
   public readonly scoreCalculationOptions: InputCardRadioOption<ScoreCalculation>[] =
     scoreCalculationOptions;
+  public readonly recommendedScoreCalculationChoices =
+    recommendationChoices<ScoreCalculation>(scoreCalculationOptions);
+  public readonly recommendedPairingModeChoices =
+    recommendationChoices<PairingMode>(pairingModeOptions);
+  public readonly recommendedEliminationSeedingChoices =
+    recommendationChoices<EliminationSeeding>(eliminationSeedingOptions);
 
   public readonly meta = computed<Partial<Record<AppSettingKey, SettingMeta>>>(() => {
     const drafts = this.drafts();
@@ -171,6 +196,7 @@ export class SuperAdminSettingsComponent {
     ].join(' · '),
   );
   public readonly fillThresholds = computed(() => this.drafts().bracket_fill_thresholds ?? null);
+  public readonly recommendedOptions = computed(() => this.drafts().recommended_options ?? null);
 
   // ========= Draft edits =========
 
@@ -236,6 +262,12 @@ export class SuperAdminSettingsComponent {
     const current = this.fillThresholds();
     if (!current) return;
     this.patchDraft('bracket_fill_thresholds', { ...current, ...patch });
+  }
+
+  onRecommendedOptionsChange(patch: Partial<RecommendedOptions>): void {
+    const current = this.recommendedOptions();
+    if (!current) return;
+    this.patchDraft('recommended_options', { ...current, ...patch });
   }
 
   // ========= Actions =========

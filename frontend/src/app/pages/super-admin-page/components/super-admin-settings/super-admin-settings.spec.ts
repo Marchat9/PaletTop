@@ -28,6 +28,14 @@ const SETTINGS: AppSettingDetailDto[] = [
   { ...detail('bye_loser_score_cap', 6), scope: 'internal' },
   { ...detail('bracket_fill_thresholds', { okRatio: 0.9, warningRatio: 0.75 }), scope: 'public' },
   {
+    ...detail('recommended_options', {
+      scoreCalculation: 'victory_goal_average',
+      pairingMode: 'dutch',
+      eliminationSeeding: 'pyramidal',
+    }),
+    scope: 'public',
+  },
+  {
     ...detail('training_cleanup', { enabled: true, cronExpression: '0 6 * * 1', retentionDays: 7 }),
     source: 'env',
     sourceDetail: 'TRAINING_CLEANUP_RETENTION_DAYS',
@@ -150,6 +158,34 @@ describe('SuperAdminSettingsComponent', () => {
         { key: 'bracket_fill_thresholds', value: { okRatio: 0.95, warningRatio: 0.75 } },
       ]);
       expect(component.meta().max_consolation_count?.isDirty).toBe(false);
+    });
+  });
+
+  describe('recommended options', () => {
+    it('offers « Aucune » before the options of each choice', () => {
+      expect(component.recommendedPairingModeChoices.map((choice) => choice.value)).toEqual([
+        null,
+        'dutch',
+        'neighbors',
+        'random',
+      ]);
+    });
+
+    it('changes one recommendation, keeps the others and saves them together', () => {
+      component.onRecommendedOptionsChange({ pairingMode: null });
+      expect(component.meta().recommended_options?.isDirty).toBe(true);
+
+      component.onSave('recommended_options');
+      expect(saved).toEqual([
+        {
+          key: 'recommended_options',
+          value: {
+            scoreCalculation: 'victory_goal_average',
+            pairingMode: null,
+            eliminationSeeding: 'pyramidal',
+          },
+        },
+      ]);
     });
   });
 });

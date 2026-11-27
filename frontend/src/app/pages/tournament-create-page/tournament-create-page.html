@@ -27,6 +27,7 @@
   <app-tournament-configuration
     [columns]="2"
     [scoreCalculationsByMode]="scoreCalculationsByMode()"
+    [recommendedOptions]="recommendedOptions()"
     [planState]="planState()"
     [simulation]="simulation()"
     (simulationTeamCountChange)="simulatedTeamCount.set($event)"

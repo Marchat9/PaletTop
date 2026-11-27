@@ -16,11 +16,26 @@ import {
     TrainingCleanupConfig,
 } from 'src/config/training-cleanup.config';
 import { AppSettingKey, AppSettingScope } from 'src/enum/app-setting.enum';
-import { CompetitionMode, ScoreCalculation } from 'src/enum/tounament.enum';
+import {
+    CompetitionMode,
+    EliminationSeeding,
+    PairingMode,
+    ScoreCalculation,
+} from 'src/enum/tounament.enum';
 import { FillThresholds } from 'src/modules/tournaments/strategies/structured/plan/plan.types';
 
 /** Score calculations offered at tournament creation, per competition mode (display order). */
 export type ScoreCalculationsByMode = Record<CompetitionMode, ScoreCalculation[]>;
+
+/**
+ * Option flagged « Recommandé » at tournament creation, for each choice that has one; null shows
+ * no badge for that choice.
+ */
+export interface RecommendedOptions {
+    scoreCalculation: ScoreCalculation | null;
+    pairingMode: PairingMode | null;
+    eliminationSeeding: EliminationSeeding | null;
+}
 
 export interface AppSettingValues {
     [AppSettingKey.SCORE_CALCULATIONS_BY_MODE]: ScoreCalculationsByMode;
@@ -31,6 +46,7 @@ export interface AppSettingValues {
     [AppSettingKey.MAX_CONSOLATION_COUNT]: number;
     [AppSettingKey.BRACKET_FILL_THRESHOLDS]: FillThresholds;
     [AppSettingKey.BYE_LOSER_SCORE_CAP]: number;
+    [AppSettingKey.RECOMMENDED_OPTIONS]: RecommendedOptions;
 }
 
 export interface AppSettingDefinition<K extends AppSettingKey> {
@@ -192,6 +208,32 @@ export function validateByeLoserScoreCap(value: unknown): string[] {
     return [];
 }
 
+function checkOptionalChoice(
+    errors: string[],
+    value: unknown,
+    choices: object,
+    label: string,
+): void {
+    if (value !== null && !(Object.values(choices) as unknown[]).includes(value)) {
+        errors.push(`${label} recommandé est inconnu.`);
+    }
+}
+
+export function validateRecommendedOptions(value: unknown): string[] {
+    if (!isRecord(value)) return ['La valeur doit être un objet.'];
+    const errors: string[] = [];
+    checkKeys(errors, value, ['scoreCalculation', 'pairingMode', 'eliminationSeeding']);
+    checkOptionalChoice(errors, value.scoreCalculation, ScoreCalculation, 'Le calcul des scores');
+    checkOptionalChoice(errors, value.pairingMode, PairingMode, "Le mode d'appariement");
+    checkOptionalChoice(
+        errors,
+        value.eliminationSeeding,
+        EliminationSeeding,
+        'Le placement des phases éliminatoires',
+    );
+    return errors;
+}
+
 export function validateBracketFillThresholds(value: unknown): string[] {
     if (!isRecord(value)) return ['La valeur doit être un objet.'];
     const errors: string[] = [];
@@ -263,6 +305,11 @@ export const DEFAULT_BRACKET_FILL_THRESHOLDS: FillThresholds = {
     okRatio: 0.9,
     warningRatio: 0.75,
 };
+export const DEFAULT_RECOMMENDED_OPTIONS: RecommendedOptions = {
+    scoreCalculation: ScoreCalculation.VICTORY_GOAL_AVERAGE,
+    pairingMode: PairingMode.DUTCH,
+    eliminationSeeding: EliminationSeeding.PYRAMIDAL,
+};
 
 /** Every app setting: the code is the source of truth for keys, scopes, defaults and rules. */
 export const APP_SETTING_DEFINITIONS: AppSettingDefinitions = {
@@ -310,6 +357,11 @@ export const APP_SETTING_DEFINITIONS: AppSettingDefinitions = {
         scope: AppSettingScope.INTERNAL,
         defaultValue: DEFAULT_BYE_LOSER_SCORE_CAP,
         validate: validateByeLoserScoreCap,
+    },
+    [AppSettingKey.RECOMMENDED_OPTIONS]: {
+        scope: AppSettingScope.PUBLIC,
+        defaultValue: DEFAULT_RECOMMENDED_OPTIONS,
+        validate: validateRecommendedOptions,
     },
 };
 

@@ -196,6 +196,7 @@ describe('AppSettingsService', () => {
                 scoreKey,
                 AppSettingKey.MAX_CONSOLATION_COUNT,
                 AppSettingKey.BRACKET_FILL_THRESHOLDS,
+                AppSettingKey.RECOMMENDED_OPTIONS,
             ]);
             expect(Object.keys(publicSettings[0])).toEqual(['key', 'value']);
         });

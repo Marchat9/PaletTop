@@ -40,6 +40,50 @@
       </section>
     }
 
+    @if (recommendedOptions(); as recommended) {
+      <section class="setting-block">
+        <h3 class="setting-title">Options recommandées</h3>
+        <p class="settings-hint">
+          À la création d'un tournoi, l'option choisie porte le badge « Recommandé ». « Aucune »
+          retire le badge de ce choix.
+        </p>
+        <div class="setting-mode">
+          <span class="setting-mode-label">Calcul des scores</span>
+          <app-input-card-radio
+            [columns]="3"
+            [options]="recommendedScoreCalculationChoices"
+            [value]="recommended.scoreCalculation"
+            (valueChange)="onRecommendedOptionsChange({ scoreCalculation: $event })"
+          />
+        </div>
+        <div class="setting-mode">
+          <span class="setting-mode-label">Mode d'appariement (montantes / descendantes)</span>
+          <app-input-card-radio
+            [columns]="3"
+            [options]="recommendedPairingModeChoices"
+            [value]="recommended.pairingMode"
+            (valueChange)="onRecommendedOptionsChange({ pairingMode: $event })"
+          />
+        </div>
+        <div class="setting-mode">
+          <span class="setting-mode-label">Placement des phases éliminatoires</span>
+          <app-input-card-radio
+            [columns]="3"
+            [options]="recommendedEliminationSeedingChoices"
+            [value]="recommended.eliminationSeeding"
+            (valueChange)="onRecommendedOptionsChange({ eliminationSeeding: $event })"
+          />
+        </div>
+        @if (settingMeta.recommended_options; as footerMeta) {
+          <app-setting-footer
+            [meta]="footerMeta"
+            (save)="onSave('recommended_options')"
+            (reset)="onReset('recommended_options')"
+          />
+        }
+      </section>
+    }
+
     @if (maxConsolationCount() !== null) {
       <section class="setting-block">
         <h3 class="setting-title">Nombre maximum de consolantes</h3>
