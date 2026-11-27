@@ -33,7 +33,16 @@ import {
   selectStartTournamentTeamCountChanged,
 } from 'src/app/store/tournament/tournament.selectors';
 import { TournamentDto, TounamentTeamDto } from 'src/app/store/tournament/tournament.models';
-import { startTournament } from 'src/app/store/tournament/tournament.match.actions';
+import { nextSession, startTournament } from 'src/app/store/tournament/tournament.match.actions';
+import { selectLocalStorageData } from 'src/app/store/app-config/app-config.selectors';
+import {
+  removeLocalStorageData,
+  setLocalStorageData,
+} from 'src/app/store/app-config/app-config.actions';
+import {
+  ROUND_CONFIRMATION_SKIP_TTL_MS,
+  skipRoundConfirmationKey,
+} from 'src/app/store/app-config/round-confirmation';
 import {
   EDIT_CONFIGURATION,
   LaunchCheckPopup,
@@ -54,6 +63,8 @@ import type { TDocumentDefinitions } from 'pdfmake/interfaces';
 import { PdfExportService } from 'src/app/services/pdf-export.service';
 import { TournamentParcours } from 'src/app/shared/tournament-parcours/tournament-parcours';
 import { TournamentTeamConfigurationCard } from './components/tournament-team-configuration-card/tournament-team-configuration-card';
+import { DonationCard } from './components/donation-card/donation-card';
+import { CurrentRoundCard } from 'src/app/shared/current-round-card/current-round-card';
 
 function buildTeams(count: number): TounamentTeamDto[] {
   return Array.from({ length: count }, (_, index) => ({
@@ -109,6 +120,8 @@ interface SetupOptions {
   pdfDownload?: () => Promise<void>;
   paramMap?: Observable<ParamMap>;
   tournament?: TournamentDto;
+  localStorageData?: Record<string, unknown>;
+  nextLoading?: boolean;
 }
 
 function setup({
@@ -119,6 +132,8 @@ function setup({
   pdfDownload = () => Promise.resolve(),
   paramMap = of(convertToParamMap({ tournamentCode: 'ABCD' })),
   tournament = buildTournament(status),
+  localStorageData = {},
+  nextLoading = false,
 }: SetupOptions = {}) {
   const activatedRoute = { paramMap } as unknown as ActivatedRoute;
   const routerMock = { navigate: vi.fn() };
@@ -150,7 +165,8 @@ function setup({
           { selector: selectCurrentTournamentIsAdminView, value: isAdminView },
           { selector: selectCompleteTournamentLoading, value: false },
           { selector: selectStartTournamentLoading, value: false },
-          { selector: selectNextSessionLoading, value: false },
+          { selector: selectNextSessionLoading, value: nextLoading },
+          { selector: selectLocalStorageData, value: localStorageData },
           { selector: selectAdminUpdateScoreLoading, value: false },
           { selector: selectRankingIsLoading, value: false },
           { selector: selectSessions, value: sessions },
@@ -384,6 +400,144 @@ describe('AdminTournamentPageComponent', { timeout: 15_000 }, () => {
     expect(pdfExport.download).toHaveBeenCalledTimes(1);
     expect(pdfExport.download.mock.calls[0][1]).toBe('matchs-tournoi-test.pdf');
     expect(fixture.componentInstance.isMatchesExporting()).toBe(false);
+  });
+
+  describe('next round', () => {
+    const open = (sessionNumber: number): MatchesSessionDto => ({
+      id: `s${sessionNumber}`,
+      sessionNumber,
+      status: SessionStatus.OPEN,
+      isDrawnRound: true,
+      matches: [],
+    });
+
+    it('asks for confirmation before starting the next round', () => {
+      const { fixture, store, dialogMock } = setup({ sessions: [open(3)] });
+      dialogMock.open.mockReturnValue({ closed: of(true) });
+      const dispatchSpy = vi.spyOn(store, 'dispatch');
+
+      fixture.componentInstance.nextSession();
+
+      expect(dialogMock.open.mock.calls[0][0]).toBe(ConfirmationPopupComponent);
+      expect(dialogMock.open.mock.calls[0][1].data.title).toBe('Lancer le round suivant ?');
+      expect(dialogMock.open.mock.calls[0][1].data.message).toContain('Le round 4 ');
+      expect(dispatchSpy).toHaveBeenCalledWith(nextSession());
+    });
+
+    it('does not start the round when cancelled', () => {
+      const { fixture, store, dialogMock } = setup({ sessions: [open(3)] });
+      dialogMock.open.mockReturnValue({ closed: of(false) });
+      const dispatchSpy = vi.spyOn(store, 'dispatch');
+
+      fixture.componentInstance.nextSession();
+
+      expect(dispatchSpy).not.toHaveBeenCalledWith(nextSession());
+    });
+
+    const OPT_OUT_KEY = skipRoundConfirmationKey('tournament', 'ABCD');
+
+    it('starts the round directly once the admin chose not to be asked for this tournament', () => {
+      const { fixture, store, dialogMock } = setup({
+        localStorageData: { [OPT_OUT_KEY]: Date.now() },
+      });
+      const dispatchSpy = vi.spyOn(store, 'dispatch');
+
+      fixture.componentInstance.nextSession();
+
+      expect(dialogMock.open).not.toHaveBeenCalled();
+      expect(dispatchSpy).toHaveBeenCalledWith(nextSession());
+    });
+
+    it('asks again 24 hours after the opt-out', () => {
+      const { fixture, dialogMock } = setup({
+        localStorageData: { [OPT_OUT_KEY]: Date.now() - ROUND_CONFIRMATION_SKIP_TTL_MS - 1 },
+      });
+      dialogMock.open.mockReturnValue({ closed: of(false) });
+
+      fixture.componentInstance.nextSession();
+
+      expect(dialogMock.open).toHaveBeenCalledTimes(1);
+    });
+
+    it('still asks when only another tournament or a session was opted out', () => {
+      const { fixture, dialogMock } = setup({
+        localStorageData: {
+          [skipRoundConfirmationKey('tournament', 'ZZZZ')]: Date.now(),
+          [skipRoundConfirmationKey('training', 'ABCD')]: Date.now(),
+        },
+      });
+      dialogMock.open.mockReturnValue({ closed: of(false) });
+
+      fixture.componentInstance.nextSession();
+
+      expect(dialogMock.open).toHaveBeenCalledTimes(1);
+    });
+
+    it('remembers the opt-out of this tournament under its own key', () => {
+      const now = Date.UTC(2026, 10, 27, 12);
+      vi.spyOn(Date, 'now').mockReturnValue(now);
+      const { fixture, store, dialogMock } = setup();
+      dialogMock.open.mockReturnValue({ closed: of(true) });
+      const dispatchSpy = vi.spyOn(store, 'dispatch');
+
+      fixture.componentInstance.nextSession();
+      dialogMock.open.mock.calls[0][1].data.onDontAskAgain();
+
+      expect(dispatchSpy).toHaveBeenCalledWith(
+        setLocalStorageData({ key: OPT_OUT_KEY, value: now }),
+      );
+      vi.restoreAllMocks();
+    });
+
+    it('forgets the opt-out once the tournament is finished', () => {
+      const { fixture, store } = setup({
+        status: TournamentStatus.FINISHED,
+        localStorageData: { [OPT_OUT_KEY]: Date.now() },
+      });
+      const dispatchSpy = vi.spyOn(store, 'dispatch');
+
+      fixture.detectChanges();
+
+      expect(dispatchSpy).toHaveBeenCalledWith(removeLocalStorageData({ key: OPT_OUT_KEY }));
+    });
+
+    it('stores nothing to forget while the tournament is active', () => {
+      const { fixture, store } = setup({ localStorageData: { [OPT_OUT_KEY]: Date.now() } });
+      const dispatchSpy = vi.spyOn(store, 'dispatch');
+
+      fixture.detectChanges();
+
+      expect(dispatchSpy).not.toHaveBeenCalledWith(removeLocalStorageData({ key: OPT_OUT_KEY }));
+    });
+
+    it('does nothing while the next round is loading', () => {
+      const { fixture, store, dialogMock } = setup({ nextLoading: true });
+      const dispatchSpy = vi.spyOn(store, 'dispatch');
+
+      fixture.componentInstance.nextSession();
+
+      expect(dialogMock.open).not.toHaveBeenCalled();
+      expect(dispatchSpy).not.toHaveBeenCalledWith(nextSession());
+    });
+  });
+
+  describe('donation', () => {
+    it('shows the donation card above the finished message once the tournament is over', () => {
+      const { fixture } = setup({ status: TournamentStatus.FINISHED });
+      fixture.detectChanges();
+
+      expect(fixture.debugElement.query(By.directive(DonationCard))).not.toBeNull();
+      expect(fixture.debugElement.query(By.directive(CurrentRoundCard))).not.toBeNull();
+      expect(fixture.nativeElement.textContent).toContain('Le tournoi est terminé');
+    });
+
+    it('shows the rounds card and no donation card while the tournament is active', () => {
+      const { fixture } = setup({ status: TournamentStatus.ACTIVE });
+      fixture.detectChanges();
+
+      expect(fixture.debugElement.query(By.directive(DonationCard))).toBeNull();
+      expect(fixture.debugElement.query(By.directive(CurrentRoundCard))).not.toBeNull();
+    });
   });
 
   describe('parcours', () => {

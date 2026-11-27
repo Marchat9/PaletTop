@@ -31,7 +31,17 @@ import {
 import { BackLink } from 'src/app/shared/back-link/back-link';
 import { AdminHeaderInfo } from 'src/app/shared/admin-page-header/admin-page-header.model';
 import { AnimateOnChangeDirective } from 'src/app/shared/animate-on-change/animate-on-change.directive';
-import { addNotification } from 'src/app/store/app-config/app-config.actions';
+import {
+  addNotification,
+  removeLocalStorageData,
+  setLocalStorageData,
+} from 'src/app/store/app-config/app-config.actions';
+import { selectLocalStorageData } from 'src/app/store/app-config/app-config.selectors';
+import {
+  isRoundConfirmationSkipped,
+  skipRoundConfirmationKey,
+} from 'src/app/store/app-config/round-confirmation';
+import { buildTrainingRoundConfirmation } from 'src/app/utils/round-confirmation.util';
 import { connectTrainingAdministrator } from 'src/app/store/training/training.admin.actions';
 import { adminUpdateTrainingScore } from 'src/app/store/training/training.match.actions';
 import {
@@ -142,6 +152,9 @@ export class AdminTrainingSessionPage implements OnInit, OnDestroy {
     selectGenerateTrainingRoundLoading,
   );
   public readonly closeSessionLoading = this.store.selectSignal(selectCloseTrainingSessionLoading);
+  private readonly localStorageData = this.store.selectSignal(selectLocalStorageData);
+  /** A double click lands before the dialog covers the button: a single dialog opens. */
+  private isConfirmingRound = false;
   private readonly closeSessionRequestError = this.store.selectSignal(
     selectCloseTrainingSessionError,
   );
@@ -358,6 +371,18 @@ export class AdminTrainingSessionPage implements OnInit, OnDestroy {
   );
 
   constructor() {
+    // No more rounds to confirm once the session is closed: its "don't ask again" is dropped.
+    effect(() => {
+      const session = this.session();
+      if (session?.status !== 'CLOSED') {
+        return;
+      }
+      const key = skipRoundConfirmationKey('training', session.code);
+      if (key in this.localStorageData()) {
+        this.store.dispatch(removeLocalStorageData({ key }));
+      }
+    });
+
     // What the page shows. A failed refresh keeps the last admin view on screen - the store keeps
     // its data on failure - and so does a public payload landing in the shared slot. The view is
     // only dropped when the store has nothing left, or holds another session.
@@ -586,10 +611,39 @@ export class AdminTrainingSessionPage implements OnInit, OnDestroy {
 
   public generateRound(): void {
     const sessionCode = this.sessionCode();
-    if (!sessionCode) {
+    if (!sessionCode || this.generateRoundLoading() || this.isConfirmingRound) {
       return;
     }
-    this.store.dispatch(generateTrainingRound({ sessionCode }));
+    if (isRoundConfirmationSkipped(this.localStorageData(), 'training', sessionCode, Date.now())) {
+      this.store.dispatch(generateTrainingRound({ sessionCode }));
+      return;
+    }
+
+    const data: ConfirmationData = {
+      ...buildTrainingRoundConfirmation(),
+      onDontAskAgain: () =>
+        this.store.dispatch(
+          setLocalStorageData({
+            key: skipRoundConfirmationKey('training', sessionCode),
+            value: Date.now(),
+          }),
+        ),
+    };
+
+    this.isConfirmingRound = true;
+    this.dialog
+      .open<boolean, ConfirmationData>(ConfirmationPopupComponent, {
+        data,
+        panelClass: 'dialog-panel',
+        backdropClass: 'dialog-backdrop-light',
+        disableClose: false,
+      })
+      .closed.subscribe((confirmed) => {
+        this.isConfirmingRound = false;
+        if (confirmed) {
+          this.store.dispatch(generateTrainingRound({ sessionCode }));
+        }
+      });
   }
 
   public updateScore(update: ScoreUpdate): void {

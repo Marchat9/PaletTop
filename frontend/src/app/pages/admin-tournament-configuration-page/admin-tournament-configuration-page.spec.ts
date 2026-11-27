@@ -172,6 +172,19 @@ describe('AdminTournamentConfigurationPage', { timeout: 15_000 }, () => {
     expect(routerMock.navigate).toHaveBeenCalledWith(['/admin/tournament', 'ABCD']);
   });
 
+  it('offers the same way back to the tournament under the form, instead of « Annuler »', () => {
+    const { fixture, routerMock } = setup();
+    fixture.detectChanges();
+    const formButtons = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll('app-configuration-form .button'),
+    ) as HTMLElement[];
+
+    expect(formButtons.some((button) => button.textContent?.includes('Annuler'))).toBe(false);
+    formButtons.find((button) => button.textContent?.includes('Retour au tournoi'))?.click();
+
+    expect(routerMock.navigate).toHaveBeenCalledWith(['/admin/tournament', 'ABCD']);
+  });
+
   describe('live preview of the brackets', () => {
     it('previews a draft with its registered teams, once, 300 ms after the last change', () => {
       vi.useFakeTimers();

@@ -93,6 +93,18 @@ import { MatchesSessionDto, SessionStatus } from 'src/app/models/matches-session
 import { Nullable } from 'src/app/models/nullable.model';
 import { TournamentHeaderComponent } from './components/tournament-header/tournament-header.component';
 import { TournamentTeamConfigurationCard } from './components/tournament-team-configuration-card/tournament-team-configuration-card';
+import { DonationCard } from './components/donation-card/donation-card';
+import { buildTournamentRoundConfirmation } from 'src/app/utils/round-confirmation.util';
+import { selectLocalStorageData } from 'src/app/store/app-config/app-config.selectors';
+import {
+  removeLocalStorageData,
+  setLocalStorageData,
+} from 'src/app/store/app-config/app-config.actions';
+import {
+  isRoundConfirmationSkipped,
+  skipRoundConfirmationKey,
+} from 'src/app/store/app-config/round-confirmation';
+import { environment } from 'src/environments/environment';
 import {
   clearTournamentClubSuggestions,
   searchTournamentClubs,
@@ -117,6 +129,7 @@ const TEAM_COUNT_CHANGED_NOTICE =
     TournamentHeaderComponent,
     TournamentTeamConfigurationCard,
     CurrentRoundCard,
+    DonationCard,
     TournamentNextStep,
     Leaderboard,
     Button,
@@ -195,6 +208,15 @@ export class AdminTournamentPageComponent implements OnInit {
     Number(this.tournament()?.configuration?.pointsPerGame ?? 13),
   );
   public readonly isActive = computed(() => this.tournament()?.status === TournamentStatus.ACTIVE);
+  public readonly isFinished = computed(
+    () => this.tournament()?.status === TournamentStatus.FINISHED,
+  );
+  public readonly donationUrl = environment.about.donationUrl;
+  private readonly localStorageData = this.store.selectSignal(selectLocalStorageData);
+  /** A double click lands before the dialog covers the button: a single dialog opens. */
+  private isConfirmingRound = false;
+  /** Once the tournament is over, the organiser is invited to support the app. */
+  public readonly showDonation = computed(() => this.isFinished() && !!this.donationUrl);
   public readonly canGenerateNewSession = computed(
     () => this.tournament()?.tournamentStatus?.canGenerateNewSession ?? false,
   );
@@ -271,6 +293,21 @@ export class AdminTournamentPageComponent implements OnInit {
   );
 
   constructor() {
+    // No more rounds to confirm once the tournament is over: its "don't ask again" is dropped.
+    effect(() => {
+      const tournament = this.tournament();
+      const isOver =
+        tournament?.status === TournamentStatus.FINISHED ||
+        tournament?.status === TournamentStatus.CANCELLED;
+      if (!tournament || !isOver) {
+        return;
+      }
+      const key = skipRoundConfirmationKey('tournament', tournament.code);
+      if (key in this.localStorageData()) {
+        this.store.dispatch(removeLocalStorageData({ key }));
+      }
+    });
+
     // Try to connect when code / password change.
     effect(() => {
       const code = this.tournamentCode();
@@ -650,10 +687,44 @@ export class AdminTournamentPageComponent implements OnInit {
   public nextSession(): void {
     // The button only re-renders as loading on the next change detection: a double click can
     // land in between. The store signal is already up to date after the first dispatch.
-    if (this.nextLoading()) {
+    if (this.nextLoading() || this.isConfirmingRound) {
       return;
     }
-    this.store.dispatch(nextSession());
+    const code = this.tournament()?.code;
+    if (
+      !code ||
+      isRoundConfirmationSkipped(this.localStorageData(), 'tournament', code, Date.now())
+    ) {
+      this.store.dispatch(nextSession());
+      return;
+    }
+
+    const roundNumber = (this.currentSession()?.sessionNumber ?? 0) + 1;
+    const data: ConfirmationData = {
+      ...buildTournamentRoundConfirmation(roundNumber, this.tournament()?.plan ?? null),
+      onDontAskAgain: () =>
+        this.store.dispatch(
+          setLocalStorageData({
+            key: skipRoundConfirmationKey('tournament', code),
+            value: Date.now(),
+          }),
+        ),
+    };
+
+    this.isConfirmingRound = true;
+    this.dialog
+      .open<boolean, ConfirmationData>(ConfirmationPopupComponent, {
+        data,
+        panelClass: 'dialog-panel',
+        backdropClass: 'dialog-backdrop-light',
+        disableClose: false,
+      })
+      .closed.subscribe((confirmed) => {
+        this.isConfirmingRound = false;
+        if (confirmed) {
+          this.store.dispatch(nextSession());
+        }
+      });
   }
 
   public completeTournament(): void {

@@ -36,6 +36,10 @@
       (nextRound)="nextSession()"
     />
 
+    @if (showDonation()) {
+      <app-donation-card [donationUrl]="donationUrl" />
+    }
+
     @if (parcoursPlan(); as plan) {
       <app-tournament-parcours
         [plan]="plan"

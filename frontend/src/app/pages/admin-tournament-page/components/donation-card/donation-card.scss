@@ -1,0 +1,94 @@
+:host {
+  display: block;
+}
+
+.donation-card {
+  // A light gold edge and glow: set apart from the other cards without shouting.
+  ::ng-deep .card {
+    border: 1px solid color-mix(in srgb, var(--color-primary) 35%, transparent);
+    background: linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--color-primary) 10%, var(--color-surface-container-low)) 0%,
+      var(--color-surface-container-low) 65%
+    );
+  }
+
+  .donation {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+
+    .head {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+
+      .icon-box {
+        flex: none;
+        display: grid;
+        place-items: center;
+        inline-size: 2.6rem;
+        block-size: 2.6rem;
+        border-radius: 0.7rem;
+        background: color-mix(in srgb, var(--color-primary) 14%, transparent);
+
+        ::ng-deep .donation-icon {
+          font-size: 1.4rem;
+          color: var(--color-primary);
+        }
+      }
+
+      .title {
+        margin: 0;
+        font-family: var(--font-headline);
+        font-size: 1.25rem;
+        color: var(--color-on-surface);
+      }
+    }
+
+    .text {
+      margin: 0;
+      font-size: 0.875rem;
+      line-height: 1.5;
+      color: var(--color-on-surface-variant);
+    }
+
+    .actions {
+      display: flex;
+
+      // A real link (open in a new tab, copy the address), dressed as the primary button.
+      .donate-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5em;
+        border-radius: 0.6rem;
+        padding: 0.7rem 1rem;
+        background: var(--gradient-brass);
+        color: var(--color-on-primary);
+        font-family: var(--font-label);
+        font-size: 0.64rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        text-decoration: none;
+        transition:
+          filter 0.2s ease,
+          transform 0.2s ease;
+
+        &:hover {
+          filter: brightness(1.06);
+        }
+
+        &:focus-visible {
+          outline: 2px solid var(--color-primary);
+          outline-offset: 2px;
+        }
+
+        ::ng-deep .donate-icon {
+          font-size: 1rem;
+          line-height: 0.64rem;
+        }
+      }
+    }
+  }
+}
