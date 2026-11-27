@@ -84,6 +84,36 @@
       </section>
     }
 
+    @if (byeLoserScoreCap() !== null) {
+      <section class="setting-block">
+        <h3 class="setting-title">Score du perdant d'un bye (plafond)</h3>
+        <p class="settings-hint">
+          Une équipe exemptée en qualification gagne le nombre de points de la partie (13-6 à 13
+          points, 11-6 à 11). Le score fictif de l'adversaire est le nombre de points moins 1,
+          plafonné à cette valeur.
+        </p>
+        <div class="setting-field">
+          <label class="setting-label" for="bye-loser-score-cap">
+            Plafond (de {{ byeLoserScoreCapMin }} à {{ byeLoserScoreCapMax }})
+          </label>
+          <app-input-number
+            id="bye-loser-score-cap"
+            [min]="byeLoserScoreCapMin"
+            [max]="byeLoserScoreCapMax"
+            [value]="byeLoserScoreCap()"
+            (valueChange)="onByeLoserScoreCapChange($event)"
+          />
+        </div>
+        @if (settingMeta.bye_loser_score_cap; as footerMeta) {
+          <app-setting-footer
+            [meta]="footerMeta"
+            (save)="onSave('bye_loser_score_cap')"
+            (reset)="onReset('bye_loser_score_cap')"
+          />
+        }
+      </section>
+    }
+
     @if (maxConsolationCount() !== null) {
       <section class="setting-block">
         <h3 class="setting-title">Nombre maximum de consolantes</h3>
@@ -287,36 +317,6 @@
             [meta]="footerMeta"
             (save)="onSave('training_auto_close')"
             (reset)="onReset('training_auto_close')"
-          />
-        }
-      </section>
-    }
-
-    @if (byeLoserScoreCap() !== null) {
-      <section class="setting-block">
-        <h3 class="setting-title">Score du perdant d'un bye (plafond)</h3>
-        <p class="settings-hint">
-          Une équipe exemptée en qualification gagne le nombre de points de la partie (13-6 à 13
-          points, 11-6 à 11). Le score fictif de l'adversaire est le nombre de points moins 1,
-          plafonné à cette valeur.
-        </p>
-        <div class="setting-field">
-          <label class="setting-label" for="bye-loser-score-cap">
-            Plafond (de {{ byeLoserScoreCapMin }} à {{ byeLoserScoreCapMax }})
-          </label>
-          <app-input-number
-            id="bye-loser-score-cap"
-            [min]="byeLoserScoreCapMin"
-            [max]="byeLoserScoreCapMax"
-            [value]="byeLoserScoreCap()"
-            (valueChange)="onByeLoserScoreCapChange($event)"
-          />
-        </div>
-        @if (settingMeta.bye_loser_score_cap; as footerMeta) {
-          <app-setting-footer
-            [meta]="footerMeta"
-            (save)="onSave('bye_loser_score_cap')"
-            (reset)="onReset('bye_loser_score_cap')"
           />
         }
       </section>
