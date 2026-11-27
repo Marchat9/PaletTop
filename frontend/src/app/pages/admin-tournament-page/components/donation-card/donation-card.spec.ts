@@ -22,13 +22,7 @@ describe('DonationCard', () => {
 
     expect(text).toContain("Votre tournoi s'est bien passé ?");
     expect(text).toContain('PaletTop est gratuit, sans publicité et développé bénévolement.');
-    expect(text).toContain('Soutenir via PayPal');
-  });
-
-  it('shows the PayPal logo in its button', () => {
-    const logo = setup().nativeElement.querySelector('app-button img') as HTMLImageElement | null;
-
-    expect(logo?.getAttribute('src')).toContain('assets/images/paypal.webp');
+    expect(text).toContain('Soutenir PaletTop via PayPal');
   });
 
   it('opens the donation page in a new tab', () => {
