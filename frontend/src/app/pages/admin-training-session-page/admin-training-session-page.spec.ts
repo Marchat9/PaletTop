@@ -1,7 +1,10 @@
 import { Dialog } from '@angular/cdk/dialog';
-import { selectSkipRoundConfirmation } from 'src/app/store/app-config/app-config.selectors';
-import { setLocalStorageData } from 'src/app/store/app-config/app-config.actions';
-import { SkipRoundConfirmation } from 'src/app/store/app-config/round-confirmation';
+import { selectLocalStorageData } from 'src/app/store/app-config/app-config.selectors';
+import {
+  removeLocalStorageData,
+  setLocalStorageData,
+} from 'src/app/store/app-config/app-config.actions';
+import { skipRoundConfirmationKey } from 'src/app/store/app-config/round-confirmation';
 import { ConfirmationPopupComponent } from 'src/app/modales/confirmation-popup/confirmation-popup';
 import { generateTrainingRound } from 'src/app/store/training/training.round.actions';
 import { LeaderboardPopup } from 'src/app/modales/leaderboard-popup/leaderboard-popup';
@@ -83,14 +86,11 @@ function buildSession(): TrainingSessionAdminDto {
 }
 
 interface SetupOptions {
-  skipRoundConfirmation?: SkipRoundConfirmation;
+  localStorageData?: Record<string, unknown>;
   generateLoading?: boolean;
 }
 
-function setup({
-  skipRoundConfirmation = { tournament: [], training: [] },
-  generateLoading = false,
-}: SetupOptions = {}) {
+function setup({ localStorageData = {}, generateLoading = false }: SetupOptions = {}) {
   const activatedRoute = {
     paramMap: of(convertToParamMap({ trainingCode: 'LAITON-2026', sessionCode: '1234' })),
   } as unknown as ActivatedRoute;
@@ -123,7 +123,7 @@ function setup({
           { selector: selectCheckinTrainingParticipantLoading, value: false },
           { selector: selectCreateTrainingTeamLoading, value: false },
           { selector: selectGenerateTrainingRoundLoading, value: generateLoading },
-          { selector: selectSkipRoundConfirmation, value: skipRoundConfirmation },
+          { selector: selectLocalStorageData, value: localStorageData },
           { selector: selectCloseTrainingSessionLoading, value: false },
           { selector: selectCloseTrainingSessionError, value: null },
           { selector: selectAdminUpdateTrainingScoreLoading, value: false },
@@ -165,9 +165,11 @@ describe('AdminTrainingSessionPage', () => {
       expect(dispatchSpy).not.toHaveBeenCalledWith(generate);
     });
 
+    const OPT_OUT_KEY = skipRoundConfirmationKey('training', '1234');
+
     it('génère directement quand l’admin ne veut plus être sollicité pour cette séance', () => {
       const { fixture, store, dialogMock } = setup({
-        skipRoundConfirmation: { tournament: [], training: ['1234'] },
+        localStorageData: { [OPT_OUT_KEY]: Date.now() },
       });
       const dispatchSpy = vi.spyOn(store, 'dispatch');
 
@@ -179,7 +181,7 @@ describe('AdminTrainingSessionPage', () => {
 
     it('demande encore quand seul un tournoi de même code a été désactivé', () => {
       const { fixture, dialogMock } = setup({
-        skipRoundConfirmation: { tournament: ['1234'], training: [] },
+        localStorageData: { [skipRoundConfirmationKey('tournament', '1234')]: Date.now() },
       });
       dialogMock.open.mockReturnValue({ closed: of(false) });
 
@@ -188,7 +190,9 @@ describe('AdminTrainingSessionPage', () => {
       expect(dialogMock.open).toHaveBeenCalledTimes(1);
     });
 
-    it('retient le choix « ne plus demander » de cette séance dans le stockage local', () => {
+    it('retient le choix « ne plus demander » de cette séance sous sa propre clé', () => {
+      const now = Date.UTC(2026, 10, 27, 12);
+      vi.spyOn(Date, 'now').mockReturnValue(now);
       const { fixture, store, dialogMock } = setup();
       dialogMock.open.mockReturnValue({ closed: of(true) });
       const dispatchSpy = vi.spyOn(store, 'dispatch');
@@ -197,11 +201,24 @@ describe('AdminTrainingSessionPage', () => {
       dialogMock.open.mock.calls[0][1].data.onDontAskAgain();
 
       expect(dispatchSpy).toHaveBeenCalledWith(
-        setLocalStorageData({
-          key: 'skipRoundConfirmation',
-          value: { tournament: [], training: ['1234'] },
-        }),
+        setLocalStorageData({ key: OPT_OUT_KEY, value: now }),
       );
+      vi.restoreAllMocks();
+    });
+
+    it('oublie le choix une fois la séance clôturée', () => {
+      const { fixture, store } = setup({ localStorageData: { [OPT_OUT_KEY]: Date.now() } });
+      const dispatchSpy = vi.spyOn(store, 'dispatch');
+      expect(dispatchSpy).not.toHaveBeenCalledWith(removeLocalStorageData({ key: OPT_OUT_KEY }));
+
+      store.overrideSelector(selectCurrentTrainingSessionData, {
+        ...buildSession(),
+        status: 'CLOSED',
+      });
+      store.refreshState();
+      fixture.detectChanges();
+
+      expect(dispatchSpy).toHaveBeenCalledWith(removeLocalStorageData({ key: OPT_OUT_KEY }));
     });
 
     it('ne fait rien pendant la génération d’un round', () => {

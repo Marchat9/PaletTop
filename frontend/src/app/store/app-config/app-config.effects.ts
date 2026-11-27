@@ -12,6 +12,7 @@ import {
 } from './app-config.actions';
 import { Action } from '@ngrx/store';
 import { ToastrService } from 'ngx-toastr';
+import { withoutExpiredRoundSkips } from './round-confirmation';
 
 const THEME_STORAGE_KEY = 'app-theme';
 const LOCAL_STORAGE_DATA_KEY = 'app-local-storage-data';
@@ -69,8 +70,13 @@ export class AppConfigEffects {
         if (savedData) {
           try {
             const parsedData = JSON.parse(savedData);
-            if (Object.keys(parsedData).length > 0) {
-              actionList.push(updateLocalStorageData({ data: parsedData }));
+            // Round opt-outs only last 24 hours: the expired ones are dropped for good.
+            const data = withoutExpiredRoundSkips(parsedData, Date.now());
+            if (Object.keys(data).length !== Object.keys(parsedData).length) {
+              writeStoredData(() => data);
+            }
+            if (Object.keys(data).length > 0) {
+              actionList.push(updateLocalStorageData({ data }));
             }
           } catch (e) {
             console.error('Failed to parse localStorage data:', e);

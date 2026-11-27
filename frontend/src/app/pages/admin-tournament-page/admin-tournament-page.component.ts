@@ -95,12 +95,15 @@ import { TournamentHeaderComponent } from './components/tournament-header/tourna
 import { TournamentTeamConfigurationCard } from './components/tournament-team-configuration-card/tournament-team-configuration-card';
 import { DonationCard } from './components/donation-card/donation-card';
 import { buildTournamentRoundConfirmation } from 'src/app/utils/round-confirmation.util';
+import { selectLocalStorageData } from 'src/app/store/app-config/app-config.selectors';
 import {
-  SKIP_ROUND_CONFIRMATION_STORAGE_KEY,
-  selectSkipRoundConfirmation,
-} from 'src/app/store/app-config/app-config.selectors';
-import { setLocalStorageData } from 'src/app/store/app-config/app-config.actions';
-import { withSkippedRound } from 'src/app/store/app-config/round-confirmation';
+  removeLocalStorageData,
+  setLocalStorageData,
+} from 'src/app/store/app-config/app-config.actions';
+import {
+  isRoundConfirmationSkipped,
+  skipRoundConfirmationKey,
+} from 'src/app/store/app-config/round-confirmation';
 import { environment } from 'src/environments/environment';
 import {
   clearTournamentClubSuggestions,
@@ -209,7 +212,7 @@ export class AdminTournamentPageComponent implements OnInit {
     () => this.tournament()?.status === TournamentStatus.FINISHED,
   );
   public readonly donationUrl = environment.about.donationUrl;
-  private readonly skipRoundConfirmation = this.store.selectSignal(selectSkipRoundConfirmation);
+  private readonly localStorageData = this.store.selectSignal(selectLocalStorageData);
   /** A double click lands before the dialog covers the button: a single dialog opens. */
   private isConfirmingRound = false;
   /** Once the tournament is over, the organiser is invited to support the app. */
@@ -288,6 +291,21 @@ export class AdminTournamentPageComponent implements OnInit {
   );
 
   constructor() {
+    // No more rounds to confirm once the tournament is over: its "don't ask again" is dropped.
+    effect(() => {
+      const tournament = this.tournament();
+      const isOver =
+        tournament?.status === TournamentStatus.FINISHED ||
+        tournament?.status === TournamentStatus.CANCELLED;
+      if (!tournament || !isOver) {
+        return;
+      }
+      const key = skipRoundConfirmationKey('tournament', tournament.code);
+      if (key in this.localStorageData()) {
+        this.store.dispatch(removeLocalStorageData({ key }));
+      }
+    });
+
     // Try to connect when code / password change.
     effect(() => {
       const code = this.tournamentCode();
@@ -671,7 +689,10 @@ export class AdminTournamentPageComponent implements OnInit {
       return;
     }
     const code = this.tournament()?.code;
-    if (!code || this.skipRoundConfirmation().tournament.includes(code)) {
+    if (
+      !code ||
+      isRoundConfirmationSkipped(this.localStorageData(), 'tournament', code, Date.now())
+    ) {
       this.store.dispatch(nextSession());
       return;
     }
@@ -682,8 +703,8 @@ export class AdminTournamentPageComponent implements OnInit {
       onDontAskAgain: () =>
         this.store.dispatch(
           setLocalStorageData({
-            key: SKIP_ROUND_CONFIRMATION_STORAGE_KEY,
-            value: withSkippedRound(this.skipRoundConfirmation(), 'tournament', code),
+            key: skipRoundConfirmationKey('tournament', code),
+            value: Date.now(),
           }),
         ),
     };
