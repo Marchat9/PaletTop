@@ -35,10 +35,10 @@
 
     <div class="actions">
       <app-button
-        title="Annuler"
-        variant="tertiary"
-        [disabled]="!canCancel()"
-        (clicked)="onCancel()"
+        title="Retour au tournoi"
+        icon="arrow_back"
+        variant="secondary"
+        (clicked)="backRequested.emit()"
       />
       <app-button
         title="Enregistrer"

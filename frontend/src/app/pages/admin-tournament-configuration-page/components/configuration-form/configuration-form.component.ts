@@ -54,14 +54,14 @@ export class ConfigurationFormComponent {
 
   public readonly configurationSaved = output<TournamentConfigurationDto>();
   public readonly formReady = output<TournamentConfigurationForm>();
-  public readonly configurationCancelled = output<void>();
+  /** Same way back as the header's: leaving with unsaved changes is confirmed by the guard. */
+  public readonly backRequested = output<void>();
   public readonly simulationTeamCountChange = output<number>();
   public readonly simulationSheetRequested = output<number>();
   // ==============================
 
   public readonly tournamentForm = signal<Nullable<TournamentConfigurationForm>>(null);
   public readonly invalidFieldNames = signal<Nullable<string[]>>(null);
-  private initialFormValues: Nullable<TournamentConfigurationForm['value']> = null;
 
   private readonly destroyRef = inject(DestroyRef);
   /** `pristine` is not a signal: this one changes whenever the form does, to recompute what depends on it. */
@@ -75,14 +75,9 @@ export class ConfigurationFormComponent {
       !!form && !!this.tournament() && !this.saving() && !form.pristine && !this.invalidFieldNames()
     );
   });
-  public readonly canCancel = computed(() => {
-    this.formRevision();
-    return !this.saving() && !this.tournamentForm()?.pristine;
-  });
 
   public onFormReady(form: TournamentConfigurationForm): void {
     this.tournamentForm.set(form);
-    this.initialFormValues = form.getRawValue();
     merge(form.valueChanges, form.statusChanges)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.formRevision.update((revision) => revision + 1));
@@ -105,12 +100,5 @@ export class ConfigurationFormComponent {
     const formattedConfig: TournamentConfigurationDto =
       convertTournamentFormToTournamentConfigurationDto(this.tournamentForm()!);
     this.configurationSaved.emit(formattedConfig);
-  }
-
-  public onCancel(): void {
-    if (this.initialFormValues) {
-      this.tournamentForm()!.reset(this.initialFormValues);
-    }
-    this.configurationCancelled.emit();
   }
 }
