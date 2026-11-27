@@ -37,6 +37,8 @@ export interface LeaderboardPopupData {
   /** Tournament only: its name, in the title, and how its ranking is computed. */
   tournamentName?: string;
   scoreCalculation?: ScoreCalculation;
+  /** Podium above the table: hidden unless set to true. */
+  showPodium?: boolean;
 }
 
 interface LeaderboardPopupPresentation {
@@ -69,6 +71,7 @@ export class LeaderboardPopup {
   readonly highlightedId = this.data.highlightedId;
   /** A tournament ranking has more columns (wins, points, goal average): the popup is wider. */
   readonly isTournament = this.data.scope === 'tournament';
+  readonly showPodium = !!this.data.showPodium;
   readonly presentation = presentationOf(this.data);
 
   private readonly tournamentEntries = this.store.selectSignal(selectRanking);

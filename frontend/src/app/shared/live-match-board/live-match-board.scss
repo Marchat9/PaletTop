@@ -30,7 +30,8 @@
       height: 6.5rem;
 
       .meta {
-        font-size: 0.8rem;
+        font-size: 1rem;
+        line-height: 1.2;
       }
 
       .team {
@@ -110,9 +111,9 @@
         white-space: nowrap;
       }
 
-      // Timer then status, on the line of the plate: the timer takes the size of that text.
+      // Timer then status, on the line of the plate: the timer is slightly smaller than that text.
       .status {
-        --match-timer-size: 1em;
+        --match-timer-size: 0.9em;
 
         display: flex;
         align-items: center;
@@ -121,6 +122,12 @@
         color: var(--status-color);
         font-weight: 700;
         white-space: nowrap;
+
+        // Optical nudge: the digits sit higher than the status letters. A translation, unlike a
+        // margin, leaves the height of the line as it is.
+        app-match-timer {
+          translate: 0 1.5px;
+        }
       }
     }
 
