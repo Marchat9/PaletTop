@@ -44,6 +44,14 @@
       </button>
     </div>
 
+    @if (errorMessage(); as current) {
+      <div class="plan-simulation__error" aria-live="polite">
+        <app-inline-notice [tone]="current.tone" [icon]="current.icon">{{
+          current.text
+        }}</app-inline-notice>
+      </div>
+    }
+
     <p class="plan-simulation__gap" [class.plan-simulation__gap--surplus]="isSurplus()">
       {{ gapText() }}
     </p>

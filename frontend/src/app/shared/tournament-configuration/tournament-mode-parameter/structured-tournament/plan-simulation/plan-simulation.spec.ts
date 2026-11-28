@@ -150,11 +150,31 @@ describe('PlanSimulation', () => {
     expect(root.querySelector('.plan-simulation__message app-inline-notice')).not.toBeNull();
   });
 
-  it('shows an error in place of the plan message', () => {
+  it('shows an error right under the slider, and no plan message', () => {
     const root = create({ error: 'Calcul impossible' });
-    expect(root.querySelector('.plan-simulation__message')?.textContent).toContain(
+    expect(root.querySelector('.plan-simulation__error')?.textContent).toContain(
       'Calcul impossible',
     );
+    expect(root.querySelector('.plan-simulation__message app-inline-notice')).toBeNull();
+  });
+
+  it('also moves an error of the plan under the slider', () => {
+    const warning: PlanWarning = {
+      code: 'IMPOSSIBLE',
+      level: 'error',
+      message: 'Impossible de répartir 9 équipes sur 2 tableaux.',
+    };
+    const root = create({ plan: plan(0, 0, [warning]) });
+    expect(root.querySelector('.plan-simulation__error')?.textContent).toContain(
+      'Impossible de répartir',
+    );
+    expect(root.querySelector('.plan-simulation__message app-inline-notice')).toBeNull();
+  });
+
+  it('keeps the other messages under the brackets', () => {
+    const root = create({ plan: plan(3, 6) });
+    expect(root.querySelector('.plan-simulation__error')).toBeNull();
+    expect(root.querySelector('.plan-simulation__message app-inline-notice')).not.toBeNull();
   });
 
   it('only shows the columns the plan needs, without padding', () => {

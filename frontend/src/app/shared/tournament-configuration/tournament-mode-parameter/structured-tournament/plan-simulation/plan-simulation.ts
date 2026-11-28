@@ -73,10 +73,19 @@ export class PlanSimulation {
       : `${teams} de moins que le nombre visé`;
   });
 
-  protected readonly message = computed<Nullable<PlanMessage>>(() => {
-    const error = this.error();
-    return error ? { tone: 'alert', icon: 'error', text: error } : pickPlanMessage(this.plan());
+  /** Why no plan can be shown for this count: right under the slider that caused it. */
+  protected readonly errorMessage = computed<Nullable<PlanMessage>>(() => {
+    const error =
+      this.error() ??
+      this.plan()?.warnings.find((warning) => warning.level === 'error')?.message ??
+      null;
+    return error ? { tone: 'alert', icon: 'error', text: error } : null;
   });
+
+  /** Any other message about the plan, under the brackets. */
+  protected readonly message = computed<Nullable<PlanMessage>>(() =>
+    this.errorMessage() ? null : pickPlanMessage(this.plan()),
+  );
 
   protected setTeamCount(count: number): void {
     const clamped = Math.min(SIMULATION_MAX_TEAMS, Math.max(SIMULATION_MIN_TEAMS, count));
