@@ -3,7 +3,7 @@ import { join } from 'path';
 import { DataSourceOptions } from 'typeorm';
 import { parseNumber } from 'src/config/config.utils';
 
-function isDevBddEnvironment(): boolean {
+export function isDevBddEnvironment(): boolean {
     const environment = process.env.APP_ENV ?? process.env.NODE_ENV ?? '';
     return environment === 'dev-bdd';
 }

@@ -8,6 +8,7 @@ import { addTransactionalDataSource } from 'typeorm-transactional';
 import { DataSource } from 'typeorm';
 import { HttpThrottlerGuard } from './utils/http-throttler.guard';
 import { getTypeOrmConfig } from './database/typeorm.config';
+import { DevBddExtensionsInitializer } from './database/dev-bdd-extensions.initializer';
 import superAdminConfig from './config/super-admin.config';
 import { AppSettingsModule } from './modules/app-settings/app-settings.module';
 import { TournamentsModule } from './modules/tournaments/tournaments.module';
@@ -49,6 +50,6 @@ import { AdminPasswordModule } from './modules/admin-password/admin-password.mod
         HealthModule,
         TrainingModule,
     ],
-    providers: [{ provide: APP_GUARD, useClass: HttpThrottlerGuard }],
+    providers: [{ provide: APP_GUARD, useClass: HttpThrottlerGuard }, DevBddExtensionsInitializer],
 })
 export class AppModule {}
