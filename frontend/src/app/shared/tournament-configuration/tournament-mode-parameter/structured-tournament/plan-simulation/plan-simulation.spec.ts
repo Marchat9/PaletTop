@@ -150,31 +150,42 @@ describe('PlanSimulation', () => {
     expect(root.querySelector('.plan-simulation__message app-inline-notice')).not.toBeNull();
   });
 
-  it('shows an error right under the slider, and no plan message', () => {
+  /** The single message slot, right under the slider (in the pinned part, above the brackets). */
+  function messageUnderSlider(root: HTMLElement): string | undefined {
+    const slot = root.querySelector('.plan-simulation__pinned .plan-simulation__message');
+    const slider = root.querySelector('.plan-simulation__slider');
+    const chips = root.querySelector('app-bracket-chips');
+    const below = (a: Element | null, b: Element | null) =>
+      !!a && !!b && !!(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
+    if (!slot || !below(slider, slot) || !below(slot, chips)) return undefined;
+    return slot.querySelector('app-inline-notice')?.textContent ?? '';
+  }
+
+  it('shows an error under the slider, in place of the plan message', () => {
     const root = create({ error: 'Calcul impossible' });
-    expect(root.querySelector('.plan-simulation__error')?.textContent).toContain(
-      'Calcul impossible',
-    );
-    expect(root.querySelector('.plan-simulation__message app-inline-notice')).toBeNull();
+    expect(messageUnderSlider(root)).toContain('Calcul impossible');
+    expect(root.querySelectorAll('app-inline-notice')).toHaveLength(1);
   });
 
-  it('also moves an error of the plan under the slider', () => {
+  it('shows the error of the plan at the same place', () => {
     const warning: PlanWarning = {
       code: 'IMPOSSIBLE',
       level: 'error',
       message: 'Impossible de répartir 9 équipes sur 2 tableaux.',
     };
     const root = create({ plan: plan(0, 0, [warning]) });
-    expect(root.querySelector('.plan-simulation__error')?.textContent).toContain(
-      'Impossible de répartir',
-    );
-    expect(root.querySelector('.plan-simulation__message app-inline-notice')).toBeNull();
+    expect(messageUnderSlider(root)).toContain('Impossible de répartir');
   });
 
-  it('keeps the other messages under the brackets', () => {
-    const root = create({ plan: plan(3, 6) });
-    expect(root.querySelector('.plan-simulation__error')).toBeNull();
-    expect(root.querySelector('.plan-simulation__message app-inline-notice')).not.toBeNull();
+  it('shows the fill messages at the same place', () => {
+    const warning: PlanWarning = {
+      code: 'MID_FILL',
+      level: 'warning',
+      message: 'Consolante A : 5 équipes sur 8. 3 équipes exemptées au 1er tour.',
+    };
+    const root = create({ plan: plan(3, 6, [warning]) });
+    expect(messageUnderSlider(root)).toContain('Consolante A : 5 équipes sur 8');
+    expect(root.querySelector('.plan-simulation__body app-inline-notice')).toBeNull();
   });
 
   it('only shows the columns the plan needs, without padding', () => {
