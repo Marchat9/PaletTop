@@ -73,6 +73,7 @@ export class PlanSimulation {
       : `${teams} de moins que le nombre visé`;
   });
 
+  /** The one message about this count (error first), right under the slider that set it. */
   protected readonly message = computed<Nullable<PlanMessage>>(() => {
     const error = this.error();
     return error ? { tone: 'alert', icon: 'error', text: error } : pickPlanMessage(this.plan());

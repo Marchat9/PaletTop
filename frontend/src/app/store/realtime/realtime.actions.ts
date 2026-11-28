@@ -4,6 +4,7 @@ import { MatchHistoryDto, PlayerMatchDto } from 'src/app/models/player-match.mod
 import { GlobalRankingEntry } from 'src/app/models/global-ranking.model';
 import { TournamentDto } from 'src/app/store/tournament/tournament.models';
 import {
+  TrainingClubLeaderboardEntryDto,
   TrainingLeaderboardEntryDto,
   TrainingMatchDto,
   TrainingRoundDto,
@@ -63,6 +64,12 @@ export const wsTrainingMatchUpdated = createAction(
 export const wsTrainingLeaderboardUpdated = createAction(
   '[WS] Training Leaderboard Updated',
   props<{ leaderboard: TrainingLeaderboardEntryDto[] }>(),
+);
+
+// Computed once by the server when a round is over (or a finished round corrected).
+export const wsTrainingClubLeaderboardUpdated = createAction(
+  '[WS] Training Club Leaderboard Updated',
+  props<{ clubLeaderboard: TrainingClubLeaderboardEntryDto[] }>(),
 );
 // ---------------------------------------------------------------------
 

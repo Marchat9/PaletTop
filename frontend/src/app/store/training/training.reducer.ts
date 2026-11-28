@@ -53,8 +53,6 @@ import {
   loadTrainingClubLeaderboard,
   loadTrainingClubLeaderboardFailure,
   loadTrainingClubLeaderboardSuccess,
-  followTrainingClubLeaderboard,
-  unfollowTrainingClubLeaderboard,
   loadTrainingLeaderboard,
   loadTrainingLeaderboardFailure,
   loadTrainingLeaderboardSuccess,
@@ -118,6 +116,7 @@ import {
 import { Nullable } from 'src/app/models/nullable.model';
 import {
   resyncPending,
+  wsTrainingClubLeaderboardUpdated,
   wsTrainingLeaderboardUpdated,
   wsTrainingMatchUpdated,
   wsTrainingRoundGenerated,
@@ -165,7 +164,6 @@ export const initialTrainingState: TrainingState = {
   currentRound: { data: null, isLoading: false, error: null },
   leaderboard: { data: [], isLoading: false, error: null },
   clubLeaderboard: { data: [], isLoading: false, error: null },
-  followedClubLeaderboardSession: null,
   participantCurrentMatch: { data: null, isLoading: false, error: null },
   participantHistory: { data: [], isLoading: false, error: null },
   participantAwaitingResync: false,
@@ -750,15 +748,6 @@ export const trainingReducer = createReducer(
     // Read from another session, the club leaderboard differs: the previous one is not shown.
     clubLeaderboard: { data: [], isLoading: true, error: null },
   })),
-  on(followTrainingClubLeaderboard, (state, { sessionCode }) => ({
-    ...state,
-    clubLeaderboard: { data: [], isLoading: true, error: null },
-    followedClubLeaderboardSession: sessionCode,
-  })),
-  on(unfollowTrainingClubLeaderboard, (state) => ({
-    ...state,
-    followedClubLeaderboardSession: null,
-  })),
   on(loadTrainingClubLeaderboardSuccess, (state, { clubLeaderboard }) => ({
     ...state,
     clubLeaderboard: { data: clubLeaderboard, isLoading: false, error: null },
@@ -1096,6 +1085,10 @@ export const trainingReducer = createReducer(
     ...state,
     leaderboard: { data: leaderboard, isLoading: false, error: null },
   })),
+  on(wsTrainingClubLeaderboardUpdated, (state, { clubLeaderboard }) => ({
+    ...state,
+    clubLeaderboard: { data: clubLeaderboard, isLoading: false, error: null },
+  })),
 
   // Full reset: the training changes (admin logout, creation, a player arriving). Whatever stays in
   // memory belongs to the previous one and has no business there.
@@ -1111,7 +1104,6 @@ export const trainingReducer = createReducer(
     currentRound: initialTrainingState.currentRound,
     leaderboard: initialTrainingState.leaderboard,
     clubLeaderboard: initialTrainingState.clubLeaderboard,
-    followedClubLeaderboardSession: null,
     lastCheckedInParticipant: null,
   })),
   on(disconnectTrainingAdministrator, (state) => ({

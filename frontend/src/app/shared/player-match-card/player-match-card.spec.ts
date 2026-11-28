@@ -176,6 +176,20 @@ describe('PlayerMatchCard', () => {
     expect(element(fixture).querySelector('.match-card__scoreboard')).toBeNull();
   });
 
+  it('n’annonce plus d’attente une fois l’exemption validée, même sans gain', () => {
+    const byeCopy = {
+      title: 'Exempté',
+      message: 'Votre équipe est exemptée pour ce round.',
+      awardLabel: null,
+      pendingLabel: 'En attente de confirmation',
+    };
+    const pending = setup(buildMatch({ isBye: true, status: 'PENDING' }), { byeCopy });
+    const validated = setup(buildMatch({ isBye: true, status: 'VALIDATED' }), { byeCopy });
+
+    expect(element(pending).querySelector('.bye-pending')).not.toBeNull();
+    expect(element(validated).querySelector('.bye-pending')).toBeNull();
+  });
+
   it('garde sa boîte pour accueillir l’état fourni par la page', () => {
     const fixture = setup(null);
 

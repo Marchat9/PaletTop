@@ -102,6 +102,20 @@ describe('computePlayerParcours', () => {
     expect(steps.map((step) => step.text).join(' ')).not.toContain('repêch');
   });
 
+  it('counts plain matches, not qualifiers, in a mode without qualifiers', () => {
+    const sessions = [
+      session(1, CLOSED, [match('m1', 11, 5, null)]),
+      session(2, OPEN, [match('m2', 0, 0, null)]),
+    ];
+
+    expect(computePlayerParcours(sessions, 'me', false).map((step) => step.text)).toEqual([
+      'Match 2 en cours (1 victoire)',
+    ]);
+    expect(computePlayerParcours([sessions[0]], 'me', false).map((step) => step.text)).toEqual([
+      'Matchs : 1 victoire',
+    ]);
+  });
+
   it('is empty when the team plays no round', () => {
     expect(computePlayerParcours([session(1, OPEN, [match('m1', 0, 0, null)])], 'nobody')).toEqual(
       [],

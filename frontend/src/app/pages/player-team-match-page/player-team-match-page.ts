@@ -182,7 +182,8 @@ export class PlayerTeamMatchPageComponent {
   );
   public readonly parcoursSteps = computed(() => {
     const team = this.team();
-    return team ? computePlayerParcours(this.sessions() ?? [], team.id) : [];
+    const hasQualifiers = this.tournamentData()?.configuration.competitionMode === 'standard';
+    return team ? computePlayerParcours(this.sessions() ?? [], team.id, hasQualifiers) : [];
   });
   public readonly recentResults = computed(() => historyToResults(this.matchHistory()));
 

@@ -44,6 +44,14 @@
       </button>
     </div>
 
+    <div class="plan-simulation__message" aria-live="polite">
+      @if (message(); as current) {
+        <app-inline-notice [tone]="current.tone" [icon]="current.icon">{{
+          current.text
+        }}</app-inline-notice>
+      }
+    </div>
+
     <p class="plan-simulation__gap" [class.plan-simulation__gap--surplus]="isSurplus()">
       {{ gapText() }}
     </p>
@@ -61,14 +69,6 @@
   </div>
 
   <div class="plan-simulation__body">
-    <div class="plan-simulation__message" aria-live="polite">
-      @if (message(); as current) {
-        <app-inline-notice [tone]="current.tone" [icon]="current.icon">{{
-          current.text
-        }}</app-inline-notice>
-      }
-    </div>
-
     @if (plan(); as current) {
       <app-plan-table [plan]="current" />
     }

@@ -50,8 +50,7 @@ import {
 } from 'src/app/store/training/training.round.actions';
 import {
   closeTrainingSession,
-  followTrainingClubLeaderboard,
-  unfollowTrainingClubLeaderboard,
+  loadTrainingClubLeaderboard,
   connectTrainingSessionAdministrator,
   leaveTrainingSession,
   loadTrainingLeaderboard,
@@ -666,17 +665,15 @@ export class AdminTrainingSessionPage implements OnInit, OnDestroy {
     if (!sessionCode) {
       return;
     }
-    this.store.dispatch(followTrainingClubLeaderboard({ sessionCode }));
-    this.dialog
-      .open<void, LeaderboardPopupData>(LeaderboardPopup, {
-        data: { scope: 'club', highlightedId: this.adminParticipant()?.memberId ?? null },
-        ...leaderboardDialogPlacement(
-          this.overlay,
-          this.breakpointObserver.isMatched(LEADERBOARD_MOBILE_QUERY),
-          'dialog-panel',
-        ),
-      })
-      .closed.subscribe(() => this.store.dispatch(unfollowTrainingClubLeaderboard()));
+    this.store.dispatch(loadTrainingClubLeaderboard({ sessionCode }));
+    this.dialog.open<void, LeaderboardPopupData>(LeaderboardPopup, {
+      data: { scope: 'club', highlightedId: this.adminParticipant()?.memberId ?? null },
+      ...leaderboardDialogPlacement(
+        this.overlay,
+        this.breakpointObserver.isMatched(LEADERBOARD_MOBILE_QUERY),
+        'dialog-panel',
+      ),
+    });
   }
 
   public closeSession(): void {

@@ -48,8 +48,6 @@ import {
 } from 'src/app/store/training/training.match.actions';
 import {
   leaveTrainingSession,
-  followTrainingClubLeaderboard,
-  unfollowTrainingClubLeaderboard,
   loadTrainingClubLeaderboard,
   loadTrainingLeaderboard,
   loadTrainingSessionPublic,
@@ -465,27 +463,25 @@ export class PlayerTrainingSessionPage implements OnInit, OnDestroy {
     this.openLeaderboard('session', this.me()?.id ?? null);
   }
 
-  /** The club leaderboard is followed live while its popup is open. */
+  /** Loaded on opening, then kept up to date by the server at the end of each round. */
   public openClubLeaderboard(): void {
     const sessionCode = this.sessionCode();
     if (!sessionCode) {
       return;
     }
-    this.store.dispatch(followTrainingClubLeaderboard({ sessionCode }));
-    this.openLeaderboard('club', this.me()?.memberId ?? null).subscribe(() =>
-      this.store.dispatch(unfollowTrainingClubLeaderboard()),
-    );
+    this.store.dispatch(loadTrainingClubLeaderboard({ sessionCode }));
+    this.openLeaderboard('club', this.me()?.memberId ?? null);
   }
 
-  private openLeaderboard(scope: LeaderboardPopupScope, highlightedId: string | null) {
-    return this.dialog.open<void, LeaderboardPopupData>(LeaderboardPopup, {
+  private openLeaderboard(scope: LeaderboardPopupScope, highlightedId: string | null): void {
+    this.dialog.open<void, LeaderboardPopupData>(LeaderboardPopup, {
       data: { scope, highlightedId },
       ...leaderboardDialogPlacement(
         this.overlay,
         this.breakpointObserver.isMatched(LEADERBOARD_MOBILE_QUERY),
         'dialog-panel',
       ),
-    }).closed;
+    });
   }
 
   private reload(sessionCode: string, participantCode: string): void {
@@ -493,7 +489,7 @@ export class PlayerTrainingSessionPage implements OnInit, OnDestroy {
     this.store.dispatch(loadTrainingParticipantHistory({ sessionCode, participantCode }));
     this.store.dispatch(loadTrainingSessionPublic({ sessionCode }));
     this.store.dispatch(loadTrainingLeaderboard({ sessionCode }));
-    // Once, for the « Club » tile: the popup then follows it live.
+    // For the « Club » tile: the server then sends it again at the end of each round.
     this.store.dispatch(loadTrainingClubLeaderboard({ sessionCode }));
   }
 }
