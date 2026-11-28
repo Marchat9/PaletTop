@@ -88,6 +88,11 @@ export class TrainingRealtimeGateway {
         this.broadcast(sessionCode, 'leaderboard:updated', leaderboard);
     }
 
+    /** Computed once per finished round and sent to every phone, rather than fetched by each. */
+    emitClubLeaderboardUpdated(sessionCode: string, clubLeaderboard: unknown): void {
+        this.broadcast(sessionCode, 'club-leaderboard:updated', clubLeaderboard);
+    }
+
     // Same payload for both audiences: a single broadcast over the union of the rooms, socket.io
     // delivering only once to a socket present in several of them.
     private broadcast(sessionCode: string, event: string, payload: unknown): void {

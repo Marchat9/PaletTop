@@ -13,6 +13,7 @@ import {
 } from './training.actions';
 import {
   resyncPending,
+  wsTrainingClubLeaderboardUpdated,
   wsTrainingMatchUpdated,
   wsTrainingRoundGenerated,
   wsTrainingSessionUpdated,
@@ -471,6 +472,15 @@ describe('trainingReducer', () => {
       );
 
       expect(trainingReducer(loaded, resetTraining()).clubLeaderboard.data).toEqual([]);
+    });
+
+    it('prend celui envoyé par le serveur à la fin d’un round, sans rechargement', () => {
+      const state = trainingReducer(
+        { ...initialTrainingState, clubLeaderboard: { data: [], isLoading: true, error: 'x' } },
+        wsTrainingClubLeaderboardUpdated({ clubLeaderboard: entries }),
+      );
+
+      expect(state.clubLeaderboard).toEqual({ data: entries, isLoading: false, error: null });
     });
   });
 

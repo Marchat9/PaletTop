@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ExpectedScore } from 'src/utils/score-conflict.util';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
+import { In, Not, Repository } from 'typeorm';
 import { TrainingMatch } from 'src/entities/training-match.entity';
 import { MatchStatus } from 'src/enum/status.enum';
 
@@ -60,6 +60,19 @@ export class TrainingMatchRepository {
             where: { id: matchId, session: { id: sessionId } },
             relations: FULL_TEAM_RELATIONS,
         });
+    }
+
+    /** Whether every played match of the round but this one is validated: a bye never is. */
+    async areOthersValidatedInRound(roundId: string, matchId: string): Promise<boolean> {
+        const notValidated = await this.repo.count({
+            where: {
+                id: Not(matchId),
+                round: { id: roundId },
+                isBye: false,
+                status: Not(MatchStatus.VALIDATED),
+            },
+        });
+        return notValidated === 0;
     }
 
     findValidatedBySession(sessionId: string): Promise<TrainingMatch[]> {

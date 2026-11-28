@@ -6,7 +6,11 @@ import { MatchStatus } from 'src/enum/status.enum';
 import { TrainingRoundStatus, TrainingSessionStatus } from 'src/enum/training.enum';
 import { TrainingScoreService } from './training-score.service';
 
-function makeService(match: TrainingMatch, status = TrainingSessionStatus.OPEN) {
+function makeService(
+    match: TrainingMatch,
+    status = TrainingSessionStatus.OPEN,
+    othersValidated = false,
+) {
     const session = {
         id: 'session-1',
         code: '1234',
@@ -17,20 +21,27 @@ function makeService(match: TrainingMatch, status = TrainingSessionStatus.OPEN) 
     const gateway = {
         emitMatchUpdated: vi.fn(),
         emitLeaderboardUpdated: vi.fn(),
+        emitClubLeaderboardUpdated: vi.fn(),
+    };
+    const leaderboardService = {
+        getLeaderboardBySessionId: vi.fn(() => Promise.resolve([])),
+        getClubLeaderboard: vi.fn(() => Promise.resolve([{ memberId: 'a' }])),
+    };
+    const matchRepo = {
+        findByIdInSession: vi.fn(() => Promise.resolve(match)),
+        save: vi.fn((rows: TrainingMatch[]) => Promise.resolve(rows)),
+        areOthersValidatedInRound: vi.fn(() => Promise.resolve(othersValidated)),
     };
 
     const service = new TrainingScoreService(
-        {
-            findByIdInSession: vi.fn(() => Promise.resolve(match)),
-            save: vi.fn((rows: TrainingMatch[]) => Promise.resolve(rows)),
-        } as never,
+        matchRepo as never,
         { touchLastActivity: vi.fn() } as never,
         { findWithAdminAuth: vi.fn(() => Promise.resolve(session)) } as never,
-        { getLeaderboardBySessionId: vi.fn(() => Promise.resolve([])) } as never,
+        leaderboardService as never,
         gateway as never,
     );
 
-    return { service, gateway };
+    return { service, gateway, leaderboardService, matchRepo };
 }
 
 function match(overrides: Partial<TrainingMatch>): TrainingMatch {
@@ -44,7 +55,7 @@ function match(overrides: Partial<TrainingMatch>): TrainingMatch {
         finishedAt: null,
         teamA: { members: [] },
         teamB: { members: [] },
-        round: { status: TrainingRoundStatus.OPEN },
+        round: { id: 'r1', roundNumber: 2, status: TrainingRoundStatus.OPEN },
         ...overrides,
     } as unknown as TrainingMatch;
 }
@@ -76,6 +87,61 @@ describe('TrainingScoreService.adminUpdateScore', () => {
         await service.adminUpdateScore('1234', 'm1', 'pwd', 8, 5);
 
         expect(gateway.emitLeaderboardUpdated).not.toHaveBeenCalled();
+    });
+});
+
+describe('TrainingScoreService club leaderboard broadcast', () => {
+    it('broadcasts the club leaderboard once, when the last match of the round is validated', async () => {
+        const { service, gateway, matchRepo } = makeService(
+            match({ status: MatchStatus.ONGOING }),
+            TrainingSessionStatus.OPEN,
+            true,
+        );
+
+        await service.adminUpdateScore('1234', 'm1', 'pwd', 13, 5);
+
+        expect(matchRepo.areOthersValidatedInRound).toHaveBeenCalledWith('r1', 'm1');
+        expect(gateway.emitClubLeaderboardUpdated).toHaveBeenCalledTimes(1);
+        expect(gateway.emitClubLeaderboardUpdated).toHaveBeenCalledWith('1234', [
+            { memberId: 'a' },
+        ]);
+    });
+
+    it('does not compute it while other matches of the round are still played', async () => {
+        const { service, gateway, leaderboardService } = makeService(
+            match({ status: MatchStatus.ONGOING }),
+        );
+
+        await service.adminUpdateScore('1234', 'm1', 'pwd', 13, 5);
+
+        expect(leaderboardService.getClubLeaderboard).not.toHaveBeenCalled();
+        expect(gateway.emitClubLeaderboardUpdated).not.toHaveBeenCalled();
+    });
+
+    it('broadcasts it again when a correction changes a match of a finished round', async () => {
+        const validated = { status: MatchStatus.VALIDATED, scoreA: 13, scoreB: 5 };
+        const corrected = makeService(match(validated), TrainingSessionStatus.OPEN, true);
+        const reopened = makeService(match(validated), TrainingSessionStatus.OPEN, true);
+
+        await corrected.service.adminUpdateScore('1234', 'm1', 'pwd', 13, 9);
+        await reopened.service.adminUpdateScore('1234', 'm1', 'pwd', 10, 5);
+
+        expect(corrected.gateway.emitClubLeaderboardUpdated).toHaveBeenCalledTimes(1);
+        expect(reopened.gateway.emitClubLeaderboardUpdated).toHaveBeenCalledTimes(1);
+    });
+
+    it('keeps the score saved when the club leaderboard cannot be computed', async () => {
+        const { service, gateway, leaderboardService } = makeService(
+            match({ status: MatchStatus.ONGOING }),
+            TrainingSessionStatus.OPEN,
+            true,
+        );
+        leaderboardService.getClubLeaderboard.mockRejectedValue(new Error('db down'));
+
+        await expect(service.adminUpdateScore('1234', 'm1', 'pwd', 13, 5)).resolves.toMatchObject({
+            scoreA: 13,
+        });
+        expect(gateway.emitClubLeaderboardUpdated).not.toHaveBeenCalled();
     });
 });
 
@@ -130,6 +196,7 @@ describe('TrainingScoreService.updateScore against a stale score', () => {
         const matchRepo = {
             findByIdInSession: vi.fn().mockResolvedValueOnce(found).mockResolvedValue(latest),
             updateIfStatus: vi.fn(() => Promise.resolve(updated)),
+            areOthersValidatedInRound: vi.fn(() => Promise.resolve(false)),
         };
         const service = new TrainingScoreService(
             matchRepo as never,

@@ -271,8 +271,43 @@ export class TrainingScoreService {
             const leaderboard =
                 await this.trainingLeaderboardService.getLeaderboardBySessionId(sessionId);
             this.trainingRealtimeGateway.emitLeaderboardUpdated(sessionCode, leaderboard);
+            await this.emitClubLeaderboardIfRoundOver(sessionCode, match);
         }
         return dto;
+    }
+
+    /**
+     * The club leaderboard only moves with a finished round: computed once then, for every phone.
+     * Every other match of the round validated means the round is over now (this one validated)
+     * or was over before this correction (this one validated before): either way the players must
+     * see the new totals.
+     *
+     * The score is already committed: a failure here is logged, never reported to the caller.
+     */
+    private async emitClubLeaderboardIfRoundOver(
+        sessionCode: string,
+        match: TrainingMatch,
+    ): Promise<void> {
+        try {
+            const roundId = match.round?.id;
+            if (
+                !roundId ||
+                !(await this.trainingMatchRepo.areOthersValidatedInRound(roundId, match.id))
+            ) {
+                return;
+            }
+            const clubLeaderboard =
+                await this.trainingLeaderboardService.getClubLeaderboard(sessionCode);
+            this.trainingRealtimeGateway.emitClubLeaderboardUpdated(sessionCode, clubLeaderboard);
+            this.logger.log(
+                `Club leaderboard broadcast: round ${match.round.roundNumber} over (training session: ${sessionCode})`,
+            );
+        } catch (error: unknown) {
+            this.logger.error(
+                `Club leaderboard broadcast failed for match ${match.id} of session ${sessionCode}`,
+                error,
+            );
+        }
     }
 
     // Admin correction of a score: a score that reaches pointsPerGame validates the match directly

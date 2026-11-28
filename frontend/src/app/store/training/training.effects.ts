@@ -88,7 +88,6 @@ import {
   createTrainingSession,
   createTrainingSessionFailure,
   createTrainingSessionSuccess,
-  followTrainingClubLeaderboard,
   loadTrainingClubLeaderboard,
   loadTrainingClubLeaderboardFailure,
   loadTrainingClubLeaderboardSuccess,
@@ -147,11 +146,9 @@ import {
 import {
   selectCurrentTrainingAdminInformations,
   selectCurrentTrainingParticipantInformations,
-  selectFollowedTrainingClubLeaderboardSession,
   selectTrainingParticipantCurrentMatch,
   selectTrainingRounds,
 } from './training.selectors';
-import { wsTrainingLeaderboardUpdated } from '../realtime/realtime.actions';
 import { newId } from 'src/app/utils/unique-id.util';
 import { environment } from '@environment';
 
@@ -468,11 +465,7 @@ export class TrainingEffects {
   loadTrainingClubLeaderboard$ = createEffect(() =>
     this.actions$.pipe(
       // A refresh keeps the leaderboard on screen while it is reloaded.
-      ofType(
-        loadTrainingClubLeaderboard,
-        followTrainingClubLeaderboard,
-        refreshTrainingClubLeaderboard,
-      ),
+      ofType(loadTrainingClubLeaderboard, refreshTrainingClubLeaderboard),
       switchMap(({ sessionCode }) =>
         this.trainingService.getClubLeaderboard(sessionCode).pipe(
           map((clubLeaderboard) => loadTrainingClubLeaderboardSuccess({ clubLeaderboard })),
@@ -481,20 +474,6 @@ export class TrainingEffects {
           ),
         ),
       ),
-    ),
-  );
-
-  // A validated match changes the club leaderboard too: the open popup follows it. The server
-  // recomputes it from the whole club history for every phone that has it open, so a burst of
-  // validations is grouped into one reload.
-  refreshFollowedClubLeaderboard$ = createEffect(() =>
-    this.actions$.pipe(
-      ofType(wsTrainingLeaderboardUpdated),
-      debounceTime(environment.apiConfiguration.clubLeaderboardRefreshDebounce ?? 0),
-      withLatestFrom(this.store.select(selectFollowedTrainingClubLeaderboardSession)),
-      map(([, sessionCode]) => sessionCode),
-      filter((sessionCode): sessionCode is string => !!sessionCode),
-      map((sessionCode) => refreshTrainingClubLeaderboard({ sessionCode })),
     ),
   );
 

@@ -8,10 +8,7 @@ import { skipRoundConfirmationKey } from 'src/app/store/app-config/round-confirm
 import { ConfirmationPopupComponent } from 'src/app/modales/confirmation-popup/confirmation-popup';
 import { generateTrainingRound } from 'src/app/store/training/training.round.actions';
 import { LeaderboardPopup } from 'src/app/modales/leaderboard-popup/leaderboard-popup';
-import {
-  followTrainingClubLeaderboard,
-  unfollowTrainingClubLeaderboard,
-} from 'src/app/store/training/training.session.actions';
+import { loadTrainingClubLeaderboard } from 'src/app/store/training/training.session.actions';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { Actions } from '@ngrx/effects';
@@ -484,21 +481,17 @@ describe('AdminTrainingSessionPage', () => {
     expect(fixture.componentInstance.generateBlockedReason()).toContain('au moins un joueur');
   });
 
-  it('suit le classement du club tant que sa popup est ouverte', () => {
+  it('charge le classement du club à l’ouverture de sa popup', () => {
     const { fixture, store, dialogMock } = setup();
-    const closed = new Subject<void>();
-    dialogMock.open.mockReturnValue({ closed });
+    dialogMock.open.mockReturnValue({ closed: new Subject<void>() });
     const dispatchSpy = vi.spyOn(store, 'dispatch');
 
     fixture.componentInstance.openClubLeaderboard();
 
     expect(dispatchSpy).toHaveBeenCalledWith(
-      followTrainingClubLeaderboard({ sessionCode: fixture.componentInstance.sessionCode()! }),
+      loadTrainingClubLeaderboard({ sessionCode: fixture.componentInstance.sessionCode()! }),
     );
     expect(dialogMock.open).toHaveBeenCalledWith(LeaderboardPopup, expect.anything());
-
-    closed.next();
-    expect(dispatchSpy).toHaveBeenCalledWith(unfollowTrainingClubLeaderboard());
   });
 
   it('marque l’admin dans le classement du club quand il joue la séance', () => {

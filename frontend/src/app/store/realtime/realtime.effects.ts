@@ -29,6 +29,7 @@ import {
   wsSessionUpdated,
   wsTeamsUpdated,
   wsTournamentUpdated,
+  wsTrainingClubLeaderboardUpdated,
   wsTrainingLeaderboardUpdated,
   wsTrainingMatchUpdated,
   wsTrainingRoundGenerated,
@@ -45,6 +46,7 @@ import {
 } from 'src/app/store/training/training.session.actions';
 import { selectCurrentTrainingAdminInformations } from 'src/app/store/training/training.selectors';
 import {
+  TrainingClubLeaderboardEntryDto,
   TrainingLeaderboardEntryDto,
   TrainingMatchDto,
   TrainingRoundDto,
@@ -173,6 +175,9 @@ export class RealtimeEffects {
       this.wsService
         .on<TrainingLeaderboardEntryDto[]>('leaderboard:updated')
         .pipe(map((leaderboard) => wsTrainingLeaderboardUpdated({ leaderboard }))),
+      this.wsService
+        .on<TrainingClubLeaderboardEntryDto[]>('club-leaderboard:updated')
+        .pipe(map((clubLeaderboard) => wsTrainingClubLeaderboardUpdated({ clubLeaderboard }))),
     );
   }
 
