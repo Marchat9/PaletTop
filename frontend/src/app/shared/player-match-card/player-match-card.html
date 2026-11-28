@@ -21,7 +21,7 @@
           <app-icon name="verified" />
           <span>{{ byeCopy().awardLabel }}</span>
         </div>
-      } @else if (byeCopy().pendingLabel) {
+      } @else if (!isValidated() && byeCopy().pendingLabel) {
         <p class="bye-pending">{{ byeCopy().pendingLabel }}</p>
       }
     } @else {
