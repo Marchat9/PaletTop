@@ -55,7 +55,30 @@ function qualifyingSummary(rounds: TeamRound[], teamId: string): string {
     .join(', ');
 }
 
-function qualifyingStep(rounds: TeamRound[], teamId: string): PlayerParcoursStep[] {
+/** Wording of the drawn rounds: qualifiers in a structured tournament, plain matches otherwise. */
+interface DrawnRoundsWording {
+  current: (sessionNumber: number) => string;
+  done: string;
+  finished: string;
+}
+
+const QUALIFYING_WORDING: DrawnRoundsWording = {
+  current: (sessionNumber) => `Qualifs : partie ${sessionNumber} en cours`,
+  done: 'Qualifs',
+  finished: 'terminées',
+};
+
+const MATCHES_WORDING: DrawnRoundsWording = {
+  current: (sessionNumber) => `Match ${sessionNumber} en cours`,
+  done: 'Matchs',
+  finished: 'terminés',
+};
+
+function qualifyingStep(
+  rounds: TeamRound[],
+  teamId: string,
+  wording: DrawnRoundsWording,
+): PlayerParcoursStep[] {
   if (rounds.length === 0) {
     return [];
   }
@@ -67,11 +90,13 @@ function qualifyingStep(rounds: TeamRound[], teamId: string): PlayerParcoursStep
       {
         key: 'qualifying',
         state: 'current',
-        text: `Qualifs : partie ${open.session.sessionNumber} en cours${suffix}`,
+        text: `${wording.current(open.session.sessionNumber)}${suffix}`,
       },
     ];
   }
-  return [{ key: 'qualifying', state: 'done', text: `Qualifs : ${summary || 'terminées'}` }];
+  return [
+    { key: 'qualifying', state: 'done', text: `${wording.done} : ${summary || wording.finished}` },
+  ];
 }
 
 function eliminationText(round: TeamRound, teamId: string, roundLabel: string): string {
@@ -98,10 +123,12 @@ function isLost(round: TeamRound, teamId: string): boolean {
 /**
  * The way of a team through the rounds already drawn: its qualifiers in one line, then one line per
  * elimination round it played, the one in progress last. A first-round bye reads « exempt ».
+ * Only a structured tournament has qualifiers: the other modes count plain matches.
  */
 export function computePlayerParcours(
   sessions: MatchesSessionDto[],
   teamId: string,
+  hasQualifiers = true,
 ): PlayerParcoursStep[] {
   const ordered = [...sessions].sort((a, b) => a.sessionNumber - b.sessionNumber);
   const teamRounds = (list: MatchesSessionDto[]): TeamRound[] =>
@@ -111,7 +138,11 @@ export function computePlayerParcours(
     });
 
   const qualifyingSessions = ordered.filter((session) => !isElimination(session));
-  const steps = qualifyingStep(teamRounds(qualifyingSessions), teamId);
+  const steps = qualifyingStep(
+    teamRounds(qualifyingSessions),
+    teamId,
+    hasQualifiers ? QUALIFYING_WORDING : MATCHES_WORDING,
+  );
 
   const eliminations = teamRounds(ordered.filter(isElimination));
   eliminations.forEach((round) => {
